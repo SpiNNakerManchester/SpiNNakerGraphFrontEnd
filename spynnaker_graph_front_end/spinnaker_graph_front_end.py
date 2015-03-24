@@ -19,7 +19,7 @@ from spinn_front_end_common.utilities.timer import Timer
 
 
 from spynnaker_graph_front_end.utilities.xml_interface import XMLInterface
-from spynnaker_graph_front_end.utilities import conf
+from spynnaker_graph_front_end.utilities.conf import config
 
 import math
 import logging
@@ -34,17 +34,107 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
     entrance class for the graph front end
     """
 
-    def __init__(self):
+    def __init__(self, hostname=None, graph_label=None,
+                 model_binaries_path=None):
         """
         generate a spinnaker grpah front end object
-        :return: the spinnaker grpah front end object
+        :return: the spinnaker graph front end object
         """
+        global _binary_search_paths
+        if model_binaries_path is not None:
+            _binary_search_paths.add_path(model_binaries_path)
 
+        if hostname is None:
+            hostname = config.get("Machine", "machineName")
+        if graph_label is None:
+            graph_label = config.get("Application", "graph_label")
 
-        FrontEndCommonConfigurationFunctions.__init__(self, host_name,
+        FrontEndCommonConfigurationFunctions.__init__(self, hostname,
                                                       graph_label)
-        FrontEndCommonInterfaceFunctions.__init__(self, report_folder,
-                                                  report_states)
+
+        application_file_folder = \
+            config.get("Reports", "defaultApplicationDataFilePath")
+        max_application_binaries = \
+            config.get("Reports", "max_application_binaries_kept")
+        max_reports_kept = config.get("Reports", "max_reports_kept")
+        default_report_folder = \
+            config.get("Reports", "defaultReportFilePath")
+        enabled_reports = config.get("Reports", "reportsEnabled")
+        write_provance = config.get("Reports", "writeProvanceData")
+        write_text_spec = config.get("Reports", "writeTextSpecs")
+        app_id = config.get("Application", "appID")
+        execute_data_spec_report = \
+            config.getboolean("Reports", "writeTextSpecs"),
+        execute_partitioner_report = \
+            config.getboolean("Reports", "writePartitionerReports"),
+        execute_placer_report = \
+            config.getboolean("Reports", "writePlacerReports"),
+        execute_router_dat_based_report = \
+            config.getboolean("Reports", "writeRouterDatReport"),
+        generate_performance_measurements = \
+            config.getboolean("Reports", "outputTimesForSections"),
+        execute_router_report = \
+            config.getboolean("Reports", "writeRouterReports"),
+        execute_write_reload_steps = \
+            config.getboolean("Reports", "writeReloadSteps"),
+        generate_transciever_report = \
+            config.getboolean("Reports", "writeTransceiverReport"),
+        execute_routing_info_report = \
+            config.getboolean("Reports", "writeRouterInfoReport"),
+        in_debug_mode = config.get("Mode", "mode") == "Debug",
+        create_database = config.getboolean("Database", "create_database")
+        partitioner_algorithm = config.get("Partitioner", "algorithm")
+        placer_algorithm = config.get("Placer", "algorithm")
+        key_allocator_algorithm = config.get("KeyAllocator", "algorithm")
+        router_algorithm = config.get("Routing", "algorithm")
+        virtual_x_dimension = \
+            config.get("Machine", "virutal_board_x_dimension"),
+        virtual_y_dimension = \
+            config.get("Machine", "virutal_board_y_dimension"),
+        downed_chips = config.get("Machine", "down_chips"),
+        downed_cores = config.get("Machine", "down_cores"),
+        requires_virtual_board = config.getboolean("Machine", "virtual_board"),
+        requires_wrap_around = config.get("Machine", "requires_wrap_arounds"),
+        machine_version = config.getint("Machine", "version")
+        # set up the configuration methods
+        self._set_up_output_application_data_specifics(application_file_folder,
+                                                       max_application_binaries)
+        self._set_up_report_specifics(
+            enabled_reports, write_text_spec, default_report_folder,
+            max_reports_kept, write_provance)
+
+        self._set_up_main_objects(
+            app_id=app_id, create_database=create_database,
+            execute_data_spec_report=execute_data_spec_report,
+            execute_partitioner_report=execute_partitioner_report,
+            execute_placer_report=execute_placer_report,
+            execute_router_dat_based_report=execute_router_dat_based_report,
+            execute_router_report=execute_router_report,
+            execute_routing_info_report=execute_routing_info_report,
+            execute_write_reload_steps=execute_write_reload_steps,
+            generate_performance_measurements=generate_performance_measurements,
+            generate_transciever_report=generate_transciever_report,
+            in_debug_mode=in_debug_mode, reports_are_enabled=enabled_reports)
+        
+        self._set_up_pacman_algorthms_listings(
+            partitioner_algorithm=partitioner_algorithm,
+            placer_algorithm=placer_algorithm,
+            key_allocator_algorithm=key_allocator_algorithm,
+            routing_algorithm=router_algorithm)
+
+        self._set_up_executable_specifics()
+
+        #set up the interfaces with the machine
+        FrontEndCommonInterfaceFunctions.__init__(self, default_report_folder,
+                                                  self._reports_states)
+        self._setup_interfaces(
+            downed_chips=downed_chips, downed_cores=downed_cores,
+            hostname=hostname, machine_version=machine_version,
+            requires_virtual_board=requires_virtual_board,
+            requires_wrap_around=requires_wrap_around,
+            virtual_x_dimension=virtual_x_dimension,
+            virtual_y_dimension=virtual_y_dimension)
+
         self._none_labelled_vertex_count = 0
         self._none_labelled_edge_count = 0
 
@@ -61,10 +151,9 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
             label = "Edge {}".format(self._none_labelled_edge_count)
             self._none_labelled_edge_count += 1
         edge = PartitionableEdge(pre_vertex, post_vertex, constraints, label)
+        self._partitionable_graph.add_edge(edge)
 
     def run(self, run_time):
-        self._setup_interfaces(hostname=self._hostname)
-
         # create network report if needed
         if self._reports_states is not None:
             reports.network_specification_report(
@@ -98,7 +187,7 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
                         "is not currently supportable in this tool chain."
                         "watch this space")
 
-        do_timing = conf.config.getboolean("Reports", "outputTimesForSections")
+        do_timing = config.getboolean("Reports", "outputTimesForSections")
         if do_timing:
             timer = Timer()
         else:
@@ -126,7 +215,7 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
             timer.start_timing()
         processor_to_app_data_base_address = \
             self.execute_data_specification_execution(
-                conf.config.getboolean("SpecExecution", "specExecOnHost"),
+                config.getboolean("SpecExecution", "specExecOnHost"),
                 self._hostname, self._placements, self._graph_mapper)
 
         if self._reports_states is not None:
@@ -157,15 +246,15 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         if self._do_run is True:
             logger.info("*** Running simulation... *** ")
             if self._reports_states.transciever_report:
-                binary_folder = conf.config.get("SpecGeneration",
+                binary_folder = config.get("SpecGeneration",
                                                 "Binary_folder")
                 reports.re_load_script_running_aspects(
                     binary_folder, executable_targets, self._hostname,
                     self._app_id, run_time)
 
-            wait_on_confirmation = conf.config.getboolean(
+            wait_on_confirmation = config.getboolean(
                 "Database", "wait_on_confirmation")
-            send_start_notification = conf.config.getboolean(
+            send_start_notification = config.getboolean(
                 "Database", "send_start_notification")
             self._start_execution_on_machine(
                 executable_targets, self._app_id, self._runtime,

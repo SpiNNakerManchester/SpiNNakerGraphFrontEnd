@@ -18,15 +18,25 @@ def _init_module():
 _init_module()
 
 
-def setup():
+def setup(hostname=None, graph_label=None, model_binary_folder=None):
+    """ for builders with pynn attitude, allows end users to define wherever
+    their binaries are
+
+    :param hostname:
+    :param graph_label:
+    :param model_binary_folder:
+    :return:
+    """
     from spynnaker_graph_front_end.spinnaker_graph_front_end import \
         SpiNNakerGraphFrontEnd
     global _executable_finder
     global _spinnaker
     if _executable_finder is None:
         _init_module()
+    if model_binary_folder is not None:
+        _executable_finder.add_path(model_binary_folder)
     # set up the spinnaker object
-    _spinnaker = SpiNNakerGraphFrontEnd()
+    _spinnaker = SpiNNakerGraphFrontEnd(hostname, graph_label)
 
 
 def run(duration=None):
