@@ -1,11 +1,26 @@
 """
 entrance class for the graph front end
 """
+from multiprocessing.pool import ThreadPool
 from pacman.model.partitionable_graph.partitionable_edge import \
     PartitionableEdge
+from pacman.model.routing_info.dict_based_partitioned_edge_n_keys_map import \
+    DictBasedPartitionedEdgeNKeysMap
+from pacman.operations.partition_algorithms import BasicPartitioner
+from pacman.operations.placer_algorithms import BasicPlacer
+from pacman.operations.router_algorithms import BasicDijkstraRouting
+from pacman.operations.router_check_functionality.valid_routes_checker import \
+    ValidRouteChecker
+from pacman.utilities import reports as pacman_reports
+from pacman.operations.routing_info_allocator_algorithms import \
+    BasicRoutingInfoAllocator
+from pacman.operations.tag_allocator_algorithms import BasicTagAllocator
+from pacman.utilities.progress_bar import ProgressBar
 from spinn_front_end_common.abstract_models.\
     abstract_data_specable_vertex import \
     AbstractDataSpecableVertex
+from spinn_front_end_common.interface.data_generator_interface import \
+    DataGeneratorInterface
 
 from spinn_front_end_common.interface.\
     front_end_common_configuration_functions import \
@@ -16,7 +31,22 @@ from spinn_front_end_common.interface.\
 from spinn_front_end_common.utilities import reports
 from spinn_front_end_common.utilities import exceptions
 from spinn_front_end_common.utilities.timer import Timer
+from spinnman.model.core_subset import CoreSubset
+from spinnman.model.core_subsets import CoreSubsets
 
+from spynnaker.pyNN.models.abstract_models.\
+    abstract_provides_incoming_edge_constraints import \
+    AbstractProvidesIncomingEdgeConstraints
+from spynnaker.pyNN.models.abstract_models.\
+    abstract_provides_n_keys_for_edge import \
+    AbstractProvidesNKeysForEdge
+from spynnaker.pyNN.models.abstract_models.\
+    abstract_provides_outgoing_edge_constraints import \
+    AbstractProvidesOutgoingEdgeConstraints
+from spynnaker_graph_front_end.DataSpecedGeneratorInterface import \
+    DataSpecedGeneratorInterface
+from spynnaker_graph_front_end.abstract_data_speced_vertex import \
+    AbstractDataSpecedVertex
 
 from spynnaker_graph_front_end.utilities.xml_interface import XMLInterface
 from spynnaker_graph_front_end.utilities.conf import config
@@ -35,14 +65,14 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
     """
 
     def __init__(self, hostname=None, graph_label=None,
-                 model_binaries_path=None):
+                 executable_paths=None):
         """
         generate a spinnaker grpah front end object
-        :return: the spinnaker graph front end object
+        :param hostname:
+        :param graph_label:
+        :param executable_paths:
+        :return:the spinnaker graph front end object
         """
-        global _binary_search_paths
-        if model_binaries_path is not None:
-            _binary_search_paths.add_path(model_binaries_path)
 
         if hostname is None:
             hostname = config.get("Machine", "machineName")
@@ -51,6 +81,8 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
 
         FrontEndCommonConfigurationFunctions.__init__(self, hostname,
                                                       graph_label)
+
+        self._executable_paths = executable_paths
 
         application_file_folder = \
             config.get("Reports", "defaultApplicationDataFilePath")
@@ -62,25 +94,26 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         enabled_reports = config.get("Reports", "reportsEnabled")
         write_provance = config.get("Reports", "writeProvanceData")
         write_text_spec = config.get("Reports", "writeTextSpecs")
-        app_id = config.get("Application", "appID")
+        # TODO remove this self
+        self._app_id = config.get("Application", "appID")
         execute_data_spec_report = \
-            config.getboolean("Reports", "writeTextSpecs"),
+            config.getboolean("Reports", "writeTextSpecs")
         execute_partitioner_report = \
-            config.getboolean("Reports", "writePartitionerReports"),
+            config.getboolean("Reports", "writePartitionerReports")
         execute_placer_report = \
-            config.getboolean("Reports", "writePlacerReports"),
+            config.getboolean("Reports", "writePlacerReports")
         execute_router_dat_based_report = \
-            config.getboolean("Reports", "writeRouterDatReport"),
+            config.getboolean("Reports", "writeRouterDatReport")
         generate_performance_measurements = \
-            config.getboolean("Reports", "outputTimesForSections"),
+            config.getboolean("Reports", "outputTimesForSections")
         execute_router_report = \
-            config.getboolean("Reports", "writeRouterReports"),
+            config.getboolean("Reports", "writeRouterReports")
         execute_write_reload_steps = \
-            config.getboolean("Reports", "writeReloadSteps"),
+            config.getboolean("Reports", "writeReloadSteps")
         generate_transciever_report = \
-            config.getboolean("Reports", "writeTransceiverReport"),
+            config.getboolean("Reports", "writeTransceiverReport")
         execute_routing_info_report = \
-            config.getboolean("Reports", "writeRouterInfoReport"),
+            config.getboolean("Reports", "writeRouterInfoReport")
         in_debug_mode = config.get("Mode", "mode") == "Debug",
         create_database = config.getboolean("Database", "create_database")
         partitioner_algorithm = config.get("Partitioner", "algorithm")
@@ -88,14 +121,15 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         key_allocator_algorithm = config.get("KeyAllocator", "algorithm")
         router_algorithm = config.get("Routing", "algorithm")
         virtual_x_dimension = \
-            config.get("Machine", "virutal_board_x_dimension"),
+            config.get("Machine", "virutal_board_x_dimension")
         virtual_y_dimension = \
-            config.get("Machine", "virutal_board_y_dimension"),
-        downed_chips = config.get("Machine", "down_chips"),
-        downed_cores = config.get("Machine", "down_cores"),
-        requires_virtual_board = config.getboolean("Machine", "virtual_board"),
-        requires_wrap_around = config.get("Machine", "requires_wrap_arounds"),
-        machine_version = config.getint("Machine", "version")
+            config.get("Machine", "virutal_board_y_dimension")
+        downed_chips = config.get("Machine", "down_chips")
+        downed_cores = config.get("Machine", "down_cores")
+        requires_virtual_board = config.getboolean("Machine", "virtual_board")
+        requires_wrap_around = config.get("Machine", "requires_wrap_arounds")
+        #TODO ge this bit fixed
+        self._machine_version = config.getint("Machine", "version")
         # set up the configuration methods
         self._set_up_output_application_data_specifics(application_file_folder,
                                                        max_application_binaries)
@@ -104,7 +138,7 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
             max_reports_kept, write_provance)
 
         self._set_up_main_objects(
-            app_id=app_id, create_database=create_database,
+            app_id=self._app_id, create_database=create_database,
             execute_data_spec_report=execute_data_spec_report,
             execute_partitioner_report=execute_partitioner_report,
             execute_placer_report=execute_placer_report,
@@ -129,7 +163,7 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
                                                   self._reports_states)
         self._setup_interfaces(
             downed_chips=downed_chips, downed_cores=downed_cores,
-            hostname=hostname, machine_version=machine_version,
+            hostname=hostname, machine_version=self._machine_version,
             requires_virtual_board=requires_virtual_board,
             requires_wrap_around=requires_wrap_around,
             virtual_x_dimension=virtual_x_dimension,
@@ -138,20 +172,53 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         self._none_labelled_vertex_count = 0
         self._none_labelled_edge_count = 0
 
-    def add_vertex(self, cellclass, cellparams, label=None):
+    def add_partitionable_vertex(self, cellclass, cellparams, label=None):
+        # corect label if needed
         if label is None:
             label = "Vertex {}".format(self._none_labelled_vertex_count)
             self._none_labelled_vertex_count += 1
+        #check that theres no partitioned vertices added so far
+        if len(self._partitioned_graph.subvertices) > 0:
+            raise exceptions.ConfigurationException(
+                "The partitioned graph has already got some vertices, and "
+                "therefore cannot be executed correctly. Please rectify and "
+                "try again")
+        # add vertex
         cellparams['label'] = label
         vertex = cellclass(**cellparams)
         self._partitionable_graph.add_vertex(vertex)
 
-    def add_edge(self, pre_vertex, post_vertex, constraints, label):
+    def add_partitioned_vertex(self, cellclass, cellparams, label=None):
+        # corect label if needed
+        if label is None:
+            label = "Vertex {}".format(self._none_labelled_vertex_count)
+            self._none_labelled_vertex_count += 1
+            #check that theres no partitioned vertices added so far
+        if len(self._partitionable_graph.vertices) > 0:
+            raise exceptions.ConfigurationException(
+                "The partitionable graph has already got some vertices, and "
+                "therefore cannot be executed correctly. Please rectify and "
+                "try again")
+        # add vertex
+        cellparams['label'] = label
+        vertex = cellclass(**cellparams)
+        self._partitioned_graph.add_subvertex(vertex)
+
+    def add_partitionable_edge(
+            self, cell_type, cell_params, label, constraints):
         if label is None:
             label = "Edge {}".format(self._none_labelled_edge_count)
             self._none_labelled_edge_count += 1
-        edge = PartitionableEdge(pre_vertex, post_vertex, constraints, label)
+        edge = cell_type(cell_params, constraints)
         self._partitionable_graph.add_edge(edge)
+
+    def  add_partitioned_edge(
+            self, cell_type, cell_params, constraints, label):
+        if label is None:
+            label = "Edge {}".format(self._none_labelled_edge_count)
+            self._none_labelled_edge_count += 1
+        edge = cell_type(cell_params, constraints, label)
+        self._partitioned_graph.add_edge(edge)
 
     def run(self, run_time):
         # create network report if needed
@@ -216,7 +283,8 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         processor_to_app_data_base_address = \
             self.execute_data_specification_execution(
                 config.getboolean("SpecExecution", "specExecOnHost"),
-                self._hostname, self._placements, self._graph_mapper)
+                self._hostname, self._placements, self._graph_mapper,
+                self._writeTextSpecs, self._app_data_runtime_folder)
 
         if self._reports_states is not None:
             reports.write_memory_map_report(self._report_default_directory,
@@ -237,9 +305,11 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
             self._load_application_data(
                 self._placements, self._router_tables, self._graph_mapper,
                 processor_to_app_data_base_address, self._hostname,
-                self._app_id)
+                self._app_id, self._app_data_runtime_folder,
+                self._machine_version)
             logger.info("*** Loading executables ***")
-            self._load_executable_images(executable_targets, self._app_id)
+            self._load_executable_images(executable_targets, self._app_id,
+                                         self._app_data_runtime_folder)
         if do_timing:
             timer.take_sample()
 
@@ -247,7 +317,7 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
             logger.info("*** Running simulation... *** ")
             if self._reports_states.transciever_report:
                 binary_folder = config.get("SpecGeneration",
-                                                "Binary_folder")
+                                           "Binary_folder")
                 reports.re_load_script_running_aspects(
                     binary_folder, executable_targets, self._hostname,
                     self._app_id, run_time)
@@ -267,9 +337,310 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
                 self._retieve_provance_data_from_machine(
                     executable_targets, self._router_tables, self._machine)
 
-    def end(self):
-        pass
+    def map_model(self):
+        """
+        executes the pacman compilation stack
+        """
+        pacman_report_state = \
+            self._reports_states.generate_pacman_report_states()
+
+        ##self._add_virtual_chips()
+
+        # execute partitioner
+        if len(self._partitionable_graph.vertices) > 0:
+            self._execute_partitioner(pacman_report_state)
+
+        # execute placer
+        self._execute_placer(pacman_report_state)
+
+        # exeucte tag allocator
+        self._execute_tag_allocator(pacman_report_state)
+
+        # execute key allocator
+        self._execute_key_allocator(pacman_report_state)
+
+        # execute router
+        self._execute_router(pacman_report_state)
+
+    def _execute_tag_allocator(self, pacman_report_state):
+        """
+
+        :param pacman_report_state:
+        :return:
+        """
+        if self._tag_allocator_algorithm is None:
+            self._tag_allocator_algorithm = BasicTagAllocator()
+        else:
+            self._tag_allocator_algorithm = self._tag_allocator_algorithm()
+
+        # execute tag allocation
+        self._tags = self._tag_allocator_algorithm.allocate_tags(
+            self._machine, self._placements)
+
+        # generate reports
+        if (pacman_report_state is not None and
+                pacman_report_state.tag_allocation_report):
+            pacman_reports.tag_allocator_report(
+                self._report_default_directory, self._tags)
+
+    def _execute_key_allocator(self, pacman_report_state):
+        """ executes the key allocator
+
+        :param pacman_report_state:
+        :return:
+        """
+        if self._key_allocator_algorithm is None:
+            self._key_allocator_algorithm = BasicRoutingInfoAllocator()
+        else:
+            self._key_allocator_algorithm = self._key_allocator_algorithm()
+
+        # Generate an n_keys map for the graph and add constraints
+        n_keys_map = DictBasedPartitionedEdgeNKeysMap()
+        for edge in self._partitioned_graph.subedges:
+            vertex_slice = self._graph_mapper.get_subvertex_slice(
+                edge.pre_subvertex)
+            super_edge = (self._graph_mapper
+                          .get_partitionable_edge_from_partitioned_edge(edge))
+            if vertex_slice.n_atoms > 2048:
+                raise exceptions.ConfigurationException(
+                    "The current models can only support up to 2048 atoms"
+                    " per core (restricted by the supported key format)")
+
+            if not isinstance(super_edge.pre_vertex,
+                              AbstractProvidesNKeysForEdge):
+                n_keys_map.set_n_keys_for_patitioned_edge(edge,
+                                                          vertex_slice.n_atoms)
+            else:
+                n_keys_map.set_n_keys_for_patitioned_edge(
+                    super_edge,
+                    super_edge.pre_vertex.get_n_keys_for_partitioned_edge(
+                        edge, self._graph_mapper))
+
+            if isinstance(super_edge.pre_vertex,
+                          AbstractProvidesOutgoingEdgeConstraints):
+                edge.add_constraints(
+                    super_edge.pre_vertex.get_outgoing_edge_constraints(
+                        edge, self._graph_mapper))
+            if isinstance(super_edge.post_vertex,
+                          AbstractProvidesIncomingEdgeConstraints):
+                edge.add_constraints(
+                    super_edge.post_vertex.get_incoming_edge_constraints(
+                        edge, self._graph_mapper))
+
+        # execute routing info generator
+        self._routing_infos = \
+            self._key_allocator_algorithm.allocate_routing_info(
+                self._partitioned_graph, self._placements, n_keys_map)
+
+        # generate reports
+        if (pacman_report_state is not None and
+                pacman_report_state.routing_info_report):
+            pacman_reports.routing_info_reports(
+                self._report_default_directory, self._partitioned_graph,
+                self._routing_infos)
+
+    def _execute_router(self, pacman_report_state):
+        """ exectes the router algorithum
+
+        :param pacman_report_state:
+        :return:
+        """
+
+        # set up a default placer algorithm if none are specified
+        if self._router_algorithm is None:
+            self._router_algorithm = BasicDijkstraRouting()
+        else:
+            self._router_algorithm = self._router_algorithm()
+
+        self._router_tables = \
+            self._router_algorithm.route(
+                self._routing_infos, self._placements, self._machine,
+                self._partitioned_graph)
+
+        if pacman_report_state is not None and \
+                pacman_report_state.router_report:
+            pacman_reports.router_reports(
+                graph=self._partitionable_graph, hostname=self._hostname,
+                graph_to_sub_graph_mapper=self._graph_mapper,
+                placements=self._placements,
+                report_folder=self._report_default_directory,
+                include_dat_based=pacman_report_state.router_dat_based_report,
+                routing_tables=self._router_tables,
+                routing_info=self._routing_infos, machine=self._machine)
+
+        if self._in_debug_mode:
+
+            # check that all routes are valid and no cycles exist
+            valid_route_checker = ValidRouteChecker(
+                placements=self._placements, routing_infos=self._routing_infos,
+                routing_tables=self._router_tables, machine=self._machine,
+                partitioned_graph=self._partitioned_graph)
+            valid_route_checker.validate_routes()
+
+    def _execute_partitioner(self, pacman_report_state):
+        """ executes the partitioner function
+
+        :param pacman_report_state:
+        :return:
+        """
+
+        # execute partitioner or default partitioner (as seen fit)
+        if self._partitioner_algorithm is None:
+            self._partitioner_algorithm = BasicPartitioner()
+        else:
+            self._partitioner_algorithm = self._partitioner_algorithm()
+
+        # execute partitioner
+        self._partitioned_graph, self._graph_mapper = \
+            self._partitioner_algorithm.partition(self._partitionable_graph,
+                                                  self._machine)
+
+        # execute reports
+        if (pacman_report_state is not None and
+                pacman_report_state.partitioner_report):
+            pacman_reports.partitioner_reports(
+                self._report_default_directory, self._hostname,
+                self._partitionable_graph, self._graph_mapper)
+
+    def _execute_placer(self, pacman_report_state):
+        """ executes the placer
+
+        :param pacman_report_state:
+        :return:
+        """
+
+        # execute placer or default placer (as seen fit)
+        if self._placer_algorithm is None:
+            self._placer_algorithm = BasicPlacer()
+        else:
+            self._placer_algorithm = self._placer_algorithm()
+
+        # execute placer
+        self._placements = self._placer_algorithm.place(
+            self._partitioned_graph, self._machine)
+
+        # execute placer reports if needed
+        if (pacman_report_state is not None and
+                pacman_report_state.placer_report):
+            pacman_reports.placer_reports(
+                graph=self._partitionable_graph,
+                graph_mapper=self._graph_mapper, hostname=self._hostname,
+                machine=self._machine, placements=self._placements,
+                report_folder=self._report_default_directory)
+
+    def generate_data_specifications(self):
+        """ generates the dsg for the graph.
+
+        :return:
+        """
+
+        # iterate though subvertexes and call generate_data_spec for each
+        # vertex
+        executable_targets = dict()
+        no_processors = config.getint("Threading", "dsg_threads")
+        thread_pool = ThreadPool(processes=no_processors)
+
+        # create a progress bar for end users
+        progress_bar = ProgressBar(len(list(self._placements.placements)),
+                                   "on generating data specifications")
+        data_generator_interfaces = list()
+        for placement in self._placements.placements:
+            binary_name = None
+            if len(self._partitionable_graph.vertices) > 0:
+                associated_vertex =\
+                    self._graph_mapper.get_vertex_from_subvertex(
+                        placement.subvertex)
+
+                # if the vertex can generate a DSG, call it
+                if isinstance(associated_vertex, AbstractDataSpecableVertex):
+
+                    ip_tags = self._tags.get_ip_tags_for_vertex(
+                        placement.subvertex)
+                    reverse_ip_tags = self._tags.get_reverse_ip_tags_for_vertex(
+                        placement.subvertex)
+                    data_generator_interface = DataGeneratorInterface(
+                        associated_vertex, placement.subvertex, placement,
+                        self._partitioned_graph, self._partitionable_graph,
+                        self._routing_infos, self._hostname,
+                        self._graph_mapper, self._report_default_directory,
+                        ip_tags, reverse_ip_tags, progress_bar)
+                    data_generator_interfaces.append(data_generator_interface)
+                    thread_pool.apply_async(data_generator_interface.start)
+                    binary_name = associated_vertex.get_binary_file_name()
+            else:
+                if isinstance(placement.subvertex, AbstractDataSpecedVertex):
+                    ip_tags = self._tags.get_ip_tags_for_vertex(
+                        placement.subvertex)
+                    reverse_ip_tags = self._tags.get_reverse_ip_tags_for_vertex(
+                        placement.subvertex)
+                    data_generator_interface = DataSpecedGeneratorInterface(
+                        placement.subvertex, placement,
+                        self._partitioned_graph, self._routing_infos,
+                        self._hostname, self._report_default_directory,
+                        ip_tags, reverse_ip_tags, progress_bar
+                    )
+                    data_generator_interfaces.append(data_generator_interface)
+                    thread_pool.apply_async(data_generator_interface.start)
+                    binary_name = placement.subvertex.get_binary_file_name()
+
+                # Attempt to find this within search paths
+                binary_path = \
+                    self._executable_paths.get_executable_path(binary_name)
+                if binary_path is None:
+                    raise exceptions.ExecutableNotFoundException(binary_name)
+
+                if binary_path in executable_targets:
+                    executable_targets[binary_path].add_processor(placement.x,
+                                                                  placement.y,
+                                                                  placement.p)
+                else:
+                    processors = [placement.p]
+                    initial_core_subset = CoreSubset(placement.x, placement.y,
+                                                     processors)
+                    list_of_core_subsets = [initial_core_subset]
+                    executable_targets[binary_path] = \
+                        CoreSubsets(list_of_core_subsets)
+
+        for data_generator_interface in data_generator_interfaces:
+            data_generator_interface.wait_for_finish()
+        thread_pool.close()
+        thread_pool.join()
+
+        # finish the progress bar
+        progress_bar.end()
+
+        return executable_targets
+
+    def stop(self, stop_on_board=True):
+        if stop_on_board:
+            for router_table in self._router_tables.routing_tables:
+                if (not self._machine.get_chip_at(router_table.x,
+                                                  router_table.y).virtual and
+                        len(router_table.multicast_routing_entries) > 0):
+                    self._txrx.clear_router_diagnostic_counters(router_table.x,
+                                                                router_table.y)
+            for ip_tag in self._tags.ip_tags:
+                self._txrx.clear_ip_tag(
+                    ip_tag.tag, board_address=ip_tag.board_address)
+            for reverse_ip_tag in self._tags.reverse_ip_tags:
+                self._txrx.clear_ip_tag(
+                    reverse_ip_tag.tag,
+                    board_address=reverse_ip_tag.board_address)
+
+            # self._txrx.stop_application(self._app_id)
+        if self._create_database:
+            self._database_interface.stop()
+
+        # stop the transciever
+        self._txrx.close()
 
     def read_xml_file(self, file_path):
         xml_interface = XMLInterface(file_path)
         self._partitionable_graph = xml_interface.read_in_file()
+
+    def get_machine_dimensions(self):
+        """
+        method for end users to get the machine dimensions
+        :return:
+        """
+        return {'x': self._machine.max_chip_x, 'y': self._machine.max_chip_y}

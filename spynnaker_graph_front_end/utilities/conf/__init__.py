@@ -36,6 +36,8 @@ def _install_cfg():
 # Create a config, read global defaults and then read in additional files
 config = ConfigParser.RawConfigParser()
 default = os.path.join(os.path.dirname(spynnaker_graph_front_end.__file__),
+                       os.pardir)
+default = os.path.join(default,
                        "spiNNakerGraphFrontEnd.cfg")
 spynnaker_user = os.path.expanduser("~/.spiNNakerGraphFrontEnd.cfg")
 spynnaker_others = (spynnaker_user, "spiNNakerGraphFrontEnd.cfg")

@@ -3,25 +3,33 @@ from pacman.model.abstract_classes.abstract_partitionable_vertex import \
     AbstractPartitionableVertex
 
 #spinn front end common imports
-from spinn_front_end_common.abstract_models.\
-    abstract_data_specable_vertex import \
-    AbstractDataSpecableVertex
+from pacman.model.partitioned_graph.partitioned_vertex import PartitionedVertex
+from pacman.model.resources.cpu_cycles_per_tick_resource import \
+    CPUCyclesPerTickResource
+from pacman.model.resources.dtcm_resource import DTCMResource
+from pacman.model.resources.resource_container import ResourceContainer
+from pacman.model.resources.sdram_resource import SDRAMResource
+from spynnaker_graph_front_end.abstract_data_speced_vertex import \
+    AbstractDataSpecedVertex
 
 
-class HeatDemoVertex(AbstractPartitionableVertex,
-                     AbstractDataSpecableVertex):
+class HeatDemoVertex(PartitionedVertex,
+                     AbstractDataSpecedVertex):
 
     CORE_APP_IDENTIFIER = 0xABCD
     _model_based_max_atoms_per_core = 1
     _model_n_atoms = 1
 
-    def __init__(self, label, constraints, machine_time_step,
-                 time_scale_factor):
-        AbstractPartitionableVertex.__init__(
-            self, label=label,
-            max_atoms_per_core=HeatDemoVertex._model_based_max_atoms_per_core,
-            n_atoms=HeatDemoVertex._model_n_atoms, constraints=constraints)
-        AbstractDataSpecableVertex.__init__(
+    def __init__(self, label, machine_time_step, time_scale_factor,
+                 constraints=None):
+        #resoruces used by a heat element vertex
+        resoruces = ResourceContainer(cpu=CPUCyclesPerTickResource(45),
+                                      dtcm=DTCMResource(34),
+                                      sdram=SDRAMResource(23))
+        PartitionedVertex.__init__(
+            self, label=label, resources_required=resoruces,
+            constraints=constraints)
+        AbstractDataSpecedVertex.__init__(
             self, label=label, n_atoms=HeatDemoVertex._model_n_atoms,
             machine_time_step=machine_time_step,
             timescale_factor=time_scale_factor)
@@ -32,17 +40,7 @@ class HeatDemoVertex(AbstractPartitionableVertex,
     def model_name(self):
         return "Heat_Demo_Vertex"
 
-    def get_cpu_usage_for_atoms(self, vertex_slice, graph):
-        return 2
-
-    def get_dtcm_usage_for_atoms(self, vertex_slice, graph):
-        return 2
-
-    def generate_data_spec(self, subvertex, placement, sub_graph, graph,
-                           routing_info, hostname, graph_subgraph_mapper,
-                           report_folder, write_text_specs,
-                           application_run_time_folder):
+    def generate_data_spec(
+            self, placement, sub_graph, routing_info, hostname,  report_folder,
+            write_text_specs, application_run_time_folder):
         pass
-
-    def get_sdram_usage_for_atoms(self, vertex_slice, graph):
-        return 12

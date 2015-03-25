@@ -1,21 +1,6 @@
-from spynnaker_graph_front_end import model_binaries
+from spinn_front_end_common.interface.executable_finder import ExecutableFinder
 
 _spinnaker = None
-_executable_finder = None
-
-
-def _init_module():
-    import logging
-    import os
-    from spinn_front_end_common.interface.executable_finder \
-        import ExecutableFinder
-    global _executable_finder
-
-    _executable_finder = ExecutableFinder(model_binaries.__file__)
-    # Register this path with SpyNNaker
-    logging.info("recording where SpiNNakerGraphFrontEnd model binaries reside")
-
-_init_module()
 
 
 def setup(hostname=None, graph_label=None, model_binary_folder=None):
@@ -29,14 +14,13 @@ def setup(hostname=None, graph_label=None, model_binary_folder=None):
     """
     from spynnaker_graph_front_end.spinnaker_graph_front_end import \
         SpiNNakerGraphFrontEnd
-    global _executable_finder
+    import os
     global _spinnaker
-    if _executable_finder is None:
-        _init_module()
-    if model_binary_folder is not None:
-        _executable_finder.add_path(model_binary_folder)
+    executable_finder = ExecutableFinder()
+    executable_finder.add_path(os.path.dirname(model_binary_folder.__file__))
     # set up the spinnaker object
-    _spinnaker = SpiNNakerGraphFrontEnd(hostname, graph_label)
+    _spinnaker = SpiNNakerGraphFrontEnd(hostname, graph_label,
+                                        executable_finder)
 
 
 def run(duration=None):
@@ -51,7 +35,7 @@ def run(duration=None):
     _spinnaker.run(duration)
 
 
-def end(stop_on_board=True):
+def stop(stop_on_board=True):
     """
     Do any necessary cleaning up before exiting.
 
@@ -80,10 +64,29 @@ def read_xml_file(file_path):
 # noinspection PyPep8Naming
 def Vertex(cellclass, cellparams, label=None):
     global _spinnaker
-    return _spinnaker.add_vertex(cellclass, cellparams, label)
+    return _spinnaker.add_partitionable_vertex(cellclass, cellparams, label)
 
 
 # noinspection PyPep8Naming
-def Edge(pre_vertex, post_vertex, constraints, label):
+def Edge(cell_type, cellparams, constraints=None):
     global _spinnaker
-    return _spinnaker.add_edge(pre_vertex, post_vertex, constraints, label)
+    return _spinnaker.add_partitionable_edge(cell_type, cellparams,
+                                             constraints)
+
+
+# noinspection PyPep8Naming
+def PartitionedVertex(cellclass, cellparams, label=None):
+    global _spinnaker
+    return _spinnaker.add_partitioned_vertex(cellclass, cellparams, label)
+
+
+# noinspection PyPep8Naming
+def PartitionedEdge(
+        cellclass, cellparams, constraints=None):
+    global _spinnaker
+    return _spinnaker.add_partitioned_edge(cellclass, cellparams, constraints)
+
+
+def get_machine_dimensions():
+    global _spinnaker
+    return _spinnaker.get_machine_dimensions()
