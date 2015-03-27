@@ -4,9 +4,12 @@ heat demo
 """
 from enum import Enum
 from pacman.model.partitioned_graph.partitioned_edge import PartitionedEdge
+# TODO remove this dependency
+from spynnaker.pyNN.models.abstract_models.\
+    abstract_provides_n_keys_for_edge import AbstractProvidesNKeysForEdge
 
 
-class HeatDemoEdge(PartitionedEdge):
+class HeatDemoEdge(PartitionedEdge, AbstractProvidesNKeysForEdge):
     """
     HeatDemoEdge: used in conjunction with a heat demo vertex to execute the
     heat demo
@@ -23,6 +26,7 @@ class HeatDemoEdge(PartitionedEdge):
     def __init__(self, pre_vertex, post_vertex, direction, label, constraints):
         PartitionedEdge.__init__(self, pre_vertex, post_vertex, constraints,
                                  label)
+        AbstractProvidesNKeysForEdge.__init__(self)
         self._direction = direction
 
     @property
@@ -32,3 +36,12 @@ class HeatDemoEdge(PartitionedEdge):
         :return:
         """
         return self._direction
+
+    def get_n_keys_for_partitioned_edge(self, partitioned_edge, graph_mapper):
+        """
+
+        :param partitioned_edge:
+        :param graph_mapper:
+        :return:
+        """
+        return 1

@@ -1,7 +1,8 @@
 from spinn_front_end_common.interface.executable_finder import ExecutableFinder
 
 _spinnaker = None
-
+_none_labelled_vertex_count = None
+_none_labelled_edge_count = None
 
 def setup(hostname=None, graph_label=None, model_binary_folder=None):
     """ for builders with pynn attitude, allows end users to define wherever
@@ -16,11 +17,17 @@ def setup(hostname=None, graph_label=None, model_binary_folder=None):
         SpiNNakerGraphFrontEnd
     import os
     global _spinnaker
+    global _none_labelled_vertex_count
+    global _none_labelled_edge_count
+
     executable_finder = ExecutableFinder()
     executable_finder.add_path(os.path.dirname(model_binary_folder.__file__))
     # set up the spinnaker object
     _spinnaker = SpiNNakerGraphFrontEnd(hostname, graph_label,
                                         executable_finder)
+    # set up none label count params.
+    _none_labelled_edge_count = 0
+    _none_labelled_vertex_count = 0
 
 
 def run(duration=None):
@@ -76,8 +83,18 @@ def Vertex(cellclass, cellparams, label=None, constraints=None):
     :return:
     """
     global _spinnaker
-    return _spinnaker.add_partitionable_vertex(cellclass, cellparams, label,
-                                               constraints)
+    global _none_labelled_vertex_count
+
+    # corect label if needed
+    if label is None:
+        label = "Vertex {}".format(_none_labelled_vertex_count)
+        _none_labelled_vertex_count += 1
+    # add vertex
+    cellparams['label'] = label
+    cellparams['constraints'] = constraints
+    vertex = cellclass(**cellparams)
+    _spinnaker.add_partitionable_vertex(vertex)
+    return vertex
 
 
 # noinspection PyPep8Naming
@@ -91,8 +108,16 @@ def Edge(cell_type, cellparams, label=None, constraints=None):
     :return:
     """
     global _spinnaker
-    return _spinnaker.add_partitionable_edge(cell_type, cellparams, label,
-                                             constraints)
+    global _none_labelled_edge_count
+
+    if label is None:
+        label = "Edge {}".format(_none_labelled_edge_count)
+        _none_labelled_edge_count += 1
+    cellparams['label'] = label
+    cellparams['constraints'] = constraints
+    edge = cell_type(**cellparams)
+    _spinnaker.add_partitionable_edge(edge)
+    return edge
 
 
 # noinspection PyPep8Naming
@@ -106,8 +131,17 @@ def PartitionedVertex(cellclass, cellparams, label=None, constraints=None):
     :return:
     """
     global _spinnaker
-    return _spinnaker.add_partitioned_vertex(cellclass, cellparams, label,
-                                             constraints)
+    global _none_labelled_vertex_count
+    # corect label if needed
+    if label is None:
+        label = "Vertex {}".format(_none_labelled_vertex_count)
+        _none_labelled_vertex_count += 1
+    # add vertex
+    cellparams['label'] = label
+    cellparams['constraints'] = constraints
+    vertex = cellclass(**cellparams)
+    _spinnaker.add_partitioned_vertex(vertex)
+    return vertex
 
 
 # noinspection PyPep8Naming
@@ -121,8 +155,16 @@ def PartitionedEdge(cellclass, cellparams, label=None, constraints=None):
     :return:
     """
     global _spinnaker
-    return _spinnaker.add_partitioned_edge(cellclass, cellparams, label,
-                                           constraints)
+    global _none_labelled_edge_count
+
+    if label is None:
+        label = "Edge {}".format(_none_labelled_edge_count)
+        _none_labelled_edge_count += 1
+    cellparams['label'] = label
+    cellparams['constraints'] = constraints
+    edge = cellclass(**cellparams)
+    _spinnaker.add_partitioned_edge(edge)
+    return edge
 
 
 def get_machine_dimensions():

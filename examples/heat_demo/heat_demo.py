@@ -2,7 +2,7 @@
 heat demo main entrance
 """
 import spynnaker_graph_front_end as front_end
-from examples.heat_demo.heat_demo_vertex import HeatDemoVertex
+from examples.heat_demo.heat_demo_vertex import HeatDemoVertexPartitioned
 from examples.heat_demo.heat_demo_edge import HeatDemoEdge
 from examples import heat_demo
 
@@ -19,7 +19,7 @@ vertices = [None] * (dimenions['x'] * 4)
 for x_position in range(0, (dimenions['x'] * 4)):
     for y_position in range(0, (dimenions['y'] * 4)):
         element = front_end.PartitionedVertex(
-            HeatDemoVertex,
+            HeatDemoVertexPartitioned,
             {'machine_time_step': machine_time_step,
              'time_scale_factor': time_scale_factor},
             label="heat_element at coords {}:{}".format(x_position, y_position))

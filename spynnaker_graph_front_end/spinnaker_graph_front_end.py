@@ -31,25 +31,21 @@ from spinn_front_end_common.utilities import exceptions
 from spinn_front_end_common.utilities.timer import Timer
 from spinnman.model.core_subset import CoreSubset
 from spinnman.model.core_subsets import CoreSubsets
-
-from spynnaker.pyNN.models.abstract_models.\
-    abstract_provides_incoming_edge_constraints import \
+from spynnaker.pyNN.models.abstract_models.abstract_provides_incoming_edge_constraints import \
     AbstractProvidesIncomingEdgeConstraints
-from spynnaker.pyNN.models.abstract_models.\
-    abstract_provides_n_keys_for_edge import \
+from spynnaker.pyNN.models.abstract_models.abstract_provides_n_keys_for_edge import \
     AbstractProvidesNKeysForEdge
-from spynnaker.pyNN.models.abstract_models.\
-    abstract_provides_outgoing_edge_constraints import \
+from spynnaker.pyNN.models.abstract_models.abstract_provides_outgoing_edge_constraints import \
     AbstractProvidesOutgoingEdgeConstraints
+
 from spynnaker_graph_front_end.DataSpecedGeneratorInterface import \
     DataSpecedGeneratorInterface
-from spynnaker_graph_front_end.abstract_data_speced_vertex import \
-    AbstractDataSpecedVertex
+from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
+    import AbstractPartitionedDataSpecableVertex
 
 from spynnaker_graph_front_end.utilities.xml_interface import XMLInterface
 from spynnaker_graph_front_end.utilities.conf import config
 
-import math
 import logging
 from multiprocessing.pool import ThreadPool
 
@@ -174,101 +170,54 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         self._none_labelled_vertex_count = 0
         self._none_labelled_edge_count = 0
 
-    def add_partitionable_vertex(self, cellclass, cellparams, label=None,
-                                 constraints=None):
+    def add_partitionable_vertex(self, vertex):
         """
 
-        :param cellclass:
-        :param cellparams:
-        :param label:
-        :param constraints:
+        :param vertex
         :return:
         """
-        # corect label if needed
-        if label is None:
-            label = "Vertex {}".format(self._none_labelled_vertex_count)
-            self._none_labelled_vertex_count += 1
         # check that theres no partitioned vertices added so far
         if len(self._partitioned_graph.subvertices) > 0:
             raise exceptions.ConfigurationException(
                 "The partitioned graph has already got some vertices, and "
                 "therefore cannot be executed correctly. Please rectify and "
                 "try again")
-        # add vertex
-        cellparams['label'] = label
-        cellparams['constraints'] = constraints
-        vertex = cellclass(**cellparams)
         self._partitionable_graph.add_vertex(vertex)
-        return vertex
 
-    def add_partitioned_vertex(self, cellclass, cellparams, label=None,
-                               constraints=None):
+    def add_partitioned_vertex(self, vertex):
         """
 
-        :param cellclass:
-        :param cellparams:
-        :param label:
-        :param constraints:
+        :param vertex
         :return:
         """
-        # corect label if needed
-        if label is None:
-            label = "Vertex {}".format(self._none_labelled_vertex_count)
-            self._none_labelled_vertex_count += 1
-            # check that theres no partitioned vertices added so far
+        # check that theres no partitioned vertices added so far
         if len(self._partitionable_graph.vertices) > 0:
             raise exceptions.ConfigurationException(
                 "The partitionable graph has already got some vertices, and "
                 "therefore cannot be executed correctly. Please rectify and "
                 "try again")
-        # add vertex
-        cellparams['label'] = label
-        cellparams['constraints'] = constraints
-        vertex = cellclass(**cellparams)
+
         if self._partitioned_graph is None:
             self._partitioned_graph = PartitionedGraph(
                 label="partitioned_graph for application id {}"
                 .format(self._app_id))
         self._partitioned_graph.add_subvertex(vertex)
-        return vertex
 
-    def add_partitionable_edge(
-            self, cell_type, cell_params, label, constraints):
+    def add_partitionable_edge(self, edge):
         """
 
-        :param cell_type:
-        :param cell_params:
-        :param label:
-        :param constraints:
+        :param edge:
         :return:
         """
-        if label is None:
-            label = "Edge {}".format(self._none_labelled_edge_count)
-            self._none_labelled_edge_count += 1
-        cell_params['label'] = label
-        cell_params['constraints'] = constraints
-        edge = cell_type(**cell_params)
         self._partitionable_graph.add_edge(edge)
-        return edge
 
-    def add_partitioned_edge(
-            self, cell_type, cell_params, label, constraints):
+    def add_partitioned_edge(self, edge):
         """
 
-        :param cell_type:
-        :param cell_params:
-        :param constraints:
-        :param label:
+        :param edge
         :return:
         """
-        if label is None:
-            label = "Edge {}".format(self._none_labelled_edge_count)
-            self._none_labelled_edge_count += 1
-        cell_params['label'] = label
-        cell_params['constraints'] = constraints
-        edge = cell_type(**cell_params)
         self._partitioned_graph.add_subedge(edge)
-        return edge
 
     def run(self, run_time):
         """
@@ -453,36 +402,56 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
 
         # Generate an n_keys map for the graph and add constraints
         n_keys_map = DictBasedPartitionedEdgeNKeysMap()
-        for edge in self._partitioned_graph.subedges:
-            vertex_slice = self._graph_mapper.get_subvertex_slice(
-                edge.pre_subvertex)
-            super_edge = (self._graph_mapper
-                          .get_partitionable_edge_from_partitioned_edge(edge))
-            if vertex_slice.n_atoms > 2048:
-                raise exceptions.ConfigurationException(
-                    "The current models can only support up to 2048 atoms"
-                    " per core (restricted by the supported key format)")
+        if len(self._partitionable_graph.vertices) > 0:
+            for edge in self._partitioned_graph.subedges:
+                vertex_slice = self._graph_mapper.get_subvertex_slice(
+                    edge.pre_subvertex)
+                super_edge = \
+                    self._graph_mapper\
+                        .get_partitionable_edge_from_partitioned_edge(edge)
 
-            if not isinstance(super_edge.pre_vertex,
-                              AbstractProvidesNKeysForEdge):
-                n_keys_map.set_n_keys_for_patitioned_edge(edge,
-                                                          vertex_slice.n_atoms)
-            else:
-                n_keys_map.set_n_keys_for_patitioned_edge(
-                    super_edge,
-                    super_edge.pre_vertex.get_n_keys_for_partitioned_edge(
-                        edge, self._graph_mapper))
+                if not isinstance(super_edge.pre_vertex,
+                                  AbstractProvidesNKeysForEdge):
+                    n_keys_map.\
+                        set_n_keys_for_patitioned_edge(edge,
+                                                       vertex_slice.n_atoms)
+                else:
+                    n_keys_map.set_n_keys_for_patitioned_edge(
+                        edge,
+                        super_edge.pre_vertex.get_n_keys_for_partitioned_edge(
+                            edge, self._graph_mapper))
 
-            if isinstance(super_edge.pre_vertex,
-                          AbstractProvidesOutgoingEdgeConstraints):
-                edge.add_constraints(
-                    super_edge.pre_vertex.get_outgoing_edge_constraints(
-                        edge, self._graph_mapper))
-            if isinstance(super_edge.post_vertex,
-                          AbstractProvidesIncomingEdgeConstraints):
-                edge.add_constraints(
-                    super_edge.post_vertex.get_incoming_edge_constraints(
-                        edge, self._graph_mapper))
+                if isinstance(super_edge.pre_vertex,
+                              AbstractProvidesOutgoingEdgeConstraints):
+                    edge.add_constraints(
+                        super_edge.pre_vertex.get_outgoing_edge_constraints(
+                            edge, self._graph_mapper))
+                if isinstance(super_edge.post_vertex,
+                              AbstractProvidesIncomingEdgeConstraints):
+                    edge.add_constraints(
+                        super_edge.post_vertex.get_incoming_edge_constraints(
+                            edge, self._graph_mapper))
+        else:
+            for edge in self._partitioned_graph.subedges:
+                if not isinstance(edge.pre_subvertex,
+                                  AbstractProvidesNKeysForEdge):
+                    n_keys_map.set_n_keys_for_patitioned_edge(edge, 1)
+                else:
+                    n_keys_map.set_n_keys_for_patitioned_edge(
+                        edge,
+                        edge.pre_subvertex.get_n_keys_for_partitioned_edge(
+                            edge, self._graph_mapper))
+
+                if isinstance(edge.pre_subvertex,
+                              AbstractProvidesOutgoingEdgeConstraints):
+                    edge.add_constraints(
+                        edge.pre_subvertex.get_outgoing_edge_constraints(
+                            edge, self._graph_mapper))
+                if isinstance(edge.post_subvertex,
+                              AbstractProvidesIncomingEdgeConstraints):
+                    edge.add_constraints(
+                        edge.post_subvertex.get_incoming_edge_constraints(
+                            edge, self._graph_mapper))
 
         # execute routing info generator
         self._routing_infos = \
@@ -579,9 +548,8 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         # execute placer reports if needed
         if (pacman_report_state is not None and
                 pacman_report_state.placer_report):
-            pacman_reports.placer_reports(
-                graph=self._partitionable_graph,
-                graph_mapper=self._graph_mapper, hostname=self._hostname,
+            pacman_reports.placer_reports_without_partitionable_graph(
+                hostname=self._hostname, sub_graph=self._partitioned_graph,
                 machine=self._machine, placements=self._placements,
                 report_folder=self._report_default_directory)
 
@@ -625,7 +593,7 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
                     thread_pool.apply_async(data_generator_interface.start)
                     binary_name = associated_vertex.get_binary_file_name()
             else:
-                if isinstance(placement.subvertex, AbstractDataSpecedVertex):
+                if isinstance(placement.subvertex, AbstractPartitionedDataSpecableVertex):
                     ip_tags = self._tags.get_ip_tags_for_vertex(
                         placement.subvertex)
                     reverse_ip_tags = self._tags.get_reverse_ip_tags_for_vertex(

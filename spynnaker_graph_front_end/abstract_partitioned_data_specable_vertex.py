@@ -14,7 +14,7 @@ import os
 
 
 @add_metaclass(ABCMeta)
-class AbstractDataSpecedVertex(object):
+class AbstractPartitionedDataSpecableVertex(object):
 
     @abstractmethod
     def generate_data_spec(
@@ -65,7 +65,7 @@ class AbstractDataSpecedVertex(object):
             report_directory, write_text_specs,
             application_run_time_report_folder):
         binary_file_path = \
-            AbstractDataSpecedVertex.get_data_spec_file_path(
+            AbstractPartitionedDataSpecableVertex.get_data_spec_file_path(
                 processor_chip_x, processor_chip_y, processor_id, hostname,
                 application_run_time_report_folder)
         data_writer = FileDataWriter(binary_file_path)
