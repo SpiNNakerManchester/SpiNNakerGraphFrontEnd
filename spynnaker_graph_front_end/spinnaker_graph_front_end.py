@@ -1,9 +1,7 @@
 """
 entrance class for the graph front end
 """
-from multiprocessing.pool import ThreadPool
-from pacman.model.partitionable_graph.partitionable_edge import \
-    PartitionableEdge
+from pacman.model.partitioned_graph.partitioned_graph import PartitionedGraph
 from pacman.model.routing_info.dict_based_partitioned_edge_n_keys_map import \
     DictBasedPartitionedEdgeNKeysMap
 from pacman.operations.partition_algorithms import BasicPartitioner
@@ -53,6 +51,7 @@ from spynnaker_graph_front_end.utilities.conf import config
 
 import math
 import logging
+from multiprocessing.pool import ThreadPool
 
 
 logger = logging.getLogger(__name__)
@@ -114,6 +113,8 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
             config.getboolean("Reports", "writeTransceiverReport")
         execute_routing_info_report = \
             config.getboolean("Reports", "writeRouterInfoReport")
+        generate_tag_report = \
+            config.getboolean("Reports", "writeTagAllocationReports")
         in_debug_mode = config.get("Mode", "mode") == "Debug",
         create_database = config.getboolean("Database", "create_database")
         partitioner_algorithm = config.get("Partitioner", "algorithm")
@@ -128,7 +129,7 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         downed_cores = config.get("Machine", "down_cores")
         requires_virtual_board = config.getboolean("Machine", "virtual_board")
         requires_wrap_around = config.get("Machine", "requires_wrap_arounds")
-        #TODO ge this bit fixed
+        # TODO get this bit fixed
         self._machine_version = config.getint("Machine", "version")
         # set up the configuration methods
         self._set_up_output_application_data_specifics(application_file_folder,
@@ -148,7 +149,8 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
             execute_write_reload_steps=execute_write_reload_steps,
             generate_performance_measurements=generate_performance_measurements,
             generate_transciever_report=generate_transciever_report,
-            in_debug_mode=in_debug_mode, reports_are_enabled=enabled_reports)
+            in_debug_mode=in_debug_mode, reports_are_enabled=enabled_reports,
+            generate_tag_report=generate_tag_report)
         
         self._set_up_pacman_algorthms_listings(
             partitioner_algorithm=partitioner_algorithm,
@@ -158,9 +160,9 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
 
         self._set_up_executable_specifics()
 
-        #set up the interfaces with the machine
-        FrontEndCommonInterfaceFunctions.__init__(self, default_report_folder,
-                                                  self._reports_states)
+        # set up the interfaces with the machine
+        FrontEndCommonInterfaceFunctions.__init__(
+            self, self._reports_states, self._report_default_directory)
         self._setup_interfaces(
             downed_chips=downed_chips, downed_cores=downed_cores,
             hostname=hostname, machine_version=self._machine_version,
@@ -172,12 +174,21 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         self._none_labelled_vertex_count = 0
         self._none_labelled_edge_count = 0
 
-    def add_partitionable_vertex(self, cellclass, cellparams, label=None):
+    def add_partitionable_vertex(self, cellclass, cellparams, label=None,
+                                 constraints=None):
+        """
+
+        :param cellclass:
+        :param cellparams:
+        :param label:
+        :param constraints:
+        :return:
+        """
         # corect label if needed
         if label is None:
             label = "Vertex {}".format(self._none_labelled_vertex_count)
             self._none_labelled_vertex_count += 1
-        #check that theres no partitioned vertices added so far
+        # check that theres no partitioned vertices added so far
         if len(self._partitioned_graph.subvertices) > 0:
             raise exceptions.ConfigurationException(
                 "The partitioned graph has already got some vertices, and "
@@ -185,15 +196,26 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
                 "try again")
         # add vertex
         cellparams['label'] = label
+        cellparams['constraints'] = constraints
         vertex = cellclass(**cellparams)
         self._partitionable_graph.add_vertex(vertex)
+        return vertex
 
-    def add_partitioned_vertex(self, cellclass, cellparams, label=None):
+    def add_partitioned_vertex(self, cellclass, cellparams, label=None,
+                               constraints=None):
+        """
+
+        :param cellclass:
+        :param cellparams:
+        :param label:
+        :param constraints:
+        :return:
+        """
         # corect label if needed
         if label is None:
             label = "Vertex {}".format(self._none_labelled_vertex_count)
             self._none_labelled_vertex_count += 1
-            #check that theres no partitioned vertices added so far
+            # check that theres no partitioned vertices added so far
         if len(self._partitionable_graph.vertices) > 0:
             raise exceptions.ConfigurationException(
                 "The partitionable graph has already got some vertices, and "
@@ -201,26 +223,59 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
                 "try again")
         # add vertex
         cellparams['label'] = label
+        cellparams['constraints'] = constraints
         vertex = cellclass(**cellparams)
+        if self._partitioned_graph is None:
+            self._partitioned_graph = PartitionedGraph(
+                label="partitioned_graph for application id {}"
+                .format(self._app_id))
         self._partitioned_graph.add_subvertex(vertex)
+        return vertex
 
     def add_partitionable_edge(
             self, cell_type, cell_params, label, constraints):
-        if label is None:
-            label = "Edge {}".format(self._none_labelled_edge_count)
-            self._none_labelled_edge_count += 1
-        edge = cell_type(cell_params, constraints)
-        self._partitionable_graph.add_edge(edge)
+        """
 
-    def  add_partitioned_edge(
-            self, cell_type, cell_params, constraints, label):
+        :param cell_type:
+        :param cell_params:
+        :param label:
+        :param constraints:
+        :return:
+        """
         if label is None:
             label = "Edge {}".format(self._none_labelled_edge_count)
             self._none_labelled_edge_count += 1
-        edge = cell_type(cell_params, constraints, label)
-        self._partitioned_graph.add_edge(edge)
+        cell_params['label'] = label
+        cell_params['constraints'] = constraints
+        edge = cell_type(**cell_params)
+        self._partitionable_graph.add_edge(edge)
+        return edge
+
+    def add_partitioned_edge(
+            self, cell_type, cell_params, label, constraints):
+        """
+
+        :param cell_type:
+        :param cell_params:
+        :param constraints:
+        :param label:
+        :return:
+        """
+        if label is None:
+            label = "Edge {}".format(self._none_labelled_edge_count)
+            self._none_labelled_edge_count += 1
+        cell_params['label'] = label
+        cell_params['constraints'] = constraints
+        edge = cell_type(**cell_params)
+        self._partitioned_graph.add_subedge(edge)
+        return edge
 
     def run(self, run_time):
+        """
+
+        :param run_time:
+        :return:
+        """
         # create network report if needed
         if self._reports_states is not None:
             reports.network_specification_report(
@@ -229,6 +284,8 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
 
         # calculate number of machine time steps
         if run_time is not None:
+            pass
+            """
             self._no_machine_time_steps =\
                 int((run_time * 1000.0) / self._machine_time_step)
             ceiled_machine_time_steps = \
@@ -241,7 +298,7 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
             for vertex in self._partitionable_graph.vertices:
                 if isinstance(vertex, AbstractDataSpecableVertex):
                     vertex.set_no_machine_time_steps(
-                        self._no_machine_time_steps)
+                        self._no_machine_time_steps)"""
         else:
             self._no_machine_time_steps = None
             logger.warn("You have set a runtime that will never end, this may"
@@ -344,7 +401,7 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         pacman_report_state = \
             self._reports_states.generate_pacman_report_states()
 
-        ##self._add_virtual_chips()
+        # self._add_virtual_chips()
 
         # execute partitioner
         if len(self._partitionable_graph.vertices) > 0:
@@ -612,6 +669,11 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         return executable_targets
 
     def stop(self, stop_on_board=True):
+        """
+
+        :param stop_on_board:
+        :return:
+        """
         if stop_on_board:
             for router_table in self._router_tables.routing_tables:
                 if (not self._machine.get_chip_at(router_table.x,
@@ -635,6 +697,11 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         self._txrx.close()
 
     def read_xml_file(self, file_path):
+        """
+
+        :param file_path:
+        :return:
+        """
         xml_interface = XMLInterface(file_path)
         self._partitionable_graph = xml_interface.read_in_file()
 

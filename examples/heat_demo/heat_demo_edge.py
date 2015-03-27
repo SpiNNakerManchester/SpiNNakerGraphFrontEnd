@@ -3,11 +3,10 @@ HeatDemoEdge: used in conjunction with a heat demo vertex to execute the
 heat demo
 """
 from enum import Enum
-from pacman.model.partitionable_graph.partitionable_edge import \
-    PartitionableEdge
+from pacman.model.partitioned_graph.partitioned_edge import PartitionedEdge
 
 
-class HeatDemoEdge(PartitionableEdge):
+class HeatDemoEdge(PartitionedEdge):
     """
     HeatDemoEdge: used in conjunction with a heat demo vertex to execute the
     heat demo
@@ -21,12 +20,15 @@ class HeatDemoEdge(PartitionableEdge):
                              ("SOUTH_WEST", 4),
                              ("SOUTH", 5)])
 
-
     def __init__(self, pre_vertex, post_vertex, direction, label, constraints):
-        PartitionableEdge.__init__(self, pre_vertex, post_vertex, label,
-                                   constraints)
+        PartitionedEdge.__init__(self, pre_vertex, post_vertex, constraints,
+                                 label)
         self._direction = direction
 
     @property
     def direction(self):
+        """
+
+        :return:
+        """
         return self._direction

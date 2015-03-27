@@ -1,6 +1,6 @@
 from data_specification.file_data_writer import FileDataWriter
 
-from pacman.model.partitionable_graph.abstract_constrained_vertex \
+from pacman.model.abstract_classes.abstract_constrained_vertex \
     import AbstractConstrainedVertex
 
 from spinn_front_end_common.utilities import exceptions
@@ -14,23 +14,7 @@ import os
 
 
 @add_metaclass(ABCMeta)
-class AbstractDataSpecedVertex(AbstractConstrainedVertex):
-
-    def __init__(self, n_atoms, label, machine_time_step, timescale_factor,
-                 constraints=None):
-        AbstractConstrainedVertex.__init__(self, label, constraints)
-        self._machine_time_step = machine_time_step
-        self._timescale_factor = timescale_factor
-        self._application_runtime = None
-        self._no_machine_time_steps = None
-
-    def _write_basic_setup_info(self, spec, core_app_identifier, region_id):
-
-        # Write this to the system region (to be picked up by the simulation):
-        spec.switch_write_focus(region=region_id)
-        spec.write_value(data=core_app_identifier)
-        spec.write_value(data=self._machine_time_step * self._timescale_factor)
-        spec.write_value(data=self._no_machine_time_steps)
+class AbstractDataSpecedVertex(object):
 
     @abstractmethod
     def generate_data_spec(
