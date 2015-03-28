@@ -1,5 +1,14 @@
 from spinn_front_end_common.interface.executable_finder import ExecutableFinder
 
+# utility models for graph front ends
+from spinn_front_end_common.utility_models.\
+    reverse_ip_tag_multi_cast_source import ReverseIpTagMultiCastSource
+from spinn_front_end_common.utility_models.command_sender import CommandSender
+from spinn_front_end_common.utility_models.live_packet_gather \
+    import LivePacketGather
+from pacman.model.partitioned_graph.partitioned_edge import PartitionedEdge
+from pacman.model.partitionable_graph.partitionable_edge import PartitionedEdge
+
 _spinnaker = None
 _none_labelled_vertex_count = None
 _none_labelled_edge_count = None

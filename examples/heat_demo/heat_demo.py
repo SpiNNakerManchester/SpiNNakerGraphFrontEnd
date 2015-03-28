@@ -2,6 +2,9 @@
 heat demo main entrance
 """
 import spynnaker_graph_front_end as front_end
+from spynnaker_graph_front_end import ReverseIpTagMultiCastSource
+from spynnaker_graph_front_end import PartitionedEdge
+
 from examples.heat_demo.heat_demo_vertex import HeatDemoVertexPartitioned
 from examples.heat_demo.heat_demo_edge import HeatDemoEdge
 from examples import heat_demo
@@ -12,8 +15,17 @@ dimenions = front_end.get_machine_dimensions()
 
 machine_time_step = 1
 time_scale_factor = 1
+machine_name = "spinn-1.cs.man.ac.uk"
+machine_port = 11111
 
 vertices = [None] * (dimenions['x'] * 4)
+
+command_injector = \
+    front_end.PartitionedVertex(
+        ReverseIpTagMultiCastSource,
+        {'n_atoms': 3, 'machine_time_step': machine_time_step,
+         'timescale_factor': time_scale_factor, 'label': "injector_from_vis",
+         'host_ip_address': machine_name, 'host_port_number': machine_port})
 
 # build vertices
 for x_position in range(0, (dimenions['x'] * 4)):
@@ -30,6 +42,11 @@ for x_position in range(0, (dimenions['x'] * 4)):
 # build edges
 for x_position in range(0, dimenions['x']):
     for y_position in range(0, dimenions['y']):
+        # add a link from the injecotr to the heat element
+        front_end.PartitionedEdge(
+            PartitionedEdge,
+            {'pre_vertex': command_injector,
+             'post_vertex': vertices[x_position][y_position]})
         # check for the likely hood for a N link
         if ((x_position + 1) % dimenions['x']) != 0:
             front_end.PartitionedEdge(
@@ -40,17 +57,6 @@ for x_position in range(0, dimenions['x']):
                 label="North edge between heat elements {}:{}"
                       .format(vertices[x_position][y_position],
                               vertices[x_position + 1][y_position]),)
-        # check for the likely hood for a NE link
-        if (((x_position + 1) % dimenions['x']) != 0 and
-                (y_position + 1) % dimenions['y'] != 0):
-            front_end.PartitionedEdge(
-                HeatDemoEdge,
-                {'pre_vertex': vertices[x_position][y_position],
-                 'post_vertex': vertices[x_position + 1][y_position + 1],
-                 'direction': HeatDemoEdge.DIRECTIONS.NORTH_EAST},
-                label="North East edge between heat elements {}:{}"
-                      .format(vertices[x_position][y_position],
-                              vertices[x_position + 1][y_position + 1]),)
         # check for the likely hood for a E link
         if ((y_position + 1) % dimenions['y']) != 0:
             front_end.PartitionedEdge(
@@ -71,17 +77,6 @@ for x_position in range(0, dimenions['x']):
                 label="South edge between heat elements {}:{}"
                       .format(vertices[x_position][y_position],
                               vertices[x_position][y_position - 1]),)
-        # check for the likely hood for a SW link
-        if (((y_position - 1) % dimenions['y']) != 0 and
-                (x_position - 1) % dimenions['x']) != 0:
-            front_end.PartitionedEdge(
-                HeatDemoEdge,
-                {'pre_vertex': vertices[x_position][y_position],
-                 'post_vertex': vertices[x_position - 1][y_position - 1],
-                 'direction': HeatDemoEdge.DIRECTIONS.SOUTH_WEST},
-                label="South West edge between heat elements {}:{}"
-                      .format(vertices[x_position][y_position],
-                              vertices[x_position - 1][y_position - 1]),)
         # check for the likely hood for a W link
         if ((x_position - 1) % dimenions['x']) != 0:
             front_end.PartitionedEdge(

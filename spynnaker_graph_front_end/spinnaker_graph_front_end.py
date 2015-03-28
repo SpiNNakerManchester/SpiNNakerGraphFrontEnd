@@ -29,14 +29,19 @@ from spinn_front_end_common.interface.\
 from spinn_front_end_common.utilities import reports
 from spinn_front_end_common.utilities import exceptions
 from spinn_front_end_common.utilities.timer import Timer
+from spinn_front_end_common.abstract_models.\
+    abstract_provides_outgoing_edge_constraints \
+    import AbstractProvidesOutgoingEdgeConstraints
+from spinn_front_end_common.abstract_models.\
+    abstract_provides_incoming_edge_constraints \
+    import AbstractProvidesIncomingEdgeConstraints
+from spinn_front_end_common.abstract_models.\
+    abstract_provides_n_keys_for_edge import AbstractProvidesNKeysForEdge
+
+
 from spinnman.model.core_subset import CoreSubset
 from spinnman.model.core_subsets import CoreSubsets
-from spynnaker.pyNN.models.abstract_models.abstract_provides_incoming_edge_constraints import \
-    AbstractProvidesIncomingEdgeConstraints
-from spynnaker.pyNN.models.abstract_models.abstract_provides_n_keys_for_edge import \
-    AbstractProvidesNKeysForEdge
-from spynnaker.pyNN.models.abstract_models.abstract_provides_outgoing_edge_constraints import \
-    AbstractProvidesOutgoingEdgeConstraints
+
 
 from spynnaker_graph_front_end.DataSpecedGeneratorInterface import \
     DataSpecedGeneratorInterface
@@ -118,13 +123,14 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         key_allocator_algorithm = config.get("KeyAllocator", "algorithm")
         router_algorithm = config.get("Routing", "algorithm")
         virtual_x_dimension = \
-            config.get("Machine", "virutal_board_x_dimension")
+            config.getint("Machine", "virutal_board_x_dimension")
         virtual_y_dimension = \
-            config.get("Machine", "virutal_board_y_dimension")
+            config.getint("Machine", "virutal_board_y_dimension")
         downed_chips = config.get("Machine", "down_chips")
         downed_cores = config.get("Machine", "down_cores")
         requires_virtual_board = config.getboolean("Machine", "virtual_board")
-        requires_wrap_around = config.get("Machine", "requires_wrap_arounds")
+        requires_wrap_around = \
+            config.getboolean("Machine", "requires_wrap_arounds")
         # TODO get this bit fixed
         self._machine_version = config.getint("Machine", "version")
         # set up the configuration methods
@@ -588,12 +594,14 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
                         self._partitioned_graph, self._partitionable_graph,
                         self._routing_infos, self._hostname,
                         self._graph_mapper, self._report_default_directory,
-                        ip_tags, reverse_ip_tags, progress_bar)
+                        ip_tags, reverse_ip_tags, self._writeTextSpecs,
+                        self._app_data_runtime_folder, progress_bar)
                     data_generator_interfaces.append(data_generator_interface)
                     thread_pool.apply_async(data_generator_interface.start)
                     binary_name = associated_vertex.get_binary_file_name()
             else:
-                if isinstance(placement.subvertex, AbstractPartitionedDataSpecableVertex):
+                if isinstance(placement.subvertex,
+                              AbstractPartitionedDataSpecableVertex):
                     ip_tags = self._tags.get_ip_tags_for_vertex(
                         placement.subvertex)
                     reverse_ip_tags = self._tags.get_reverse_ip_tags_for_vertex(
