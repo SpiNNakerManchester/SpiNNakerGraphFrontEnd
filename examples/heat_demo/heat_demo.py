@@ -15,22 +15,21 @@ dimenions = front_end.get_machine_dimensions()
 
 machine_time_step = 1
 time_scale_factor = 1
-machine_name = "spinn-1.cs.man.ac.uk"
 machine_port = 11111
 
 vertices = [None] * (dimenions['x'] * 4)
 
 command_injector = \
-    front_end.PartitionedVertex(
+    front_end.add_partitioned_vertex(
         ReverseIpTagMultiCastSource,
-        {'n_atoms': 3, 'machine_time_step': machine_time_step,
+        {'n_neurons': 3, 'machine_time_step': machine_time_step,
          'timescale_factor': time_scale_factor, 'label': "injector_from_vis",
-         'host_ip_address': machine_name, 'host_port_number': machine_port})
+         'port': machine_port})
 
 # build vertices
 for x_position in range(0, (dimenions['x'] * 4)):
     for y_position in range(0, (dimenions['y'] * 4)):
-        element = front_end.PartitionedVertex(
+        element = front_end.add_partitioned_vertex(
             HeatDemoVertexPartitioned,
             {'machine_time_step': machine_time_step,
              'time_scale_factor': time_scale_factor},
@@ -43,13 +42,15 @@ for x_position in range(0, (dimenions['x'] * 4)):
 for x_position in range(0, dimenions['x']):
     for y_position in range(0, dimenions['y']):
         # add a link from the injecotr to the heat element
-        front_end.PartitionedEdge(
+        front_end.add_partitioned_edge(
             PartitionedEdge,
-            {'pre_vertex': command_injector,
-             'post_vertex': vertices[x_position][y_position]})
+            {'pre_subvertex': command_injector,
+             'post_subvertex': vertices[x_position][y_position]},
+            label="injector edge for vertex {}"
+                  .format(vertices[x_position][y_position].label))
         # check for the likely hood for a N link
         if ((x_position + 1) % dimenions['x']) != 0:
-            front_end.PartitionedEdge(
+            front_end.add_partitioned_edge(
                 HeatDemoEdge,
                 {'pre_vertex': vertices[x_position][y_position],
                  'post_vertex': vertices[x_position + 1][y_position],
@@ -59,7 +60,7 @@ for x_position in range(0, dimenions['x']):
                               vertices[x_position + 1][y_position]),)
         # check for the likely hood for a E link
         if ((y_position + 1) % dimenions['y']) != 0:
-            front_end.PartitionedEdge(
+            front_end.add_partitioned_edge(
                 HeatDemoEdge,
                 {'pre_vertex': vertices[x_position][y_position],
                  'post_vertex': vertices[x_position][y_position + 1],
@@ -69,7 +70,7 @@ for x_position in range(0, dimenions['x']):
                               vertices[x_position][y_position + 1]),)
         # check for the likely hood for a S link
         if ((y_position - 1) % dimenions['y']) != 0:
-            front_end.PartitionedEdge(
+            front_end.add_partitioned_edge(
                 HeatDemoEdge,
                 {'pre_vertex': vertices[x_position][y_position],
                  'post_vertex': vertices[x_position][y_position - 1],
@@ -79,7 +80,7 @@ for x_position in range(0, dimenions['x']):
                               vertices[x_position][y_position - 1]),)
         # check for the likely hood for a W link
         if ((x_position - 1) % dimenions['x']) != 0:
-            front_end.PartitionedEdge(
+            front_end.add_partitioned_edge(
                 HeatDemoEdge,
                 {'pre_vertex': vertices[x_position][y_position],
                  'post_vertex': vertices[x_position - 1][y_position],

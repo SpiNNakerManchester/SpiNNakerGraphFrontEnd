@@ -81,8 +81,7 @@ def read_xml_file(file_path):
     _spinnaker.read_xml_file(file_path)
 
 
-# noinspection PyPep8Naming
-def Vertex(cellclass, cellparams, label=None, constraints=None):
+def add_vertex(cellclass, cellparams, label=None, constraints=None):
     """
 
     :param cellclass:
@@ -106,8 +105,7 @@ def Vertex(cellclass, cellparams, label=None, constraints=None):
     return vertex
 
 
-# noinspection PyPep8Naming
-def Edge(cell_type, cellparams, label=None, constraints=None):
+def add_edge(cell_type, cellparams, label=None, constraints=None):
     """
 
     :param cell_type:
@@ -129,8 +127,7 @@ def Edge(cell_type, cellparams, label=None, constraints=None):
     return edge
 
 
-# noinspection PyPep8Naming
-def PartitionedVertex(cellclass, cellparams, label=None, constraints=None):
+def add_partitioned_vertex(cellclass, cellparams, label=None, constraints=None):
     """
 
     :param cellclass:
@@ -153,8 +150,7 @@ def PartitionedVertex(cellclass, cellparams, label=None, constraints=None):
     return vertex
 
 
-# noinspection PyPep8Naming
-def PartitionedEdge(cellclass, cellparams, label=None, constraints=None):
+def add_partitioned_edge(cellclass, cellparams, label=None, constraints=None):
     """
 
     :param cellclass:
