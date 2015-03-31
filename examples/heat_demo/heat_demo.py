@@ -1,9 +1,11 @@
 """
 heat demo main entrance
 """
+from spinn_front_end_common.utility_models.live_packet_gather import \
+    LivePacketGather
 import spynnaker_graph_front_end as front_end
 from spynnaker_graph_front_end import ReverseIpTagMultiCastSource
-from spynnaker_graph_front_end import PartitionedEdge
+from spynnaker_graph_front_end import MultiCastPartitionedEdge
 
 from examples.heat_demo.heat_demo_vertex import HeatDemoVertexPartitioned
 from examples.heat_demo.heat_demo_edge import HeatDemoEdge
@@ -16,6 +18,7 @@ dimenions = front_end.get_machine_dimensions()
 machine_time_step = 1
 time_scale_factor = 1
 machine_port = 11111
+machine_recieve_port = 22222
 
 vertices = [None] * (dimenions['x'] * 4)
 
@@ -25,6 +28,16 @@ command_injector = \
         {'n_neurons': 3, 'machine_time_step': machine_time_step,
          'timescale_factor': time_scale_factor, 'label': "injector_from_vis",
          'port': machine_port})
+
+live_gatherer = \
+    front_end.add_partitioned_vertex(
+        LivePacketGather,
+        {'machine_time_step': machine_time_step,
+         'timescale_factor': time_scale_factor,
+         'label': "gatherer from heat elements",
+         'ip_address': "local_host",
+         'port': machine_recieve_port}
+    )
 
 # build vertices
 for x_position in range(0, (dimenions['x'] * 4)):
@@ -43,10 +56,17 @@ for x_position in range(0, dimenions['x']):
     for y_position in range(0, dimenions['y']):
         # add a link from the injecotr to the heat element
         front_end.add_partitioned_edge(
-            PartitionedEdge,
+            MultiCastPartitionedEdge,
             {'pre_subvertex': command_injector,
              'post_subvertex': vertices[x_position][y_position]},
             label="injector edge for vertex {}"
+                  .format(vertices[x_position][y_position].label))
+        # add a link from the heat element to the live packet gatherer
+        front_end.add_partitioned_edge(
+            MultiCastPartitionedEdge,
+            {'pre_subvertex': vertices[x_position][y_position],
+             'post_subvertex': live_gatherer},
+            label="gatherer edge from vertex {} to live packet gatherer"
                   .format(vertices[x_position][y_position].label))
         # check for the likely hood for a N link
         if ((x_position + 1) % dimenions['x']) != 0:

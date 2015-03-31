@@ -6,8 +6,10 @@ from spinn_front_end_common.utility_models.\
 from spinn_front_end_common.utility_models.command_sender import CommandSender
 from spinn_front_end_common.utility_models.live_packet_gather \
     import LivePacketGather
-from pacman.model.partitioned_graph.partitioned_edge import PartitionedEdge
-from pacman.model.partitionable_graph.partitionable_edge import PartitionedEdge
+from pacman.model.partitioned_graph.multi_cast_partitioned_edge \
+    import MultiCastPartitionedEdge
+from pacman.model.partitionable_graph.multi_cast_partitionable_edge \
+    import MultiCastPartitionableEdge
 
 _spinnaker = None
 _none_labelled_vertex_count = None

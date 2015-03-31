@@ -3,14 +3,15 @@ HeatDemoEdge: used in conjunction with a heat demo vertex to execute the
 heat demo
 """
 from enum import Enum
-from pacman.model.partitioned_graph.partitioned_edge import PartitionedEdge
+from pacman.model.partitioned_graph.abstract_partitioned_edge \
+    import AbstractPartitionedEdge
 
 # front end common imports
 from spinn_front_end_common.abstract_models.\
     abstract_provides_n_keys_for_edge import AbstractProvidesNKeysForEdge
 
 
-class HeatDemoEdge(PartitionedEdge, AbstractProvidesNKeysForEdge):
+class HeatDemoEdge(AbstractPartitionedEdge, AbstractProvidesNKeysForEdge):
     """
     HeatDemoEdge: used in conjunction with a heat demo vertex to execute the
     heat demo
@@ -23,8 +24,8 @@ class HeatDemoEdge(PartitionedEdge, AbstractProvidesNKeysForEdge):
                              ("SOUTH", 3)])
 
     def __init__(self, pre_vertex, post_vertex, direction, label, constraints):
-        PartitionedEdge.__init__(self, pre_vertex, post_vertex, constraints,
-                                 label)
+        AbstractPartitionedEdge.__init__(
+            self, pre_vertex, post_vertex, constraints, label)
         AbstractProvidesNKeysForEdge.__init__(self)
         self._direction = direction
 
@@ -44,3 +45,10 @@ class HeatDemoEdge(PartitionedEdge, AbstractProvidesNKeysForEdge):
         :return:
         """
         return 1
+
+    def is_partitioned_edge(self):
+        """
+        helper emthod for isinstance
+        :return:
+        """
+        return True

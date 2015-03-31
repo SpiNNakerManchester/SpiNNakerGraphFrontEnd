@@ -122,17 +122,26 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         placer_algorithm = config.get("Placer", "algorithm")
         key_allocator_algorithm = config.get("KeyAllocator", "algorithm")
         router_algorithm = config.get("Routing", "algorithm")
-        virtual_x_dimension = \
-            config.getint("Machine", "virutal_board_x_dimension")
-        virtual_y_dimension = \
-            config.getint("Machine", "virutal_board_y_dimension")
+
         downed_chips = config.get("Machine", "down_chips")
         downed_cores = config.get("Machine", "down_cores")
         requires_virtual_board = config.getboolean("Machine", "virtual_board")
-        requires_wrap_around = \
-            config.getboolean("Machine", "requires_wrap_arounds")
-        # TODO get this bit fixed
         self._machine_version = config.getint("Machine", "version")
+
+        # sort out config None vs bool/int
+        virtual_x_dimension = config.get("Machine", "virutal_board_x_dimension")
+        virtual_y_dimension = config.get("Machine", "virutal_board_y_dimension")
+        requires_wrap_around = config.get("Machine", "requires_wrap_arounds")
+        if virtual_x_dimension != "None":
+            virtual_x_dimension = int(virtual_x_dimension)
+        if virtual_y_dimension != "None":
+            virtual_y_dimension = int(virtual_y_dimension)
+        if requires_wrap_around == "None":
+            requires_wrap_around = False
+        else:
+            requires_wrap_around = \
+                config.getboolean("Machine", "requires_wrap_arounds")
+
         # set up the configuration methods
         self._set_up_output_application_data_specifics(application_file_folder,
                                                        max_application_binaries)

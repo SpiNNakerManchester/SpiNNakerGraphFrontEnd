@@ -25,21 +25,17 @@
 
 // SpiNNaker API
 #include "spin1_api.h"
+#include <data_specification.h>
+#include <simulation.h>
+#include <debug.h>
 
 
-// ------------------------------------------------------------------------
-// DEBUG parameters
-// ------------------------------------------------------------------------
-//#define DEBUG              TRUE
 #define DEBUG_KEYS         500
-
-#define VERBOSE            TRUE
 
 // the visualiser has a bug with negative temperatures!
 #define POSITIVE_TEMP      TRUE
 
-#define TIMER_TICK_PERIOD  -1
-
+// constants to use in heat difusion calculation
 #define PARAM_CX           0.03125
 #define PARAM_CY           0.03125
 
@@ -51,7 +47,6 @@
 #define TEMP_EAST_KEY  ROUTING_KEY(17, 17)
 #define TEMP_SOUTH_KEY ROUTING_KEY(18, 17)
 #define TEMP_WEST_KEY  ROUTING_KEY(19, 17)
-#define CMD_MASK       0xfffffe1f
 
 /* multicast routing keys to communicate with neighbours */
 uint my_key;
@@ -183,35 +178,6 @@ void report_temp (uint ticks)
     }
   }
 }
-/*
-*******/
-
-
-/****f* heat_demo.c/report_results
-*
-* SUMMARY
-*  This function is called at application exit.
-*  It's used to report some statistics and say goodbye.
-*
-* SYNOPSIS
-*  void report_results ()
-*
-* SOURCE
-*/
-void report_results ()
-{
-  /* report temperature in shared memory */
-  core_temp[coreID - 1] = my_temp;
-
-  /* report final temperature */
-//  /* skew io_printfs to avoid congesting tubotron */
-//  spin1_delay_us (200 * ((chipID << 5) + coreID));
-
-  io_printf (IO_BUF, "T = %7.3f\n", my_temp);
-}
-/*
-*******/
-
 
 /****f* heat_demo.c/receive_data
 *
@@ -515,8 +481,11 @@ void host_data (uint mailbox, uint port)
 
   spin1_msg_free (msg);
 }
-/*
-*******/
+
+static bool initialize(uint32_t *timer_period) {
+
+
+}
 
 
 /****f* heat_demo.c/c_main
@@ -532,33 +501,21 @@ void host_data (uint mailbox, uint port)
 */
 void c_main()
 {
-  #ifdef VERBOSE
-    // say hello
-    io_printf (IO_BUF, "starting heat_demo\n");
-  #endif
+    log_info("starting heat_demo\n");
+    // Load DTCM data
+    uint32_t timer_period;
 
-  // get this core's ID
-  coreID = spin1_get_core_id();
-  chipID = spin1_get_chip_id();
+    // initialise the model
+    if (!initialize(&timer_period)){
+    	rt_error(RTE_API);
+    }
 
-  // get this chip's coordinates for core map
-  my_x = chipID >> 8;
-  my_y = chipID & 0xff;
-  my_chip = (my_x * NUMBER_OF_YCHIPS) + my_y;
-
-  board_loc = ((sv->board_addr >> 5) | sv->board_addr) & 63;
-
-  // operate only if in core map!
-  if ((my_x < NUMBER_OF_XCHIPS) && (my_y < NUMBER_OF_YCHIPS)
-       && ((core_map[my_x][my_y] & (1 << coreID)) != 0)
-     )
-  {
-    // set the core map for the simulation
-    //##    spin1_application_core_map(NUMBER_OF_XCHIPS, NUMBER_OF_YCHIPS, core_map);
+    // Start the time at "-1" so that the first tick will be 0
+    time = UINT32_MAX;
 
     // set timer tick value to 1ms (in microseconds)
     // slow down simulation to alow users to appreciate changes
-    spin1_set_timer_tick (TIMER_TICK_PERIOD);
+    spin1_set_timer_tick (timer_period);
 
     // register callbacks
     spin1_callback_on (MCPL_PACKET_RECEIVED, receive_data, 0);
@@ -568,17 +525,6 @@ void c_main()
     // initialise SDP message buffer
     sdp_init ();
 
-    // initialise temperatures (for absent cores!)
-
-    core_temp = (volatile int *) sv->sysram_base; //##
-
-    if (leadAp)
-    {
-      for (uint i = 1; i <= 16; i++)
-      {
-        core_temp[i - 1] = 0;
-      }
-    }
 
     #ifdef DEBUG
       // initialise variables
@@ -591,22 +537,10 @@ void c_main()
     // kick-start the update process
     spin1_schedule_callback(send_first_value, 0, 0, 3);
 
-    // go
-    spin1_start (SYNC_WAIT);	//##
-
-    // restore router configuration
-    rtr[RTR_CONTROL] = rtr_conf;
-
-    #ifdef VERBOSE
-      // report results
-      report_results();
-    #endif
-  }
-
-  #ifdef VERBOSE
-    // say goodbye
-    io_printf (IO_BUF, "stopping heat_demo\n");
-  #endif
+    // start execution
+    log_info("Starting");
+    simulation.run()
+    log_info("stopping heat_demo\n");
 }
 /*
 *******/

@@ -11,10 +11,14 @@ import ConfigParser
 import inspect
 import os
 import re
+from spynnaker_graph_front_end.utilities import log
 import shutil
 import sys
+import logging
+import string
 import spynnaker_graph_front_end
 
+read = list()
 
 def _install_cfg():
     template_cfg = os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -75,3 +79,22 @@ def create_directory(directory):
     else:
         shutil.rmtree(directory)
         os.makedirs(directory)
+
+
+# Create the root logger with the given level
+# Create filters based on logging levels
+try:
+    if config.getboolean("Logging", "instantiate"):
+        logging.basicConfig(level=0)
+
+    for handler in logging.root.handlers:
+        handler.addFilter(log.ConfiguredFilter(config))
+        handler.setFormatter(log.ConfiguredFormatter(config))
+except ConfigParser.NoSectionError:
+    pass
+except ConfigParser.NoOptionError:
+    pass
+
+# Log which config files we read
+logger = logging.getLogger(__name__)
+logger.info("Read config files: %s" % string.join(read, ", "))

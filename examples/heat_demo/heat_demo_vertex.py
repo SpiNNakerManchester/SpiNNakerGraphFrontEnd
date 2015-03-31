@@ -21,15 +21,19 @@ from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.sdram_resource import SDRAMResource
 
 # graph front end imports
+from spinn_front_end_common.utility_models.live_packet_gather import \
+    LivePacketGather
+from spinn_front_end_common.utility_models.\
+    reverse_ip_tag_multi_cast_source import ReverseIpTagMultiCastSource
 from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
     import AbstractPartitionedDataSpecableVertex
 
 # front end common imports
 from spinn_front_end_common.utilities import constants
-from spinn_front_end_common.utilities import exceptions
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_edge_constraints\
     import AbstractProvidesOutgoingEdgeConstraints
+from spinn_front_end_common.utilities import exceptions
 
 # general imports
 from enum import Enum
@@ -50,16 +54,22 @@ class HeatDemoVertexPartitioned(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
                ('TRANSMISSIONS', 1),
-               ('NEIGBOUR_DATA', 2)])
+               ('NEIGBOUR_KEYS', 2),
+               ('COMMAND_KEYS', 3),
+               ('OUPUT_KEY', 4),
+               ('TEMP_VALUE', 5)])
     # one key for each incoming edge.
     NEIGBOUR_DATA_SIZE = 6 * 4
     TRANSMISSION_DATA_SIZE = 2 * 4
+    COMMAND_KEYS_SIZE = 3 * 4
+    OUPUT_KEY_SIZE = 1 * 4
+    TEMP_VALUE_SIZE = 1 * 4
 
     _model_based_max_atoms_per_core = 1
     _model_n_atoms = 1
 
     def __init__(self, label, machine_time_step, time_scale_factor,
-                 constraints=None):
+                 heat_tempature=0, constraints=None):
 
         # resoruces used by a heat element vertex
         resoruces = ResourceContainer(cpu=CPUCyclesPerTickResource(45),
@@ -73,6 +83,7 @@ class HeatDemoVertexPartitioned(
         AbstractProvidesOutgoingEdgeConstraints.__init__(self)
         self._machine_time_step = machine_time_step
         self._time_scale_factor = time_scale_factor
+        self._heat_temperature = heat_tempature
 
     def get_binary_file_name(self):
         """
@@ -90,6 +101,12 @@ class HeatDemoVertexPartitioned(
         return "Heat_Demo_Vertex"
 
     def get_outgoing_edge_constraints(self, partitioned_edge, graph_mapper):
+        """
+
+        :param partitioned_edge:
+        :param graph_mapper:
+        :return:
+        """
         constraints = list()
         constraints.append(KeyAllocatorSameKeysConstraint(partitioned_edge))
         return constraints
@@ -129,10 +146,16 @@ class HeatDemoVertexPartitioned(
         self._write_basic_setup_info(spec, self.CORE_APP_IDENTIFIER,
                                      self.DATA_REGIONS.SYSTEM_REGION.value)
         self._write_tranmssion_keys(spec, routing_info, sub_graph)
-        self._write_input_keys(spec, routing_info, sub_graph)
+        self._write_key_data(spec, routing_info, sub_graph)
+        self._write_temp_data(spec)
         # End-of-Spec:
         spec.end_specification()
         data_writer.close()
+
+    def _write_temp_data(self, spec):
+        spec.switch_write_focus(region=self.DATA_REGIONS.TEMP_VALUE.value)
+        spec.comment("writing initial temp for this heat element \n")
+        spec.write_value(data=self._heat_temperature)
 
     def _reserve_memory_regions(self, spec, system_size):
         """
@@ -150,8 +173,15 @@ class HeatDemoVertexPartitioned(
         spec.reserve_memory_region(region=self.DATA_REGIONS.TRANSMISSIONS.value,
                                    size=self.TRANSMISSION_DATA_SIZE,
                                    label="inputs")
-        spec.reserve_memory_region(region=self.DATA_REGIONS.NEIGBOUR_DATA.value,
+        spec.reserve_memory_region(region=self.DATA_REGIONS.NEIGBOUR_KEYS.value,
                                    size=self.NEIGBOUR_DATA_SIZE, label="inputs")
+        spec.reserve_memory_region(region=self.DATA_REGIONS.COMMAND_KEYS.value,
+                                   size=self.COMMAND_KEYS_SIZE,
+                                   label="commands")
+        spec.reserve_memory_region(region=self.DATA_REGIONS.OUPUT_KEY.value,
+                                   size=self.OUPUT_KEY_SIZE, label="outputs")
+        spec.reserve_memory_region(region=self.DATA_REGIONS.TEMP_VALUE.value,
+                                   size=self.TEMP_VALUE_SIZE, label="temp")
 
     def _write_basic_setup_info(self, spec, core_app_identifier, region_id):
         """
@@ -176,7 +206,7 @@ class HeatDemoVertexPartitioned(
         """
         # Every subedge should have the same key
         keys_and_masks = routing_info.get_keys_and_masks_from_subedge(
-            subgraph.outgoing_subedges_from_subvertex(self)[0])
+            subgraph.outgoing_subedges_from_subvertex(self))
         key = keys_and_masks[0].key
         spec.switch_write_focus(region=self.DATA_REGIONS.TRANSMISSIONS.value)
         # Write Key info for this core:
@@ -189,7 +219,7 @@ class HeatDemoVertexPartitioned(
             spec.write_value(data=1)
             spec.write_value(data=key)
 
-    def _write_input_keys(self, spec, routing_info, sub_graph):
+    def _write_key_data(self, spec, routing_info, sub_graph):
         """
 
         :param spec:
@@ -197,24 +227,62 @@ class HeatDemoVertexPartitioned(
         :param sub_graph:
         :return:
         """
-        spec.switch_write_focus(region=self.DATA_REGIONS.NEIGBOUR_DATA.value)
+        spec.switch_write_focus(region=self.DATA_REGIONS.NEIGBOUR_KEYS.value)
         # get incoming edges
         incoming_edges = sub_graph.incoming_subedges_from_subvertex(self)
-        sorted(incoming_edges, key=lambda subedge: subedge.direction,
-               reverse=True)
-        # write each key that this modle should expect packets from.
+        spec.comment("\n the keys for the neighbours in EAST, NORTH, WEST, "
+                     "SOUTH. order:\n\n")
+        direction_edges = list()
+        command_edge = None
+        output_edge = None
+        for incoming_edge in incoming_edges:
+            if isinstance(incoming_edge, HeatDemoEdge):
+                direction_edges.append(incoming_edge)
+            elif isinstance(incoming_edge.post_subvertex, LivePacketGather):
+                output_edge = incoming_edge
+            elif isinstance(incoming_edge.pre_subvertex,
+                            ReverseIpTagMultiCastSource):
+                command_edge = incoming_edge
+
+        sorted(direction_edges, key=lambda subedge: subedge.direction,
+               reverse=False)
+        # write each key that this modle should expect packets from in order
+        # of EAST, NORTH, WEST, SOUTH.
         current_direction = 0
         for edge in incoming_edges:
-            if not isinstance(edge, HeatDemoEdge):
-                raise exceptions.ConfigurationException(
-                    "The edge connected to this model is not reconisable as a"
-                    "heat element. This is deemed as an error")
+            if edge.direction.value != current_direction:
+                spec.write_value(data=0)
             else:
-                if edge.direction.value != current_direction:
-                    spec.write_value(data=0)
-                else:
-                    keys_and_masks = \
-                        routing_info.get_keys_and_masks_from_subedge(edge)
-                    key = keys_and_masks[0][0].key
-                    spec.write_value(data=key)
-                current_direction += 1
+                keys_and_masks = \
+                    routing_info.get_keys_and_masks_from_subedge(edge)
+                key = keys_and_masks[0].key
+                spec.write_value(data=key)
+            current_direction += 1
+
+        # write key for host output
+        spec.switch_write_focus(region=self.DATA_REGIONS.OUPUT_KEY.value)
+        spec.comment("\n the key for transmitting temp to host gatherer:\n\n")
+        if output_edge is not None:
+            output_edge_key_and_mask = \
+                routing_info.get_keys_and_masks_from_subedge(output_edge)
+            key = output_edge_key_and_mask[0].key
+            spec.write_value(data=key)
+        else:
+            spec.write_value(data=0)
+
+        # write keys for commands
+        spec.switch_write_focus(region=self.DATA_REGIONS.COMMAND_KEYS.value)
+        spec.comment("\n the command keys in order of STOP, PAUSE, RESUME:\n\n")
+        commands_keys_and_masks = \
+            routing_info.get_keys_and_masks_from_subedge(command_edge)
+        # get just the keys
+        keys = list()
+        for key_and_mask in commands_keys_and_masks:
+            keys.append(key_and_mask.key)
+        # sort keys in assending order
+        sorted(keys, reverse=False)
+        if len(keys) != 3:
+            raise exceptions.ConfigurationException(
+                "Do not have enough keys to reflect the commands. broken")
+        for key in keys:
+            spec.write_value(data=key)
