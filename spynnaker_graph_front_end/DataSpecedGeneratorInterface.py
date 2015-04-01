@@ -5,8 +5,8 @@ from threading import Condition
 class DataSpecedGeneratorInterface(object):
 
     def __init__(self, subvertex, placement, partitioned_graph, routing_infos,
-                 hostname, report_default_directory, write_text_specs,
-                 application_run_time_folder, progress_bar):
+                 hostname, report_default_directory, ip_tags, reverse_iptags,
+                 write_text_specs, application_run_time_folder, progress_bar):
         self._subvertex = subvertex
         self._placement = placement
         self._partitioned_graph = partitioned_graph
@@ -14,6 +14,8 @@ class DataSpecedGeneratorInterface(object):
         self._hostname = hostname
         self._report_default_directory = report_default_directory
         self._progress_bar = progress_bar
+        self._iptags = ip_tags
+        self._reverse_iptags = reverse_iptags
         self._write_text_specs = write_text_specs
         self._application_run_time_folder = application_run_time_folder
         self._done = False
@@ -25,8 +27,9 @@ class DataSpecedGeneratorInterface(object):
         try:
             self._subvertex.generate_data_spec(
                 self._placement, self._partitioned_graph, self._routing_infos,
-                self._hostname, self._report_default_directory,
-                self._write_text_specs, self._application_run_time_folder)
+                self._hostname, self._report_default_directory, self._iptags,
+                self._reverse_iptags, self._write_text_specs,
+                self._application_run_time_folder)
             self._progress_bar.update()
             self._wait_condition.acquire()
             self._done = True

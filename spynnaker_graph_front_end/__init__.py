@@ -16,13 +16,14 @@ _spinnaker = None
 _none_labelled_vertex_count = None
 _none_labelled_edge_count = None
 
-def setup(hostname=None, graph_label=None, model_binary_folder=None):
+def setup(hostname=None, graph_label=None, model_binary_module=None,
+          model_binary_folder=None):
     """ for builders with pynn attitude, allows end users to define wherever
     their binaries are
 
     :param hostname:
     :param graph_label:
-    :param model_binary_folder:
+    :param model_binary_module:
     :return:
     """
     from spynnaker_graph_front_end.spinnaker_graph_front_end import \
@@ -33,7 +34,13 @@ def setup(hostname=None, graph_label=None, model_binary_folder=None):
     global _none_labelled_edge_count
 
     executable_finder = ExecutableFinder()
-    executable_finder.add_path(os.path.dirname(model_binary_folder.__file__))
+    # add the directorities for where to locate the binaries
+    if model_binary_module is not None:
+        executable_finder.add_path(
+            os.path.dirname(model_binary_module.__file__))
+    elif model_binary_folder is not None:
+        executable_finder.add_path(model_binary_folder)
+
     # set up the spinnaker object
     _spinnaker = SpiNNakerGraphFrontEnd(hostname, graph_label,
                                         executable_finder)
@@ -97,11 +104,18 @@ def add_vertex(cellclass, cellparams, label=None, constraints=None):
     global _none_labelled_vertex_count
 
     # corect label if needed
-    if label is None:
+    if label is None and 'label' not in cellparams:
         label = "Vertex {}".format(_none_labelled_vertex_count)
         _none_labelled_vertex_count += 1
+        cellparams['label'] = label
+    elif 'label' in cellparams and cellparams['label'] is None:
+        label = "Vertex {}".format(_none_labelled_vertex_count)
+        _none_labelled_vertex_count += 1
+        cellparams['label'] = label
+    elif label is not None:
+        cellparams['label'] = label
+
     # add vertex
-    cellparams['label'] = label
     cellparams['constraints'] = constraints
     vertex = cellclass(**cellparams)
     _spinnaker.add_partitionable_vertex(vertex)
@@ -120,10 +134,19 @@ def add_edge(cell_type, cellparams, label=None, constraints=None):
     global _spinnaker
     global _none_labelled_edge_count
 
-    if label is None:
-        label = "Edge {}".format(_none_labelled_edge_count)
+    # corect label if needed
+    if label is None and 'label' not in cellparams:
+        label = "Vertex {}".format(_none_labelled_edge_count)
         _none_labelled_edge_count += 1
-    cellparams['label'] = label
+        cellparams['label'] = label
+    elif 'label' in cellparams and cellparams['label'] is None:
+        label = "Vertex {}".format(_none_labelled_edge_count)
+        _none_labelled_edge_count += 1
+        cellparams['label'] = label
+    elif label is not None:
+        cellparams['label'] = label
+
+    # add edge
     cellparams['constraints'] = constraints
     edge = cell_type(**cellparams)
     _spinnaker.add_partitionable_edge(edge)
@@ -142,11 +165,18 @@ def add_partitioned_vertex(cellclass, cellparams, label=None, constraints=None):
     global _spinnaker
     global _none_labelled_vertex_count
     # corect label if needed
-    if label is None:
+    if label is None and 'label' not in cellparams:
         label = "Vertex {}".format(_none_labelled_vertex_count)
         _none_labelled_vertex_count += 1
-    # add vertex
-    cellparams['label'] = label
+        cellparams['label'] = label
+    elif 'label' in cellparams and cellparams['label'] is None:
+        label = "Vertex {}".format(_none_labelled_vertex_count)
+        _none_labelled_vertex_count += 1
+        cellparams['label'] = label
+    elif label is not None:
+        cellparams['label'] = label
+
+    # add partitioned vertex
     cellparams['constraints'] = constraints
     vertex = cellclass(**cellparams)
     _spinnaker.add_partitioned_vertex(vertex)
@@ -165,10 +195,19 @@ def add_partitioned_edge(cellclass, cellparams, label=None, constraints=None):
     global _spinnaker
     global _none_labelled_edge_count
 
-    if label is None:
-        label = "Edge {}".format(_none_labelled_edge_count)
+    # corect label if needed
+    if label is None and 'label' not in cellparams:
+        label = "Vertex {}".format(_none_labelled_edge_count)
         _none_labelled_edge_count += 1
-    cellparams['label'] = label
+        cellparams['label'] = label
+    elif 'label' in cellparams and cellparams['label'] is None:
+        label = "Vertex {}".format(_none_labelled_edge_count)
+        _none_labelled_edge_count += 1
+        cellparams['label'] = label
+    elif label is not None:
+        cellparams['label'] = label
+
+    # add partitioned edge
     cellparams['constraints'] = constraints
     edge = cellclass(**cellparams)
     _spinnaker.add_partitioned_edge(edge)

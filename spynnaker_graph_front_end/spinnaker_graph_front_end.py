@@ -1,6 +1,13 @@
 """
 entrance class for the graph front end
 """
+
+# pacman imports
+import traceback
+from data_specification.data_specification_executor import \
+    DataSpecificationExecutor
+from data_specification.file_data_reader import FileDataReader
+from data_specification.file_data_writer import FileDataWriter
 from pacman.model.partitioned_graph.partitioned_graph import PartitionedGraph
 from pacman.model.routing_info.dict_based_partitioned_edge_n_keys_map import \
     DictBasedPartitionedEdgeNKeysMap
@@ -20,6 +27,7 @@ from spinn_front_end_common.abstract_models.\
 from spinn_front_end_common.interface.data_generator_interface import \
     DataGeneratorInterface
 
+# spinn front end common imports
 from spinn_front_end_common.interface.\
     front_end_common_configuration_functions import \
     FrontEndCommonConfigurationFunctions
@@ -28,6 +36,7 @@ from spinn_front_end_common.interface.\
     FrontEndCommonInterfaceFunctions
 from spinn_front_end_common.utilities import reports
 from spinn_front_end_common.utilities import exceptions
+from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.utilities.timer import Timer
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_edge_constraints \
@@ -38,22 +47,26 @@ from spinn_front_end_common.abstract_models.\
 from spinn_front_end_common.abstract_models.\
     abstract_provides_n_keys_for_edge import AbstractProvidesNKeysForEdge
 
-
+# spinnman imports
+from spinn_machine.sdram import SDRAM
 from spinnman.model.core_subset import CoreSubset
 from spinnman.model.core_subsets import CoreSubsets
 
-
+# graph front end imports
 from spynnaker_graph_front_end.DataSpecedGeneratorInterface import \
     DataSpecedGeneratorInterface
 from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
     import AbstractPartitionedDataSpecableVertex
-from spynnaker_graph_front_end.models.mutli_cast_partitioned_edge_with_n_keys import \
+from spynnaker_graph_front_end.models.\
+    mutli_cast_partitioned_edge_with_n_keys import \
     MultiCastPartitionedEdgeWithNKeys
-
 from spynnaker_graph_front_end.utilities.xml_interface import XMLInterface
 from spynnaker_graph_front_end.utilities.conf import config
 
+# general imports
 import logging
+import math
+import os
 from multiprocessing.pool import ThreadPool
 
 
@@ -236,6 +249,26 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         """
         self._partitioned_graph.add_subedge(edge)
 
+    def _set_runtime_in_time_steps_for_model(self, vertex, run_time):
+        """
+
+        :param vertex:
+        :param run_time:
+        :return:
+        """
+        self._no_machine_time_steps =\
+            int((run_time * 1000.0) / vertex.machine_time_step)
+        ceiled_machine_time_steps = math.ceil((run_time * 1000.0) /
+                                              vertex.machine_time_step)
+        if self._no_machine_time_steps != ceiled_machine_time_steps:
+            raise exceptions.ConfigurationException(
+                "The runtime and machine time step combination "
+                "result in a factional number of machine runable "
+                "time steps and therefore spinnaker cannot "
+                "determine how many to run for")
+        vertex.set_no_machine_time_steps(
+            self._no_machine_time_steps)
+
     def run(self, run_time):
         """
 
@@ -244,27 +277,25 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         """
         # create network report if needed
         if self._reports_states is not None:
-            reports.network_specification_report(
-                self._report_default_directory, self._partitionable_graph,
-                self._hostname)
+            if len(self._partitionable_graph.vertices) > 0:
+                reports.network_specification_partitionable_report(
+                    self._report_default_directory, self._partitionable_graph,
+                    self._hostname)
+            else:
+                reports.network_specification_report_partitioned_graph(
+                    self._report_default_directory, self._partitioned_graph,
+                    self._hostname)
 
         # calculate number of machine time steps
         if run_time is not None:
-            pass
-            """
-            self._no_machine_time_steps =\
-                int((run_time * 1000.0) / self._machine_time_step)
-            ceiled_machine_time_steps = \
-                math.ceil((run_time * 1000.0) / self._machine_time_step)
-            if self._no_machine_time_steps != ceiled_machine_time_steps:
-                raise exceptions.ConfigurationException(
-                    "The runtime and machine time step combination result in "
-                    "a factional number of machine runable time steps and "
-                    "therefore spinnaker cannot determine how many to run for")
             for vertex in self._partitionable_graph.vertices:
                 if isinstance(vertex, AbstractDataSpecableVertex):
-                    vertex.set_no_machine_time_steps(
-                        self._no_machine_time_steps)"""
+                    self._set_runtime_in_time_steps_for_model(vertex, run_time)
+            for vertex in self._partitioned_graph.subvertices:
+                if isinstance(vertex, AbstractPartitionedDataSpecableVertex):
+                    self._set_runtime_in_time_steps_for_model(vertex, run_time)
+                elif isinstance(vertex, AbstractDataSpecableVertex):
+                    self._set_runtime_in_time_steps_for_model(vertex, run_time)
         else:
             self._no_machine_time_steps = None
             logger.warn("You have set a runtime that will never end, this may"
@@ -320,8 +351,7 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
             timer.start_timing()
 
         logger.info("*** Loading tags ***")
-        self._load_iptags()
-        self._load_reverse_ip_tags()
+        self._load_tags(self._tags)
 
         if self._do_load is True:
             logger.info("*** Loading data ***")
@@ -453,16 +483,16 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
                                   AbstractProvidesNKeysForEdge):
                     n_keys_map.set_n_keys_for_patitioned_edge(edge, 1)
                 else:
-                    if isinstance(edge, AbstractProvidesNKeysForEdge):
+                    n_keys_map.set_n_keys_for_patitioned_edge(
+                        edge,
+                        edge.pre_subvertex.get_n_keys_for_partitioned_edge(
+                            edge, self._graph_mapper))
+
+                if isinstance(edge, AbstractProvidesNKeysForEdge):
                         n_keys = edge.\
                             get_n_keys_for_partitioned_edge(edge,
                                                             self._graph_mapper)
                         n_keys_map.set_n_keys_for_patitioned_edge(edge, n_keys)
-                    else:
-                        n_keys_map.set_n_keys_for_patitioned_edge(
-                            edge,
-                            edge.pre_subvertex.get_n_keys_for_partitioned_edge(
-                                edge, self._graph_mapper))
 
                 if isinstance(edge.pre_subvertex,
                               AbstractProvidesOutgoingEdgeConstraints):
@@ -627,8 +657,8 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
                         placement.subvertex, placement,
                         self._partitioned_graph, self._routing_infos,
                         self._hostname, self._report_default_directory,
-                        ip_tags, reverse_ip_tags, progress_bar
-                    )
+                        ip_tags, reverse_ip_tags, self._writeTextSpecs,
+                        self._app_data_runtime_folder, progress_bar)
                     data_generator_interfaces.append(data_generator_interface)
                     thread_pool.apply_async(data_generator_interface.start)
                     binary_name = placement.subvertex.get_binary_file_name()
@@ -719,3 +749,124 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         :return:
         """
         return {'x': self._machine.max_chip_x, 'y': self._machine.max_chip_y}
+
+    # TODO THIS NEEDS REMOVING AND FIXING
+    def host_based_data_specification_execution(
+            self, hostname, placements, graph_mapper, write_text_specs,
+            application_data_runtime_folder):
+        """
+
+        :param hostname:
+        :param placements:
+        :param graph_mapper:
+        :param write_text_specs:
+        :param application_data_runtime_folder:
+        :return:
+        """
+        space_based_memory_tracker = dict()
+        processor_to_app_data_base_address = dict()
+
+        # create a progress bar for end users
+        progress_bar = ProgressBar(len(list(placements.placements)),
+                                   "on executing data specifications on the "
+                                   "host machine")
+
+        for placement in placements.placements:
+            if graph_mapper is not None:
+                associated_vertex = graph_mapper.get_vertex_from_subvertex(
+                    placement.subvertex)
+            else:
+                associated_vertex = placement.subvertex
+
+            # if the vertex can generate a DSG, call it
+            if isinstance(associated_vertex, AbstractDataSpecableVertex):
+
+                data_spec_file_path = \
+                    associated_vertex.get_data_spec_file_path(
+                        placement.x, placement.y, placement.p, hostname,
+                        application_data_runtime_folder)
+                app_data_file_path = \
+                    associated_vertex.get_application_data_file_path(
+                        placement.x, placement.y, placement.p, hostname,
+                        application_data_runtime_folder)
+                data_spec_reader = FileDataReader(data_spec_file_path)
+                data_writer = FileDataWriter(app_data_file_path)
+
+                # locate current memory requirement
+                current_memory_available = SDRAM.DEFAULT_SDRAM_BYTES
+                memory_tracker_key = (placement.x, placement.y)
+                if memory_tracker_key in space_based_memory_tracker:
+                    current_memory_available = space_based_memory_tracker[
+                        memory_tracker_key]
+
+                # generate a file writer for dse report (app pointer table)
+                report_writer = None
+                if write_text_specs:
+                    new_report_directory = os.path.join(
+                        self._report_default_directory, "data_spec_text_files")
+
+                    if not os.path.exists(new_report_directory):
+                        os.mkdir(new_report_directory)
+
+                    file_name = "{}_DSE_report_for_{}_{}_{}.txt".format(
+                        hostname, placement.x, placement.y, placement.p)
+                    report_file_path = os.path.join(new_report_directory,
+                                                    file_name)
+                    report_writer = FileDataWriter(report_file_path)
+
+                # generate data spec executor
+                host_based_data_spec_executor = DataSpecificationExecutor(
+                    data_spec_reader, data_writer, current_memory_available,
+                    report_writer)
+
+                # update memory calc and run data spec executor
+                bytes_written_by_spec = None
+                # noinspection PyBroadException
+                try:
+                    bytes_used_by_spec, bytes_written_by_spec = \
+                        host_based_data_spec_executor.execute()
+                except:
+                    logger.error("Error executing data specification for {}"
+                                 .format(associated_vertex))
+                    traceback.print_exc()
+
+                # update base address mapper
+                processor_mapping_key = (placement.x, placement.y, placement.p)
+                processor_to_app_data_base_address[processor_mapping_key] = {
+                    'start_address':
+                        ((SDRAM.DEFAULT_SDRAM_BYTES -
+                          current_memory_available) +
+                         constants.SDRAM_BASE_ADDR),
+                    'memory_used': bytes_used_by_spec,
+                    'memory_written': bytes_written_by_spec}
+
+                space_based_memory_tracker[memory_tracker_key] = \
+                    current_memory_available - bytes_used_by_spec
+
+            # update the progress bar
+            progress_bar.update()
+
+        # close the progress bar
+        progress_bar.end()
+        return processor_to_app_data_base_address
+
+    # TODO THIS NEEDS REMOVING AND FIXING
+    def execute_data_specification_execution(
+            self, host_based_execution, hostname, placements, graph_mapper,
+            write_text_specs, runtime_application_data_folder):
+        """
+
+        :param host_based_execution:
+        :param hostname:
+        :param placements:
+        :param graph_mapper:
+        :param write_text_specs:
+        :param runtime_application_data_folder:
+        :return:
+        """
+        if host_based_execution:
+            return self.host_based_data_specification_execution(
+                hostname, placements, graph_mapper, write_text_specs,
+                runtime_application_data_folder)
+        else:
+            return self._chip_based_data_specification_execution(hostname)

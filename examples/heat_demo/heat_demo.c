@@ -8,64 +8,86 @@
 *
 *******/
 
-// SpiNNaker API
+//! imports
 #include "spin1_api.h"
 #include "common-typedefs.h"
 #include <data_specification.h>
 #include <simulation.h>
 #include <debug.h>
 
+//! left shift for each point in the arrived element
+#define NORTH              3
+#define SOUTH              2
+#define EAST               1
+#define WEST               0
 
+//! the value expected when each neighbour's data has arrived
+#define NORTH_ARRIVED      (1 << NORTH)
+#define SOUTH_ARRIVED      (1 << SOUTH)
+#define EAST_ARRIVED       (1 << EAST)
+#define WEST_ARRIVED       (1 << WEST)
+#define NONE_ARRIVED       0
+//! the value expected when a combination of nighbours data has arrived
+#define NS_ARRIVED         (NORTH_ARRIVED | SOUTH_ARRIVED)
+#define EW_ARRIVED         (EAST_ARRIVED | WEST_ARRIVED)
+#define ALL_ARRIVED        (NS_ARRIVED | EW_ARRIVED)
+
+//! how many keys to store before overwriting
 #define DEBUG_KEYS         500
 
-// the visualiser has a bug with negative temperatures!
+//! the visualiser has a bug with negative temperatures!
 #define POSITIVE_TEMP      TRUE
 
-// constants to use in heat difusion calculation
+//! constants to use in heat difusion calculation
 #define PARAM_CX           0.03125
 #define PARAM_CY           0.03125
 
-/* multicast routing keys to communicate with neighbours */
+/*! multicast routing keys to communicate with neighbours */
 uint my_key;
 uint north_key;
 uint south_key;
 uint east_key;
 uint west_key;
-/* multicast routing keys recivable for injecting temps*/
+/*! multicast routing keys recivable for injecting temps*/
 uint fake_temp_north_key;
 uint fake_temp_south_key;
 uint fake_temp_east_key;
 uint fake_temp_west_key;
-/* multicast routing keys recivable for commands*/
+/*! multicast routing keys recivable for commands*/
 uint command_pause_key;
 uint comamnd_stop_key;
 uint command_resume_key;
-/* multicast routing keys for sneding temp back to host for live stream*/
+/*! multicast routing keys for sneding temp back to host for live stream*/
 uint host_data_key;
 
-/* temperature values */
+/*! temperature values */
 int my_temp;  // any initial value will do!
 int old_temp = 0;  // any initial value will do!
 
-// get temperatures from 4 neighbours
-// make sure to have room for two values from each neighbour
-// given that the communication is asynchronous
+//! get temperatures from 4 neighbours
+//! make sure to have room for two values from each neighbour
+//! given that the communication is asynchronous
 int neighbours_temp[2][4];
 
-/* coeficients to compute new temperature value */
-/* adjust for 16.16 fixed-point representation  */
+/*! coeficients to compute new temperature value */
+/*! adjust for 16.16 fixed-point representation  */
 int cx_adj = (int) (PARAM_CX * (1 << 16));
 int cy_adj = (int) (PARAM_CY * (1 << 16));
 
-/* keep track of which neighbours have sent data */
-/* cores in the boder need special values! */
+/*! keep track of which neighbours have sent data */
+/*! cores in the boder need special values! */
 uint arrived[2];
 uint init_arrived;
 uint now  = 0;
 uint next = 1;
 
+//! bool to control if the model should do an update of its element
 bool updating = true;
-uint simulation_ticks;
+//! control vlaue, which says how many timer tics to run for before exiting
+static uint32_t simulation_ticks;
+//! the unqieu identifier of this model, so that it can tell if the data its
+//! reading is for itself.
+#define APPLICATION_MAGIC_NUMBER 0xABCD
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
@@ -99,6 +121,7 @@ typedef enum initial_temperature_region_elements {
     INITIAL_TEMPERATURE
 }initial_temperature_region_elements;
 
+//! if in debug mode, store some tracers
 #ifdef DEBUG
     uint   dbg_packs_recv = 0;
     uint * dbg_keys_recv;
@@ -106,10 +129,10 @@ typedef enum initial_temperature_region_elements {
     uint * dbg_stime;
 #endif
 
-/****f* heat_demo.c/send_temps_to_host
+/*! heat_demo.c/send_temps_to_host
 *
 * SUMMARY
-*  This function is called at application exit.
+* \brief This function is called at application exit.
 *  It's used to report the final temperatures to the host
 *
 * SYNOPSIS
@@ -136,7 +159,8 @@ void send_temps_to_host ()
 */
 void report_temp (uint ticks)
 {
-  //error
+  use(ticks);
+  // need to look at recording regions and definign how much data to store
 }
 
 /****f* heat_demo.c/receive_data
@@ -271,6 +295,8 @@ void receive_data (uint key, uint payload)
 */
 void send_first_value (uint a, uint b)
 {
+    use(a);
+    use(b);
     /* send data to neighbours */
     spin1_send_mc_packet(my_key, my_temp, WITH_PAYLOAD);
 }
@@ -287,7 +313,15 @@ void send_first_value (uint a, uint b)
 */
 void update (uint ticks, uint b)
 {
+    use(b);
     sark.vcpu->user0++;
+
+    // check that the run time hasnt already alapsed and thus needs to be killed
+    if (ticks == simulation_ticks){
+        log_info("Simulation complete.\n");
+        spin1_exit(0);
+        return;
+    }
 
     if (updating)
     {
@@ -295,7 +329,7 @@ void update (uint ticks, uint b)
         #ifdef DEBUG
             if (arrived[now] != ALL_ARRIVED)
             {
-                io_printf (IO_STD, "@\n");
+                log_debug("@\n");
                 dbg_timeouts++;
             }
         #endif
@@ -441,9 +475,6 @@ void c_main()
     	rt_error(RTE_API);
     }
 
-    // Start the time at "-1" so that the first tick will be 0
-    time = UINT32_MAX;
-
     // set timer tick value to 1ms (in microseconds)
     // slow down simulation to alow users to appreciate changes
     spin1_set_timer_tick (timer_period);
@@ -465,6 +496,6 @@ void c_main()
 
     // start execution
     log_info("Starting");
-    simulation.run()
+    simulation_run();
     log_info("stopping heat_demo\n");
 }

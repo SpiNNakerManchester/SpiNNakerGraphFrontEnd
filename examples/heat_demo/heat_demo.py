@@ -10,10 +10,13 @@ from spynnaker_graph_front_end import MultiCastPartitionedEdge
 
 from examples.heat_demo.heat_demo_vertex import HeatDemoVertexPartitioned
 from examples.heat_demo.heat_demo_edge import HeatDemoEdge
-from examples import heat_demo
+
+# import the folder where all graph front end binaries are located
+from examples import model_binaries
 
 # set up the front end and ask for the detected machines dimensions
-front_end.setup(graph_label="heat_demo_graph", model_binary_folder=heat_demo)
+front_end.setup(graph_label="heat_demo_graph",
+                model_binary_module=model_binaries)
 dimenions = front_end.get_machine_dimensions()
 
 machine_time_step = 1
@@ -21,7 +24,13 @@ time_scale_factor = 1
 machine_port = 11111
 machine_recieve_port = 22222
 
-vertices = [None] * (dimenions['x'] * 4)
+# hard code dimensions here (useful for debug) (chip based)
+x_dimension = dimenions['x']
+y_dimension = dimenions['y']
+#overrwide dimensions
+x_dimension = 1
+y_dimension = 1
+vertices = [None] * (x_dimension * 4)
 
 
 command_injector = \
@@ -42,8 +51,9 @@ live_gatherer = \
     )
 
 # build vertices
-for x_position in range(0, (dimenions['x'] * 4)):
-    for y_position in range(0, (dimenions['y'] * 4)):
+
+for x_position in range(0, (x_dimension * 4)):
+    for y_position in range(0, (y_dimension * 4)):
         element = front_end.add_partitioned_vertex(
             HeatDemoVertexPartitioned,
             {'machine_time_step': machine_time_step,
@@ -54,8 +64,9 @@ for x_position in range(0, (dimenions['x'] * 4)):
         vertices[x_position].append(element)
 
 # build edges
-for x_position in range(0, dimenions['x']):
-    for y_position in range(0, dimenions['y']):
+for x_position in range(0, (x_dimension * 4)):
+    for y_position in range(0, (y_dimension * 4)):
+
         # add a link from the injecotr to the heat element
         front_end.add_partitioned_edge(
             HeatDemoCommandEdge,
@@ -71,8 +82,9 @@ for x_position in range(0, dimenions['x']):
              'post_subvertex': live_gatherer},
             label="gatherer edge from vertex {} to live packet gatherer"
                   .format(vertices[x_position][y_position].label))
+
         # check for the likely hood for a N link
-        if ((x_position + 1) % dimenions['x']) != 0:
+        if (((x_dimension * 4) - 1) - (x_position + 1)) >= 0:
             front_end.add_partitioned_edge(
                 HeatDemoEdge,
                 {'pre_subvertex': vertices[x_position][y_position],
@@ -88,10 +100,9 @@ for x_position in range(0, dimenions['x']):
                  'post_subvertex': vertices[x_position][y_position],
                  'direction': HeatDemoEdge.DIRECTIONS.NORTH},
                 label="injected temp for north edge of fabric for heat element"
-                      "{}:{}".format(vertices[x_position][y_position],
-                                     vertices[x_position + 1][y_position]),)
+                      "{}".format(vertices[x_position][y_position]),)
         # check for the likely hood for a E link
-        if ((y_position + 1) % dimenions['y']) != 0:
+        if (((y_dimension * 4) - 1) - (y_position + 1)) >= 0:
             front_end.add_partitioned_edge(
                 HeatDemoEdge,
                 {'pre_subvertex': vertices[x_position][y_position],
@@ -107,10 +118,9 @@ for x_position in range(0, dimenions['x']):
                  'post_subvertex': vertices[x_position][y_position],
                  'direction': HeatDemoEdge.DIRECTIONS.EAST},
                 label="Injected temp for East edge of fabric for heat element"
-                      " {}:{}".format(vertices[x_position][y_position],
-                                      vertices[x_position][y_position + 1]),)
+                      " {}".format(vertices[x_position][y_position]),)
         # check for the likely hood for a S link
-        if ((y_position - 1) % dimenions['y']) != 0:
+        if (y_position - 1) >= 0:
             front_end.add_partitioned_edge(
                 HeatDemoEdge,
                 {'pre_subvertex': vertices[x_position][y_position],
@@ -126,10 +136,9 @@ for x_position in range(0, dimenions['x']):
                  'post_subvertex': vertices[x_position][y_position],
                  'direction': HeatDemoEdge.DIRECTIONS.SOUTH},
                 label="Injected temp for South edge of fabric for heat element"
-                      " {}:{}".format(vertices[x_position][y_position],
-                                      vertices[x_position][y_position - 1]),)
+                      " {}".format(vertices[x_position][y_position]),)
         # check for the likely hood for a W link
-        if ((x_position - 1) % dimenions['x']) != 0:
+        if (x_position - 1) >= 0:
             front_end.add_partitioned_edge(
                 HeatDemoEdge,
                 {'pre_subvertex': vertices[x_position][y_position],
@@ -145,8 +154,7 @@ for x_position in range(0, dimenions['x']):
                  'post_subvertex': vertices[x_position][y_position],
                  'direction': HeatDemoEdge.DIRECTIONS.WEST},
                 label="Injected temp for West edge of fabric for heat element"
-                      " {}:{}".format(vertices[x_position][y_position],
-                                      vertices[x_position - 1][y_position]),)
+                      " {}".format(vertices[x_position][y_position]))
 
 front_end.run(10000)
 front_end.stop()
