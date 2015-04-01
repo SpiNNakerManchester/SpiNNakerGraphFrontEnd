@@ -3,6 +3,8 @@ HeatDemoVertexPartitioned
 """
 
 # heat demo imports
+from data_specification.enums.data_type import DataType
+from examples.heat_demo.heat_demo_command_edge import HeatDemoCommandEdge
 from examples.heat_demo.heat_demo_edge import HeatDemoEdge
 
 # data spec imports
@@ -59,7 +61,7 @@ class HeatDemoVertexPartitioned(
                ('OUPUT_KEY', 4),
                ('TEMP_VALUE', 5)])
     # one key for each incoming edge.
-    NEIGBOUR_DATA_SIZE = 6 * 4
+    NEIGBOUR_DATA_SIZE = 10 * 4
     TRANSMISSION_DATA_SIZE = 2 * 4
     COMMAND_KEYS_SIZE = 3 * 4
     OUPUT_KEY_SIZE = 1 * 4
@@ -233,15 +235,21 @@ class HeatDemoVertexPartitioned(
         spec.comment("\n the keys for the neighbours in EAST, NORTH, WEST, "
                      "SOUTH. order:\n\n")
         direction_edges = list()
+        fake_temp_edges = list()
         command_edge = None
         output_edge = None
         for incoming_edge in incoming_edges:
-            if isinstance(incoming_edge, HeatDemoEdge):
+            if (isinstance(incoming_edge, HeatDemoEdge) and
+                    isinstance(incoming_edge.pre_subvertex,
+                               ReverseIpTagMultiCastSource)):
+                fake_temp_edges.append(incoming_edge)
+            elif (isinstance(incoming_edge, HeatDemoEdge) and not
+                    isinstance(incoming_edge.pre_subvertex,
+                               ReverseIpTagMultiCastSource)):
                 direction_edges.append(incoming_edge)
             elif isinstance(incoming_edge.post_subvertex, LivePacketGather):
                 output_edge = incoming_edge
-            elif isinstance(incoming_edge.pre_subvertex,
-                            ReverseIpTagMultiCastSource):
+            elif isinstance(incoming_edge, HeatDemoCommandEdge):
                 command_edge = incoming_edge
 
         sorted(direction_edges, key=lambda subedge: subedge.direction,
@@ -251,7 +259,22 @@ class HeatDemoVertexPartitioned(
         current_direction = 0
         for edge in incoming_edges:
             if edge.direction.value != current_direction:
-                spec.write_value(data=0)
+                spec.write_value(data_type=DataType.INT32, data=-1)
+            else:
+                keys_and_masks = \
+                    routing_info.get_keys_and_masks_from_subedge(edge)
+                key = keys_and_masks[0].key
+                spec.write_value(data=key)
+            current_direction += 1
+
+        # write each key that this model should expect packets from in order of
+        # EAST, NORTH, WEST, SOUTH for injected temps
+        sorted(fake_temp_edges, key=lambda subedge: subedge.direction,
+               reverse=False)
+        current_direction = 0
+        for edge in fake_temp_edges:
+            if edge.direction.value != current_direction:
+                spec.write_value(data_type=DataType.INT32, data=-1)
             else:
                 keys_and_masks = \
                     routing_info.get_keys_and_masks_from_subedge(edge)
@@ -268,7 +291,7 @@ class HeatDemoVertexPartitioned(
             key = output_edge_key_and_mask[0].key
             spec.write_value(data=key)
         else:
-            spec.write_value(data=0)
+            spec.write_value(data_type=DataType.INT32, data=-1)
 
         # write keys for commands
         spec.switch_write_focus(region=self.DATA_REGIONS.COMMAND_KEYS.value)

@@ -47,6 +47,8 @@ from spynnaker_graph_front_end.DataSpecedGeneratorInterface import \
     DataSpecedGeneratorInterface
 from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
     import AbstractPartitionedDataSpecableVertex
+from spynnaker_graph_front_end.models.mutli_cast_partitioned_edge_with_n_keys import \
+    MultiCastPartitionedEdgeWithNKeys
 
 from spynnaker_graph_front_end.utilities.xml_interface import XMLInterface
 from spynnaker_graph_front_end.utilities.conf import config
@@ -421,9 +423,8 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
             for edge in self._partitioned_graph.subedges:
                 vertex_slice = self._graph_mapper.get_subvertex_slice(
                     edge.pre_subvertex)
-                super_edge = \
-                    self._graph_mapper\
-                        .get_partitionable_edge_from_partitioned_edge(edge)
+                super_edge = self._graph_mapper\
+                    .get_partitionable_edge_from_partitioned_edge(edge)
 
                 if not isinstance(super_edge.pre_vertex,
                                   AbstractProvidesNKeysForEdge):
@@ -452,10 +453,16 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
                                   AbstractProvidesNKeysForEdge):
                     n_keys_map.set_n_keys_for_patitioned_edge(edge, 1)
                 else:
-                    n_keys_map.set_n_keys_for_patitioned_edge(
-                        edge,
-                        edge.pre_subvertex.get_n_keys_for_partitioned_edge(
-                            edge, self._graph_mapper))
+                    if isinstance(edge, AbstractProvidesNKeysForEdge):
+                        n_keys = edge.\
+                            get_n_keys_for_partitioned_edge(edge,
+                                                            self._graph_mapper)
+                        n_keys_map.set_n_keys_for_patitioned_edge(edge, n_keys)
+                    else:
+                        n_keys_map.set_n_keys_for_patitioned_edge(
+                            edge,
+                            edge.pre_subvertex.get_n_keys_for_partitioned_edge(
+                                edge, self._graph_mapper))
 
                 if isinstance(edge.pre_subvertex,
                               AbstractProvidesOutgoingEdgeConstraints):
@@ -611,6 +618,7 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
             else:
                 if isinstance(placement.subvertex,
                               AbstractPartitionedDataSpecableVertex):
+
                     ip_tags = self._tags.get_ip_tags_for_vertex(
                         placement.subvertex)
                     reverse_ip_tags = self._tags.get_reverse_ip_tags_for_vertex(
@@ -624,24 +632,39 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
                     data_generator_interfaces.append(data_generator_interface)
                     thread_pool.apply_async(data_generator_interface.start)
                     binary_name = placement.subvertex.get_binary_file_name()
-
-                # Attempt to find this within search paths
-                binary_path = \
-                    self._executable_paths.get_executable_path(binary_name)
-                if binary_path is None:
-                    raise exceptions.ExecutableNotFoundException(binary_name)
-
-                if binary_path in executable_targets:
-                    executable_targets[binary_path].add_processor(placement.x,
-                                                                  placement.y,
-                                                                  placement.p)
                 else:
-                    processors = [placement.p]
-                    initial_core_subset = CoreSubset(placement.x, placement.y,
-                                                     processors)
-                    list_of_core_subsets = [initial_core_subset]
-                    executable_targets[binary_path] = \
-                        CoreSubsets(list_of_core_subsets)
+                    ip_tags = self._tags.get_ip_tags_for_vertex(
+                        placement.subvertex)
+                    reverse_ip_tags = self._tags.get_reverse_ip_tags_for_vertex(
+                        placement.subvertex)
+                    data_generator_interface = DataGeneratorInterface(
+                        placement.subvertex, placement.subvertex, placement,
+                        self._partitioned_graph, self._partitionable_graph,
+                        self._routing_infos, self._hostname,
+                        self._graph_mapper, self._report_default_directory,
+                        ip_tags, reverse_ip_tags, self._writeTextSpecs,
+                        self._app_data_runtime_folder, progress_bar)
+                    data_generator_interfaces.append(data_generator_interface)
+                    thread_pool.apply_async(data_generator_interface.start)
+                    binary_name = placement.subvertex.get_binary_file_name()
+
+            # Attempt to find this within search paths
+            binary_path = \
+                self._executable_paths.get_executable_path(binary_name)
+            if binary_path is None:
+                raise exceptions.ExecutableNotFoundException(binary_name)
+
+            if binary_path in executable_targets:
+                executable_targets[binary_path].add_processor(placement.x,
+                                                              placement.y,
+                                                              placement.p)
+            else:
+                processors = [placement.p]
+                initial_core_subset = CoreSubset(placement.x, placement.y,
+                                                 processors)
+                list_of_core_subsets = [initial_core_subset]
+                executable_targets[binary_path] = \
+                    CoreSubsets(list_of_core_subsets)
 
         for data_generator_interface in data_generator_interfaces:
             data_generator_interface.wait_for_finish()

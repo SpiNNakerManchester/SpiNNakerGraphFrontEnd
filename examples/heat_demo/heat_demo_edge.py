@@ -3,15 +3,17 @@ HeatDemoEdge: used in conjunction with a heat demo vertex to execute the
 heat demo
 """
 from enum import Enum
-from pacman.model.partitioned_graph.abstract_partitioned_edge \
-    import AbstractPartitionedEdge
 
 # front end common imports
 from spinn_front_end_common.abstract_models.\
     abstract_provides_n_keys_for_edge import AbstractProvidesNKeysForEdge
+from spynnaker_graph_front_end.models.\
+    mutli_cast_partitioned_edge_with_n_keys import \
+    MultiCastPartitionedEdgeWithNKeys
 
 
-class HeatDemoEdge(AbstractPartitionedEdge, AbstractProvidesNKeysForEdge):
+class HeatDemoEdge(MultiCastPartitionedEdgeWithNKeys,
+                   AbstractProvidesNKeysForEdge):
     """
     HeatDemoEdge: used in conjunction with a heat demo vertex to execute the
     heat demo
@@ -23,9 +25,11 @@ class HeatDemoEdge(AbstractPartitionedEdge, AbstractProvidesNKeysForEdge):
                              ("WEST", 2),
                              ("SOUTH", 3)])
 
-    def __init__(self, pre_vertex, post_vertex, direction, label, constraints):
-        AbstractPartitionedEdge.__init__(
-            self, pre_vertex, post_vertex, constraints, label)
+    def __init__(self, pre_subvertex, post_subvertex, direction, n_keys=1,
+                 label=None, constraints=None):
+        MultiCastPartitionedEdgeWithNKeys.__init__(
+            self, pre_subvertex, post_subvertex, n_keys=n_keys, label=label,
+            constraints=constraints)
         AbstractProvidesNKeysForEdge.__init__(self)
         self._direction = direction
 

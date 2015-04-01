@@ -11,6 +11,7 @@ from pacman.model.partitioned_graph.multi_cast_partitioned_edge \
 from pacman.model.partitionable_graph.multi_cast_partitionable_edge \
     import MultiCastPartitionableEdge
 
+
 _spinnaker = None
 _none_labelled_vertex_count = None
 _none_labelled_edge_count = None
