@@ -2,7 +2,7 @@ from setuptools import setup
 exec(open("spynnaker_graph_front_end/_version.py").read())
 
 setup(
-    name="sPyNNaker",
+    name="spynnaker_graph_front_end",
     version=__version__,
     description="Front end to the SpiNNaker tool chain which uses a basic graph",
     url="https://github.com/SpiNNakerManchester/SpiNNakerGraphFrontEnd",
