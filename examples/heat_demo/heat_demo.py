@@ -67,7 +67,6 @@ for x_position in range(0, (x_dimension * 4)):
 # build edges
 for x_position in range(0, (x_dimension * 4)):
     for y_position in range(0, (y_dimension * 4)):
-        print "{}:{}".format(x_position, y_position)
         # add a link from the injecotr to the heat element
         front_end.add_partitioned_edge(
             HeatDemoCommandEdge,

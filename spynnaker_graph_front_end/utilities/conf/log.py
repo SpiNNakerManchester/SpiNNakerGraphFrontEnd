@@ -70,7 +70,7 @@ class ConfiguredFormatter(logging.Formatter):
             match = re.sub(r'\.[^.]+$', '', match)
 
         # If no match then return None, there is no deepest parent
-        if not match in parents:
+        if match not in parents:
             match = None
 
         return match

@@ -22,6 +22,7 @@ _spinnaker = None
 _none_labelled_vertex_count = None
 _none_labelled_edge_count = None
 
+
 def setup(hostname=None, graph_label=None, model_binary_module=None,
           model_binary_folder=None, database_socket_addresses=None):
     """ for builders with pynn attitude, allows end users to define wherever

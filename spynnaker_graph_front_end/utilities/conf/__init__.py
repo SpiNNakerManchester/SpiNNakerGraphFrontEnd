@@ -8,17 +8,19 @@ working directory.
 All config is made accessible through the global object `config`.
 """
 import ConfigParser
-import inspect
-import os
-import re
-from spynnaker_graph_front_end.utilities import log
-import shutil
-import sys
 import logging
+import os
+import shutil
 import string
+import sys
+
 import spynnaker_graph_front_end
+from spinn_front_end_common.utilities import exceptions
+from spynnaker_graph_front_end.utilities.conf import log
+
 
 read = list()
+
 
 def _install_cfg():
     template_cfg = os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -65,13 +67,6 @@ else:
 read.append(default)
 
 
-# Get lists of appropriate routers, placers and partitioners
-def get_valid_components(module, terminator):
-    terminator = re.compile(terminator + '$')
-    return dict(map(lambda (name, router): (terminator.sub('', name), router),
-                inspect.getmembers(module, inspect.isclass)))
-
-
 # creates a directory if needed, or deletes it and rebuilds it
 def create_directory(directory):
     if not os.path.exists(directory):
@@ -98,3 +93,7 @@ except ConfigParser.NoOptionError:
 # Log which config files we read
 logger = logging.getLogger(__name__)
 logger.info("Read config files: %s" % string.join(read, ", "))
+
+
+
+
