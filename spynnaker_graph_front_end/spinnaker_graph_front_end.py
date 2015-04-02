@@ -48,9 +48,14 @@ from spinn_front_end_common.abstract_models.\
     abstract_provides_n_keys_for_edge import AbstractProvidesNKeysForEdge
 
 # spinnman imports
-from spinn_machine.sdram import SDRAM
+from spinn_machine.virutal_machine import VirtualMachine
 from spinnman.model.core_subset import CoreSubset
 from spinnman.model.core_subsets import CoreSubsets
+from spinnman.data.file_data_reader import FileDataReader \
+    as SpinnmanFileDataReader
+
+# spinn_machine imports
+from spinn_machine.sdram import SDRAM
 
 # graph front end imports
 from spynnaker_graph_front_end.DataSpecedGeneratorInterface import \
@@ -60,6 +65,10 @@ from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
 from spynnaker_graph_front_end.models.\
     mutli_cast_partitioned_edge_with_n_keys import \
     MultiCastPartitionedEdgeWithNKeys
+from spynnaker_graph_front_end.utilities.database.data_base_interface import \
+    DataBaseInterface
+from spynnaker_graph_front_end.utilities.database.socket_address import \
+    SocketAddress
 from spynnaker_graph_front_end.utilities.xml_interface import XMLInterface
 from spynnaker_graph_front_end.utilities.conf import config
 
@@ -80,7 +89,7 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
     """
 
     def __init__(self, hostname=None, graph_label=None,
-                 executable_paths=None):
+                 executable_paths=None, database_socket_addresses=None):
         """
         generate a spinnaker grpah front end object
         :param hostname:
@@ -93,6 +102,14 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
             hostname = config.get("Machine", "machineName")
         if graph_label is None:
             graph_label = config.get("Application", "graph_label")
+
+        if database_socket_addresses is None:
+            database_socket_addresses = list()
+            listen_port = config.getint("Database", "listen_port")
+            notify_port = config.getint("Database", "notify_port")
+            noftiy_hostname = config.get("Database", "notify_hostname")
+            database_socket_addresses.append(
+                SocketAddress(noftiy_hostname, notify_port, listen_port))
 
         FrontEndCommonConfigurationFunctions.__init__(self, hostname,
                                                       graph_label)
@@ -110,7 +127,7 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         write_provance = config.get("Reports", "writeProvanceData")
         write_text_spec = config.get("Reports", "writeTextSpecs")
         # TODO remove this self
-        self._app_id = config.get("Application", "appID")
+        self._app_id = config.getint("Application", "appID")
         execute_data_spec_report = \
             config.getboolean("Reports", "writeTextSpecs")
         execute_partitioner_report = \
@@ -133,6 +150,8 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
             config.getboolean("Reports", "writeTagAllocationReports")
         in_debug_mode = config.get("Mode", "mode") == "Debug",
         create_database = config.getboolean("Database", "create_database")
+        wait_on_confirmation = \
+            config.getboolean("Database", "wait_on_confirmation")
         partitioner_algorithm = config.get("Partitioner", "algorithm")
         placer_algorithm = config.get("Placer", "algorithm")
         key_allocator_algorithm = config.get("KeyAllocator", "algorithm")
@@ -165,7 +184,7 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
             max_reports_kept, write_provance)
 
         self._set_up_main_objects(
-            app_id=self._app_id, create_database=create_database,
+            app_id=self._app_id,
             execute_data_spec_report=execute_data_spec_report,
             execute_partitioner_report=execute_partitioner_report,
             execute_placer_report=execute_placer_report,
@@ -197,8 +216,14 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
             virtual_x_dimension=virtual_x_dimension,
             virtual_y_dimension=virtual_y_dimension)
 
+        if create_database:
+            self._database_interface = DataBaseInterface(
+                self._app_data_runtime_folder, wait_on_confirmation,
+                database_socket_addresses)
+
         self._none_labelled_vertex_count = 0
         self._none_labelled_edge_count = 0
+        self._time_scale_factor = 1
 
     def add_partitionable_vertex(self, vertex):
         """
@@ -369,26 +394,49 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         if self._do_run is True:
             logger.info("*** Running simulation... *** ")
             if self._reports_states.transciever_report:
-                binary_folder = config.get("SpecGeneration",
-                                           "Binary_folder")
                 reports.re_load_script_running_aspects(
-                    binary_folder, executable_targets, self._hostname,
-                    self._app_id, run_time)
+                    self._app_data_runtime_folder, executable_targets,
+                    self._hostname, self._app_id, run_time)
 
-            wait_on_confirmation = config.getboolean(
-                "Database", "wait_on_confirmation")
-            send_start_notification = config.getboolean(
-                "Database", "send_start_notification")
-            self._start_execution_on_machine(
-                executable_targets, self._app_id, self._runtime,
-                self._time_scale_factor, wait_on_confirmation,
-                send_start_notification, self._in_debug_mode)
-            self._has_ran = True
-            if self._retrieve_provance_data:
+                wait_on_confirmation = config.getboolean(
+                    "Database", "wait_on_confirmation")
+                send_start_notification = config.getboolean(
+                    "Database", "send_start_notification")
 
-                # retrieve provance data
-                self._retieve_provance_data_from_machine(
-                    executable_targets, self._router_tables, self._machine)
+                self._wait_for_cores_to_be_ready(executable_targets,
+                                                 self._app_id)
+
+                # wait till external app is ready for us to start if required
+                if (self._database_interface is not None and
+                        wait_on_confirmation):
+                    logger.info(
+                        "*** Awaiting for a response from an external source "
+                        "to state its ready for the simulation to start ***")
+                    self._database_interface.wait_for_confirmation()
+
+                self._start_all_cores(executable_targets, self._app_id)
+
+                if (self._database_interface is not None and
+                        send_start_notification):
+                    self._database_interface.send_start_notification()
+
+                if self._runtime is None:
+                    logger.info("Application is set to run forever - exiting")
+                else:
+                    self._wait_for_execution_to_complete(
+                        executable_targets, self._app_id, self._runtime,
+                        self._time_scale_factor)
+                self._has_ran = True
+                if self._retrieve_provance_data:
+
+                    # retrieve provenance data
+                    self._retieve_provance_data_from_machine(
+                        executable_targets, self._router_tables, self._machine)
+        elif isinstance(self._machine, VirtualMachine):
+            logger.info(
+                "*** Using a Virtual Machine so no simulation will occur")
+        else:
+            logger.info("*** No simulation requested: Stopping. ***")
 
     def map_model(self):
         """
@@ -779,7 +827,9 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
                 associated_vertex = placement.subvertex
 
             # if the vertex can generate a DSG, call it
-            if isinstance(associated_vertex, AbstractDataSpecableVertex):
+            if (isinstance(associated_vertex, AbstractDataSpecableVertex) or
+                isinstance(associated_vertex,
+                           AbstractPartitionedDataSpecableVertex)):
 
                 data_spec_file_path = \
                     associated_vertex.get_data_spec_file_path(
@@ -870,3 +920,90 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
                 runtime_application_data_folder)
         else:
             return self._chip_based_data_specification_execution(hostname)
+
+    # TODO THIS NEEDS REMOVING AND FIXING
+    def _load_application_data(
+            self, placements, router_tables, vertex_to_subvertex_mapper,
+            processor_to_app_data_base_address, hostname, app_id,
+            app_data_folder, machine_version):
+
+        # if doing reload, start script
+        if self._reports_states.transciever_report:
+            reports.start_transceiver_rerun_script(
+                app_data_folder, hostname, machine_version)
+
+        # go through the placements and see if there's any application data to
+        # load
+        progress_bar = ProgressBar(len(list(placements.placements)),
+                                   "Loading application data onto the machine")
+        for placement in placements.placements:
+            if vertex_to_subvertex_mapper is not None:
+                associated_vertex = \
+                    vertex_to_subvertex_mapper.get_vertex_from_subvertex(
+                        placement.subvertex)
+            else:
+                associated_vertex = placement.subvertex
+
+            if (isinstance(associated_vertex, AbstractDataSpecableVertex) or
+                isinstance(associated_vertex,
+                           AbstractPartitionedDataSpecableVertex)):
+                logger.debug("loading application data for vertex {}"
+                             .format(associated_vertex.label))
+                key = (placement.x, placement.y, placement.p)
+                start_address = \
+                    processor_to_app_data_base_address[key]['start_address']
+                memory_written = \
+                    processor_to_app_data_base_address[key]['memory_written']
+                file_path_for_application_data = \
+                    associated_vertex.get_application_data_file_path(
+                        placement.x, placement.y, placement.p, hostname,
+                        app_data_folder)
+                application_data_file_reader = SpinnmanFileDataReader(
+                    file_path_for_application_data)
+                logger.debug("writing application data for vertex {}"
+                             .format(associated_vertex.label))
+                self._txrx.write_memory(
+                    placement.x, placement.y, start_address,
+                    application_data_file_reader, memory_written)
+
+                # update user 0 so that it points to the start of the
+                # applications data region on sdram
+                logger.debug("writing user 0 address for vertex {}"
+                             .format(associated_vertex.label))
+                user_o_register_address = \
+                    self._txrx.get_user_0_register_address_from_core(
+                        placement.x, placement.y, placement.p)
+                self._txrx.write_memory(placement.x, placement.y,
+                                        user_o_register_address, start_address)
+
+                # add lines to rerun_script if requested
+                if self._reports_states.transciever_report:
+                    reports.re_load_script_application_data_load(
+                        file_path_for_application_data, placement,
+                        start_address, memory_written, user_o_register_address,
+                        app_data_folder)
+            progress_bar.update()
+        progress_bar.end()
+
+        progress_bar = ProgressBar(len(list(router_tables.routing_tables)),
+                                   "Loading routing data onto the machine")
+
+        # load each router table that is needed for the application to run into
+        # the chips sdram
+        for router_table in router_tables.routing_tables:
+            if not self._machine.get_chip_at(router_table.x,
+                                             router_table.y).virtual:
+                self._txrx.clear_multicast_routes(router_table.x,
+                                                  router_table.y)
+                self._txrx.clear_router_diagnostic_counters(router_table.x,
+                                                            router_table.y)
+
+                if len(router_table.multicast_routing_entries) > 0:
+                    self._txrx.load_multicast_routes(
+                        router_table.x, router_table.y,
+                        router_table.multicast_routing_entries, app_id=app_id)
+                    if self._reports_states.transciever_report:
+                        reports.re_load_script_load_routing_tables(
+                            router_table, app_data_folder, app_id)
+            progress_bar.update()
+        progress_bar.end()

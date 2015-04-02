@@ -56,3 +56,10 @@ class HeatDemoEdge(MultiCastPartitionedEdgeWithNKeys,
         :return:
         """
         return True
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        return "HeatDemoedge:{}:{}:{}".format(self._label, self._direction,
+                                              self._n_keys)

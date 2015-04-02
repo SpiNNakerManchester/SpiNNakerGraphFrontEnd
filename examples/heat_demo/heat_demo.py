@@ -23,6 +23,7 @@ machine_time_step = 1
 time_scale_factor = 1
 machine_port = 11111
 machine_recieve_port = 22222
+machine_host = "0.0.0.0"
 
 # hard code dimensions here (useful for debug) (chip based)
 x_dimension = dimenions['x']
@@ -46,7 +47,7 @@ live_gatherer = \
         {'machine_time_step': machine_time_step,
          'timescale_factor': time_scale_factor,
          'label': "gatherer from heat elements",
-         'ip_address': "local_host",
+         'ip_address': machine_host,
          'port': machine_recieve_port}
     )
 
@@ -66,7 +67,7 @@ for x_position in range(0, (x_dimension * 4)):
 # build edges
 for x_position in range(0, (x_dimension * 4)):
     for y_position in range(0, (y_dimension * 4)):
-
+        print "{}:{}".format(x_position, y_position)
         # add a link from the injecotr to the heat element
         front_end.add_partitioned_edge(
             HeatDemoCommandEdge,
@@ -83,13 +84,13 @@ for x_position in range(0, (x_dimension * 4)):
             label="gatherer edge from vertex {} to live packet gatherer"
                   .format(vertices[x_position][y_position].label))
 
-        # check for the likely hood for a N link
-        if (((x_dimension * 4) - 1) - (x_position + 1)) >= 0:
+        # check for the likely hood for a N link (incoming to south)
+        if (x_position + 1) < (x_dimension * 4):
             front_end.add_partitioned_edge(
                 HeatDemoEdge,
                 {'pre_subvertex': vertices[x_position][y_position],
                  'post_subvertex': vertices[x_position + 1][y_position],
-                 'direction': HeatDemoEdge.DIRECTIONS.NORTH},
+                 'direction': HeatDemoEdge.DIRECTIONS.SOUTH},
                 label="North edge between heat elements {}:{}"
                       .format(vertices[x_position][y_position],
                               vertices[x_position + 1][y_position]),)
@@ -102,12 +103,12 @@ for x_position in range(0, (x_dimension * 4)):
                 label="injected temp for north edge of fabric for heat element"
                       "{}".format(vertices[x_position][y_position]),)
         # check for the likely hood for a E link
-        if (((y_dimension * 4) - 1) - (y_position + 1)) >= 0:
+        if (y_position + 1) < (y_dimension * 4):
             front_end.add_partitioned_edge(
                 HeatDemoEdge,
                 {'pre_subvertex': vertices[x_position][y_position],
                  'post_subvertex': vertices[x_position][y_position + 1],
-                 'direction': HeatDemoEdge.DIRECTIONS.EAST},
+                 'direction': HeatDemoEdge.DIRECTIONS.WEST},
                 label="East edge between heat elements {}:{}"
                       .format(vertices[x_position][y_position],
                               vertices[x_position][y_position + 1]),)
@@ -125,7 +126,7 @@ for x_position in range(0, (x_dimension * 4)):
                 HeatDemoEdge,
                 {'pre_subvertex': vertices[x_position][y_position],
                  'post_subvertex': vertices[x_position][y_position - 1],
-                 'direction': HeatDemoEdge.DIRECTIONS.SOUTH},
+                 'direction': HeatDemoEdge.DIRECTIONS.NORTH},
                 label="South edge between heat elements {}:{}"
                       .format(vertices[x_position][y_position],
                               vertices[x_position][y_position - 1]),)
@@ -143,7 +144,7 @@ for x_position in range(0, (x_dimension * 4)):
                 HeatDemoEdge,
                 {'pre_subvertex': vertices[x_position][y_position],
                  'post_subvertex': vertices[x_position - 1][y_position],
-                 'direction': HeatDemoEdge.DIRECTIONS.WEST},
+                 'direction': HeatDemoEdge.DIRECTIONS.EAST},
                 label="West edge between heat elements {}:{}"
                       .format(vertices[x_position][y_position],
                               vertices[x_position - 1][y_position]),)
@@ -156,5 +157,5 @@ for x_position in range(0, (x_dimension * 4)):
                 label="Injected temp for West edge of fabric for heat element"
                       " {}".format(vertices[x_position][y_position]))
 
-front_end.run(10000)
+front_end.run(1)
 front_end.stop()

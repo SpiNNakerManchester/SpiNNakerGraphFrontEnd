@@ -1,4 +1,6 @@
 from spinn_front_end_common.interface.executable_finder import ExecutableFinder
+from spynnaker_graph_front_end.utilities import conf
+
 
 # utility models for graph front ends
 from spinn_front_end_common.utility_models.\
@@ -11,19 +13,26 @@ from pacman.model.partitioned_graph.multi_cast_partitioned_edge \
 from pacman.model.partitionable_graph.multi_cast_partitionable_edge \
     import MultiCastPartitionableEdge
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 _spinnaker = None
 _none_labelled_vertex_count = None
 _none_labelled_edge_count = None
 
 def setup(hostname=None, graph_label=None, model_binary_module=None,
-          model_binary_folder=None):
+          model_binary_folder=None, database_socket_addresses=None):
     """ for builders with pynn attitude, allows end users to define wherever
     their binaries are
 
     :param hostname:
     :param graph_label:
     :param model_binary_module:
+    :param model_binary_folder:
+    :param database_socket_addresses:
+
     :return:
     """
     from spynnaker_graph_front_end.spinnaker_graph_front_end import \
@@ -42,8 +51,8 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         executable_finder.add_path(model_binary_folder)
 
     # set up the spinnaker object
-    _spinnaker = SpiNNakerGraphFrontEnd(hostname, graph_label,
-                                        executable_finder)
+    _spinnaker = SpiNNakerGraphFrontEnd(
+        hostname, graph_label, executable_finder, database_socket_addresses)
     # set up none label count params.
     _none_labelled_edge_count = 0
     _none_labelled_vertex_count = 0
