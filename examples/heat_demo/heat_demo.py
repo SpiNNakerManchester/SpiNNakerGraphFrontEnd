@@ -19,7 +19,7 @@ front_end.setup(graph_label="heat_demo_graph",
                 model_binary_module=model_binaries)
 dimenions = front_end.get_machine_dimensions()
 
-machine_time_step = 1
+machine_time_step = 1000
 time_scale_factor = 1
 machine_port = 11111
 machine_recieve_port = 22222
@@ -28,7 +28,7 @@ machine_host = "0.0.0.0"
 # hard code dimensions here (useful for debug) (chip based)
 x_dimension = dimenions['x']
 y_dimension = dimenions['y']
-#overrwide dimensions
+# overrwide dimensions
 x_dimension = 1
 y_dimension = 1
 vertices = [None] * (x_dimension * 4)
@@ -156,5 +156,5 @@ for x_position in range(0, (x_dimension * 4)):
                 label="Injected temp for West edge of fabric for heat element"
                       " {}".format(vertices[x_position][y_position]))
 
-front_end.run(1)
+front_end.run(10)
 front_end.stop()

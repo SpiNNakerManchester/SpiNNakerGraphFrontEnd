@@ -67,7 +67,7 @@ int old_temp = 0;  // any initial value will do!
 //! get temperatures from 4 neighbours
 //! make sure to have room for two values from each neighbour
 //! given that the communication is asynchronous
-int neighbours_temp[2][4];
+volatile int neighbours_temp[2][4];
 
 /*! coeficients to compute new temperature value */
 /*! adjust for 16.16 fixed-point representation  */
@@ -76,13 +76,13 @@ int cy_adj = (int) (PARAM_CY * (1 << 16));
 
 /*! keep track of which neighbours have sent data */
 /*! cores in the boder need special values! */
-uint arrived[2];
+volatile uint arrived[2];
 uint init_arrived;
-uint now  = 0;
-uint next = 1;
+volatile uint now  = 0;
+volatile uint next = 1;
 
 //! bool to control if the model should do an update of its element
-bool updating = true;
+volatile bool updating = true;
 //! control vlaue, which says how many timer tics to run for before exiting
 static uint32_t simulation_ticks;
 //! the unqieu identifier of this model, so that it can tell if the data its
@@ -308,10 +308,11 @@ void send_first_value (uint a, uint b)
 {
     use(a);
     use(b);
-    sark.vcpu->user3 = 99;
     log_debug("sending out inital temp\n");
     /* send data to neighbours */
-    spin1_send_mc_packet(my_key, my_temp, WITH_PAYLOAD);
+    while(! spin1_send_mc_packet(my_key, my_temp, WITH_PAYLOAD)){
+        spin1_delay_us(1);
+    }
 }
 
 
@@ -400,7 +401,9 @@ void update (uint ticks, uint b)
         log_debug("sending my temp of %d via multicast with key %d\n",
                   my_temp, my_key);
         /* send new data to neighbours */
-        spin1_send_mc_packet(my_key, my_temp, WITH_PAYLOAD);
+        while(! spin1_send_mc_packet(my_key, my_temp, WITH_PAYLOAD)){
+            spin1_delay_us(1);
+        }
 
         /* prepare for next iteration */
         arrived[now] = init_arrived;
@@ -524,11 +527,12 @@ void c_main()
 
     // set timer tick value to 1ms (in microseconds)
     // slow down simulation to alow users to appreciate changes
+    log_debug("setting timer to execute every %d microseconds", timer_period);
     spin1_set_timer_tick (timer_period);
 
     // register callbacks
-    spin1_callback_on (MCPL_PACKET_RECEIVED, receive_data, -1);
-    //spin1_callback_on (MC_PACKET_RECEIVED, receive_data_void, -1);
+    spin1_callback_on (MCPL_PACKET_RECEIVED, receive_data, 0);
+    spin1_callback_on (MC_PACKET_RECEIVED, receive_data_void, -1);
     spin1_callback_on (TIMER_TICK, update, 0);
 
     #ifdef DEBUG
