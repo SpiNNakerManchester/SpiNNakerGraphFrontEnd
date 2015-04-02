@@ -1,5 +1,5 @@
 """
-heat demo main entrance
+heat demo main entrance allows users to run the heat demo on the tool chain
 """
 from examples.heat_demo.heat_demo_command_edge import HeatDemoCommandEdge
 from spinn_front_end_common.utility_models.live_packet_gather import \
