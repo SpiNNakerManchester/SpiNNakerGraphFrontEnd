@@ -25,12 +25,20 @@ machine_port = 11111
 machine_recieve_port = 22222
 machine_host = "0.0.0.0"
 
+
+
+
 # hard code dimensions here (useful for debug) (chip based)
 x_dimension = dimenions['x']
 y_dimension = dimenions['y']
+
+max_x_element_id = x_dimension * 4
+max_y_element_id = y_dimension * 4
+
 # overrwide dimensions
-x_dimension = 1
-y_dimension = 1
+max_x_element_id = 2
+max_y_element_id = 2
+
 vertices = [None] * (x_dimension * 4)
 
 
@@ -53,8 +61,8 @@ live_gatherer = \
 
 # build vertices
 
-for x_position in range(0, (x_dimension * 4)):
-    for y_position in range(0, (y_dimension * 4)):
+for x_position in range(0, max_x_element_id):
+    for y_position in range(0, max_y_element_id):
         element = front_end.add_partitioned_vertex(
             HeatDemoVertexPartitioned,
             {'machine_time_step': machine_time_step,
@@ -65,8 +73,8 @@ for x_position in range(0, (x_dimension * 4)):
         vertices[x_position].append(element)
 
 # build edges
-for x_position in range(0, (x_dimension * 4)):
-    for y_position in range(0, (y_dimension * 4)):
+for x_position in range(0, max_x_element_id):
+    for y_position in range(0, max_y_element_id):
         # add a link from the injecotr to the heat element
         front_end.add_partitioned_edge(
             HeatDemoCommandEdge,
@@ -84,7 +92,7 @@ for x_position in range(0, (x_dimension * 4)):
                   .format(vertices[x_position][y_position].label))
 
         # check for the likely hood for a N link (incoming to south)
-        if (x_position + 1) < (x_dimension * 4):
+        if (x_position + 1) < max_x_element_id:
             front_end.add_partitioned_edge(
                 HeatDemoEdge,
                 {'pre_subvertex': vertices[x_position][y_position],
@@ -102,7 +110,7 @@ for x_position in range(0, (x_dimension * 4)):
                 label="injected temp for north edge of fabric for heat element"
                       "{}".format(vertices[x_position][y_position]),)
         # check for the likely hood for a E link
-        if (y_position + 1) < (y_dimension * 4):
+        if (y_position + 1) < max_y_element_id:
             front_end.add_partitioned_edge(
                 HeatDemoEdge,
                 {'pre_subvertex': vertices[x_position][y_position],
