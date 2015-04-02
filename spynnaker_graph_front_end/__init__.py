@@ -73,7 +73,7 @@ def run(duration=None):
     _spinnaker.run(duration)
 
 
-def stop(stop_on_board=True):
+def stop():
     """
     Do any necessary cleaning up before exiting.
 
@@ -84,7 +84,7 @@ def stop(stop_on_board=True):
     global _spinnaker
     global _executable_finder
 
-    _spinnaker.stop(stop_on_board)
+    _spinnaker.stop()
     _spinnaker = None
     _executable_finder = None
 

@@ -754,28 +754,12 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
 
         return executable_targets
 
-    def stop(self, stop_on_board=True):
+    def stop(self):
         """
-
-        :param stop_on_board:
+        kills database if running
         :return:
         """
-        if stop_on_board:
-            for router_table in self._router_tables.routing_tables:
-                if (not self._machine.get_chip_at(router_table.x,
-                                                  router_table.y).virtual and
-                        len(router_table.multicast_routing_entries) > 0):
-                    self._txrx.clear_router_diagnostic_counters(router_table.x,
-                                                                router_table.y)
-            for ip_tag in self._tags.ip_tags:
-                self._txrx.clear_ip_tag(
-                    ip_tag.tag, board_address=ip_tag.board_address)
-            for reverse_ip_tag in self._tags.reverse_ip_tags:
-                self._txrx.clear_ip_tag(
-                    reverse_ip_tag.tag,
-                    board_address=reverse_ip_tag.board_address)
 
-            # self._txrx.stop_application(self._app_id)
         if self._create_database:
             self._database_interface.stop()
 

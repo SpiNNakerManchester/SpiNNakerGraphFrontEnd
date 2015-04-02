@@ -32,6 +32,12 @@
 #define EW_ARRIVED         (EAST_ARRIVED | WEST_ARRIVED)
 #define ALL_ARRIVED        (NS_ARRIVED | EW_ARRIVED)
 
+//! values for when a certain edge isnt expected
+#define NORTH_INIT         (40 << 16)
+#define EAST_INIT          (10 << 16)
+#define SOUTH_INIT         (10 << 16)
+#define WEST_INIT          (40 << 16)
+
 //! how many keys to store before overwriting
 #define DEBUG_KEYS         500
 
@@ -404,6 +410,7 @@ void update (uint ticks, uint b)
         while(! spin1_send_mc_packet(my_key, my_temp, WITH_PAYLOAD)){
             spin1_delay_us(1);
         }
+        log_debug("sent my temp via multicast");
 
         /* prepare for next iteration */
         arrived[now] = init_arrived;
@@ -432,6 +439,7 @@ static bool initialize(uint32_t *timer_period) {
 
     // Read the header
     if (!data_specification_read_header(address)) {
+        log_error("failed to read the dataspec header");
         return false;
     }
 
@@ -441,8 +449,11 @@ static bool initialize(uint32_t *timer_period) {
     if (!simulation_read_timing_details(
             system_region, APPLICATION_MAGIC_NUMBER, timer_period,
             &simulation_ticks)) {
+        log_error("failed to read the system header");
         return false;
     }
+
+    // output message about length of time to run
     log_debug("i plan to run for %d timer ticks", simulation_ticks);
 
     // initlise transmission keys
@@ -463,12 +474,38 @@ static bool initialize(uint32_t *timer_period) {
        NEIGBOUR_KEYS, address);
     east_key = neigbour_region_address[EAST_KEY];
     log_debug("my east neighbours key is %d\n", east_key);
+    if (east_key == -1){
+        neighbours_temp[now][NORTH]  = EAST_INIT;
+        neighbours_temp[next][NORTH] = EAST_INIT;
+        init_arrived |= EAST_ARRIVED;
+    }
     north_key = neigbour_region_address[NORTH_KEY];
     log_debug("my north neighbours key is %d\n", north_key);
+    if (north_key == -1){
+        neighbours_temp[now][NORTH]  = NORTH_INIT;
+        neighbours_temp[next][NORTH] = NORTH_INIT;
+        init_arrived |= NORTH_ARRIVED;
+    }
     west_key = neigbour_region_address[WEST_KEY];
     log_debug("my west neighbours key is %d\n", west_key);
+    if (west_key == -1){
+        neighbours_temp[now][WEST]  = WEST_INIT;
+        neighbours_temp[next][WEST] = WEST_INIT;
+        init_arrived |= WEST_ARRIVED;
+    }
     south_key = neigbour_region_address[SOUTH_KEY];
     log_debug("my south neighbours key is %d\n", south_key);
+    if (south_key == -1){
+        neighbours_temp[now][SOUTH]  = SOUTH_INIT;
+        neighbours_temp[next][SOUTH] = SOUTH_INIT;
+        init_arrived |= SOUTH_ARRIVED;
+    }
+
+    // prepare for first update
+    arrived[now]  = init_arrived;
+    arrived[next] = init_arrived;
+
+    // locate fake injected temp keys
     fake_temp_east_key = neigbour_region_address[EAST_FAKE_KEY];
     log_debug("my fake east temp key is %d\n", fake_temp_east_key);
     fake_temp_north_key = neigbour_region_address[NORTH_FAKE_KEY];
@@ -528,11 +565,11 @@ void c_main()
     // set timer tick value to 1ms (in microseconds)
     // slow down simulation to alow users to appreciate changes
     log_debug("setting timer to execute every %d microseconds", timer_period);
-    spin1_set_timer_tick (timer_period);
+    spin1_set_timer_tick(timer_period);
 
     // register callbacks
     spin1_callback_on (MCPL_PACKET_RECEIVED, receive_data, 0);
-    spin1_callback_on (MC_PACKET_RECEIVED, receive_data_void, -1);
+    spin1_callback_on (MC_PACKET_RECEIVED, receive_data_void, 0);
     spin1_callback_on (TIMER_TICK, update, 0);
 
     #ifdef DEBUG
