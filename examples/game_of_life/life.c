@@ -224,7 +224,7 @@ void c_main (void)
 
     spin1_start (SYNC_NOWAIT);					// start event-driven operation
 
-    io_printf (IO_BUF, "Terminated core %d %d %d\n",
-		chip >> 8, chip & 255, core);			// print if event_exit used...
+    // print if event_exit used...
+    log_debug("Terminated core %d %d %d\n", chip >> 8, chip & 255, core);
   }
 }
