@@ -65,7 +65,8 @@ uint comamnd_stop_key;
 uint command_resume_key;
 /*! multicast routing keys for sneding temp back to host for live stream*/
 uint host_data_key;
-
+/*! setter for if i should record data to sdram*/
+uint should_record_to_sdram;
 /*! temperature values */
 int my_temp;  // any initial value will do!
 int old_temp = 0;  // any initial value will do!
@@ -98,7 +99,7 @@ static uint32_t simulation_ticks;
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
     SYSTEM_REGION, TRANSMISSIONS, NEIGBOUR_KEYS, COMMAND_KEYS, OUTPUT_KEYS,
-    TEMP_VALUE,
+    TEMP_VALUE, RECORDING_REGION,
 } regions_e;
 
 //! human readable definitions of each element in the transmission region
@@ -127,6 +128,11 @@ typedef enum initial_temperature_region_elements {
     INITIAL_TEMPERATURE
 }initial_temperature_region_elements;
 
+//! human readable definitions of each element in the recoridng region config
+typedef enum recording_region_config_elements {
+    SET_TO_RECORD
+}recording_region_config_elements;
+
 //! if in debug mode, store some tracers
 #ifdef DEBUG
     uint   dbg_packs_recv = 0;
@@ -146,7 +152,7 @@ typedef enum initial_temperature_region_elements {
 *
 * SOURCE
 */
-void send_temps_to_host ()
+void send_temps_to_host()
 {
     /* send mc packet which should be ecieved by host via gatherers */
     spin1_send_mc_packet(host_data_key, my_temp, WITH_PAYLOAD);
@@ -163,10 +169,20 @@ void send_temps_to_host ()
 *
 * SOURCE
 */
-void report_temp (uint ticks)
+void report_temp(uint ticks)
 {
-  use(ticks);
-  // need to look at recording regions and definign how much data to store
+    // if the model is set to record, then locate the right address to
+    //write current temp into
+    if (should_record_to_sdram){
+         // Copy data into recording channel
+         address_t address = data_specification_get_data_address();
+         address_t my_recording_region_address = data_specification_get_region(
+              RECORDING_REGION, address);
+         address_t place_to_record =
+              my_recording_region_address + sizeof(uint) +
+              (sizeof(uint) * ticks);
+         memcpy(&place_to_record, my_temp, 4);
+    }
 }
 
 /****f* heat_demo.c/receive_data
@@ -184,7 +200,7 @@ void report_temp (uint ticks)
 *
 * SOURCE
 */
-void receive_data (uint key, uint payload)
+void receive_data(uint key, uint payload)
 {
     sark.vcpu->user1++;
     log_debug("the key ive recieved is %d\n", key);
@@ -310,7 +326,7 @@ void receive_data (uint key, uint payload)
 *
 * SOURCE
 */
-void send_first_value (uint a, uint b)
+void send_first_value(uint a, uint b)
 {
     use(a);
     use(b);
@@ -331,7 +347,7 @@ void send_first_value (uint a, uint b)
 *
 * SOURCE
 */
-void update (uint ticks, uint b)
+void update(uint ticks, uint b)
 {
     use(b);
     sark.vcpu->user0++;
@@ -425,7 +441,7 @@ void update (uint ticks, uint b)
 //! \brief this method is to catch strange behaviour
 //! \param[in] key: the key being recieved
 //! \param[in] uknown: second arg with no state. set to zero by deault
-void receive_data_void (uint key, uint unknown){
+void receive_data_void(uint key, uint unknown){
     use(key);
     use(unknown);
     log_error("this should never ever be done\n");
@@ -517,7 +533,7 @@ static bool initialize(uint32_t *timer_period) {
     
     // initlise command keys
     address_t command_region_address =  data_specification_get_region(
-       COMMAND_KEYS, address);
+        COMMAND_KEYS, address);
     comamnd_stop_key = command_region_address[STOP_COMMAND_KEY];
     log_debug("my stop command is %d\n", comamnd_stop_key);
     command_pause_key = command_region_address[PAUSE_COMMAND_KEY];
@@ -527,15 +543,21 @@ static bool initialize(uint32_t *timer_period) {
 
     // initlise output key
     address_t host_output_region_address =  data_specification_get_region(
-       OUTPUT_KEYS, address);
+        OUTPUT_KEYS, address);
     host_data_key = host_output_region_address[HOST_TRANSMISSION_KEY];
     log_debug("my to host key is %d\n", host_data_key);
 
     // read my temperture
     address_t my_temp_region_address =  data_specification_get_region(
-       TEMP_VALUE, address);
+        TEMP_VALUE, address);
     my_temp = my_temp_region_address[INITIAL_TEMPERATURE];
     log_debug("my initial temp is %d\n", my_temp);
+
+    // read if im recording
+    address_t my_recording_region_address = data_specification_get_region(
+        RECORDING_REGION, address);
+    should_record_to_sdram = my_recording_region_address[SET_TO_RECORD];
+    log_debug("if i should record is set to %d\n", should_record_to_sdram);
     return true;
 }
 
@@ -568,9 +590,9 @@ void c_main()
     spin1_set_timer_tick(timer_period);
 
     // register callbacks
-    spin1_callback_on (MCPL_PACKET_RECEIVED, receive_data, 0);
-    spin1_callback_on (MC_PACKET_RECEIVED, receive_data_void, 0);
-    spin1_callback_on (TIMER_TICK, update, 0);
+    spin1_callback_on(MCPL_PACKET_RECEIVED, receive_data, 0);
+    spin1_callback_on(MC_PACKET_RECEIVED, receive_data_void, 0);
+    spin1_callback_on(TIMER_TICK, update, 0);
 
     #ifdef DEBUG
         // initialise variables
