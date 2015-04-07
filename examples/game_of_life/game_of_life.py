@@ -29,13 +29,13 @@ front_end.setup(graph_label="game_of_life_demo",
 dimenions = front_end.get_machine_dimensions()
 
 machine_time_step = 1000
-time_scale_factor = 1
+time_scale_factor = 10
 machine_port = 11111
 machine_recieve_port = 22222
 machine_host = "0.0.0.0"
 toroid = True
 record_on_sdram = True
-runtime = 10
+runtime = 100
 
 # hard code dimensions here (useful for debug) (chip based)
 x_dimension = dimenions['x']
