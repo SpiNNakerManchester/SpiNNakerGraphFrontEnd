@@ -301,7 +301,7 @@ if record_on_sdram:
                 get_recorded_states(trasnciever, placement))
 
     print states
-    for time_step in range(runtime):
+    for time_step in range(runtime - 1):
         for x_position in range(0, max_x_element_id):
             line = ""
             for y_position in range(0, max_y_element_id):

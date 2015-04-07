@@ -74,7 +74,7 @@ void report_state(uint ticks)
          address_t my_recording_region_address = data_specification_get_region(
               RECORDING_REGION, address);
          // 2 is for "does record and initial value)
-         address_t place_to_record = my_recording_region_address + 2 + ticks;
+         address_t place_to_record = my_recording_region_address + 1 + ticks;
          log_debug("recording_region_address is %d", my_recording_region_address);
          spin1_memcpy(place_to_record, &alive, 1);
          log_debug("recorded state %d for tick %d at address %d",
@@ -99,11 +99,12 @@ void report_state(uint ticks)
 */
 void receive_data(uint key, uint payload)
 {
-    log_debug("the key ive recieved is %d\n", key);
+    log_debug("the key ive recieved is %d with payload %d \n", key, payload);
     // count[gen mod 2] += alive
-    count +=1;
+    if (payload == 1){
+        count +=1;
+    }
 }
-
 
 /****f* heat_demo.c/send_first_value
 *
@@ -140,6 +141,7 @@ void update(uint ticks, uint b)
     use(b);
 
     log_debug("on tick %d", ticks);
+    log_debug("have recieved %d alive packets", count);
     // check that the run time hasnt already alapsed and thus needs to be killed
     if (ticks == simulation_ticks){
         log_info("Simulation complete.\n");
@@ -147,6 +149,11 @@ void update(uint ticks, uint b)
         return;
     }
 
+    // traditional conways game of life rules:
+    // http://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
+    // http://www.bitstorm.org/gameoflife/
+    // http://www.conwaylife.com/wiki/Conway%27s_Game_of_Life
+    // and many many more.
     if (alive == 1){
         if(count < 2){
              alive = 0;
@@ -170,7 +177,6 @@ void update(uint ticks, uint b)
 
     //alive = (count[gen] | alive) == theshold;		// Life automaton rule
     count = 0;						            // clear count for next gen
-    gen = !gen;							            // onto next generation
 
     // send state to neighbours
     spin1_send_mc_packet (my_key, alive, WITH_PAYLOAD);
@@ -279,7 +285,7 @@ void c_main()
     // register callbacks
     spin1_callback_on(MCPL_PACKET_RECEIVED, receive_data, 0);
     spin1_callback_on(MC_PACKET_RECEIVED, receive_data_void, 0);
-    spin1_callback_on(TIMER_TICK, update, 0);
+    spin1_callback_on(TIMER_TICK, update, -1);
 
     // kick-start the update process
     spin1_schedule_callback(send_first_value, 0, 0, 3);

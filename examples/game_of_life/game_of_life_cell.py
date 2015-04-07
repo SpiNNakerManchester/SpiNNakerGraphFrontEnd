@@ -21,6 +21,8 @@ from pacman.model.resources.sdram_resource import SDRAMResource
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_edge_constraints import \
     AbstractProvidesOutgoingEdgeConstraints
+from spinnman.data.little_endian_byte_array_byte_reader import \
+    LittleEndianByteArrayByteReader
 from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
     import AbstractPartitionedDataSpecableVertex
 from spynnaker_graph_front_end.utilities import utility_calls
@@ -302,12 +304,12 @@ class GameOfLifeCell(
             recorded_states = transciever.read_memory_return_byte_array(
                 placement.x, placement.y,
                 recorded_state_region_base_address + 4,
-                self._no_machine_time_steps)
+                (self._no_machine_time_steps - 1) * 4)
 
-            data_list = bytearray()
-            for data in recorded_states:
-                data_list.append(data)
-            numpy_data = numpy.asarray(data_list, dtype="uint32")
-            return numpy_data
+            reader = LittleEndianByteArrayByteReader(recorded_states)
+            data = list()
+            while not reader.is_at_end():
+                data.append(reader.read_int())
+            return data
         else:
             return []
