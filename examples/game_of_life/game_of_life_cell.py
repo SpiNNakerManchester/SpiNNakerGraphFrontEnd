@@ -2,11 +2,6 @@
 HeatDemoVertexPartitioned
 """
 
-# heat demo imports
-from data_specification.enums.data_type import DataType
-from examples.heat_demo.heat_demo_command_edge import HeatDemoCommandEdge
-from examples.heat_demo.heat_demo_edge import HeatDemoEdge
-
 # data spec imports
 from data_specification.data_specification_generator import \
     DataSpecificationGenerator
@@ -26,10 +21,6 @@ from pacman.model.resources.sdram_resource import SDRAMResource
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_edge_constraints import \
     AbstractProvidesOutgoingEdgeConstraints
-from spinn_front_end_common.utility_models.live_packet_gather import \
-    LivePacketGather
-from spinn_front_end_common.utility_models.\
-    reverse_ip_tag_multi_cast_source import ReverseIpTagMultiCastSource
 from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
     import AbstractPartitionedDataSpecableVertex
 from spynnaker_graph_front_end.utilities import utility_calls
@@ -62,14 +53,19 @@ class GameOfLifeCell(
                ('STATE_REGION', 2),
                ('RECORDING_REGION', 3)])
 
+    STATES = Enum(
+        value="STATES",
+        names=[('DEAD', 0),
+               ('ALIVE', 1)])
+
     _model_based_max_atoms_per_core = 1
     _model_n_atoms = 1
     STATE_REGION_SIZE = 2 * 4
-    TRANSMISSIONS_SIZE = 1 * 4
-
+    TRANSMISSIONS_SIZE = 2 * 4
 
     def __init__(
-            self, label, machine_time_step, time_scale_factor, initial_state=0,
+            self, label, machine_time_step, time_scale_factor,
+            initial_state=None,
             theshold_point=3, record_on_sdram=False, constraints=None):
 
         self._record_on_sdram = record_on_sdram
@@ -81,7 +77,13 @@ class GameOfLifeCell(
         AbstractProvidesOutgoingEdgeConstraints.__init__(self)
         self._machine_time_step = machine_time_step
         self._time_scale_factor = time_scale_factor
-        self._initial_state = initial_state
+        if initial_state is None:
+            self._initial_state = self.STATES.DEAD
+        elif isinstance(initial_state, self.STATES):
+            self._initial_state = initial_state
+        else:
+            exceptions.ConfigurationException(
+                "The intial state isnt recongised, please fix and try again")
         self._theshold_point = theshold_point
 
         # used to support 
@@ -89,6 +91,10 @@ class GameOfLifeCell(
 
     @property
     def resources_required(self):
+        """
+        overriden method for getting the resource container.
+        :return:
+        """
         return ResourceContainer(cpu=CPUCyclesPerTickResource(45),
                                  dtcm=DTCMResource(34),
                                  sdram=self._calculate_sdram_usage())
@@ -109,7 +115,7 @@ class GameOfLifeCell(
         recording_size = 4  # one int for bool saying to record or not
         if self._record_on_sdram:
             recording_size = (self._no_machine_time_steps * 4) + 4
-        total_sizes = self.TRANSMISSION_DATA_SIZE + system_size + recording_size
+        total_sizes = self.TRANSMISSIONS_SIZE + system_size + recording_size
         return SDRAMResource(total_sizes)
 
     def model_name(self):
@@ -185,15 +191,15 @@ class GameOfLifeCell(
         spec.comment("writing bool saying to record or not \n")
         if self._record_on_sdram:
             spec.write_value(data=1)
+            spec.write_value(data=self._initial_state.value)
         else:
             spec.write_value(data=0)
 
     def _write_state_data(self, spec):
         spec.switch_write_focus(region=self.DATA_REGIONS.STATE_REGION.value)
-        spec.comment("writing initial temp for this game of life cell \n")
-        spec.write_value(data=self._initial_state)
+        spec.comment("writing initial state for this game of life cell \n")
+        spec.write_value(data=self._initial_state.value)
         spec.write_value(data=self._theshold_point)
-
 
     def _reserve_memory_regions(self, spec):
         """
@@ -210,7 +216,7 @@ class GameOfLifeCell(
         spec.reserve_memory_region(region=self.DATA_REGIONS.SYSTEM.value,
                                    size=system_size, label='systemInfo')
         spec.reserve_memory_region(region=self.DATA_REGIONS.TRANSMISSIONS.value,
-                                   size=self.TRANSMISSION_DATA_SIZE,
+                                   size=self.TRANSMISSIONS_SIZE,
                                    label="keys")
         spec.reserve_memory_region(region=self.DATA_REGIONS.STATE_REGION.value,
                                    size=self.STATE_REGION_SIZE, label="state")
@@ -270,6 +276,7 @@ class GameOfLifeCell(
         """
 
         :param transciever:
+        :param placement:
         :return:
         """
         if self._record_on_sdram:
@@ -279,28 +286,28 @@ class GameOfLifeCell(
                     placement.x, placement.y, placement.p).user[0]
 
             # Get the position of the spike buffer
-
-            recorded_temp_region_base_address_offset = \
+            recorded_state_region_base_address_offset = \
                 utility_calls.get_region_base_address_offset(
                     app_data_base_address,
                     self.DATA_REGIONS.RECORDING_REGION.value)
-            recorded_temp_region_base_address_buf = \
+            recorded_state_region_base_address_buf = \
                 str(list(transciever.read_memory(
                     placement.x, placement.y,
-                    recorded_temp_region_base_address_offset, 4))[0])
-            recorded_temp_region_base_address = \
-                struct.unpack("<I", recorded_temp_region_base_address_buf)[0]
-            recorded_temp_region_base_address += app_data_base_address
+                    recorded_state_region_base_address_offset, 4))[0])
+            recorded_state_region_base_address = \
+                struct.unpack("<I", recorded_state_region_base_address_buf)[0]
+            recorded_state_region_base_address += app_data_base_address
 
-            # read the recorded temps
-            recorded_temps = transciever.read_memory(
-                placement.x, placement.y, recorded_temp_region_base_address + 4,
-                self._no_machine_time_steps * 4)
+            # read the recorded states
+            recorded_states = transciever.read_memory_return_byte_array(
+                placement.x, placement.y,
+                recorded_state_region_base_address + 4,
+                self._no_machine_time_steps)
 
             data_list = bytearray()
-            for data in recorded_temps:
-                data_list.extend(data)
-            numpy_data = numpy.asarray(data_list, dtype="uint8")
+            for data in recorded_states:
+                data_list.append(data)
+            numpy_data = numpy.asarray(data_list, dtype="uint32")
             return numpy_data
         else:
             return []

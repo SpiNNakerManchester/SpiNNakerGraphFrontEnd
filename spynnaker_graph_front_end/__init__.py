@@ -231,3 +231,21 @@ def get_machine_dimensions():
     """
     global _spinnaker
     return _spinnaker.get_machine_dimensions()
+
+
+def get_placement(partitioned_vertex):
+    """supports scripts to use placement objects if needed.
+
+    :param partitioned_vertex:
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.get_placement(partitioned_vertex)
+
+def get_transciever():
+    """  returns the transciever for scripts to use if needed
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.get_transciever()

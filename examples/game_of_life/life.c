@@ -4,7 +4,7 @@
   This example program demonstrates the use of Tubogrid to get simple
   per-core animation. It implements Conway's Life .
 */
-*******/
+
 
 //! imports
 #include "spin1_api.h"
@@ -23,9 +23,9 @@ uint alive;
 //! the number of alive neigubours needed to keep this cell alive.
 uint theshold;
 //! previous state
-uint last_alive = 2;
+uint last_alive;
 //! live neighbour count [for each gen]
-uint count [2];
+uint count;
 //! generation (used for parity)
 uint gen;
 //! control vlaue, which says how many timer tics to run for before exiting
@@ -73,10 +73,12 @@ void report_state(uint ticks)
          address_t address = data_specification_get_data_address();
          address_t my_recording_region_address = data_specification_get_region(
               RECORDING_REGION, address);
-         address_t place_to_record =
-              my_recording_region_address + sizeof(uint) +
-              (sizeof(uint) * ticks);
-         memcpy(&place_to_record, gen+(alive<<1), 4);
+         // 2 is for "does record and initial value)
+         address_t place_to_record = my_recording_region_address + 2 + ticks;
+         log_debug("recording_region_address is %d", my_recording_region_address);
+         spin1_memcpy(place_to_record, &alive, 1);
+         log_debug("recorded state %d for tick %d at address %d",
+                   alive, ticks, place_to_record);
     }
 }
 
@@ -97,10 +99,9 @@ void report_state(uint ticks)
 */
 void receive_data(uint key, uint payload)
 {
-    sark.vcpu->user1++;
     log_debug("the key ive recieved is %d\n", key);
     // count[gen mod 2] += alive
-    count[data & 1] += data >> 1;
+    count +=1;
 }
 
 
@@ -119,7 +120,7 @@ void send_first_value(uint a, uint b)
     use(b);
     log_debug("sending out inital state\n");
     /* send data to neighbours */
-    while(! spin1_send_mc_packet(my_key, gen+(alive<<1), WITH_PAYLOAD)){
+    while(! spin1_send_mc_packet(my_key, alive, WITH_PAYLOAD)){
         spin1_delay_us(1);
     }
 }
@@ -137,7 +138,6 @@ void send_first_value(uint a, uint b)
 void update(uint ticks, uint b)
 {
     use(b);
-    sark.vcpu->user0++;
 
     log_debug("on tick %d", ticks);
     // check that the run time hasnt already alapsed and thus needs to be killed
@@ -147,15 +147,35 @@ void update(uint ticks, uint b)
         return;
     }
 
-    alive = (count[gen] | alive) == theshold;				// Life automaton rule
-    count[gen] = 0;						// clear count for next gen
-    gen = !gen;							// onto next generation
+    if (alive == 1){
+        if(count < 2){
+             alive = 0;
+        }
+        else if(count == 2 && count == 3){
+            alive = 1;
+        }
+        else if(count > 3){
+            alive = 0;
+        }
+    }
+    else{
+        if(count == 3){
+            alive = 1;
+        }
+        else{
+            alive = 0;
+        }
+    }
 
-    spin1_send_mc_packet (my_key, gen+(alive<<1), WITH_PAYLOAD);	// send state to neighbours
+
+    //alive = (count[gen] | alive) == theshold;		// Life automaton rule
+    count = 0;						            // clear count for next gen
+    gen = !gen;							            // onto next generation
+
+    // send state to neighbours
+    spin1_send_mc_packet (my_key, alive, WITH_PAYLOAD);
 
     if (alive != last_alive){
-        char *s = (alive) ? "white" : "black";			// Make a colour string
-        log_debug("#%s;#fill;\n", s);        		// And print it
         last_alive = alive;
     }
 
@@ -215,8 +235,10 @@ static bool initialize(uint32_t *timer_period) {
     address_t state_region_address =  data_specification_get_region(
         STATE_REGION, address);
     alive = state_region_address[INITIAL_STATE];
+    last_alive = alive;
     theshold = state_region_address[THESHOLD];
     log_debug("my initial state is %d", alive);
+    log_debug("my theshold is %d", theshold);
 
     // read if im recording
     address_t my_recording_region_address = data_specification_get_region(

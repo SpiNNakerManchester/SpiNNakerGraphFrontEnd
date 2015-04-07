@@ -178,10 +178,8 @@ void report_temp(uint ticks)
          address_t address = data_specification_get_data_address();
          address_t my_recording_region_address = data_specification_get_region(
               RECORDING_REGION, address);
-         address_t place_to_record =
-              my_recording_region_address + sizeof(uint) +
-              (sizeof(uint) * ticks);
-         memcpy(&place_to_record, my_temp, 4);
+         address_t place_to_record = my_recording_region_address + 1 + ticks;
+         memcpy(place_to_record, &my_temp, 4);
     }
 }
 

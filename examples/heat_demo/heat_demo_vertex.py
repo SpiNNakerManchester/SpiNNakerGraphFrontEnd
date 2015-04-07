@@ -30,6 +30,8 @@ from spinn_front_end_common.utility_models.live_packet_gather import \
     LivePacketGather
 from spinn_front_end_common.utility_models.\
     reverse_ip_tag_multi_cast_source import ReverseIpTagMultiCastSource
+from spinnman.data.little_endian_byte_array_byte_reader import \
+    LittleEndianByteArrayByteReader
 from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
     import AbstractPartitionedDataSpecableVertex
 from spynnaker_graph_front_end.utilities import utility_calls
@@ -434,7 +436,7 @@ class HeatDemoVertexPartitioned(
             data_list = bytearray()
             for data in recorded_temps:
                 data_list.extend(data)
-            numpy_data = numpy.asarray(data_list, dtype="uint8")
+            numpy_data = numpy.asarray(data_list, dtype="uint32")
             return numpy_data
         else:
             return []

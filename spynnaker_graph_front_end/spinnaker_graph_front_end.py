@@ -274,6 +274,21 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         """
         self._partitioned_graph.add_subedge(edge)
 
+    def get_transciever(self):
+        """ returns the transciever for scripts to use if needed
+
+        :return:
+        """
+        return self._txrx
+
+    def get_placement(self, partitioned_vertex):
+        """ supports scripts to use placement objects if needed.
+
+        :param partitioned_vertex:
+        :return:
+        """
+        return self._placements.get_placement_of_subvertex(partitioned_vertex)
+
     def _set_runtime_in_time_steps_for_model(self, vertex, run_time):
         """
 

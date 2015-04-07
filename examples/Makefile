@@ -1,4 +1,4 @@
-BUILD_DIRS = heat_demo, game_of_life
+BUILD_DIRS = heat_demo game_of_life
 
 all: $(BUILD_DIRS)
 	for d in $(BUILD_DIRS); do (cd $$d; "$(MAKE)") || exit $$?; done
