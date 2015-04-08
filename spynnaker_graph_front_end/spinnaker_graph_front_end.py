@@ -62,9 +62,6 @@ from spynnaker_graph_front_end.DataSpecedGeneratorInterface import \
     DataSpecedGeneratorInterface
 from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
     import AbstractPartitionedDataSpecableVertex
-from spynnaker_graph_front_end.models.\
-    mutli_cast_partitioned_edge_with_n_keys import \
-    MultiCastPartitionedEdgeWithNKeys
 from spynnaker_graph_front_end.utilities.database.data_base_interface import \
     DataBaseInterface
 from spynnaker_graph_front_end.utilities.database.socket_address import \
@@ -175,6 +172,9 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         else:
             requires_wrap_around = \
                 config.getboolean("Machine", "requires_wrap_arounds")
+
+        # sort out database stuff
+        self._create_database = config.getboolean("Database", "create_database")
 
         # set up the configuration methods
         self._set_up_output_application_data_specifics(application_file_folder,
