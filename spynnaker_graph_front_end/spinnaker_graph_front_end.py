@@ -24,10 +24,13 @@ from pacman.utilities.progress_bar import ProgressBar
 from spinn_front_end_common.abstract_models.\
     abstract_data_specable_vertex import \
     AbstractDataSpecableVertex
-from spinn_front_end_common.interface.data_generator_interface import \
-    DataGeneratorInterface
 
 # spinn front end common imports
+from spinn_front_end_common.interface.data_generator_interface import \
+    DataGeneratorInterface
+from spinn_front_end_common.abstract_models.\
+    abstract_provides_provanence_data import \
+    AbstractProvidesProvanenceData
 from spinn_front_end_common.interface.\
     front_end_common_configuration_functions import \
     FrontEndCommonConfigurationFunctions
@@ -46,6 +49,9 @@ from spinn_front_end_common.abstract_models.\
     import AbstractProvidesIncomingEdgeConstraints
 from spinn_front_end_common.abstract_models.\
     abstract_provides_n_keys_for_edge import AbstractProvidesNKeysForEdge
+from spinn_front_end_common.interface.\
+    front_end_common_provanence_functions import \
+    FrontEndCommonProvanenceFunctions
 
 # spinnman imports
 from spinn_machine.virutal_machine import VirtualMachine
@@ -80,7 +86,8 @@ logger = logging.getLogger(__name__)
 
 
 class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
-                             FrontEndCommonInterfaceFunctions):
+                             FrontEndCommonInterfaceFunctions,
+                             FrontEndCommonProvanenceFunctions):
     """
     entrance class for the graph front end
     """
@@ -110,6 +117,7 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
 
         FrontEndCommonConfigurationFunctions.__init__(self, hostname,
                                                       graph_label)
+        FrontEndCommonProvanenceFunctions.__init__(self)
 
         self._executable_paths = executable_paths
 
@@ -442,11 +450,27 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
                         executable_targets, self._app_id, self._runtime,
                         self._time_scale_factor)
                 self._has_ran = True
-                if self._retrieve_provance_data:
 
-                    # retrieve provenance data
-                    self._retieve_provance_data_from_machine(
-                        executable_targets, self._router_tables, self._machine)
+                if self._retrieve_provance_data:
+                    # retrieve provence data from central
+                    file_path = os.path.join(self._report_default_directory,
+                                             "provance_data")
+
+                    # check the directory doesnt already exist
+                    if not os.path.exists(file_path):
+                        os.mkdir(file_path)
+
+                    self._write_provanence_data_in_xml(file_path)
+
+                    # retrieve provenance data from any cores that provide data
+                    for placement in self._placements:
+                        if isinstance(placement.subvertex,
+                                      AbstractProvidesProvanenceData):
+                            file_path = os.path.join(
+                                self._report_default_directory,
+                                "Provanence_data_for_core:{}:{}:{}"
+                                .format(placement.x, placement.y, placement.p))
+
         elif isinstance(self._machine, VirtualMachine):
             logger.info(
                 "*** Using a Virtual Machine so no simulation will occur")
