@@ -66,7 +66,7 @@ live_gatherer = \
          'label': "gatherer from heat elements",
          'ip_address': machine_host,
          'port': machine_recieve_port,
-         'message_type': EIEIOType.KEY_PAYLOAD_32_BIT})
+         'message_type': EIEIOType.KEY_32_BIT})
 
 # build vertices
 for x_position in range(0, max_x_element_id):
