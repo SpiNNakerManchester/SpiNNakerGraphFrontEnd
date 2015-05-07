@@ -22,5 +22,5 @@ setup(
                       'SpiNNaker_PACMAN >= 2015.003-alpha-02',
                       'SpiNNaker_DataSpecification >= 2015.003-alpha-01',
                       'SpiNNFrontEndCommon >= 2015.001-alpha-01',
-                      'numpy', 'scipy', 'lxml', 'six']
+                      'numpy', 'lxml', 'six']
 )
