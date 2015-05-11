@@ -9,6 +9,7 @@
 //! imports
 #include "spin1_api.h"
 #include "common-typedefs.h"
+#include "../constants.h"
 #include <data_specification.h>
 #include <simulation.h>
 #include <debug.h>
@@ -36,7 +37,8 @@ static uint32_t simulation_ticks;
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
-    SYSTEM_REGION, TRANSMISSIONS, STATE_REGION, RECORDING_REGION,
+    TIMINGS_REGION, COMPONENT_REGION, TRANSMISSIONS, STATE_REGION,
+    RECORDING_REGION,
 } regions_e;
 
 //! human readable definitions of each element in the transmission region
@@ -213,13 +215,26 @@ static bool initialize(uint32_t *timer_period) {
 
     // Get the timing details
     address_t system_region = data_specification_get_region(
-        SYSTEM_REGION, address);
+        TIMINGS_REGION, address);
     if (!simulation_read_timing_details(
-            system_region, APPLICATION_MAGIC_NUMBER, &timer_period,
-            &simulation_ticks)) {
+            system_region, timer_period, &simulation_ticks)) {
         log_error("failed to read the system header");
         return false;
     }
+
+    // get the components that build up a delay extension
+    uint32_t components[1];
+    if (!simulation_read_components(
+            data_specification_get_region(COMPONENT_REGION, address),
+            1, components)) {
+        return false;
+    }
+
+    // verify the components are correct
+    if (components[0] != GRAPH_CELL_ELEMENT_MAGIC_NUMBER){
+        return false;
+    }
+
 
     // output message about length of time to run
     log_debug("i plan to run for %d timer ticks", simulation_ticks);

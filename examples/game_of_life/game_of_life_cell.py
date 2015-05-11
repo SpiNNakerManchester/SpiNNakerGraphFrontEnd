@@ -21,11 +21,16 @@ from pacman.model.resources.sdram_resource import SDRAMResource
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_edge_constraints import \
     AbstractProvidesOutgoingEdgeConstraints
+
+# spinnman imports
 from spinnman.data.little_endian_byte_array_byte_reader import \
     LittleEndianByteArrayByteReader
+
+# graph front end imports
 from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
     import AbstractPartitionedDataSpecableVertex
 from spynnaker_graph_front_end.utilities import utility_calls
+from spynnaker_graph_front_end.utilities import constants as graph_constants
 
 # front end common imports
 from spinn_front_end_common.utilities import constants
@@ -34,8 +39,6 @@ from spinn_front_end_common.utilities import exceptions
 # general imports
 from enum import Enum
 import struct
-import numpy
-
 
 class GameOfLifeCell(
         PartitionedVertex, AbstractPartitionedDataSpecableVertex,
@@ -50,10 +53,11 @@ class GameOfLifeCell(
     # Regions for populations
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
-        names=[('SYSTEM', 0),
-               ('TRANSMISSIONS', 1),
-               ('STATE_REGION', 2),
-               ('RECORDING_REGION', 3)])
+        names=[('TIMINGS', 0),
+               ('COMPONENTS', 1),
+               ('TRANSMISSIONS', 2),
+               ('STATE_REGION', 3),
+               ('RECORDING_REGION', 4)])
 
     STATES = Enum(
         value="STATES",
@@ -113,11 +117,12 @@ class GameOfLifeCell(
         returns the size of sdram required by the heat demo vertex.
         :return:
         """
-        system_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 2) * 4
         recording_size = 4  # one int for bool saying to record or not
         if self._record_on_sdram:
             recording_size = (self._no_machine_time_steps * 4) + 4
-        total_sizes = self.TRANSMISSIONS_SIZE + system_size + recording_size
+        total_sizes = (self.TRANSMISSIONS_SIZE +
+                       constants.TIMINGS_REGION_BYTES +
+                       (len(self._get_components()) * 4) + recording_size)
         return SDRAMResource(total_sizes)
 
     def model_name(self):
@@ -179,8 +184,12 @@ class GameOfLifeCell(
 
         # Create the data regions for the spike source array:
         self._reserve_memory_regions(spec)
-        self._write_basic_setup_info(spec, self.CORE_APP_IDENTIFIER,
-                                     self.DATA_REGIONS.SYSTEM.value)
+
+        self._write_timings_region_info(spec, self.DATA_REGIONS.TIMINGS.value)
+
+        self._write_component_to_region(
+            spec, self.DATA_REGIONS.COMPONENTS.value, self._get_components())
+
         self._write_tranmssion_keys(spec, routing_info, sub_graph)
         self._write_state_data(spec)
         self._write_recording_data(spec)
@@ -203,6 +212,12 @@ class GameOfLifeCell(
         spec.write_value(data=self._initial_state.value)
         spec.write_value(data=self._theshold_point)
 
+    def _get_components(self):
+        component_identifiers = list()
+        component_identifiers.append(
+            graph_constants.GRAPH_CELL_ELEMENT_MAGIC_NUMBER)
+        return component_identifiers
+
     def _reserve_memory_regions(self, spec):
         """
         *** Modified version of same routine in abstract_models.py These could
@@ -214,14 +229,18 @@ class GameOfLifeCell(
         :return:
         """
         # Setup words + 1 for flags + 1 for recording size
-        system_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 2) * 4
-        spec.reserve_memory_region(region=self.DATA_REGIONS.SYSTEM.value,
-                                   size=system_size, label='systemInfo')
-        spec.reserve_memory_region(region=self.DATA_REGIONS.TRANSMISSIONS.value,
-                                   size=self.TRANSMISSIONS_SIZE,
-                                   label="keys")
-        spec.reserve_memory_region(region=self.DATA_REGIONS.STATE_REGION.value,
-                                   size=self.STATE_REGION_SIZE, label="state")
+        spec.reserve_memory_region(
+            region=self.DATA_REGIONS.TIMINGS.value,
+            size=constants.TIMINGS_REGION_BYTES, label='timings')
+        spec.reserve_memory_region(
+            region=self.DATA_REGIONS.COMPONENTS.value,
+            size=len(self._get_components()) * 4, label='components')
+        spec.reserve_memory_region(
+            region=self.DATA_REGIONS.TRANSMISSIONS.value,
+            size=self.TRANSMISSIONS_SIZE, label="keys")
+        spec.reserve_memory_region(
+            region=self.DATA_REGIONS.STATE_REGION.value,
+            size=self.STATE_REGION_SIZE, label="state")
         if self._record_on_sdram:
             spec.reserve_memory_region(
                 region=self.DATA_REGIONS.RECORDING_REGION.value,
@@ -231,18 +250,33 @@ class GameOfLifeCell(
                 region=self.DATA_REGIONS.RECORDING_REGION.value,
                 size=4, label="recording_region")
 
-    def _write_basic_setup_info(self, spec, core_app_identifier, region_id):
+    def _write_timings_region_info(self, spec, region_id):
         """
-         Write this to the system region (to be picked up by the simulation):
-        :param spec:
-        :param core_app_identifier:
-        :param region_id:
-        :return:
+        writes the timing configuration info including any constants expected
+        by the c code on its configuration
+        :param spec: the spec writer to write values to
+        :param region_id: the region id to write these params to
+        :return: None
         """
+
+        # Write this to the timings region (to be picked up by the simulation):
         spec.switch_write_focus(region=region_id)
-        spec.write_value(data=core_app_identifier)
-        spec.write_value(data=self._machine_time_step * self._time_scale_factor)
+        spec.write_value(data=self._machine_time_step * self._timescale_factor)
         spec.write_value(data=self._no_machine_time_steps)
+
+    def _write_component_to_region(self, spec, region_id, components):
+        """
+        writes the component magic numbers to a region for c code invesitgation.
+        :param spec: the spec writer to write values to
+        :param components: the iterable of identifiers
+        :param region_id:  the region id to write these params to
+        :return:None
+        """
+
+        # write these to a given region (to be picked up by the simulation)
+        spec.switch_write_focus(region=region_id)
+        for identifier in components:
+            spec.write_value(data=identifier)
 
     def _write_tranmssion_keys(self, spec, routing_info, subgraph):
         """
