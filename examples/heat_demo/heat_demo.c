@@ -11,7 +11,6 @@
 //! imports
 #include "spin1_api.h"
 #include "common-typedefs.h"
-#include "../constants.h"
 #include <data_specification.h>
 #include <simulation.h>
 #include <debug.h>
@@ -476,7 +475,7 @@ static bool initialize(uint32_t *timer_period) {
     }
 
     // verify the components are correct
-    if (components[0] != GRAPH_HEAT_ELEMENT_MAGIC_NUMBER){
+    if (components[0] != APPLICATION_NAME_HASH){
         return false;
     }
 

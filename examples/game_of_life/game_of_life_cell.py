@@ -30,8 +30,6 @@ from spinnman.data.little_endian_byte_array_byte_reader import \
 from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
     import AbstractPartitionedDataSpecableVertex
 from spynnaker_graph_front_end.utilities import utility_calls
-from spynnaker_graph_front_end.utilities import constants as graph_constants
-
 # front end common imports
 from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.utilities import exceptions
@@ -39,6 +37,7 @@ from spinn_front_end_common.utilities import exceptions
 # general imports
 from enum import Enum
 import struct
+import hashlib
 
 class GameOfLifeCell(
         PartitionedVertex, AbstractPartitionedDataSpecableVertex,
@@ -47,8 +46,6 @@ class GameOfLifeCell(
     HeatDemoVertexPartitioned: a vertex peice for a heat demo.
     represnets a heat element.
     """
-
-    CORE_APP_IDENTIFIER = 0xABCE
 
     # Regions for populations
     DATA_REGIONS = Enum(
@@ -214,8 +211,7 @@ class GameOfLifeCell(
 
     def _get_components(self):
         component_identifiers = list()
-        component_identifiers.append(
-            graph_constants.GRAPH_CELL_ELEMENT_MAGIC_NUMBER)
+        component_identifiers.append(hashlib.md5("life").hexdigest()[:8])
         return component_identifiers
 
     def _reserve_memory_regions(self, spec):

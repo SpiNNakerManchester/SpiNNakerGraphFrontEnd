@@ -36,13 +36,13 @@ from spinn_front_end_common.utilities import exceptions
 # graph front end imports
 from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
     import AbstractPartitionedDataSpecableVertex
-from spynnaker_graph_front_end.utilities import constants as graph_constants
 from spynnaker_graph_front_end.utilities import utility_calls
 
 # general imports
 from enum import Enum
 import struct
 import numpy
+import hashlib
 
 
 class HeatDemoVertexPartitioned(
@@ -52,8 +52,6 @@ class HeatDemoVertexPartitioned(
     HeatDemoVertexPartitioned: a vertex peice for a heat demo.
     represnets a heat element.
     """
-
-    CORE_APP_IDENTIFIER = 0xABCD
 
     # Regions for populations
     DATA_REGIONS = Enum(
@@ -96,13 +94,17 @@ class HeatDemoVertexPartitioned(
 
     @property
     def resources_required(self):
+        """
+        returns the resoruces this model will use on the machine
+        :return:
+        """
         return ResourceContainer(cpu=CPUCyclesPerTickResource(45),
                                  dtcm=DTCMResource(34),
                                  sdram=self._calculate_sdram_usage())
 
     def get_binary_file_name(self):
         """
-
+        returns the binary name for this model
         :return:
         """
         return "heat_demo.aplx"
@@ -125,7 +127,7 @@ class HeatDemoVertexPartitioned(
 
     def model_name(self):
         """
-
+        returns a human readable version of the model name
         :return:
         """
         return "Heat_Demo_Vertex"
@@ -146,10 +148,14 @@ class HeatDemoVertexPartitioned(
                 self._first_partitioned_edge))
             return constraints
 
-    def _get_components(self):
+    @staticmethod
+    def _get_components():
+        """
+        generates the components magic nums for the model
+        :return:
+        """
         component_identifiers = list()
-        component_identifiers.append(
-            graph_constants.GRAPH_CELL_ELEMENT_MAGIC_NUMBER)
+        component_identifiers.append(hashlib.md5("heat_demo").hexdigest()[:8])
         return component_identifiers
 
     def generate_data_spec(
@@ -264,7 +270,8 @@ class HeatDemoVertexPartitioned(
         spec.write_value(data=self._machine_time_step * self._timescale_factor)
         spec.write_value(data=self._no_machine_time_steps)
 
-    def _write_component_to_region(self, spec, region_id, components):
+    @staticmethod
+    def _write_component_to_region(spec, region_id, components):
         """
         writes the component magic numbers to a region for c code invesitgation.
         :param spec: the spec writer to write values to
@@ -431,8 +438,9 @@ class HeatDemoVertexPartitioned(
     def get_recorded_temperatures(self, transciever, placement):
         """
 
-        :param transciever:
-        :return:
+        :param transciever: interface with machine
+        :param placement: the placement of the model
+        :return: temps that have been recorded on the sdram
         """
         if self._record_on_sdram:
             # Get the App Data for the core
