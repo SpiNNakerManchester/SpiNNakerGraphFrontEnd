@@ -14,6 +14,8 @@ from spinnman.messages.eieio.eieio_type import EIEIOType
 import spynnaker_graph_front_end as front_end
 from spynnaker_graph_front_end import ReverseIpTagMultiCastSource
 from spynnaker_graph_front_end import MultiCastPartitionedEdge
+from spynnaker_graph_front_end.utilities.connections.\
+    live_event_connection import LiveEventConnection
 
 # example imports
 from examples.heat_demo.heat_demo_command_edge import HeatDemoCommandEdge
@@ -22,6 +24,12 @@ from examples.heat_demo.heat_demo_edge import HeatDemoEdge
 
 # import the folder where all graph front end binaries are located
 from examples import model_binaries
+
+# method for dealing with heat element events
+#def receive_events(label, time, neuron_ids):
+#    pass
+
+
 
 # set up the front end and ask for the detected machines dimensions
 front_end.setup(graph_label="heat_demo_graph",
@@ -43,8 +51,8 @@ max_x_element_id = x_dimension * 4
 max_y_element_id = y_dimension * 4
 
 # overrwide dimensions
-# max_x_element_id = 2
-# max_y_element_id = 2
+#max_x_element_id = 2
+#max_y_element_id = 2
 
 vertices = [None] * (x_dimension * 4)
 
@@ -66,7 +74,7 @@ live_gatherer = \
          'label': "gatherer from heat elements",
          'ip_address': machine_host,
          'port': machine_recieve_port,
-         'message_type': EIEIOType.KEY_32_BIT})
+         'message_type': EIEIOType.KEY_PAYLOAD_32_BIT})
 
 # build vertices
 for x_position in range(0, max_x_element_id):
@@ -103,15 +111,15 @@ for x_position in range(0, max_x_element_id):
                   .format(vertices[x_position][y_position].label))
 
         # check for the likely hood for a N link (incoming to south)
-        if (y_position + 1) < max_y_element_id:
+        if (x_position + 1) < max_x_element_id:
             front_end.add_partitioned_edge(
                 HeatDemoEdge,
                 {'pre_subvertex': vertices[x_position][y_position],
-                 'post_subvertex': vertices[x_position][y_position + 1],
+                 'post_subvertex': vertices[x_position + 1][y_position],
                  'direction': HeatDemoEdge.DIRECTIONS.SOUTH},
                 label="North edge between heat elements {}:{}"
                       .format(vertices[x_position][y_position],
-                              vertices[x_position][y_position + 1]),)
+                              vertices[x_position + 1][y_position]),)
         else:  # add a command edge for injecting north temps
             front_end.add_partitioned_edge(
                 HeatDemoEdge,
@@ -121,15 +129,15 @@ for x_position in range(0, max_x_element_id):
                 label="injected temp for north edge of fabric for heat element"
                       "{}".format(vertices[x_position][y_position]),)
         # check for the likely hood for a E link
-        if (x_position + 1) < max_x_element_id:
+        if (y_position + 1) < max_y_element_id:
             front_end.add_partitioned_edge(
                 HeatDemoEdge,
                 {'pre_subvertex': vertices[x_position][y_position],
-                 'post_subvertex': vertices[x_position + 1][y_position],
+                 'post_subvertex': vertices[x_position][y_position + 1],
                  'direction': HeatDemoEdge.DIRECTIONS.WEST},
                 label="East edge between heat elements {}:{}"
                       .format(vertices[x_position][y_position],
-                              vertices[x_position + 1][y_position]),)
+                              vertices[x_position][y_position + 1]),)
         else:  # add a command edge for injecting east temps
             front_end.add_partitioned_edge(
                 HeatDemoEdge,
@@ -175,7 +183,15 @@ for x_position in range(0, max_x_element_id):
                 label="Injected temp for West edge of fabric for heat element"
                       " {}".format(vertices[x_position][y_position]))
 
-# run the sim for 10 seconds
+
+# Set up the live connection for sending and receiving spikes
+#live_spikes_connection = LiveEventConnection(
+#    receive_labels=["pop_forward", "pop_backward"],
+#    send_labels=["spike_injector_forward", "spike_injector_backward"])
+
+# Set up callbacks to occur when spikes are received
+#live_spikes_connection.add_receive_callback("gatherer from heat elements",
+#                                            receive_events)
+
 front_end.run(10)
-# stop the run of the sim
 front_end.stop()

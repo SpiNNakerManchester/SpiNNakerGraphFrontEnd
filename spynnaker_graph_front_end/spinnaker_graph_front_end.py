@@ -24,10 +24,13 @@ from pacman.utilities.progress_bar import ProgressBar
 from spinn_front_end_common.abstract_models.\
     abstract_data_specable_vertex import \
     AbstractDataSpecableVertex
-from spinn_front_end_common.interface.data_generator_interface import \
-    DataGeneratorInterface
 
 # spinn front end common imports
+from spinn_front_end_common.interface.data_generator_interface import \
+    DataGeneratorInterface
+from spinn_front_end_common.abstract_models.\
+    abstract_provides_provanence_data import \
+    AbstractProvidesProvanenceData
 from spinn_front_end_common.interface.\
     front_end_common_configuration_functions import \
     FrontEndCommonConfigurationFunctions
@@ -46,6 +49,9 @@ from spinn_front_end_common.abstract_models.\
     import AbstractProvidesIncomingEdgeConstraints
 from spinn_front_end_common.abstract_models.\
     abstract_provides_n_keys_for_edge import AbstractProvidesNKeysForEdge
+from spinn_front_end_common.interface.\
+    front_end_common_provanence_functions import \
+    FrontEndCommonProvanenceFunctions
 
 # spinnman imports
 from spinn_machine.virutal_machine import VirtualMachine
@@ -62,9 +68,6 @@ from spynnaker_graph_front_end.DataSpecedGeneratorInterface import \
     DataSpecedGeneratorInterface
 from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
     import AbstractPartitionedDataSpecableVertex
-from spynnaker_graph_front_end.models.\
-    mutli_cast_partitioned_edge_with_n_keys import \
-    MultiCastPartitionedEdgeWithNKeys
 from spynnaker_graph_front_end.utilities.database.data_base_interface import \
     DataBaseInterface
 from spynnaker_graph_front_end.utilities.database.socket_address import \
@@ -83,7 +86,8 @@ logger = logging.getLogger(__name__)
 
 
 class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
-                             FrontEndCommonInterfaceFunctions):
+                             FrontEndCommonInterfaceFunctions,
+                             FrontEndCommonProvanenceFunctions):
     """
     entrance class for the graph front end
     """
@@ -113,6 +117,7 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
 
         FrontEndCommonConfigurationFunctions.__init__(self, hostname,
                                                       graph_label)
+        FrontEndCommonProvanenceFunctions.__init__(self)
 
         self._executable_paths = executable_paths
 
@@ -175,6 +180,9 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         else:
             requires_wrap_around = \
                 config.getboolean("Machine", "requires_wrap_arounds")
+
+        # sort out database stuff
+        self._create_database = config.getboolean("Database", "create_database")
 
         # set up the configuration methods
         self._set_up_output_application_data_specifics(application_file_folder,
@@ -273,6 +281,21 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
         :return:
         """
         self._partitioned_graph.add_subedge(edge)
+
+    def get_transciever(self):
+        """ returns the transciever for scripts to use if needed
+
+        :return:
+        """
+        return self._txrx
+
+    def get_placement(self, partitioned_vertex):
+        """ supports scripts to use placement objects if needed.
+
+        :param partitioned_vertex:
+        :return:
+        """
+        return self._placements.get_placement_of_subvertex(partitioned_vertex)
 
     def _set_runtime_in_time_steps_for_model(self, vertex, run_time):
         """
@@ -427,11 +450,27 @@ class SpiNNakerGraphFrontEnd(FrontEndCommonConfigurationFunctions,
                         executable_targets, self._app_id, self._runtime,
                         self._time_scale_factor)
                 self._has_ran = True
-                if self._retrieve_provance_data:
 
-                    # retrieve provenance data
-                    self._retieve_provance_data_from_machine(
-                        executable_targets, self._router_tables, self._machine)
+                if self._retrieve_provance_data:
+                    # retrieve provence data from central
+                    file_path = os.path.join(self._report_default_directory,
+                                             "provance_data")
+
+                    # check the directory doesnt already exist
+                    if not os.path.exists(file_path):
+                        os.mkdir(file_path)
+
+                    self._write_provanence_data_in_xml(file_path)
+
+                    # retrieve provenance data from any cores that provide data
+                    for placement in self._placements:
+                        if isinstance(placement.subvertex,
+                                      AbstractProvidesProvanenceData):
+                            file_path = os.path.join(
+                                self._report_default_directory,
+                                "Provanence_data_for_core:{}:{}:{}"
+                                .format(placement.x, placement.y, placement.p))
+
         elif isinstance(self._machine, VirtualMachine):
             logger.info(
                 "*** Using a Virtual Machine so no simulation will occur")

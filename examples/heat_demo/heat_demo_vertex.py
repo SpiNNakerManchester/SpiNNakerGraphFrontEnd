@@ -22,22 +22,27 @@ from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.sdram_resource import SDRAMResource
 
-# graph front end imports
-from spinn_front_end_common.abstract_models.abstract_provides_outgoing_edge_constraints import \
+# front end common imports
+from spinn_front_end_common.abstract_models.\
+    abstract_provides_outgoing_edge_constraints import \
     AbstractProvidesOutgoingEdgeConstraints
 from spinn_front_end_common.utility_models.live_packet_gather import \
     LivePacketGather
 from spinn_front_end_common.utility_models.\
     reverse_ip_tag_multi_cast_source import ReverseIpTagMultiCastSource
-from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
-    import AbstractPartitionedDataSpecableVertex
-
-# front end common imports
 from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.utilities import exceptions
 
+# graph front end imports
+from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
+    import AbstractPartitionedDataSpecableVertex
+from spynnaker_graph_front_end.utilities import utility_calls
+
 # general imports
 from enum import Enum
+import struct
+import numpy
+import hashlib
 
 
 class HeatDemoVertexPartitioned(
@@ -48,17 +53,17 @@ class HeatDemoVertexPartitioned(
     represnets a heat element.
     """
 
-    CORE_APP_IDENTIFIER = 0xABCD
-
     # Regions for populations
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
-        names=[('SYSTEM', 0),
-               ('TRANSMISSIONS', 1),
-               ('NEIGBOUR_KEYS', 2),
-               ('COMMAND_KEYS', 3),
-               ('OUPUT_KEY', 4),
-               ('TEMP_VALUE', 5)])
+        names=[('TIMINGS', 0),
+               ('COMPONENTS', 1),
+               ('TRANSMISSIONS', 2),
+               ('NEIGBOUR_KEYS', 3),
+               ('COMMAND_KEYS', 4),
+               ('OUPUT_KEY', 5),
+               ('TEMP_VALUE', 6),
+               ('RECORDING_REGION', 7)])
 
     # one key for each incoming edge.
     NEIGBOUR_DATA_SIZE = 10 * 4
@@ -71,15 +76,12 @@ class HeatDemoVertexPartitioned(
     _model_n_atoms = 1
 
     def __init__(self, label, machine_time_step, time_scale_factor,
-                 heat_tempature=0, constraints=None):
+                 heat_tempature=0, record_on_sdram=False, constraints=None):
 
-        # resoruces used by a heat element vertex
-        resoruces = ResourceContainer(cpu=CPUCyclesPerTickResource(45),
-                                      dtcm=DTCMResource(34),
-                                      sdram=SDRAMResource(23))
+        self._record_on_sdram = record_on_sdram
 
         PartitionedVertex.__init__(
-            self, label=label, resources_required=resoruces,
+            self, label=label, resources_required=None,
             constraints=constraints)
         AbstractPartitionedDataSpecableVertex.__init__(self)
         AbstractProvidesOutgoingEdgeConstraints.__init__(self)
@@ -90,16 +92,42 @@ class HeatDemoVertexPartitioned(
         # used to support 
         self._first_partitioned_edge = None
 
+    @property
+    def resources_required(self):
+        """
+        returns the resoruces this model will use on the machine
+        :return:
+        """
+        return ResourceContainer(cpu=CPUCyclesPerTickResource(45),
+                                 dtcm=DTCMResource(34),
+                                 sdram=self._calculate_sdram_usage())
+
     def get_binary_file_name(self):
         """
-
+        returns the binary name for this model
         :return:
         """
         return "heat_demo.aplx"
 
+    def _calculate_sdram_usage(self):
+        """
+        returns the size of sdram required by the heat demo vertex.
+        :return:
+        """
+        main_mem_regions_sizes = (
+            self.TRANSMISSION_DATA_SIZE + self.NEIGBOUR_DATA_SIZE +
+            self.COMMAND_KEYS_SIZE + self.TEMP_VALUE_SIZE + self.OUPUT_KEY_SIZE)
+        recording_size = 4  # one int for bool saying to record or not
+        if self._record_on_sdram:
+            recording_size = (self._no_machine_time_steps * 4) + 4
+        total_sizes = (main_mem_regions_sizes +
+                       constants.TIMINGS_REGION_BYTES +
+                       (len(self._get_components()) * 4) + recording_size)
+        return SDRAMResource(total_sizes)
+
     def model_name(self):
         """
-
+        returns a human readable version of the model name
         :return:
         """
         return "Heat_Demo_Vertex"
@@ -119,6 +147,16 @@ class HeatDemoVertexPartitioned(
             constraints.append(KeyAllocatorSameKeysConstraint(
                 self._first_partitioned_edge))
             return constraints
+
+    @staticmethod
+    def _get_components():
+        """
+        generates the components magic nums for the model
+        :return:
+        """
+        component_identifiers = list()
+        component_identifiers.append(hashlib.md5("heat_demo").hexdigest()[:8])
+        return component_identifiers
 
     def generate_data_spec(
             self, placement, sub_graph, routing_info, hostname, report_folder,
@@ -146,8 +184,6 @@ class HeatDemoVertexPartitioned(
                 write_text_specs, application_run_time_folder)
 
         spec = DataSpecificationGenerator(data_writer, report_writer)
-        # Setup words + 1 for flags + 1 for recording size
-        setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 2) * 4
 
         spec.comment("\n*** Spec for SpikeSourceArray Instance ***\n\n")
 
@@ -157,22 +193,32 @@ class HeatDemoVertexPartitioned(
         spec.comment("\nReserving memory space for spike data region:\n\n")
 
         # Create the data regions for the spike source array:
-        self._reserve_memory_regions(spec, setup_size)
-        self._write_basic_setup_info(spec, self.CORE_APP_IDENTIFIER,
-                                     self.DATA_REGIONS.SYSTEM.value)
+        self._reserve_memory_regions(spec)
+        self._write_timings_region_info(spec, self.DATA_REGIONS.TIMINGS.value)
+        self._write_component_to_region(
+            spec, self.DATA_REGIONS.COMPONENTS.value, self._get_components())
         self._write_tranmssion_keys(spec, routing_info, sub_graph)
         self._write_key_data(spec, routing_info, sub_graph)
         self._write_temp_data(spec)
+        self._write_recording_data(spec)
         # End-of-Spec:
         spec.end_specification()
         data_writer.close()
+
+    def _write_recording_data(self, spec):
+        spec.switch_write_focus(region=self.DATA_REGIONS.RECORDING_REGION.value)
+        spec.comment("writing bool saying to record or not \n")
+        if self._record_on_sdram:
+            spec.write_value(data=1)
+        else:
+            spec.write_value(data=0)
 
     def _write_temp_data(self, spec):
         spec.switch_write_focus(region=self.DATA_REGIONS.TEMP_VALUE.value)
         spec.comment("writing initial temp for this heat element \n")
         spec.write_value(data=self._heat_temperature)
 
-    def _reserve_memory_regions(self, spec, system_size):
+    def _reserve_memory_regions(self, spec):
         """
         *** Modified version of same routine in abstract_models.py These could
         be combined to form a common routine, perhaps by passing a list of
@@ -180,11 +226,15 @@ class HeatDemoVertexPartitioned(
         Reserve memory for the system, indices and spike data regions.
         The indices region will be copied to DTCM by the executable.
         :param spec:
-        :param system_size:
         :return:
         """
-        spec.reserve_memory_region(region=self.DATA_REGIONS.SYSTEM.value,
-                                   size=system_size, label='systemInfo')
+        spec.reserve_memory_region(
+            region=self.DATA_REGIONS.TIMINGS.value,
+            size=constants.TIMINGS_REGION_BYTES, label='timings')
+        spec.reserve_memory_region(
+            region=self.DATA_REGIONS.COMPONENTS.value,
+            size=len(self._get_components()) * 4, label='components')
+
         spec.reserve_memory_region(region=self.DATA_REGIONS.TRANSMISSIONS.value,
                                    size=self.TRANSMISSION_DATA_SIZE,
                                    label="inputs")
@@ -197,19 +247,43 @@ class HeatDemoVertexPartitioned(
                                    size=self.OUPUT_KEY_SIZE, label="outputs")
         spec.reserve_memory_region(region=self.DATA_REGIONS.TEMP_VALUE.value,
                                    size=self.TEMP_VALUE_SIZE, label="temp")
+        if self._record_on_sdram:
+            spec.reserve_memory_region(
+                region=self.DATA_REGIONS.RECORDING_REGION.value,
+                size=self._no_machine_time_steps * 4, label="reocrding_region")
+        else:
+            spec.reserve_memory_region(
+                region=self.DATA_REGIONS.RECORDING_REGION.value,
+                size=4, label="reocrding_region")
 
-    def _write_basic_setup_info(self, spec, core_app_identifier, region_id):
+    def _write_timings_region_info(self, spec, region_id):
         """
-         Write this to the system region (to be picked up by the simulation):
-        :param spec:
-        :param core_app_identifier:
-        :param region_id:
-        :return:
+        writes the timing configuration info including any constants expected
+        by the c code on its configuration
+        :param spec: the spec writer to write values to
+        :param region_id: the region id to write these params to
+        :return: None
         """
+
+        # Write this to the timings region (to be picked up by the simulation):
         spec.switch_write_focus(region=region_id)
-        spec.write_value(data=core_app_identifier)
-        spec.write_value(data=self._machine_time_step * self._time_scale_factor)
+        spec.write_value(data=self._machine_time_step * self._timescale_factor)
         spec.write_value(data=self._no_machine_time_steps)
+
+    @staticmethod
+    def _write_component_to_region(spec, region_id, components):
+        """
+        writes the component magic numbers to a region for c code invesitgation.
+        :param spec: the spec writer to write values to
+        :param components: the iterable of identifiers
+        :param region_id:  the region id to write these params to
+        :return:None
+        """
+
+        # write these to a given region (to be picked up by the simulation)
+        spec.switch_write_focus(region=region_id)
+        for identifier in components:
+            spec.write_value(data=identifier)
 
     def _write_tranmssion_keys(self, spec, routing_info, subgraph):
         """
@@ -298,9 +372,9 @@ class HeatDemoVertexPartitioned(
         if loaded_keys == 0:
             raise exceptions.ConfigurationException(
                 "This heat element  {} does not receive any data from other "
-                "elements. Please fix and try again.\n It currently has incoming "
-                "edges of {}\n directional edges of {}\n and fake edges of {}\n"
-                " and command edge of {}\n and output edge of {}"
+                "elements. Please fix and try again.\n It currently has "
+                "incoming edges of {}\n directional edges of {}\n and fake "
+                "edges of {}\n and command edge of {}\n and output edge of {}"
                 .format(self.label, incoming_edges, direction_edges,
                         fake_temp_edges, command_edge, output_edge))
 
@@ -309,7 +383,7 @@ class HeatDemoVertexPartitioned(
         fake_temp_edges = \
             sorted(fake_temp_edges, key=lambda subedge: subedge.direction.value,
                    reverse=False)
-        current_direction = 0
+
         for current_direction in range(4):
             written = False
             for edge in fake_temp_edges:
@@ -360,3 +434,43 @@ class HeatDemoVertexPartitioned(
         :return:
         """
         return True
+
+    def get_recorded_temperatures(self, transciever, placement):
+        """
+
+        :param transciever: interface with machine
+        :param placement: the placement of the model
+        :return: temps that have been recorded on the sdram
+        """
+        if self._record_on_sdram:
+            # Get the App Data for the core
+            app_data_base_address = \
+                transciever.get_cpu_information_from_core(
+                    placement.x, placement.y, placement.p).user[0]
+
+            # Get the position of the spike buffer
+
+            recorded_temp_region_base_address_offset = \
+                utility_calls.get_region_base_address_offset(
+                    app_data_base_address,
+                    self.DATA_REGIONS.RECORDING_REGION.value)
+            recorded_temp_region_base_address_buf = \
+                str(list(transciever.read_memory(
+                    placement.x, placement.y,
+                    recorded_temp_region_base_address_offset, 4))[0])
+            recorded_temp_region_base_address = \
+                struct.unpack("<I", recorded_temp_region_base_address_buf)[0]
+            recorded_temp_region_base_address += app_data_base_address
+
+            # read the recorded temps
+            recorded_temps = transciever.read_memory(
+                placement.x, placement.y, recorded_temp_region_base_address + 4,
+                self._no_machine_time_steps * 4)
+
+            data_list = bytearray()
+            for data in recorded_temps:
+                data_list.extend(data)
+            numpy_data = numpy.asarray(data_list, dtype="uint32")
+            return numpy_data
+        else:
+            return []
