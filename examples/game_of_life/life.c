@@ -215,25 +215,11 @@ static bool initialize(uint32_t *timer_period) {
     // Get the timing details
     address_t system_region = data_specification_get_region(
         TIMINGS_REGION, address);
-    if (!simulation_read_timing_details(
+    if (!simulation_read_header(
             system_region, timer_period, &simulation_ticks)) {
         log_error("failed to read the system header");
         return false;
     }
-
-    // get the components that build up a delay extension
-    uint32_t components[1];
-    if (!simulation_read_components(
-            data_specification_get_region(COMPONENT_REGION, address),
-            1, components)) {
-        return false;
-    }
-
-    // verify the components are correct
-    if (components[0] != APPLICATION_NAME_HASH){
-        return false;
-    }
-
 
     // output message about length of time to run
     log_debug("i plan to run for %d timer ticks", simulation_ticks);
