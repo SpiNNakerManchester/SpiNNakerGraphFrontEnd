@@ -91,6 +91,8 @@ volatile uint next = 1;
 volatile bool updating = true;
 //! control vlaue, which says how many timer tics to run for before exiting
 static uint32_t simulation_ticks;
+//! int as a bool to represnet if this simulation should run forever
+static uint32_t infinite_run;
 //! the unqieu identifier of this model, so that it can tell if the data its
 //! reading is for itself.
 #define APPLICATION_MAGIC_NUMBER 0xABCD
@@ -338,7 +340,7 @@ void update (uint ticks, uint b)
 
     log_debug("on tick %d", ticks);
     // check that the run time hasnt already alapsed and thus needs to be killed
-    if (ticks == simulation_ticks){
+    if ((infinite_run != TRUE) && (ticks == simulation_ticks)){
         log_info("Simulation complete.\n");
         spin1_exit(0);
         return;
@@ -448,7 +450,7 @@ static bool initialize(uint32_t *timer_period) {
         SYSTEM_REGION, address);
     if (!simulation_read_timing_details(
             system_region, APPLICATION_MAGIC_NUMBER, timer_period,
-            &simulation_ticks)) {
+            &simulation_ticks, &infinite_run)) {
         log_error("failed to read the system header");
         return false;
     }
