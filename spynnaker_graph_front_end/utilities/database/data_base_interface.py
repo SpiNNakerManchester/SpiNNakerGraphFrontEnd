@@ -221,10 +221,10 @@ class DataBaseInterface(object):
         # Send command and wait for response
         logger.info("*** Notifying visualiser that the database is ready ***")
         for connection in data_base_message_connections:
-            connection.send_eieio_command_message(eieio_command_message)
+            connection.send_eieio_message(eieio_command_message)
 
         for connection in data_base_message_connections:
-            connection.receive_eieio_command_message()
+            connection.receive_eieio_message()
         logger.info("*** Confirmation received, continuing ***")
 
     def wait_for_confirmation(self):
@@ -251,7 +251,7 @@ class DataBaseInterface(object):
 
         eieio_command_message = DatabaseConfirmation()
         for connection in data_base_message_connections:
-            connection.send_eieio_command_message(eieio_command_message)
+            connection.send_eieio_message(eieio_command_message)
 
     def add_machine_objects(self, machine):
         """
