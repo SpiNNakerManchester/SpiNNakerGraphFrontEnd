@@ -138,8 +138,10 @@ class LiveEventConnection(DatabaseConnection):
     def _start_callback(self):
         for (label, callbacks) in self._start_callbacks.iteritems():
             for callback in callbacks:
-                callback_thread = Thread(target=callback, args=(label, self),
-                                         verbose=True)
+                callback_thread = Thread(
+                    target=callback, args=(label, self), verbose=True,
+                    name="Live event connection for {}:{}"
+                        .format(self.local_port, self.local_ip_address))
                 callback_thread.start()
 
     def _receive_packet_callback(self, packet):

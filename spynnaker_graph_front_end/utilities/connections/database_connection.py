@@ -61,7 +61,9 @@ class DatabaseConnection(AbstractUDPConnection, Thread):
         AbstractUDPConnection.__init__(
             self, local_host=local_host, local_port=local_port,
             remote_host=None, remote_port=None)
-        Thread.__init__(self)
+        Thread.__init__(self,
+                        name="graph front end database connection for {}:{}"
+                        .format(local_port, local_host))
         self._database_callback_function = database_callback_function
         self._start_callback_function = start_callback_function
         self.start()
