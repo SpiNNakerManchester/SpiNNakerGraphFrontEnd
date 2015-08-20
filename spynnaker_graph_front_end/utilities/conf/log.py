@@ -77,7 +77,8 @@ class ConfiguredFormatter(logging.Formatter):
 
     @staticmethod
     def level_of_deepest_parent(parents, child):
-        """The logging level of the greediest match between child and parent."""
+        """ The logging level of the greediest match between child and parent.
+        """
         # child = re.sub( r'^pacman103\.', '', child )
         parent = ConfiguredFormatter.deepest_parent(parents.keys(), child)
 

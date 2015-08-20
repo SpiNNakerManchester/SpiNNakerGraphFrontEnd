@@ -14,8 +14,6 @@ from spinnman.messages.eieio.eieio_type import EIEIOType
 import spynnaker_graph_front_end as front_end
 from spynnaker_graph_front_end import ReverseIpTagMultiCastSource
 from spynnaker_graph_front_end import MultiCastPartitionedEdge
-from spynnaker_graph_front_end.utilities.connections.\
-    live_event_connection import LiveEventConnection
 
 # example imports
 from examples.heat_demo.heat_demo_command_edge import HeatDemoCommandEdge
@@ -50,8 +48,8 @@ max_x_element_id = x_dimension * 4
 max_y_element_id = y_dimension * 4
 
 # overrwide dimensions
-#max_x_element_id = 2
-#max_y_element_id = 2
+max_x_element_id = 2
+max_y_element_id = 2
 
 vertices = [None] * (x_dimension * 4)
 
@@ -71,7 +69,8 @@ live_gatherer = \
          'label': "gatherer from heat elements",
          'ip_address': machine_host,
          'port': machine_recieve_port,
-         'message_type': EIEIOType.KEY_PAYLOAD_32_BIT})
+         'message_type': EIEIOType.KEY_32_BIT})
+         #'message_type': EIEIOType.KEY_PAYLOAD_32_BIT})
 
 # build vertices
 

@@ -1,6 +1,9 @@
 from spinn_front_end_common.interface.executable_finder import ExecutableFinder
 from spynnaker_graph_front_end.utilities import conf
 
+from ._version import __version__, __version_name__, __version_month__,\
+    __version_year__
+
 
 # utility models for graph front ends
 from spinn_front_end_common.utility_models.\
@@ -38,10 +41,22 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
     """
     from spynnaker_graph_front_end.spinnaker_graph_front_end import \
         SpiNNakerGraphFrontEnd
+    import spinnaker_graph_front_end
     import os
     global _spinnaker
     global _none_labelled_vertex_count
     global _none_labelled_edge_count
+
+    logger.info(
+        "SpiNNaker graph front end (c) {} APT Group, University of Manchester"
+        .format( __version_year__))
+    parent_dir = os.path.split(os.path.split(
+        spinnaker_graph_front_end.__file__)[0])[0]
+    logger.info(
+        "Release version {}({}) - {} {}. Installed in folder {}".format(
+            __version__, __version_name__, __version_month__, __version_year__,
+            parent_dir))
+
 
     executable_finder = ExecutableFinder()
     # add the directorities for where to locate the binaries
