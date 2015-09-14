@@ -37,7 +37,7 @@ from spinn_front_end_common.interface.\
 from spinn_front_end_common.utilities import reports
 from spinn_front_end_common.utilities import exceptions
 from spinn_front_end_common.utilities import constants
-from spinn_front_end_common.utilities.database.data_base_writer import \
+from spinn_front_end_common.utilities.database.database_writer import \
     DatabaseWriter
 from spinn_front_end_common.utilities.executable_targets import \
     ExecutableTargets
