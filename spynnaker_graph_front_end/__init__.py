@@ -49,14 +49,13 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
 
     logger.info(
         "SpiNNaker graph front end (c) {} APT Group, University of Manchester"
-        .format( __version_year__))
+        .format(__version_year__))
     parent_dir = os.path.split(os.path.split(
         spinnaker_graph_front_end.__file__)[0])[0]
     logger.info(
         "Release version {}({}) - {} {}. Installed in folder {}".format(
             __version__, __version_name__, __version_month__, __version_year__,
             parent_dir))
-
 
     executable_finder = ExecutableFinder()
     # add the directorities for where to locate the binaries
@@ -178,7 +177,8 @@ def add_edge(cell_type, cellparams, label=None, constraints=None):
     return edge
 
 
-def add_partitioned_vertex(cellclass, cellparams, label=None, constraints=None):
+def add_partitioned_vertex(
+        cellclass, cellparams, label=None, constraints=None):
     """
 
     :param cellclass:

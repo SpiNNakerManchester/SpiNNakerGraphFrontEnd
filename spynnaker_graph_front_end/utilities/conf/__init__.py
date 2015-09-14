@@ -96,7 +96,3 @@ except ConfigParser.NoOptionError:
 # Log which config files we read
 logger = logging.getLogger(__name__)
 logger.info("Read config files: %s" % string.join(read, ", "))
-
-
-
-

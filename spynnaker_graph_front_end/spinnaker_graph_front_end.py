@@ -24,7 +24,6 @@ from pacman.operations.tag_allocator_algorithms import BasicTagAllocator
 from pacman.utilities.progress_bar import ProgressBar
 
 # spinn front end common imports
-from spinn_front_end_common.interface.executable_finder import ExecutableFinder
 from spinn_front_end_common.interface.\
     front_end_common_configuration_functions import \
     FrontEndCommonConfigurationFunctions
@@ -70,9 +69,6 @@ from spinn_machine.sdram import SDRAM
 # graph front end imports
 from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
     import AbstractPartitionedDataSpecableVertex
-from spynnaker_graph_front_end.models.\
-    mutli_cast_partitioned_edge_with_n_keys import \
-    MultiCastPartitionedEdgeWithNKeys
 from spynnaker_graph_front_end.utilities.xml_interface import XMLInterface
 from spynnaker_graph_front_end.utilities.conf import config
 
@@ -725,14 +721,16 @@ class SpiNNakerGraphFrontEnd(
                 if isinstance(associated_vertex, AbstractDataSpecableVertex):
                     ip_tags = self._tags.get_ip_tags_for_vertex(
                         placement.subvertex)
-                    reverse_ip_tags = self._tags.get_reverse_ip_tags_for_vertex(
-                        placement.subvertex)
+                    reverse_ip_tags = \
+                        self._tags.get_reverse_ip_tags_for_vertex(
+                            placement.subvertex)
                     associated_vertex.generate_data_spec(
-                        placement.subvertex, placement, self._partitioned_graph,
-                        self._partitionable_graph, self._routing_infos,
-                        self._hostname, self._graph_mapper,
-                        self._report_default_directory, ip_tags, reverse_ip_tags,
-                        self._write_text_specs, self._app_data_runtime_folder)
+                        placement.subvertex, placement,
+                        self._partitioned_graph, self._partitionable_graph,
+                        self._routing_infos, self._hostname,
+                        self._graph_mapper, self._report_default_directory,
+                        ip_tags, reverse_ip_tags, self._write_text_specs,
+                        self._app_data_runtime_folder)
                     progress_bar.update()
 
                     # Get name of binary from vertex
@@ -742,7 +740,8 @@ class SpiNNakerGraphFrontEnd(
                     binary_path = self._executable_paths.get_executable_path(
                         binary_name)
                     if binary_path is None:
-                        raise exceptions.ExecutableNotFoundException(binary_name)
+                        raise exceptions.ExecutableNotFoundException(
+                            binary_name)
 
                     if not executable_targets.has_binary(binary_path):
                         executable_targets.add_binary(binary_path)
@@ -753,8 +752,9 @@ class SpiNNakerGraphFrontEnd(
                               AbstractPartitionedDataSpecableVertex):
                     ip_tags = self._tags.get_ip_tags_for_vertex(
                         placement.subvertex)
-                    reverse_ip_tags = self._tags.get_reverse_ip_tags_for_vertex(
-                        placement.subvertex)
+                    reverse_ip_tags = \
+                        self._tags.get_reverse_ip_tags_for_vertex(
+                            placement.subvertex)
                     placement.subvertex.generate_data_spec(
                         placement, self._partitioned_graph,
                         self._routing_infos, self._hostname,
@@ -771,7 +771,8 @@ class SpiNNakerGraphFrontEnd(
                     binary_path = self._executable_paths.get_executable_path(
                         binary_name)
                     if binary_path is None:
-                        raise exceptions.ExecutableNotFoundException(binary_name)
+                        raise exceptions.ExecutableNotFoundException(
+                            binary_name)
 
                     if not executable_targets.has_binary(binary_path):
                         executable_targets.add_binary(binary_path)
@@ -780,14 +781,16 @@ class SpiNNakerGraphFrontEnd(
                 else:
                     ip_tags = self._tags.get_ip_tags_for_vertex(
                         placement.subvertex)
-                    reverse_ip_tags = self._tags.get_reverse_ip_tags_for_vertex(
-                        placement.subvertex)
+                    reverse_ip_tags = \
+                        self._tags.get_reverse_ip_tags_for_vertex(
+                            placement.subvertex)
                     placement.subvertex.generate_data_spec(
-                        placement.subvertex, placement, self._partitioned_graph,
-                        self._partitionable_graph, self._routing_infos,
-                        self._hostname, self._graph_mapper,
-                        self._report_default_directory, ip_tags, reverse_ip_tags,
-                        self._write_text_specs, self._app_data_runtime_folder)
+                        placement.subvertex, placement,
+                        self._partitioned_graph, self._partitionable_graph,
+                        self._routing_infos, self._hostname,
+                        self._graph_mapper, self._report_default_directory,
+                        ip_tags, reverse_ip_tags, self._write_text_specs,
+                        self._app_data_runtime_folder)
                     progress_bar.update()
 
                     # Get name of binary from vertex
@@ -797,7 +800,8 @@ class SpiNNakerGraphFrontEnd(
                     binary_path = self._executable_paths.get_executable_path(
                         binary_name)
                     if binary_path is None:
-                        raise exceptions.ExecutableNotFoundException(binary_name)
+                        raise exceptions.ExecutableNotFoundException(
+                            binary_name)
 
                     if not executable_targets.has_binary(binary_path):
                         executable_targets.add_binary(binary_path)
