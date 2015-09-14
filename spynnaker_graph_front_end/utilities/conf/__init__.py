@@ -15,9 +15,7 @@ import string
 import sys
 
 import spynnaker_graph_front_end
-from spinn_front_end_common.utilities import exceptions
 from spynnaker_graph_front_end.utilities.conf import log
-
 
 read = list()
 
@@ -66,6 +64,11 @@ else:
 
 read.append(default)
 
+machine_spec_file_path = config.get("Machine", "machine_spec_file")
+if machine_spec_file_path != "None":
+    config.read(machine_spec_file_path)
+    read.append(machine_spec_file_path)
+
 
 # creates a directory if needed, or deletes it and rebuilds it
 def create_directory(directory):
@@ -93,7 +96,3 @@ except ConfigParser.NoOptionError:
 # Log which config files we read
 logger = logging.getLogger(__name__)
 logger.info("Read config files: %s" % string.join(read, ", "))
-
-
-
-
