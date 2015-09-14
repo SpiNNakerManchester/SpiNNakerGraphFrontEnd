@@ -208,7 +208,7 @@ class SpiNNakerGraphFrontEnd(
             generate_transciever_report=generate_transciever_report,
             in_debug_mode=in_debug_mode, reports_are_enabled=enabled_reports,
             generate_tag_report=generate_tag_report)
-        
+
         self._set_up_pacman_algorthms_listings(
             partitioner_algorithm=partitioner_algorithm,
             placer_algorithm=placer_algorithm,
@@ -361,7 +361,7 @@ class SpiNNakerGraphFrontEnd(
             timer.start_timing()
         self.map_model()
         if do_timing:
-            timer.take_sample()
+            logger.info("Time to map model: {}".format(timer.take_sample()))
 
         # execute data spec generation
         if do_timing:
@@ -370,7 +370,8 @@ class SpiNNakerGraphFrontEnd(
         logger.debug("")
         executable_targets = self.generate_data_specifications()
         if do_timing:
-            timer.take_sample()
+            logger.info("Time to generate output: {}".format(
+                timer.take_sample()))
 
         # execute data spec execution
         if do_timing:
@@ -387,7 +388,8 @@ class SpiNNakerGraphFrontEnd(
                                             processor_to_app_data_base_address)
 
         if do_timing:
-            timer.take_sample()
+            logger.info("Time to execute data specifications: {}".format(
+                timer.take_sample()))
 
         if do_timing:
             timer.start_timing()
@@ -408,7 +410,7 @@ class SpiNNakerGraphFrontEnd(
             self.set_up_send_buffering(self._partitioned_graph,
                                        self._placements, self._tags)
         if do_timing:
-            timer.take_sample()
+            logger.info("Time to load: {}".format(timer.take_sample()))
 
         if self._do_run is True:
             logger.info("*** Running simulation... *** ")
@@ -711,7 +713,7 @@ class SpiNNakerGraphFrontEnd(
 
         # create a progress bar for end users
         progress_bar = ProgressBar(len(list(self._placements.placements)),
-                                   "on generating data specifications")
+                                   "Generating data specifications")
         for placement in self._placements.placements:
             binary_name = None
             if len(self._partitionable_graph.vertices) > 0:
@@ -853,8 +855,7 @@ class SpiNNakerGraphFrontEnd(
 
         # create a progress bar for end users
         progress_bar = ProgressBar(len(list(placements.placements)),
-                                   "on executing data specifications on the "
-                                   "host machine")
+                                   "Executing data specifications")
 
         for placement in placements.placements:
             if graph_mapper is not None:
