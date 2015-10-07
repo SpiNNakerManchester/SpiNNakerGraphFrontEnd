@@ -1,0 +1,18 @@
+
+*** Spec for SpikeSourceArray Instance ***
+
+
+
+Reserving memory space for spike data region:
+
+
+00000000. RESERVE memRegion=0 size=24 label='systemInfo' 
+00000008. RESERVE memRegion=1 size=500 label='inputs' 
+00000010. SWITCH_FOCUS memRegion = 0
+00000014. WRITE data=0xBEEF0000, repeats=1, dataType=UINT32
+0000001C. WRITE data=0x0000ABCD, repeats=1, dataType=UINT32
+00000024. WRITE data=0x000003E8, repeats=1, dataType=UINT32
+0000002C. WRITE data=0x0000000A, repeats=1, dataType=UINT32
+
+End of specification:
+00000034. END_SPEC

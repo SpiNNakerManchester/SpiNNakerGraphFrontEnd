@@ -1,0 +1,52 @@
+        Placement Information by Core
+        =============================
+
+Generated: Wed Oct  7 10:44:04 2015 for target machine '192.168.240.253'
+
+**** Chip: (0, 0)
+Application cores: 18
+  Processor 1: AbstractConstrainedVertex: 'Vertex 0' 
+  Processor 1: AbstractConstrainedVertex: 'Vertex 0' 
+              Model: <bound method HelloWorldVertex.model_name of Vertex 0>
+
+
+  Processor 2: AbstractConstrainedVertex: 'Vertex 1' 
+  Processor 2: AbstractConstrainedVertex: 'Vertex 1' 
+              Model: <bound method HelloWorldVertex.model_name of Vertex 1>
+
+
+  Processor 3: AbstractConstrainedVertex: 'Vertex 2' 
+  Processor 3: AbstractConstrainedVertex: 'Vertex 2' 
+              Model: <bound method HelloWorldVertex.model_name of Vertex 2>
+
+
+  Processor 4: AbstractConstrainedVertex: 'Vertex 3' 
+  Processor 4: AbstractConstrainedVertex: 'Vertex 3' 
+              Model: <bound method HelloWorldVertex.model_name of Vertex 3>
+
+
+  Processor 5: AbstractConstrainedVertex: 'Vertex 4' 
+  Processor 5: AbstractConstrainedVertex: 'Vertex 4' 
+              Model: <bound method HelloWorldVertex.model_name of Vertex 4>
+
+
+  Processor 6: AbstractConstrainedVertex: 'Vertex 5' 
+  Processor 6: AbstractConstrainedVertex: 'Vertex 5' 
+              Model: <bound method HelloWorldVertex.model_name of Vertex 5>
+
+
+  Processor 7: AbstractConstrainedVertex: 'Vertex 6' 
+  Processor 7: AbstractConstrainedVertex: 'Vertex 6' 
+              Model: <bound method HelloWorldVertex.model_name of Vertex 6>
+
+
+  Processor 8: AbstractConstrainedVertex: 'Vertex 7' 
+  Processor 8: AbstractConstrainedVertex: 'Vertex 7' 
+              Model: <bound method HelloWorldVertex.model_name of Vertex 7>
+
+
+  Processor 9: AbstractConstrainedVertex: 'Vertex 8' 
+  Processor 9: AbstractConstrainedVertex: 'Vertex 8' 
+              Model: <bound method HelloWorldVertex.model_name of Vertex 8>
+
+

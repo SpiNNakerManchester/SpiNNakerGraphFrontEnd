@@ -1,0 +1,21 @@
+header structure 
+0 Magic number - file identifier: 2903706326 
+4 File structure version: 65536 
+Pointer table 
+       8 pointer 0:       48 
+       C pointer 1:       60 
+      10 pointer 2:        0 
+      14 pointer 3:        0 
+      18 pointer 4:        0 
+      1C pointer 5:        0 
+      20 pointer 6:        0 
+      24 pointer 7:        0 
+      28 pointer 8:        0 
+      2C pointer 9:        0 
+      30 pointer 10:        0 
+      34 pointer 11:        0 
+      38 pointer 12:        0 
+      3C pointer 13:        0 
+      40 pointer 14:        0 
+      44 pointer 15:        0 
+End of pointer table 
