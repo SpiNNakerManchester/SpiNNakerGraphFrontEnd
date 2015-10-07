@@ -1,0 +1,41 @@
+        Placement Information by AbstractConstrainedVertex
+        ===============================
+
+Generated: Wed Oct  7 10:44:04 2015 for target machine '192.168.240.253'
+
+**** AbstractConstrainedVertex: 'Vertex 0'
+Model: <bound method HelloWorldVertex.model_name of Vertex 0>
+ Placed on core (0, 0, 1) 
+
+**** AbstractConstrainedVertex: 'Vertex 1'
+Model: <bound method HelloWorldVertex.model_name of Vertex 1>
+ Placed on core (0, 0, 2) 
+
+**** AbstractConstrainedVertex: 'Vertex 2'
+Model: <bound method HelloWorldVertex.model_name of Vertex 2>
+ Placed on core (0, 0, 3) 
+
+**** AbstractConstrainedVertex: 'Vertex 3'
+Model: <bound method HelloWorldVertex.model_name of Vertex 3>
+ Placed on core (0, 0, 4) 
+
+**** AbstractConstrainedVertex: 'Vertex 4'
+Model: <bound method HelloWorldVertex.model_name of Vertex 4>
+ Placed on core (0, 0, 5) 
+
+**** AbstractConstrainedVertex: 'Vertex 5'
+Model: <bound method HelloWorldVertex.model_name of Vertex 5>
+ Placed on core (0, 0, 6) 
+
+**** AbstractConstrainedVertex: 'Vertex 6'
+Model: <bound method HelloWorldVertex.model_name of Vertex 6>
+ Placed on core (0, 0, 7) 
+
+**** AbstractConstrainedVertex: 'Vertex 7'
+Model: <bound method HelloWorldVertex.model_name of Vertex 7>
+ Placed on core (0, 0, 8) 
+
+**** AbstractConstrainedVertex: 'Vertex 8'
+Model: <bound method HelloWorldVertex.model_name of Vertex 8>
+ Placed on core (0, 0, 9) 
+

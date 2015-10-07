@@ -1,0 +1,34 @@
+        Network Specification
+ =====================
+
+Generated: Wed Oct  7 10:44:04 2015 for target machine '192.168.240.253'
+
+*** Vertices:
+Vertex Vertex 0
+Model: <bound method HelloWorldVertex.model_name of Vertex 0>
+
+Vertex Vertex 1
+Model: <bound method HelloWorldVertex.model_name of Vertex 1>
+
+Vertex Vertex 2
+Model: <bound method HelloWorldVertex.model_name of Vertex 2>
+
+Vertex Vertex 3
+Model: <bound method HelloWorldVertex.model_name of Vertex 3>
+
+Vertex Vertex 4
+Model: <bound method HelloWorldVertex.model_name of Vertex 4>
+
+Vertex Vertex 5
+Model: <bound method HelloWorldVertex.model_name of Vertex 5>
+
+Vertex Vertex 6
+Model: <bound method HelloWorldVertex.model_name of Vertex 6>
+
+Vertex Vertex 7
+Model: <bound method HelloWorldVertex.model_name of Vertex 7>
+
+Vertex Vertex 8
+Model: <bound method HelloWorldVertex.model_name of Vertex 8>
+
+*** Edges:
