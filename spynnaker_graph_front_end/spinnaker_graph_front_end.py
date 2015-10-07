@@ -17,11 +17,11 @@ from pacman.operations.placer_algorithms import BasicPlacer
 from pacman.operations.router_algorithms import BasicDijkstraRouting
 from pacman.operations.router_check_functionality.valid_routes_checker import \
     ValidRouteChecker
-from pacman.utilities import reports as pacman_reports
+from pacman.operations.algorithm_reports import reports as pacman_reports
 from pacman.operations.routing_info_allocator_algorithms import \
     BasicRoutingInfoAllocator
 from pacman.operations.tag_allocator_algorithms import BasicTagAllocator
-from pacman.utilities.progress_bar import ProgressBar
+from pacman.utilities.utility_objs.progress_bar import ProgressBar
 
 # spinn front end common imports
 from spinn_front_end_common.interface.\
@@ -40,7 +40,7 @@ from spinn_front_end_common.utilities.database.database_writer import \
     DatabaseWriter
 from spinn_front_end_common.utilities.executable_targets import \
     ExecutableTargets
-from spinn_front_end_common.utilities.timer import Timer
+from pacman.utilities.utility_objs.timer import Timer
 from spinn_front_end_common.abstract_models.\
     abstract_provides_outgoing_edge_constraints \
     import AbstractProvidesOutgoingEdgeConstraints
@@ -54,8 +54,7 @@ from spinn_front_end_common.utilities.notification_protocol.socket_address \
 from spinn_front_end_common.abstract_models.\
     abstract_data_specable_vertex import \
     AbstractDataSpecableVertex
-from spinn_front_end_common.abstract_models.\
-    abstract_provides_provenance_data import \
+from pacman.interfaces.abstract_provides_provenance_data import \
     AbstractProvidesProvenanceData
 
 # spinnman imports
