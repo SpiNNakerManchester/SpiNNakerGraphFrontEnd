@@ -1014,5 +1014,9 @@ class SpiNNakerGraphFrontEnd(
             progress_bar.update()
         progress_bar.end()
 
+
+    def get_txrx(self):
+        return self._txrx
+
     def _chip_based_data_specification_execution(self, hostname):
         pass
