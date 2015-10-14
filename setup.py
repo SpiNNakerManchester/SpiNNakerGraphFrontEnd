@@ -10,7 +10,6 @@ setup(
               'spynnaker_graph_front_end.models',
               'spynnaker_graph_front_end.utilities',
               'spynnaker_graph_front_end.utilities.conf',
-              'spynnaker_graph_front_end.utilities.database',
               'examples',
               'examples.heat_demo'],
     package_data={'examples': ['model_binaries/*.aplx'],
