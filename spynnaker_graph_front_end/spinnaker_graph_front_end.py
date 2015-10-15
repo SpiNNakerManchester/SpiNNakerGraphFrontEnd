@@ -149,7 +149,7 @@ class SpiNNakerGraphFrontEnd(
         generate_tag_report = \
             config.getboolean("Reports", "writeTagAllocationReports")
         in_debug_mode = config.get("Mode", "mode") == "Debug",
-        create_database = config.getboolean("Database", "create_database")
+        self._create_database = config.getboolean("Database", "create_database")
         partitioner_algorithm = config.get("Partitioner", "algorithm")
         placer_algorithm = config.get("Placer", "algorithm")
         key_allocator_algorithm = config.get("KeyAllocator", "algorithm")
@@ -224,7 +224,7 @@ class SpiNNakerGraphFrontEnd(
             virtual_has_wrap_arounds=virtual_has_wrap_arounds,
             board_version=board_version)
 
-        if create_database:
+        if self._create_database:
             self._database_interface = DatabaseWriter(
                 self._app_data_runtime_folder, wait_on_confirmation,
                 database_socket_addresses)
@@ -783,13 +783,6 @@ class SpiNNakerGraphFrontEnd(
                     reverse_ip_tags = \
                         self._tags.get_reverse_ip_tags_for_vertex(
                             placement.subvertex)
-                    placement.subvertex.generate_data_spec(
-                        placement.subvertex, placement,
-                        self._partitioned_graph, self._partitionable_graph,
-                        self._routing_infos, self._hostname,
-                        self._graph_mapper, self._report_default_directory,
-                        ip_tags, reverse_ip_tags, self._write_text_specs,
-                        self._app_data_runtime_folder)
                     progress_bar.update()
 
                     # Get name of binary from vertex
@@ -1019,6 +1012,10 @@ class SpiNNakerGraphFrontEnd(
                         start_address)
             progress_bar.update()
         progress_bar.end()
+
+
+    def get_txrx(self):
+        return self._txrx
 
     def _chip_based_data_specification_execution(self, hostname):
         pass

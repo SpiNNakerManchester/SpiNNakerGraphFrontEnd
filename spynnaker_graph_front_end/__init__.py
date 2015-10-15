@@ -61,13 +61,14 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
     # add the directorities for where to locate the binaries
     if model_binary_module is not None:
         executable_finder.add_path(
-            os.path.dirname(model_binary_module.__file__))
+            os.path.dirname(model_binary_module.name))
     elif model_binary_folder is not None:
         executable_finder.add_path(model_binary_folder)
 
     # set up the spinnaker object
     _spinnaker = SpiNNakerGraphFrontEnd(
         hostname, graph_label, executable_finder, database_socket_addresses)
+
     # set up none label count params.
     _none_labelled_edge_count = 0
     _none_labelled_vertex_count = 0
@@ -238,6 +239,9 @@ def add_partitioned_edge(cellclass, cellparams, label=None, constraints=None):
     _spinnaker.add_partitioned_edge(edge)
     return edge
 
+def get_txrx():
+    global _spinnaker
+    return _spinnaker.get_txrx()
 
 def get_machine_dimensions():
     """
