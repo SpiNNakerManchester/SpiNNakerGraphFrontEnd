@@ -61,13 +61,15 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
     # add the directorities for where to locate the binaries
     if model_binary_module is not None:
         executable_finder.add_path(
-            os.path.dirname(model_binary_module.name))
+            os.path.dirname(model_binary_module.__file__))
     elif model_binary_folder is not None:
         executable_finder.add_path(model_binary_folder)
 
     # set up the spinnaker object
     _spinnaker = SpiNNakerGraphFrontEnd(
-        hostname, graph_label, executable_finder, database_socket_addresses)
+        host_name=hostname, graph_label=graph_label,
+        executable_finder=executable_finder,
+        database_socket_addresses=database_socket_addresses)
 
     # set up none label count params.
     _none_labelled_edge_count = 0
