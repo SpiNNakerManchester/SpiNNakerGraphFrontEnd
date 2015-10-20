@@ -40,9 +40,14 @@ class SpiNNakerGraphFrontEnd(object):
 
     def __init__(
             self, executable_finder, host_name=None, graph_label=None,
-            database_socket_addresses=None):
+            database_socket_addresses=None, algorithms=None,
+            partitioner_algorithm=None):
 
         self._hostname = host_name
+
+        # mapping overloads
+        self._overloaded_partitioner_algorithm = partitioner_algorithm
+        self._overloaded_algortihms = algorithms
 
         # update graph label if needed
         if graph_label is None:
@@ -184,21 +189,21 @@ class SpiNNakerGraphFrontEnd(object):
                 .format(self._app_id))
         self._partitioned_graph.add_subvertex(vertex)
 
-    def add_partitionable_edge(self, edge):
+    def add_partitionable_edge(self, edge, partition_id=None):
         """
 
         :param edge:
         :return:
         """
-        self._partitionable_graph.add_edge(edge)
+        self._partitionable_graph.add_edge(edge, partition_id)
 
-    def add_partitioned_edge(self, edge):
+    def add_partitioned_edge(self, edge, partition_id=None):
         """
 
         :param edge
         :return:
         """
-        self._partitioned_graph.add_subedge(edge)
+        self._partitioned_graph.add_subedge(edge, partition_id)
 
     def run(self, run_time):
         """
@@ -262,60 +267,104 @@ class SpiNNakerGraphFrontEnd(object):
         return xml_paths
 
     def _create_algorithm_list(self, in_debug_mode):
-        algorithms = ""
-        algorithms += \
-            config.get("Mapping", "algorithms") + "," + \
-            config.get("Mapping", "interface_algorithms")
-
-        # if using virutal machine, add to list of algorithms the virtual
-        # machine generator, otherwise add the standard machine generator
-        if config.getboolean("Machine", "virtual_board"):
-            algorithms += ",FrontEndCommonVirtualMachineInterfacer"
-        else:
-            if self._machine is None and self._txrx is None:
-                algorithms += ",FrontEndCommonMachineInterfacer"
-            algorithms += ",FrontEndCommonApplicationRunner"
-
-            # if going to write provanence data after the run add the two
-            # provenance gatherers
-            if config.get("Reports", "writeProvanceData"):
-                algorithms += ",FrontEndCommonProvenanceGatherer"
-
-            # if the end user wants reload script, add the reload script
-            # creator to the list
-            if config.getboolean("Reports", "writeReloadSteps"):
-                algorithms += ",FrontEndCommonReloadScriptCreator"
-
-        if config.getboolean("Reports", "writeMemoryMapReport"):
-            algorithms += ",FrontEndCommonMemoryMapReport"
-
-        if config.getboolean("Reports", "writeNetworkSpecificationReport"):
+        if self._overloaded_algortihms is None:
+            algorithms = ""
             algorithms += \
-                ",FrontEndCommonNetworkSpecificationPartitionableReport"
+                config.get("Mapping", "algorithms") + "," + \
+                config.get("Mapping", "interface_algorithms")
 
-        # define mapping between output types and reports
-        if self._reports_states is not None \
-                and self._reports_states.tag_allocation_report:
-            algorithms += ",TagReport"
-        if self._reports_states is not None \
-                and self._reports_states.routing_info_report:
-            algorithms += ",routingInfoReports"
-        if self._reports_states is not None \
-                and self._reports_states.router_report:
-            algorithms += ",RouterReports"
-        if self._reports_states is not None \
-                and self._reports_states.partitioner_report:
-            algorithms += ",PartitionerReport"
-        if (self._reports_states is not None and
-                self._reports_states.placer_report_with_partitionable_graph):
-            algorithms += ",PlacerReportWithPartitionableGraph"
-        if (self._reports_states is not None and
-                self._reports_states.placer_report_without_partitionable_graph):
-            algorithms += ",PlacerReportWithoutPartitionableGraph"
-        # add debug algorithms if needed
-        if in_debug_mode:
-            algorithms += ",ValidRoutesChecker"
-        return algorithms
+            contains_a_partitionable_graph = \
+                len(self._partitionable_graph.vertices) > 0
+
+            # if using virutal machine, add to list of algorithms the virtual
+            # machine generator, otherwise add the standard machine generator
+            if config.getboolean("Machine", "virtual_board"):
+                algorithms += ",FrontEndCommonVirtualMachineInterfacer"
+            else:
+                if self._machine is None and self._txrx is None:
+                    algorithms += ",FrontEndCommonMachineInterfacer"
+                algorithms += ",FrontEndCommonApplicationRunner"
+
+                # if going to write provanence data after the run add the two
+                # provenance gatherers
+                if config.get("Reports", "writeProvanceData"):
+                    algorithms += ",FrontEndCommonProvenanceGatherer"
+
+                # if the end user wants reload script, add the reload script
+                # creator to the list
+                if config.getboolean("Reports", "writeReloadSteps"):
+                    algorithms += ",FrontEndCommonReloadScriptCreator"
+
+            if config.getboolean("Reports", "writeMemoryMapReport"):
+                algorithms += ",FrontEndCommonMemoryMapReport"
+
+            if config.getboolean("Reports", "writeNetworkSpecificationReport")\
+                    and contains_a_partitionable_graph:
+                algorithms += \
+                    ",FrontEndCommonNetworkSpecificationPartitionableReport"
+
+            # define mapping between output types and reports
+            if self._reports_states is not None \
+                    and self._reports_states.tag_allocation_report:
+                algorithms += ",TagReport"
+            if self._reports_states is not None \
+                    and self._reports_states.routing_info_report:
+                algorithms += ",routingInfoReports"
+            if self._reports_states is not None \
+                    and self._reports_states.router_report:
+                algorithms += ",RouterReports"
+            if self._reports_states is not None \
+                    and self._reports_states.partitioner_report\
+                    and contains_a_partitionable_graph:
+                algorithms += ",PartitionerReport"
+            if (self._reports_states is not None and
+                    self._reports_states.
+                    placer_report_with_partitionable_graph
+                    and contains_a_partitionable_graph):
+                algorithms += ",PlacerReportWithPartitionableGraph"
+            if (self._reports_states is not None and
+                    self._reports_states.
+                    placer_report_without_partitionable_graph):
+                algorithms += ",PlacerReportWithoutPartitionableGraph"
+            # add debug algorithms if needed
+            if in_debug_mode:
+                algorithms += ",ValidRoutesChecker"
+
+            # add partitioner algorithm if the partitionable graph has more than
+            #  0 entries
+            if contains_a_partitionable_graph:
+                algorithms += ",{}".format(
+                    config.get("Mapping", "partitionerAlgorithm"))
+
+                algorithms += \
+                    ",SpinnakerGraphFrontEndPartitionableGraphEdgeToKeyMapper"
+                algorithms += \
+                    ",FrontEndCommonPartitionableGraphApplicationDataLoader"
+                algorithms += ",FrontEndCommonPartitionableGraphHostExecute" \
+                              "DataSpecification"
+                algorithms += \
+                    ",FrontEndCommomPartitionableGraphDataSpecificationWriter"
+                algorithms += ",FrontEndCommonDatabaseWriter"
+            else:
+                algorithms += \
+                    ",SpinnakerGraphFrontEndPartitionedGraphEdgeToKeyMapper"
+                algorithms += ",SpinnakerGraphFrontEndPartitionedGraph" \
+                              "ApplicationDataLoader"
+                algorithms += ",SpinnakerGraphFrontEndPartitionedGraphData" \
+                              "SpecificationWriter"
+                algorithms += ",SpinnakerGraphFrontEndPartitionedGraphHost" \
+                              "BasedDataSpecificationExeuctor"
+                algorithms += ",SpynnakerGraphFrontEndDatabaseWriter"
+
+            return algorithms
+        else:
+            if self._overloaded_partitioner_algorithm is None:
+                return self._overloaded_algortihms
+            else:
+                algorithums = "{},{}".format(
+                    self._overloaded_partitioner_algorithm,
+                    self._overloaded_algortihms)
+                return algorithums
 
     @staticmethod
     def _create_pacman_executor_outputs():
@@ -371,10 +420,12 @@ class SpiNNakerGraphFrontEnd(object):
             boot_port_num = int(boot_port_num)
 
         inputs = list()
-        inputs.append({'type': "MemoryPartitionableGraph",
-                       'value': self._partitionable_graph})
-        inputs.append({'type': "MemoryPartitionedGraph",
-                       'value': self._partitioned_graph})
+        if len(self.partitionable_graph.vertices) > 0:
+            inputs.append({'type': "MemoryPartitionableGraph",
+                           'value': self._partitionable_graph})
+        if len(self.partitioned_graph.subvertices) > 0:
+            inputs.append({'type': "MemoryPartitionedGraph",
+                           'value': self._partitioned_graph})
 
         # add machine and transciever if they've already been ran
         if self._machine is not None:

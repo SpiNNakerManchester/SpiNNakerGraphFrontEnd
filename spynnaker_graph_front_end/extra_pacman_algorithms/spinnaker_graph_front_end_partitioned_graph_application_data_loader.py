@@ -24,25 +24,19 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class SpinnakerGraphFrontEndApplicationDataLoader(object):
+class SpinnakerGraphFrontEndPartitionedGraphApplicationDataLoader(object):
     """
-    SpinnakerGraphFrontEndApplicationDataLoader
+    SpinnakerGraphFrontEndPartitionedGraphApplicationDataLoader
     """
 
-    def __call__(self, placements, vertex_to_subvertex_mapper, txrx,
-                 processor_to_app_data_base_address, hostname, app_data_folder,
+    def __call__(self, placements, txrx, processor_to_app_data_base_address,
                  vertex_to_app_data_files):
         # go through the placements and see if there's any application data to
         # load
         progress_bar = ProgressBar(len(list(placements.placements)),
                                    "Loading application data onto the machine")
         for placement in placements.placements:
-            if vertex_to_subvertex_mapper is not None:
-                associated_vertex = \
-                    vertex_to_subvertex_mapper.get_vertex_from_subvertex(
-                        placement.subvertex)
-            else:
-                associated_vertex = placement.subvertex
+            associated_vertex = placement.subvertex
 
             if (isinstance(associated_vertex, AbstractDataSpecableVertex) or
                 isinstance(associated_vertex,

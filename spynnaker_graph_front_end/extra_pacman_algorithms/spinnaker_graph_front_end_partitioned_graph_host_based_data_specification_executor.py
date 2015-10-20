@@ -1,7 +1,13 @@
 from pacman.utilities.utility_objs.progress_bar import ProgressBar
+
 from spinn_front_end_common.abstract_models.\
     abstract_data_specable_vertex import \
     AbstractDataSpecableVertex
+from spinn_front_end_common.utilities import exceptions as front_end_exceptions
+
+from spynnaker_graph_front_end.\
+    abstract_partitioned_data_specable_vertex import \
+    AbstractPartitionedDataSpecableVertex
 
 from data_specification.data_specification_executor import \
     DataSpecificationExecutor
@@ -15,12 +21,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class SpinnakerGraphFrontEndHostBasedDataSpecificationExeuctor(object):
+class SpinnakerGraphFrontEndPartitionedGraphHostBasedDataSpecificationExeuctor(
+        object):
     """
     SpinnakerGraphFrontEndHostBasedDataSpecificationExeuctor
     """
 
-    def __call__(self, placements, graph_mapper, report_default_directory,
+    def __call__(self, placements, report_default_directory,
                  hostname, application_data_runtime_folder, machine,
                  dsg_targets, write_text_specs):
         """
@@ -41,14 +48,12 @@ class SpinnakerGraphFrontEndHostBasedDataSpecificationExeuctor(object):
                                    "Executing data specifications")
 
         for placement in placements.placements:
-            if graph_mapper is not None:
-                associated_vertex = graph_mapper.get_vertex_from_subvertex(
-                    placement.subvertex)
-            else:
-                associated_vertex = placement.subvertex
+            associated_vertex = placement.subvertex
 
             # if the vertex can generate a DSG, call it
-            if isinstance(associated_vertex, AbstractDataSpecableVertex):
+            if (isinstance(associated_vertex, AbstractDataSpecableVertex)
+                    or isinstance(associated_vertex,
+                                  AbstractPartitionedDataSpecableVertex)):
 
                 vertex_to_application_data_files[placement.subvertex] = list()
                 data_spec_file_paths = dsg_targets[placement.subvertex]
@@ -104,9 +109,13 @@ class SpinnakerGraphFrontEndHostBasedDataSpecificationExeuctor(object):
                             host_based_data_spec_executor.execute()
                     except exceptions.DataSpecificationException as e:
                         logger.error(
-                            "Error executing data specification for {}"
-                            .format(associated_vertex))
-                        raise e
+                            "Error executing data specification for {} "
+                            "with the issue of {}"
+                            .format(associated_vertex, e.message))
+                        raise front_end_exceptions.RallocException(
+                            "Error executing data specification for {} "
+                            "with the issue of {}"
+                            .format(associated_vertex, e.message))
 
                     # update base address mapper
                     processor_mapping_key = \

@@ -1,19 +1,11 @@
 <algorithms>
-    <algorithm name="SpinnakerGraphFrontEndEdgeToKeyMapper">
+    <algorithm name="SpinnakerGraphFrontEndPartitionedGraphEdgeToKeyMapper">
         <python_module>spynnaker_graph_front_end.extra_pacman_algorithms.spinnaker_graph_front_end_edge_to_key_mapper</python_module>
         <python_class>SpinnakerGraphFrontEndEdgeToKeyMapper</python_class>
         <required_inputs>
             <parameter>
-                <param_name>partitionable_graph</param_name>
-                <param_type>MemoryPartitionableGraph</param_type>
-            </parameter>
-            <parameter>
                 <param_name>partitioned_graph</param_name>
                 <param_type>MemoryPartitionedGraph</param_type>
-            </parameter>
-            <parameter>
-                <param_name>graph_mapper</param_name>
-                <param_type>MemoryGraphMapper</param_type>
             </parameter>
         </required_inputs>
         <parameters>
@@ -25,17 +17,39 @@
             </parameter>
         </produces_outputs>
     </algorithm>
-    <algorithm name="SpinnakerGraphFrontEndApplicationDataLoader">
-        <python_module>spynnaker_graph_front_end.extra_pacman_algorithms.spinnaker_graph_front_end_application_data_loader</python_module>
-        <python_class>SpinnakerGraphFrontEndApplicationDataLoader</python_class>
+    <algorithm name="SpinnakerGraphFrontEndPartitionableGraphEdgeToKeyMapper">
+        <python_module>spynnaker_graph_front_end.extra_pacman_algorithms.spinnaker_graph_front_end_edge_to_key_mapper</python_module>
+        <python_class>SpinnakerGraphFrontEndEdgeToKeyMapper</python_class>
+        <required_inputs>
+            <parameter>
+                <param_name>graph_mapper</param_name>
+                <param_type>MemoryGraphMapper</param_type>
+            </parameter>
+            <parameter>
+                <param_name>partitionable_graph</param_name>
+                <param_type>MemoryPartitionableGraph</param_type>
+            </parameter>
+            <parameter>
+                <param_name>partitioned_graph</param_name>
+                <param_type>MemoryPartitionedGraph</param_type>
+            </parameter>
+        </required_inputs>
+        <parameters>
+        </parameters>
+        <produces_outputs>
+            <parameter>
+                <param_name>n_keys_map</param_name>
+                <param_type>MemoryPartitionedEdgeNKeysMap</param_type>
+            </parameter>
+        </produces_outputs>
+    </algorithm>
+    <algorithm name="SpinnakerGraphFrontEndPartitionedGraphApplicationDataLoader">
+        <python_module>spynnaker_graph_front_end.extra_pacman_algorithms.spinnaker_graph_front_end_partitioned_graph_application_data_loader</python_module>
+        <python_class>SpinnakerGraphFrontEndPartitionedGraphApplicationDataLoader</python_class>
         <required_inputs>
             <parameter>
                 <param_name>placements</param_name>
                 <param_type>MemoryPlacements</param_type>
-            </parameter>
-            <parameter>
-                <param_name>vertex_to_subvertex_mapper</param_name>
-                <param_type>MemoryGraphMapper</param_type>
             </parameter>
             <parameter>
                 <param_name>processor_to_app_data_base_address</param_name>
@@ -57,17 +71,13 @@
             </parameter>
         </produces_outputs>
     </algorithm>
-    <algorithm name="SpinnakerGraphFrontEndDataSpecificationWriter">
-        <python_module>spynnaker_graph_front_end.extra_pacman_algorithms.spinnaker_graph_front_end_data_specification_writer</python_module>
-        <python_class>SpinnakerGraphFrontEndDataSpecificationWriter</python_class>
+    <algorithm name="SpinnakerGraphFrontEndPartitionedGraphDataSpecificationWriter">
+        <python_module>spynnaker_graph_front_end.extra_pacman_algorithms.spinnaker_graph_front_end_partitioned_graph_data_specification_writer</python_module>
+        <python_class>SpinnakerGraphFrontEndPartitionedGraphDataSpecificationWriter</python_class>
         <required_inputs>
             <parameter>
                 <param_name>placements</param_name>
                 <param_type>MemoryPlacements</param_type>
-            </parameter>
-            <parameter>
-                <param_name>graph_mapper</param_name>
-                <param_type>MemoryGraphMapper</param_type>
             </parameter>
             <parameter>
                 <param_name>tags</param_name>
@@ -80,10 +90,6 @@
             <parameter>
                 <param_name>partitioned_graph</param_name>
                 <param_type>MemoryPartitionedGraph</param_type>
-            </parameter>
-            <parameter>
-                <param_name>partitionable_graph</param_name>
-                <param_type>MemoryPartitionableGraph</param_type>
             </parameter>
             <parameter>
                 <param_name>routing_infos</param_name>
@@ -117,9 +123,9 @@
             </parameter>
         </produces_outputs>
     </algorithm>
-    <algorithm name="SpinnakerGraphFrontEndHostBasedDataSpecificationExeuctor">
-        <python_module>spynnaker_graph_front_end.extra_pacman_algorithms.spinnaker_graph_front_end_host_based_data_specification_executor</python_module>
-        <python_class>SpinnakerGraphFrontEndHostBasedDataSpecificationExeuctor</python_class>
+    <algorithm name="SpinnakerGraphFrontEndPartitionedGraphHostBasedDataSpecificationExeuctor">
+        <python_module>spynnaker_graph_front_end.extra_pacman_algorithms.spinnaker_graph_front_end_partitioned_graph_host_based_data_specification_executor</python_module>
+        <python_class>SpinnakerGraphFrontEndPartitionedGraphHostBasedDataSpecificationExeuctor</python_class>
         <required_inputs>
             <parameter>
                 <param_name>hostname</param_name>
@@ -128,10 +134,6 @@
             <parameter>
                 <param_name>placements</param_name>
                 <param_type>MemoryPlacements</param_type>
-            </parameter>
-            <parameter>
-                <param_name>graph_mapper</param_name>
-                <param_type>MemoryGraphMapper</param_type>
             </parameter>
             <parameter>
                 <param_name>report_default_directory</param_name>
@@ -162,6 +164,76 @@
             <parameter>
                 <param_name>vertex_to_app_data_files</param_name>
                 <param_type>VertexToAppDataFilePaths</param_type>
+            </parameter>
+        </produces_outputs>
+    </algorithm>
+<algorithm name="SpynnakerGraphFrontEndDatabaseWriter">
+        <python_module>spynnaker_graph_front_end.extra_pacman_algorithms.spinnaker_graph_front_end_database_interface</python_module>
+        <python_class>SpinnakerGraphFrontEndDatabaseInterface</python_class>
+        <required_inputs>
+            <parameter>
+                <param_name>partitioned_graph</param_name>
+                <param_type>MemoryPartitionedGraph</param_type>
+            </parameter>
+            <parameter>
+                <param_name>user_create_database</param_name>
+                <param_type>UserCreateDatabaseFlag</param_type>
+            </parameter>
+            <parameter>
+                <param_name>tags</param_name>
+                <param_type>MemoryTags</param_type>
+            </parameter>
+            <parameter>
+                <param_name>wait_for_read_confirmation</param_name>
+                <param_type>DatabaseWaitOnConfirmationFlag</param_type>
+            </parameter>
+            <parameter>
+                <param_name>database_directory</param_name>
+                <param_type>ApplicationDataFolder</param_type>
+            </parameter>
+            <parameter>
+                <param_name>runtime</param_name>
+                <param_type>RunTime</param_type>
+            </parameter>
+            <parameter>
+                <param_name>machine</param_name>
+                <param_type>MemoryExtendedMachine</param_type>
+            </parameter>
+            <parameter>
+                <param_name>socket_addresses</param_name>
+                <param_type>DatabaseSocketAddresses</param_type>
+            </parameter>
+            <parameter>
+                <param_name>time_scale_factor</param_name>
+                <param_type>TimeScaleFactor</param_type>
+            </parameter>
+            <parameter>
+                <param_name>machine_time_step</param_name>
+                <param_type>MachineTimeStep</param_type>
+            </parameter>
+            <parameter>
+                <param_name>placements</param_name>
+                <param_type>MemoryPlacements</param_type>
+            </parameter>
+            <parameter>
+                <param_name>routing_infos</param_name>
+                <param_type>MemoryRoutingInfos</param_type>
+            </parameter>
+            <parameter>
+                <param_name>router_tables</param_name>
+                <param_type>MemoryRoutingTables</param_type>
+            </parameter>
+            <parameter>
+                <param_name>execute_mapping</param_name>
+                <param_type>ExecuteMapping</param_type>
+            </parameter>
+        </required_inputs>
+        <parameters>
+        </parameters>
+        <produces_outputs>
+            <parameter>
+                <param_name>database_interface</param_name>
+                <param_type>DatabaseInterface</param_type>
             </parameter>
         </produces_outputs>
     </algorithm>

@@ -19,11 +19,12 @@ class SpinnakerGraphFrontEndEdgeToKeyMapper(object):
     SpinnakerGraphFrontEndEdgeToKeyMapper
     """
 
-    def __call__(self, partitionable_graph, graph_mapper, partitioned_graph):
+    def __call__(self, partitioned_graph, partitionable_graph=None,
+                 graph_mapper=None):
 
         # Generate an n_keys map for the graph and add constraints
         n_keys_map = DictBasedPartitionedEdgeNKeysMap()
-        if len(partitionable_graph.vertices) > 0:
+        if partitionable_graph is not None and graph_mapper is not None:
             for edge in partitioned_graph.subedges:
                 vertex_slice = graph_mapper.get_subvertex_slice(
                     edge.pre_subvertex)

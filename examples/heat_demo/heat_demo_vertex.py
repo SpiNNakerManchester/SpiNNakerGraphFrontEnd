@@ -12,9 +12,6 @@ from data_specification.data_specification_generator import \
     DataSpecificationGenerator
 
 # pacman imports
-from pacman.model.constraints.key_allocator_constraints.\
-    key_allocator_same_keys_constraint import \
-    KeyAllocatorSameKeysConstraint
 from pacman.model.partitioned_graph.partitioned_vertex import PartitionedVertex
 from pacman.model.resources.cpu_cycles_per_tick_resource import \
     CPUCyclesPerTickResource
@@ -23,7 +20,8 @@ from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.sdram_resource import SDRAMResource
 
 # graph front end imports
-from spinn_front_end_common.abstract_models.abstract_provides_outgoing_edge_constraints import \
+from spinn_front_end_common.abstract_models.\
+    abstract_provides_outgoing_edge_constraints import \
     AbstractProvidesOutgoingEdgeConstraints
 from spinn_front_end_common.utility_models.live_packet_gather import \
     LivePacketGather
@@ -41,8 +39,7 @@ from enum import Enum
 
 
 class HeatDemoVertexPartitioned(
-        PartitionedVertex, AbstractPartitionedDataSpecableVertex,
-        AbstractProvidesOutgoingEdgeConstraints):
+        PartitionedVertex, AbstractPartitionedDataSpecableVertex):
     """
     HeatDemoVertexPartitioned: a vertex peice for a heat demo.
     represnets a heat element.
@@ -104,22 +101,6 @@ class HeatDemoVertexPartitioned(
         """
         return "Heat_Demo_Vertex"
 
-    def get_outgoing_edge_constraints(self, partitioned_edge, graph_mapper):
-        """
-
-        :param partitioned_edge:
-        :param graph_mapper:
-        :return:
-        """
-        if self._first_partitioned_edge is None:
-            self._first_partitioned_edge = partitioned_edge
-            return list()
-        else:
-            constraints = list()
-            constraints.append(KeyAllocatorSameKeysConstraint(
-                self._first_partitioned_edge))
-            return constraints
-
     def generate_data_spec(
             self, placement, sub_graph, routing_info, hostname, report_folder,
             ip_tags, reverse_ip_tags, write_text_specs,
@@ -147,7 +128,7 @@ class HeatDemoVertexPartitioned(
 
         spec = DataSpecificationGenerator(data_writer, report_writer)
         # Setup words + 1 for flags + 1 for recording size
-        setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 2) * 4
+        setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 8) * 4
 
         spec.comment("\n*** Spec for SpikeSourceArray Instance ***\n\n")
 
@@ -158,14 +139,16 @@ class HeatDemoVertexPartitioned(
 
         # Create the data regions for the spike source array:
         self._reserve_memory_regions(spec, setup_size)
-        self._write_basic_setup_info(spec, self.CORE_APP_IDENTIFIER,
-                                     self.DATA_REGIONS.SYSTEM.value)
+        self._write_setup_info(spec, self.CORE_APP_IDENTIFIER,
+                               self.DATA_REGIONS.SYSTEM.value)
         self._write_tranmssion_keys(spec, routing_info, sub_graph)
         self._write_key_data(spec, routing_info, sub_graph)
         self._write_temp_data(spec)
         # End-of-Spec:
         spec.end_specification()
         data_writer.close()
+
+        return [data_writer.filename]
 
     def _write_temp_data(self, spec):
         spec.switch_write_focus(region=self.DATA_REGIONS.TEMP_VALUE.value)
@@ -198,7 +181,7 @@ class HeatDemoVertexPartitioned(
         spec.reserve_memory_region(region=self.DATA_REGIONS.TEMP_VALUE.value,
                                    size=self.TEMP_VALUE_SIZE, label="temp")
 
-    def _write_basic_setup_info(self, spec, core_app_identifier, region_id):
+    def _write_setup_info(self, spec, core_app_identifier, region_id):
         """
          Write this to the system region (to be picked up by the simulation):
         :param spec:
@@ -206,6 +189,7 @@ class HeatDemoVertexPartitioned(
         :param region_id:
         :return:
         """
+        self._write_basic_setup_info(spec, region_id)
         spec.switch_write_focus(region=region_id)
         spec.write_value(data=core_app_identifier)
         spec.write_value(data=self._machine_time_step * self._time_scale_factor)
@@ -220,8 +204,9 @@ class HeatDemoVertexPartitioned(
         :return:
         """
         # Every subedge should have the same key
+        outgoing_edges = subgraph.outgoing_subedges_from_subvertex(self)
         keys_and_masks = routing_info.get_keys_and_masks_from_subedge(
-            subgraph.outgoing_subedges_from_subvertex(self)[0])
+            outgoing_edges[0])
         key = keys_and_masks[0].key
         spec.switch_write_focus(region=self.DATA_REGIONS.TRANSMISSIONS.value)
         # Write Key info for this core:
