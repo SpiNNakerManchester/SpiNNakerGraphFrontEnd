@@ -20,7 +20,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class HelloWorldVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
+class MasterVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
@@ -47,10 +47,10 @@ class HelloWorldVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex)
         self.placement = None
 
     def get_binary_file_name(self):
-        return "hello_world.aplx"
+        return "master.aplx"
 
     def model_name(self):
-        return "Hello_World_Vertex"
+        return "MasterVertex"
 
     def generate_data_spec(
             self, placement, sub_graph, routing_info, hostname, report_folder,

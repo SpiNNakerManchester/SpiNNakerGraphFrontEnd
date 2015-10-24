@@ -1,4 +1,4 @@
-/****a* hello_world.c/hello_world_summary
+/****a* slave.c/slave_summary
 *
 * COPYRIGHT
 *  Copyright (c) The University of Manchester, 2011. All rights reserved.
@@ -11,6 +11,7 @@
 #include "spin1_api.h"
 #include "common-typedefs.h"
 #include "recording.h"
+#include "../db-typedefs.h"
 #include <data_specification.h>
 #include <debug.h>
 
@@ -18,17 +19,6 @@
 typedef enum regions_e {
     SYSTEM_REGION, STRING_DATA_REGION
 } regions_e;
-
-typedef enum { NUL, UINT32, STRING } var_type;
-
-uint32_t get_size_bytes(void* data, var_type t){
-    switch(t){
-        case UINT32: return sizeof(uint32_t);
-        case STRING: return strlen((char*)data) * sizeof(char);
-        case NUL:
-        default:     return 0;
-    }
-}
 
 size_t bytes_written = 0;
 
@@ -43,22 +33,23 @@ void store(void* data, uint32_t size_bytes){
     return recorded;
 }
 
+bool put(uint32_t k_type_and_size, uint32_t v_type_and_size, void* k, void* v){
 
-bool put(void* k, var_type k_type, void* v, var_type v_type){
+    log_info("Putting...");
 
-    uint32_t k_size = get_size_bytes(k,k_type);
-    uint32_t v_size = get_size_bytes(v,v_type);
+    store(&k_type_and_size, sizeof(uint32_t));
+    store(&v_type_and_size, sizeof(uint32_t));
 
-    uint32_t k_size_and_type = k_size | ((k_type) << 28);
-    uint32_t v_size_and_type = v_size | ((v_type) << 28);
+    uint32_t k_size = k_type_and_size & 0x0FFFFFFF; //TODO make sure this is right...
+    uint32_t v_size = v_type_and_size & 0x0FFFFFFF;
 
-    store(&k_size_and_type, sizeof(uint32_t));
-    store(&v_size_and_type, sizeof(uint32_t));
+    log_info("storing k: %d", *((uchar*)k)); //shouldn't be!! TODO
+    log_info("storing v: %d", *((uchar*)v));
 
-    store(k, ((k_size+3)/4)*4);
+    store(k, ((k_size+3)/4)*4); //TODO hmmm NO
     store(v, ((v_size+3)/4)*4);
 
-    return true;
+    return true; //TODO should really return true?
 }
 
 char* word_to_char_array(uint32_t word){
@@ -87,21 +78,6 @@ char* words_to_char_array(uint32_t* words, uint32_t n_words){
     return char_ptr;
 }
 
-typedef struct value {
-    var_type type;
-    size_t size;
-    void* data;
-} value;
-
-value null_value(){
-    value v;
-    v.data = NULL;
-    v.size = 0;
-    v.type = NUL;
-
-    return v;
-}
-
 void get_info(uint32_t bits, var_type* type, size_t* size){
     uint32_t ii = (bits & 0xF0000000) >> 28;
     *type = (bits & 0xF0000000) >> 28;
@@ -115,8 +91,6 @@ void* value_words_to_type(uint32_t* data, size_t size_words, var_type type){
         default:        return NULL;
     }
 }
-
-
 
 value pull(void* k, var_type k_type){
 
@@ -247,70 +221,82 @@ static bool initialize() {
 
 void update (uint ticks, uint b)
 {
-    return; //do nothing for now!!!
+
     // I give it a few ticks between reading and writing, just in case
     // the IO operations take a bit of time
     if(ticks == 100){
-                              uint32_t one = 1;
-                              uint32_t a = 10;
-                              uint32_t b = 16;
-                              put(&one, UINT32, &one, UINT32);
-                              put("I love", STRING, "Spinnaker", STRING);
-                              put(&a, UINT32, "hahaz", STRING);
-                              put("ah", STRING, &b, UINT32);
-                              put("yo", STRING, "boy", STRING);
-                              put("I like cheese, man", STRING, "but do you?", STRING);
+      uint32_t one = 1;
+      uint32_t a = 10;
+      uint32_t b = 16;
+      put(&one, UINT32, &one, UINT32);
+      put("I love", STRING, "Spinnaker", STRING);
+      put(&a, UINT32, "hahaz", STRING);
+      put("ah", STRING, &b, UINT32);
+      put("yo", STRING, "boy", STRING);
+      put("I like cheese, man", STRING, "but do you?", STRING);
 
-                              log_info("We wrote a total of %d bytes", bytes_written);
-                            }
-    else if(ticks == -1)   {
-                               // log_info("Hello -> %s", pull("Hello",STRING));
-                                 //uint32_t k = 10;
-                                 //var_type k_type = UINT32;
-                                 //value v = pull(&k,k_type);
-                                 char* k = "yo";
-                                 var_type k_type = STRING;
-                                 value v = pull(k,k_type);
+      log_info("We wrote a total of %d bytes", bytes_written);
+    }
+    else if(ticks == 200)   {
+         //log_info("Hello -> %s", pull("Hello",STRING));
+         //uint32_t k = 10;
+         //var_type k_type = UINT32;
+         //value v = pull(&k,k_type);
+         char* k = "yo";
+         var_type k_type = STRING;
+         value v = pull(k,k_type);
 
-                                    switch(k_type){
-                                        case STRING: log_info("STRING Key %s", k);
-                                                     break;
-                                        case UINT32: log_info("UINT32 Key %d", k);
-                                                     break;
-                                    }
+        switch(k_type){
+            case STRING: log_info("STRING Key %s", k);
+                         break;
+            case UINT32: log_info("UINT32 Key %d", k);
+                         break;
+        }
 
-                                    switch(v.type){
-                                        case STRING: log_info("has value -> %s (type: STRING, size: %d)", v.data, v.size);
-                                                     break;
-                                        case UINT32: log_info("has value -> %d (type: UINT32, size: %d)", *((uint32_t*)v.data), v.size);
-                                                     break;
-                                        case NUL:
-                                        default:     log_info("was not found!");
-                                                     break;
-                                    }
+        switch(v.type){
+            case STRING: log_info("has value -> %s (type: STRING, size: %d)", v.data, v.size);
+                         break;
+            case UINT32: log_info("has value -> %d (type: UINT32, size: %d)", *((uint32_t*)v.data), v.size);
+                         break;
+            case NUL:
+            default:     log_info("was not found!");
+                         break;
+        }
 
-                            }
+    }
     //else if(ticks == 300)   { recording_finalise();
     //                          spin1_exit(0);}
 }
 
+
 void sdp_packet_callback(uint mailbox, uint port) {
-    log_info("RECEIVED A PACKET!!!!!!!!!!!!!");
+    log_info("Received a packet...");
 
-/*    use(port);
-    sdp_msg_t *msg = (sdp_msg_t *) mailbox;
-    uint16_t length = msg->length;
-    eieio_msg_t eieio_msg_ptr = (eieio_msg_t) &(msg->cmd_rc);
+    use(port); // TODO is this wait for port to be free?
+    sdp_msg_t* msg = (sdp_msg_t *) mailbox;
 
-    packet_handler_selector(eieio_msg_ptr, length - 8);
+    print_msg(*msg);
+
+    uint k_type_and_size = msg->arg1;
+    uint v_type_and_size = msg->arg2;
+
+    uchar k = msg->data[0]; //TODO !!!!!!!! REALLY SHOULD DO WORD->ARR OF BYTES
+    uchar v = msg->data[4]; //TODO same here...
+
+    switch(msg->cmd_rc){
+        case PUT: put(k_type_and_size,v_type_and_size, &k, &v);
+                  break;
+        default:
+                 break;
+    }
 
     // free the message to stop overload
-    spin1_msg_free(msg);*/
+    spin1_msg_free(msg);
 }
 
 void c_main()
 {
-    log_info("Initializing Distributed Hello World...");
+    log_info("Initializing Slave...");
 
     if (!initialize()) {
         rt_error(RTE_SWERR);
@@ -320,8 +306,10 @@ void c_main()
     spin1_set_timer_tick(100);
 
     // register callbacks
-    spin1_callback_on (TIMER_TICK, update, 0);
-    spin1_callback_on(SDP_PACKET_RX, sdp_packet_callback, 1);
+    //spin1_callback_on (TIMER_TICK, update, 0); TODO ENABLE WITH SOMETHING ELSE...
+    spin1_callback_on(SDP_PACKET_RX,        sdp_packet_callback, 1);
+    //spin1_callback_on(MC_PACKET_RECEIVED,   sdp_packet_callback, 1);
+    //spin1_callback_on(MCPL_PACKET_RECEIVED, sdp_packet_callback, 1);
 
     simulation_run();
 }
