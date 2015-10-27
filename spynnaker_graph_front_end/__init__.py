@@ -26,15 +26,15 @@ _none_labelled_vertex_count = None
 _none_labelled_edge_count = None
 
 
-def setup(hostname=None, graph_label=None, model_binary_module=None,
-          model_binary_folder=None, database_socket_addresses=None):
+def setup(hostname=None, graph_label=None, model_binary_modules=None,
+          model_binary_folders=None, database_socket_addresses=None):
     """ for builders with pynn attitude, allows end users to define wherever
     their binaries are
 
     :param hostname:
     :param graph_label:
     :param model_binary_module:
-    :param model_binary_folder:
+    :param model_binary_folders:
     :param database_socket_addresses:
 
     :return:
@@ -59,11 +59,13 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
 
     executable_finder = ExecutableFinder()
     # add the directorities for where to locate the binaries
-    if model_binary_module is not None:
-        executable_finder.add_path(
-            os.path.dirname(model_binary_module.name))
-    elif model_binary_folder is not None:
-        executable_finder.add_path(model_binary_folder)
+    if model_binary_modules is not None:
+        for model_binary_module in model_binary_modules:
+            executable_finder.add_path(
+                os.path.dirname(model_binary_module.name))
+    elif model_binary_folders is not None:
+        for model_binary_folder in model_binary_folders:
+            executable_finder.add_path(model_binary_folder)
 
     # set up the spinnaker object
     _spinnaker = SpiNNakerGraphFrontEnd(
@@ -242,6 +244,10 @@ def add_partitioned_edge(cellclass, cellparams, label=None, constraints=None):
 def get_txrx():
     global _spinnaker
     return _spinnaker.get_txrx()
+
+def get_spinnaker():
+    global _spinnaker
+    return _spinnaker
 
 def get_machine_dimensions():
     """

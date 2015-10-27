@@ -1,4 +1,23 @@
+
+#ifndef __DB_TYPEDEFS_H__
+#define __DB_TYPEDEFS_H__
+
 #include <debug.h>
+
+//---------------------------------------
+// Structures
+//---------------------------------------
+//! structure that defines a channel in memory.
+typedef struct recording_channel_t {
+    size_t current_size;
+    uint8_t *start;
+    uint8_t *current;
+    uint8_t *end;
+} recording_channel_t;
+
+recording_channel_t recording_channel;
+
+#define try(cond) do { if (!cond) return false; } while (0)
 
 typedef enum { NUL, UINT32, STRING } var_type;
 
@@ -10,11 +29,11 @@ typedef enum {
     REMOVE
 } dbCommand;
 
-typedef struct value {
+typedef struct value_entry {
     var_type type;
     size_t size;
     void* data;
-} value;
+} value_entry;
 
 uint32_t get_size_bytes(void* data, var_type t){
     switch(t){
@@ -24,16 +43,6 @@ uint32_t get_size_bytes(void* data, var_type t){
         default:     return 0;
     }
 }
-
-value null_value(){
-    value v;
-    v.data = NULL;
-    v.size = 0;
-    v.type = NUL;
-
-    return v;
-}
-
 
 void print_msg(sdp_msg_t msg){
   log_info("=============================================");
@@ -59,3 +68,5 @@ void print_msg(sdp_msg_t msg){
   log_info("  data[2]:   %02x", msg.data[2]);
   log_info("=============================================");
 }
+
+#endif
