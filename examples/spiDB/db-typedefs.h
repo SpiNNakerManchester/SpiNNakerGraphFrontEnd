@@ -33,18 +33,13 @@ typedef struct value_entry {
     void* data;
 } value_entry;
 
-uint32_t get_size_bytes(void* data, var_type t){
+uint16_t get_size_bytes(void* data, var_type t){ //todo what if it's bigger than 16bits?
     switch(t){
         case UINT32: return sizeof(uint32_t);
         case STRING: return strlen((char*)data) * sizeof(char);
         case NUL:
         default:     return 0;
     }
-}
-
-void get_info(uint32_t bits, var_type* type, size_t* size){
-    *type = (bits & 0xF0000000) >> 28;
-    *size = (bits & 0x0FFFFFFF);
 }
 
 void print_msg(sdp_msg_t msg){
@@ -66,9 +61,7 @@ void print_msg(sdp_msg_t msg){
   log_info("  arg1:      %08x", msg.arg1);
   log_info("  arg2:      %08x", msg.arg2);
   log_info("  arg3:      %08x", msg.arg3);
-  log_info("  data[0]:   %02x", msg.data[0]);
-  log_info("  data[1]:   %02x", msg.data[1]);
-  log_info("  data[2]:   %02x", msg.data[2]);
+  log_info("  data:      %08x", *msg.data);
   log_info("=============================================");
 }
 

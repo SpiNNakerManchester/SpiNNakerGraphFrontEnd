@@ -13,18 +13,22 @@
 #define assert_f(test,msg,...) do { if  (test) log_assert(msg, ##__VA_ARGS__);} while (0)
 #define run_test(test) do { char* msg = test(); tests_run++; if (msg) return msg; } while (0)
 
-extern bool put(uint32_t k_type_and_size, uint32_t v_type_and_size, void* k, void* v);
+extern bool put(uint32_t info, void* k, void* v);
 
 uint32_t type_and_size(uint32_t type, void* data){
     return get_size_bytes(data,type) | (type << 28);
 }
 
-#define try_put(k_type,v_type,k_data,v_data) \
-        do {                                            \
-            assert_t(put(type_and_size(k_type,k_data), type_and_size(v_type,v_data), k_data, v_data), \
-                     "Failed putting 0x%08x (s: %s) (type: %d) -> 0x%08x (s: %s) (type: %d)",\
-                     *k_data, k_data, k_type, *v_data, v_data, v_type); \
-        }while(0)
+void try_put(var_type k_type, var_type v_type, void* k_data, void* v_data){
+
+    uint16_t k_type_and_size = get_size_bytes(k_data,k_type) | ((k_type) << 12);
+    uint16_t v_type_and_size = get_size_bytes(v_data,v_type) | ((v_type) << 12);
+    uint32_t info = (k_type_and_size << 16) | v_type_and_size;
+
+    assert_t(put(info, k_data, v_data),
+             "Failed putting 0x%08x (s: %s) (type: %d) -> 0x%08x (s: %s) (type: %d)",
+             *((uint32_t*)k_data), (char*)k_data, k_type, *((uint32_t*)v_data), (char*)v_data, v_type);
+}
 
 int tests_run = 0;
 
@@ -62,7 +66,7 @@ void put_strings(){
 }
 
 void run_put_tests() {
-
+    log_info("Started running tests.");
     //TODO put the same key twice
     //clean every time??
     put_limits();

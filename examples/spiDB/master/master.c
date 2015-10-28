@@ -8,6 +8,8 @@
 *  Author: Arthur Ceccotti
 *******/
 
+#define LOG_LEVEL 40
+
 #include "spin1_api.h"
 #include "common-typedefs.h"
 #include "recording.h"
@@ -15,10 +17,12 @@
 #include <data_specification.h>
 #include <debug.h>
 
+#include <bit_field.h>
+
 #define SDP_PORT    3
 #define SDP_TIMEOUT 1
 
-sdp_msg_t put_sdp_msg(void* k, var_type k_type, void* v, var_type v_type){
+sdp_msg_t put_sdp_msg(var_type k_type, var_type v_type, void* k, void* v){
 
 /*
   struct sdp_msg *next;		//!< Next in free list
@@ -38,23 +42,32 @@ sdp_msg_t put_sdp_msg(void* k, var_type k_type, void* v, var_type v_type){
 
   ushort cmd_rc;		//!< Command/Return Code
   ushort seq;			//!< Sequence number
-  uint arg1;			//!< Arg 1
+  uint arg1;			//!< Arg 1   uint32_t a = 10;
+    uint32_t b = 16;
   uint arg2;			//!< Arg 2
   uint arg3;			//!< Arg 3
 
 
   // user data (optional)
 
+
   uchar data[SDP_BUF_SIZE];	//!< User data (256 bytes)
 
   uint __PAD1;			//!< Private padding
 */
 
-    uint32_t k_size = get_size_bytes(k,k_type);
-    uint32_t v_size = get_size_bytes(v,v_type);
+    uint16_t k_size = get_size_bytes(k,k_type); //todo should be 12. what happens if we use more than that?
+    uint16_t v_size = get_size_bytes(v,v_type);
 
-    uint32_t k_type_and_size = k_size | ((k_type) << 28);
-    uint32_t v_type_and_size = v_size | ((v_type) << 28);
+    uint16_t k_type_and_size = k_size | ((k_type) << 12);
+    uint16_t v_type_and_size = v_size | ((v_type) << 12);
+
+    uint32_t info = (k_type_and_size << 16) | v_type_and_size;
+
+    //log_info("info: %08x", info);
+
+    //uint32_t k_type_and_size = k_size | ((k_type) << 28);
+    //uint32_t v_type_and_size = v_size | ((v_type) << 28);
 
     sdp_msg_t msg;
 
@@ -72,22 +85,17 @@ sdp_msg_t put_sdp_msg(void* k, var_type k_type, void* v, var_type v_type){
     msg.cmd_rc      = PUT; // Command
     msg.seq         = 1; // TODO error checking...
 
-    msg.arg1        = k_type_and_size; // Arg1 tells the type (eg. STRING, INT, etc.) of the key
-    msg.arg2        = v_type_and_size; // Arg2 tells the type (eg. STRING, INT, etc.) of the value
-    msg.arg3        = 0; // Unused
+    msg.arg1        = info;
 
-    // TODO for now only Key and Value as integers
-    //TODO hmmmm ok. For some reason this doesn't work properly!!!!!!!!!!!!!!!!!!1
-    msg.data[0]     = *((uint32_t*)k);
-    msg.data[1]     = 0;
-    msg.data[2]     = 0;
-    msg.data[3]     = 0; //TODO !!!!!!!! REALLY SHOULD DO WORD->ARR OF BYTES
-    msg.data[4]     = *((uint32_t*)v);
-    msg.data[5]     = 0;
-    msg.data[6]     = 0;
-    msg.data[7]     = 0; //TODO same here...
+    //TODO NEEDS TO BE PUT INTO A COMMON AREA!!! NOT AN ADDRESS TO THE MASTERS DTCM (or whatever heap)
+    //TODo PUT SOMEWHERE IN SDRAM. memcpy and then pass it!
 
-    msg.length      = sizeof(sdp_hdr_t) + 16 + k_size + v_size;
+    msg.arg2        = k; // Arg2 tells the type (eg. STRING, INT, etc.) of the value
+    msg.arg3        = v; // Unused todo return code maybe?
+
+    //msg.data;
+
+    msg.length      = sizeof(sdp_hdr_t) + 16; //+ k_size + v_size
 
     return msg;
 }
@@ -95,9 +103,7 @@ sdp_msg_t put_sdp_msg(void* k, var_type k_type, void* v, var_type v_type){
 void send_packet(void) {
     log_info("Sending packet...");
 
-    uint32_t a = 10;
-    uint32_t b = 16;
-    sdp_msg_t put_msg = put_sdp_msg(&a, UINT32, &b, UINT32);
+    sdp_msg_t put_msg = put_sdp_msg(STRING, STRING, "Hello", "World");
 
     print_msg(put_msg);
 

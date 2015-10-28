@@ -3,6 +3,7 @@
 
 #include "put_tests.c"
 #include "../../db-typedefs.h"
+#include <debug.h>
 
 extern value_entry* pull(var_type k_type, void* k);
 
@@ -16,7 +17,7 @@ void pull_not_there(){
 
 bool pull_assert(var_type k_type, var_type expected_v_type, size_t expected_v_size,
                          void* k, void* expected_v){
-    value_entry* v = pull(k_type,k); //pull it
+    value_entry* v = pull(k_type,k);
 
     assert_t(v != NULL, "Could not find key %08x (s:%s)", *((uint32_t*)k), k); //check if found
     try(v != NULL);
@@ -49,7 +50,6 @@ bool pull_assert(var_type k_type, var_type expected_v_type, size_t expected_v_si
             eq = false;
             break;
     }
-
 
     assert_t(eq, "Pulled key (*:%d) (s:%s), returning unexpected data (*:%d) (s:%s). Expected (*:%d) (s:%s)",
                    *((uint32_t*)k),             (char*)k,
@@ -93,7 +93,7 @@ void pull_strings(){
 }
 
 void run_pull_tests(){
-
+    log_info("Starting pull tests.");
     pull_nothing();
 
     pull_limits();
@@ -102,6 +102,7 @@ void run_pull_tests(){
 
 
     pull_strings();
+    log_info("Finished pull tests.");
 
     /*
     pull_assert(STRING, STRING,  "Hello",

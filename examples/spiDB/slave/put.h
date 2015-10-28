@@ -2,9 +2,9 @@
 #include <data_specification.h>
 #include <string.h>
 
-bool recording_init(address_t region, uint32_t size_bytes){
+#include <debug.h>
 
-    //*recorder.counter = 0; //todo what was the counter?
+bool recording_init(address_t region, uint32_t size_bytes){
 
     recorder.start     = (address_t) &region[0];
     recorder.current   = (address_t) &region[0];
@@ -42,14 +42,14 @@ bool store_to_sdram(void* data, uint32_t size_bytes){ //TODO NOT REALLY BYTES AN
     }
 }
 
-bool put(uint32_t k_type_and_size, uint32_t v_type_and_size, void* k, void* v){
+bool put(uint32_t info, void* k, void* v){
     //TODO if fails, we need to rollback
 
-    try(store_to_sdram(&k_type_and_size, 1)); //sizeof(uint32_t))
-    try(store_to_sdram(&v_type_and_size, 1)); //sizeof(uint32_t))
+    try(store_to_sdram(&info, 1)); //sizeof(uint32_t))
+    //try(store_to_sdram(&v_type_and_size, 1)); //sizeof(uint32_t))
 
-    uint32_t k_size = k_type_and_size & 0x0FFFFFFF; //TODO make sure this is right...
-    uint32_t v_size = v_type_and_size & 0x0FFFFFFF;
+    uint16_t k_size = (info & 0x0FFF0000) >> 16; //TODO make sure this is right...
+    uint16_t v_size = info & 0x00000FFF;
 
     try(store_to_sdram(k, ((k_size+3)/4)));// *4)); //TODO hmmm NO
     try(store_to_sdram(v, ((v_size+3)/4))); //*4)

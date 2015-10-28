@@ -16,13 +16,16 @@ value_entry* pull(var_type k_type, void* k){
 
         lookup_count++;
 
-        var_type read_k_type; size_t k_size;
-        get_info(data_address[current_word++], &read_k_type, &k_size);
-        uint32_t k_size_words = (k_size+3) >> 2;
+        uint32_t info = data_address[current_word++];
 
-        var_type v_type; size_t v_size;
-        get_info(data_address[current_word++], &v_type, &v_size);
-        uint32_t v_size_words = (v_size+3) >> 2;
+        var_type read_k_type = (info & 0xF0000000) >> 28;
+        uint16_t k_size      = (info & 0x0FFF0000) >> 16;
+
+        var_type v_type      = (info & 0x0000F000) >> 12;
+        uint16_t v_size      = info & 0x00000FFF;
+
+        uint16_t k_size_words = (k_size+3) >> 2; //TODO this is stupid...
+        uint16_t v_size_words = (v_size+3) >> 2; //todo same here
 
         if(read_k_type != k_type){
             current_word += k_size_words + v_size_words;
