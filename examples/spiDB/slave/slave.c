@@ -17,8 +17,9 @@
 //#include <bit_field.h>
 
 #include <debug.h>
-#include "put_tests.c"
-#include "pull_tests.c"
+#include <simulation.h>
+#include "unit_tests/put_tests.c"
+#include "unit_tests/pull_tests.c"
 
 /*void clear_entries(){
     recording_channel_t* recording_channel = &g_recording_channels[channel];
@@ -42,7 +43,7 @@ static bool initialize() {
     }
 
     address_t system_region = data_specification_get_region(SYSTEM_REGION, address);
-    address_t data_region   = data_specification_get_region(STRING_DATA_REGION, address);
+    address_t data_region   = data_specification_get_region(DB_DATA_REGION, address);
 
     log_info("System region: %08x", system_region);
     log_info("Data region: %08x", data_region);
@@ -64,11 +65,17 @@ static bool initialize() {
 void update (uint ticks, uint b)
 {
 
+
     // I give it a few ticks between reading and writing, just in case
     // the IO operations take a bit of time
     if(ticks == 100){
         //run_put_tests();
         run_pull_tests();
+
+        clear_data();
+
+
+
         //log_info("infoinggggg:");
         //put(STRING, STRING, "I love","Spinnaker");
 
@@ -83,10 +90,9 @@ void update (uint ticks, uint b)
       put("yo", STRING, "boy", STRING);
       put("I like cheese, man", STRING, "but do you?", STRING);
 
-      log_info("We wrote a total of %d bytes", bytes_written);
+      log_info("We wrote a totaDB_DATA_REGIONl of %d bytes", bytes_written);
       */
     }
-    else if(ticks == -2)   {}
          //log_info("Hello -> %s", pull("Hello",STRING));
          //uint32_t k = 10;
          //var_type k_type = UINT32;
