@@ -4,29 +4,27 @@
 
 #include <debug.h>
 
-//---------------------------------------
-// Structures
-//---------------------------------------
-//! structure that defines a channel in memory.
-typedef struct recording_channel_t {
-    size_t current_size;
-    uint8_t *start;
-    uint8_t *current;
-    uint8_t *end;
-} recording_channel_t;
+typedef enum { NUL, UINT32, STRING } var_type;
 
-recording_channel_t recording_channel;
+typedef enum regions_e {
+    SYSTEM_REGION, DB_DATA_REGION
+} regions_e;
+
+typedef struct recorder_t {
+    size_t current_size;
+
+    address_t start;
+    address_t current;
+    address_t end;
+} recorder_t;
+
+recorder_t recorder;
 
 #define try(cond) do { if (!cond) return false; } while (0)
 
-typedef enum { NUL, UINT32, STRING } var_type;
-
 typedef enum {
-    STATE,
     PUT,
-    PULL,
-    UPDATE,
-    REMOVE
+    PULL
 } dbCommand;
 
 typedef struct value_entry {
@@ -42,6 +40,11 @@ uint32_t get_size_bytes(void* data, var_type t){
         case NUL:
         default:     return 0;
     }
+}
+
+void get_info(uint32_t bits, var_type* type, size_t* size){
+    *type = (bits & 0xF0000000) >> 28;
+    *size = (bits & 0x0FFFFFFF);
 }
 
 void print_msg(sdp_msg_t msg){
