@@ -8,123 +8,157 @@
 *  Author: Arthur Ceccotti
 *******/
 
-#define LOG_LEVEL 40
+#define LOG_LEVEL 50 //TODO hmmm
 
 #include "spin1_api.h"
 #include "common-typedefs.h"
-#include "recording.h"
 #include "../db-typedefs.h"
+#include "../sdram_writer.h"
+#include "put.h"
+#include "../sdp_utils.h"
 #include <data_specification.h>
 #include <debug.h>
+#include <sark.h>
 
-#include <bit_field.h>
+address_t* current;
 
-#define SDP_PORT    3
-#define SDP_TIMEOUT 1
+sdp_msg_t send_sdp_PULL(uint8_t dest_core, uint32_t info, void* k){
 
-sdp_msg_t put_sdp_msg(var_type k_type, var_type v_type, void* k, void* v){
-
-/*
-  struct sdp_msg *next;		//!< Next in free list
-  ushort length;		//!< length
-  ushort checksum;		//!< checksum (if used)
-
-  // sdp_hdr_t (mandatory)
-
-  uchar flags;			//!< Flag byte
-  uchar tag;			//!< IP tag
-  uchar dest_port;		//!< Destination port/CPU
-  uchar srce_port;		//!< Source port/CPU
-  ushort dest_addr;		//!< Destination address
-  ushort srce_addr;		//!< Source address
-
-  // cmd_hdr_t (optional)
-
-  ushort cmd_rc;		//!< Command/Return Code
-  ushort seq;			//!< Sequence number
-  uint arg1;			//!< Arg 1   uint32_t a = 10;
-    uint32_t b = 16;
-  uint arg2;			//!< Arg 2
-  uint arg3;			//!< Arg 3
-
-
-  // user data (optional)
-
-
-  uchar data[SDP_BUF_SIZE];	//!< User data (256 bytes)
-
-  uint __PAD1;			//!< Private padding
-*/
-
-    uint16_t k_size = get_size_bytes(k,k_type); //todo should be 12. what happens if we use more than that?
-    uint16_t v_size = get_size_bytes(v,v_type);
-
-    uint16_t k_type_and_size = k_size | ((k_type) << 12);
-    uint16_t v_type_and_size = v_size | ((v_type) << 12);
-
-    uint32_t info = (k_type_and_size << 16) | v_type_and_size;
-
-    //log_info("info: %08x", info);
-
-    //uint32_t k_type_and_size = k_size | ((k_type) << 28);
-    //uint32_t v_type_and_size = v_size | ((v_type) << 28);
-
-    sdp_msg_t msg;
-
-    // ===================== SDP Header =====================
-    msg.flags       = 0x07; // No reply required
-    msg.tag         = 0; // 0 = Send internally (not over the Ethernet)
-
-    msg.dest_addr   = spin1_get_chip_id(); // Destination core is on the same chip
-    msg.dest_port   = (SDP_PORT << PORT_SHIFT) | 2; // TODO should not be hardcoded
-
-    msg.srce_addr   = spin1_get_chip_id();
-    msg.srce_port   = (SDP_PORT << PORT_SHIFT) | spin1_get_core_id();
+    sdp_msg_t msg = create_sdp_header(dest_core);
 
     // ======================== SCP ========================
-    msg.cmd_rc      = PUT; // Command
+    msg.cmd_rc      = PULL; // TODO hmmm apparently cmd_rc is supposed to be used for something else
     msg.seq         = 1; // TODO error checking...
 
     msg.arg1        = info;
+    msg.arg2        = *current;
+    append(current, k,1); // Store into sdram and pass a pointer to it
 
-    //TODO NEEDS TO BE PUT INTO A COMMON AREA!!! NOT AN ADDRESS TO THE MASTERS DTCM (or whatever heap)
-    //TODo PUT SOMEWHERE IN SDRAM. memcpy and then pass it!
+    msg.length      = sizeof(sdp_hdr_t) + 16;
 
-    msg.arg2        = k; // Arg2 tells the type (eg. STRING, INT, etc.) of the value
-    msg.arg3        = v; // Unused todo return code maybe?
-
-    //msg.data;
-
-    msg.length      = sizeof(sdp_hdr_t) + 16; //+ k_size + v_size
+    spin1_send_sdp_msg(&msg, SDP_TIMEOUT); //message, timeout
 
     return msg;
 }
 
-void send_packet(void) {
-    log_info("Sending packet...");
+core_dsg* core_dsgs;
 
-    sdp_msg_t put_msg = put_sdp_msg(STRING, STRING, "Hello", "World");
+core_dsg get_core_dsgs(uint32_t core_id) {
 
-    print_msg(put_msg);
+    // Get pointer to 1st virtual processor info struct in SRAM
+    vcpu_t *sark_virtual_processor_info = (vcpu_t*) SV_VCPU;
 
-    spin1_send_sdp_msg(&put_msg, SDP_TIMEOUT); //message, timeout
+    // Get the address this core's DTCM data starts at from the user data member
+    // of the structure associated with this virtual processor
+    address_t address = (address_t) sark_virtual_processor_info[core_id].user0;
+
+    core_dsg dsg;
+
+    address_t data_address = data_specification_get_region(DB_DATA_REGION, address);
+
+    dsg.data_start      = (address_t*) sark_alloc(1, sizeof(address_t));
+    dsg.data_current    = (address_t*) sark_alloc(1, sizeof(address_t));
+
+    //dsg.system_address = data_specification_get_region(SYSTEM_REGION, address);
+    *dsg.data_start     = data_address; //used to store size
+    *dsg.data_current   = data_address+1;//start from next word
+
+    return dsg;
+}
+
+
+#define FIRST_SLAVE 2
+#define LAST_SLAVE  16
+
+void master_pull(uint32_t k_info, void* k){
+    log_info("Sending PULL broadcast");
+    for(int i=FIRST_SLAVE; i<=LAST_SLAVE; i++){
+        send_sdp_PULL(i, k_info, k);
+    }
+}
+
+void print_core_infos(){
+    for(int i=FIRST_SLAVE; i<=LAST_SLAVE; i++){
+        log_info("core_dsg[%d].data_start = %08x", i, *core_dsgs[i].data_start);
+    }
+}
+
+uint32_t p = 2;
+
+bool round_robin_put(uint32_t info, void* k, void* v){
+
+    bool success = put(core_dsgs[p++], info, k, v);
+
+    if(p > LAST_SLAVE){ p = FIRST_SLAVE; }
+
+    return success;
 }
 
 void update (uint ticks, uint b)
 {
     // I give it a few ticks between reading and writing, just in case
     // the IO operations take a bit of time
-    if(ticks == 1000)          { send_packet(); }
+    uint32_t zero = 0;
+    uint32_t one = 1;
+    uint32_t two = 2;
+    uint32_t three = 3;
+
+    //todo im giving them time to prepare..
+    if(ticks == 100){
+        //ignore 0,1 and 17
+        for(int i=2; i<NUM_CPUS-1; i++){
+            core_dsgs[i] = get_core_dsgs(i);
+        }
+
+        print_core_infos();
+    }
+    else if(ticks == 200){
+        for(int i = 0; i < 100; i++){
+            round_robin_put(to_info2(UINT32, UINT32, &i, &i), &i, &i);
+        }
+    }
+    else if(ticks == 300){
+        master_pull(to_info1(UINT32, &zero), &zero); //core 2
+        master_pull(to_info1(UINT32, &one), &one); //core 3
+        master_pull(to_info1(UINT32, &two), &two); //core 4
+        master_pull(to_info1(UINT32, &three), &three); //core 5
+    }
 }
 
 void sdp_packet_callback(uint mailbox, uint port) {
-    log_info("Received a packet!!!!!!!!!!!!!!!!!!!!!!!!");
-    //TODO implement packets coming from ethernet or monitor cores from another chip
+
+    use(port); // TODO is this wait for port to be free?
+    sdp_msg_t* msg = (sdp_msg_t*) mailbox;
+
+    switch(msg->cmd_rc){
+        case PULL:; uint32_t info = msg->arg1;
+                    void* v = msg->arg2; //pointer to the data from master
+
+                    log_info("Core %d replied PULL with data = %d (%s)",
+                             msg->srce_port & 0x1F, *((uint32_t*)v), (char*)v);
+
+                    //send acknowledgement back!!!
+                    break;
+        default:
+                    break;
+    }
+
+    // free the message to stop overload
+    spin1_msg_free(msg);
 }
 
 void c_main()
 {
     log_info("Initializing Master...");
+
+    if (!initialize()) {
+        rt_error(RTE_SWERR);
+    }
+
+    core_dsgs = (core_dsg*) sark_alloc(NUM_CPUS, sizeof(core_dsg));
+
+    current  = (address_t*) sark_alloc(1, sizeof(address_t));
+    *current = data_region;
 
     // set timer tick value to 100ms
     spin1_set_timer_tick(100);

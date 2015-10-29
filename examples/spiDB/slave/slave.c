@@ -11,72 +11,83 @@
 #include "spin1_api.h"
 #include "common-typedefs.h"
 #include "../db-typedefs.h"
-#include "put.h"
+#include "../sdram_writer.h"
+#include "../sdp_utils.h"
 #include "pull.h"
 
 #include <debug.h>
 #include <simulation.h>
-#include "unit_tests/put_tests.c"
 #include "unit_tests/pull_tests.c"
 
-static bool initialize() {
+#define MASTER_CORE_ID 1
 
-    // Get the address this core's DTCM data starts at from SRAM
-    address_t address = data_specification_get_data_address();
+/*
+void send_db_region_address(){
+    sdp_msg_t msg = create_sdp_header(DB_MASTER_CORE);
 
-    log_info("DataSpec data address is %08x", address);
+    msg.cmd_rc = SEND_DATA_REGION;
+    msg.seq    = 1;
+    msg.arg1   = writer.start; //how about the end?
 
-    // Read the header
-    if (!data_specification_read_header(address)) {
-        log_error("Could not read Dataspec header");
-        return false;
-    }
+    msg.length      = sizeof(sdp_hdr_t) + 16;
+    print_msg(msg);
 
-    address_t system_region = data_specification_get_region(SYSTEM_REGION, address);
-    address_t data_region   = data_specification_get_region(DB_DATA_REGION, address);
-
-    log_info("System region: %08x", system_region);
-    log_info("Data region: %08x", data_region);
-
-    uint32_t data_region_size = 500;
-
-    recording_init(data_region, data_region_size);
-
-    //todo clear data at the start?
-
-    log_info("Initialization completed successfully!");
-    return true;
+    spin1_send_sdp_msg(&msg, SDP_TIMEOUT); //message, timeout
 }
+*/
 
 void update(uint ticks, uint b)
 {
-    if(ticks == 100){
+    if(ticks == 5){
+        //send_db_region_address();
         //run_pull_tests();
-        //run_pull_tests();
+        //run_put_tests();
     }
 }
 
+
+void sdp_reply_pull_request(value_entry* value_entry_ptr){
+
+    sdp_msg_t reply = create_sdp_header(MASTER_CORE_ID);
+
+    reply.cmd_rc = PULL; //reply from a pull request //todo is this how i should do it?
+    reply.seq    = 1;
+    reply.arg1   = to_info(value_entry_ptr->type, value_entry_ptr->size);
+    reply.arg2   = value_entry_ptr->data;
+
+    reply.length      = sizeof(sdp_hdr_t) + 16; //+ k_size + v_size
+
+    spin1_send_sdp_msg(&reply, SDP_TIMEOUT); //message, timeout
+}
+
 void sdp_packet_callback(uint mailbox, uint port) {
-    log_info("Received a packet...");
 
     use(port); // TODO is this wait for port to be free?
     sdp_msg_t* msg = (sdp_msg_t*) mailbox;
 
-    print_msg(*msg);
+    uint32_t info = msg->arg1;
+    void* k = msg->arg2; //pointer to the data from master
 
-/*    uint32_t info = msg->arg1;
-    uint v_type_and_size = msg->arg2;*/
+    switch(msg->cmd_rc){
+        case PULL:; log_info("Received a PULL request on k %d (%s)",*((uint32_t*)k), (char*)k);
 
+                    value_entry* value_entry_ptr = pull(info, k);
 
-    //uchar k = msg->data[0]; //TODO !!!!!!!! REALLY SHOULD DO WORD->ARR OF BYTES
-    //uchar v = msg->data[4]; //TODO same here...
+                    if(value_entry_ptr){
+                        log_info("*******   Replying with %d (%s)   ********",
+                                 *((uint32_t*)value_entry_ptr->data), (char*)value_entry_ptr->data);
+                        sdp_reply_pull_request(value_entry_ptr);
+                    }
+                    //else{
+                        //log_info("Not replying because data was not found.");
+                    //}
+                    //if we don't find it, we don't reply
+                    //todo should we reply with a 'didnt find'? but then overloads master core...
 
-/*    switch(msg->cmd_rc){
-        case PUT: put(k_type_and_size,v_type_and_size, &k, &v);
-                  break;
-        default:
-                 break;
-    }*/
+                    break;
+        default:    log_info("cmd_rc not recognized: %d", msg->cmd_rc);
+                    break;
+    }
 
     // free the message to stop overload
     spin1_msg_free(msg);
@@ -92,10 +103,9 @@ void c_main()
     // set timer tick value to 100ms
     spin1_set_timer_tick(100); //todo should not be hardcoded
 
-
     // register callbacks
     spin1_callback_on (TIMER_TICK, update, 0);
-    spin1_callback_on(SDP_PACKET_RX,        sdp_packet_callback, 1);
+    spin1_callback_on (SDP_PACKET_RX,        sdp_packet_callback, 1); //change priorities
     //spin1_callback_on(MC_PACKET_RECEIVED,   sdp_packet_callback, 1);
     //spin1_callback_on(MCPL_PACKET_RECEIVED, sdp_packet_callback, 1);
 

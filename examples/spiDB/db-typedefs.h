@@ -10,19 +10,15 @@ typedef enum regions_e {
     SYSTEM_REGION, DB_DATA_REGION
 } regions_e;
 
-typedef struct recorder_t {
-    size_t current_size;
-
-    address_t start;
-    address_t current;
-    address_t end;
-} recorder_t;
-
-recorder_t recorder;
-
 #define try(cond) do { if (!cond) return false; } while (0)
 
+typedef struct core_dsg {
+    address_t* data_start;
+    address_t* data_current;
+} core_dsg;
+
 typedef enum {
+    SEND_DATA_REGION,
     PUT,
     PULL
 } dbCommand;
@@ -40,6 +36,18 @@ uint16_t get_size_bytes(void* data, var_type t){ //todo what if it's bigger than
         case NUL:
         default:     return 0;
     }
+}
+
+uint32_t to_info(var_type type, size_t size){
+    return  size | ((type) << 12);
+}
+
+uint32_t to_info1(var_type type, void* data){
+    return to_info(type, get_size_bytes(data,type));
+}
+
+uint32_t to_info2(var_type k_type, var_type v_type, void* k, void* v){
+   return (to_info1(k_type,k) << 16) | to_info1(v_type,v);
 }
 
 void print_msg(sdp_msg_t msg){
@@ -61,7 +69,7 @@ void print_msg(sdp_msg_t msg){
   log_info("  arg1:      %08x", msg.arg1);
   log_info("  arg2:      %08x", msg.arg2);
   log_info("  arg3:      %08x", msg.arg3);
-  log_info("  data:      %08x", *msg.data);
+  //log_info("  data:      %08x", *msg.data);
   log_info("=============================================");
 }
 
