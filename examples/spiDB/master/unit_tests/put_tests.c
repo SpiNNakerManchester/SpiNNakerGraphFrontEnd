@@ -1,31 +1,22 @@
 #ifndef _PUT_TESTS_
 #define _PUT_TESTS_
 
-#include <debug.h>
 #include <sark.h>
 #include "../../db-typedefs.h"
+#include "../../test.h"
 
-//TODO should be warning
-#define log_assert(message, ...) \
-    __log(LOG_INFO, "[ASSERT]   ", message, ##__VA_ARGS__)
-
-#define assert_t(test,msg,...) do { if (!test) log_assert(msg, ##__VA_ARGS__);} while (0)
-#define assert_f(test,msg,...) do { if  (test) log_assert(msg, ##__VA_ARGS__);} while (0)
-#define run_test(test) do { char* msg = test(); tests_run++; if (msg) return msg; } while (0)
-
-extern bool put(uint32_t info, void* k, void* v);
-
-uint32_t type_and_size(uint32_t type, void* data){
-    return get_size_bytes(data,type) | (type << 28);
-}
+extern bool put(address_t address, uint32_t info, void* k, void* v);
+extern address_t* core_regions;
 
 void try_put(var_type k_type, var_type v_type, void* k_data, void* v_data){
 
+    //todo function
     uint16_t k_type_and_size = get_size_bytes(k_data,k_type) | ((k_type) << 12);
     uint16_t v_type_and_size = get_size_bytes(v_data,v_type) | ((v_type) << 12);
     uint32_t info = (k_type_and_size << 16) | v_type_and_size;
 
-    assert_t(put(info, k_data, v_data),
+    //todo not only on core 2...
+    assert_t(put(core_regions[2], info, k_data, v_data) != NULL,
              "Failed putting 0x%08x (s: %s) (type: %d) -> 0x%08x (s: %s) (type: %d)",
              *((uint32_t*)k_data), (char*)k_data, k_type, *((uint32_t*)v_data), (char*)v_data, v_type);
 }

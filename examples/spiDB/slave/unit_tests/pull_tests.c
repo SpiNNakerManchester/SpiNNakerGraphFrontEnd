@@ -1,11 +1,11 @@
 #ifndef _PULL_TESTS_
 #define _PULL_TESTS_
-
+/*
+#include "../../test.h"
 #include "put_tests.c"
 #include "../../db-typedefs.h"
-#include <debug.h>
 
-extern value_entry* pull(var_type k_type, void* k);
+extern value_entry* pull(uint32_t k_info, void* k);
 
 void pull_nothing(){
     assert_t(pull(UINT32,&ONE) == NULL, "Pulled value when DB sdram was empty");
@@ -15,11 +15,15 @@ void pull_not_there(){
     assert_t(pull(UINT32,&THREE) == NULL, "Pulled value which was not present.");
 }
 
-bool pull_assert(var_type k_type, var_type expected_v_type, size_t expected_v_size,
-                         void* k, void* expected_v){
-    value_entry* v = pull(k_type,k);
+bool pull_assert(var_type k_type, uint16_t k_size, var_type expected_v_type, size_t expected_v_size,
+                 void* k, void* expected_v){
 
-    assert_t(v != NULL, "Could not find key %08x (s:%s)", *((uint32_t*)k), k); //check if found
+    uint32_t k_info = k_size | (k_type << 12);
+    assert_t(false, "sending k_info %08x", k_info);
+
+    value_entry* v = pull(k_info,k);
+
+    assert_t(v != NULL, "Could not find key %08x (s:%s)", *((uint32_t*)k), k);
     try(v != NULL);
 
     assert_t(v->type == expected_v_type,
@@ -59,23 +63,14 @@ bool pull_assert(var_type k_type, var_type expected_v_type, size_t expected_v_si
 
     return true;
 
-    //todo free v
+    //todo free v ??
 }
 
-/*void pull_twice(uint32_t k, uint32_t expected_v){
-    value_entry* v1 = pull_assert(k,expected_v);
-    value_entry* v2 = pull_assert(k,expected_v);
-
-    assert_t(equals(v1,v2), "Pulled single value entry twice, but results are different.");
-}*/
-
-
-//TODO OK. I NEED A WAY TO CLEAR. NOWWWWWWWWWW
 void pull_limits(){
     for(int i=-2; i<=2; i++){
         //for(int j=-1; j<=2; j++){
             try_put(UINT32, UINT32, &i,&i);
-            pull_assert(UINT32, UINT32, 1, &i,&i);
+            pull_assert(UINT32, 4, UINT32, 4, &i,&i);
         //}
     }
 }
@@ -83,13 +78,12 @@ void pull_limits(){
 void pull_strings(){
     put_strings();
 
-    pull_assert(UINT32, STRING, 5, &THREE,   "Hello");
-    pull_assert(STRING, UINT32, 1, "Hello", &THREE);
+    pull_assert(UINT32, 4, STRING, 5, &THREE,   "Hello");
+    pull_assert(STRING, 5, UINT32, 4, "Hello", &THREE);
 
-    pull_assert(STRING, STRING, 3, "Test", "ing");
+    pull_assert(STRING, 4, STRING, 3, "Test", "ing");
 
-    pull_assert(STRING, STRING, 45, "My short key", "a kind of relatively long string for testing");
-
+    pull_assert(STRING, 12, STRING, 45, "My short key", "a kind of relatively long string for testing");
 }
 
 void run_pull_tests(){
@@ -100,19 +94,10 @@ void run_pull_tests(){
 
     pull_not_there();
 
-
     pull_strings();
     log_info("Finished pull tests.");
 
-    /*
-    pull_assert(STRING, STRING,  "Hello",
-       "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"
-       "abcdefghijklmnovpqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"
-       "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
-
-    pull_assert(STRING, STRING, "", "");
-    pull_assert(STRING, STRING, "Foobar", ""); */
-
 }
+*/
 
 #endif
