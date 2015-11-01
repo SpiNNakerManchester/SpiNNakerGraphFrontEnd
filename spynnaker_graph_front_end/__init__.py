@@ -26,16 +26,19 @@ _none_labelled_vertex_count = None
 _none_labelled_edge_count = None
 
 
-def setup(hostname=None, graph_label=None, model_binary_modules=None,
-          model_binary_folders=None, database_socket_addresses=None):
+def setup(hostname=None, graph_label=None, model_binary_module=None,
+          model_binary_folder=None, database_socket_addresses=None,
+          partitioner_algorithm=None, algorithms=None):
     """ for builders with pynn attitude, allows end users to define wherever
     their binaries are
 
     :param hostname:
     :param graph_label:
     :param model_binary_module:
-    :param model_binary_folders:
+    :param model_binary_folder:
     :param database_socket_addresses:
+    :param partitioner_algorithm:
+    :param algorithms:
 
     :return:
     """
@@ -59,17 +62,18 @@ def setup(hostname=None, graph_label=None, model_binary_modules=None,
 
     executable_finder = ExecutableFinder()
     # add the directorities for where to locate the binaries
-    if model_binary_modules is not None:
-        for model_binary_module in model_binary_modules:
-            executable_finder.add_path(
-                os.path.dirname(model_binary_module.name))
-    elif model_binary_folders is not None:
-        for model_binary_folder in model_binary_folders:
-            executable_finder.add_path(model_binary_folder)
+    if model_binary_module is not None:
+        executable_finder.add_path(
+            os.path.dirname(model_binary_module.__file__))
+    elif model_binary_folder is not None:
+        executable_finder.add_path(model_binary_folder)
 
     # set up the spinnaker object
     _spinnaker = SpiNNakerGraphFrontEnd(
-        hostname, graph_label, executable_finder, database_socket_addresses)
+        host_name=hostname, graph_label=graph_label,
+        executable_finder=executable_finder,
+        database_socket_addresses=database_socket_addresses,
+        algorithms=algorithms, partitioner_algorithm=partitioner_algorithm)
 
     # set up none label count params.
     _none_labelled_edge_count = 0
@@ -95,8 +99,6 @@ def stop():
     Do any necessary cleaning up before exiting.
 
     Unregisters the controller
-    :param stop_on_board: decides if the routing tbales and tag should be
-    removed from the machine at stop
     """
     global _spinnaker
     global _executable_finder
@@ -149,13 +151,15 @@ def add_vertex(cellclass, cellparams, label=None, constraints=None):
     return vertex
 
 
-def add_edge(cell_type, cellparams, label=None, constraints=None):
+def add_edge(cell_type, cellparams, label=None, constraints=None,
+             partition_id=None):
     """
 
     :param cell_type:
     :param cellparams:
     :param constraints:
     :param label:
+    :param partition_id:
     :return:
     """
     global _spinnaker
@@ -176,8 +180,28 @@ def add_edge(cell_type, cellparams, label=None, constraints=None):
     # add edge
     cellparams['constraints'] = constraints
     edge = cell_type(**cellparams)
-    _spinnaker.add_partitionable_edge(edge)
+    _spinnaker.add_partitionable_edge(edge, partition_id)
     return edge
+
+
+def add_partitionable_edge_instance(edge, partition_id):
+    """
+
+    :param edge:
+    :param partition_id:
+    :return:
+    """
+    _spinnaker.add_partitionable_edge(edge, partition_id)
+
+
+def add_partitioned_edge_instance(edge, partition_id):
+    """
+
+    :param edge:
+    :param partition_id:
+    :return:
+    """
+    _spinnaker.add_partitioned_edge(edge, partition_id)
 
 
 def add_partitioned_vertex(
@@ -211,13 +235,15 @@ def add_partitioned_vertex(
     return vertex
 
 
-def add_partitioned_edge(cellclass, cellparams, label=None, constraints=None):
+def add_partitioned_edge(cellclass, cellparams, label=None, constraints=None,
+                         partition_id=None):
     """
 
     :param cellclass:
     :param cellparams:
     :param constraints:
     :param label:
+    :param partition_id:
     :return:
     """
     global _spinnaker
@@ -238,16 +264,14 @@ def add_partitioned_edge(cellclass, cellparams, label=None, constraints=None):
     # add partitioned edge
     cellparams['constraints'] = constraints
     edge = cellclass(**cellparams)
-    _spinnaker.add_partitioned_edge(edge)
+    _spinnaker.add_partitioned_edge(edge, partition_id)
     return edge
+
 
 def get_txrx():
     global _spinnaker
     return _spinnaker.get_txrx()
 
-def get_spinnaker():
-    global _spinnaker
-    return _spinnaker
 
 def get_machine_dimensions():
     """

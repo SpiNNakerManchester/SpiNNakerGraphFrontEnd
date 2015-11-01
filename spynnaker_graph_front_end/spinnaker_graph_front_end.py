@@ -1,80 +1,31 @@
 """
-entrance class for the graph front end
+Spinnaker
 """
 
-# datspecifcation imports
-from data_specification.data_specification_executor import \
-    DataSpecificationExecutor
-from data_specification.file_data_reader import FileDataReader
-from data_specification.file_data_writer import FileDataWriter
-
 # pacman imports
+from pacman.model.partitionable_graph.partitionable_graph import \
+    PartitionableGraph
 from pacman.model.partitioned_graph.partitioned_graph import PartitionedGraph
-from pacman.model.routing_info.dict_based_partitioned_edge_n_keys_map import \
-    DictBasedPartitionedEdgeNKeysMap
-from pacman.operations.partition_algorithms import BasicPartitioner
-from pacman.operations.placer_algorithms import BasicPlacer
-from pacman.operations.router_algorithms import BasicDijkstraRouting
-from pacman.operations.router_check_functionality.valid_routes_checker import \
-    ValidRouteChecker
-from pacman.utilities import reports as pacman_reports
-from pacman.operations.routing_info_allocator_algorithms import \
-    BasicRoutingInfoAllocator
-from pacman.operations.tag_allocator_algorithms import BasicTagAllocator
-from pacman.utilities.progress_bar import ProgressBar
+from pacman.model.partitionable_graph.multi_cast_partitionable_edge\
+    import MultiCastPartitionableEdge
+from pacman.operations import algorithm_reports as pacman_algorithm_reports
 
-# spinn front end common imports
-from spinn_front_end_common.interface.\
-    front_end_common_configuration_functions import \
-    FrontEndCommonConfigurationFunctions
-from spinn_front_end_common.interface.\
-    front_end_common_interface_functions import \
-    FrontEndCommonInterfaceFunctions
-from spinn_front_end_common.interface.\
-    front_end_common_provenance_functions import \
-    FrontEndCommonProvenanceFunctions
-from spinn_front_end_common.utilities import reports
-from spinn_front_end_common.utilities import exceptions
-from spinn_front_end_common.utilities import constants
-from spinn_front_end_common.utilities.database.database_writer import \
-    DatabaseWriter
-from spinn_front_end_common.utilities.executable_targets import \
-    ExecutableTargets
-from spinn_front_end_common.utilities.timer import Timer
-from spinn_front_end_common.abstract_models.\
-    abstract_provides_outgoing_edge_constraints \
-    import AbstractProvidesOutgoingEdgeConstraints
-from spinn_front_end_common.abstract_models.\
-    abstract_provides_incoming_edge_constraints \
-    import AbstractProvidesIncomingEdgeConstraints
-from spinn_front_end_common.abstract_models.\
-    abstract_provides_n_keys_for_edge import AbstractProvidesNKeysForEdge
-from spinn_front_end_common.utilities.notification_protocol.socket_address \
-    import SocketAddress
-from spinn_front_end_common.abstract_models.\
-    abstract_data_specable_vertex import \
-    AbstractDataSpecableVertex
-from spinn_front_end_common.abstract_models.\
-    abstract_provides_provenance_data import \
-    AbstractProvidesProvenanceData
-
-# spinnman imports
-from spinn_machine.virutal_machine import VirtualMachine
-from spinnman.data.file_data_reader import FileDataReader \
-    as SpinnmanFileDataReader
-
-# spinn_machine imports
-from spinn_machine.sdram import SDRAM
+# common front end imports
+from spinn_front_end_common.utilities import exceptions as exceptions
+from spinn_front_end_common.utilities.report_states import ReportState
+from spinn_front_end_common.utilities import helpful_functions
+from spinn_front_end_common.abstract_models.abstract_data_specable_vertex \
+    import AbstractDataSpecableVertex
 
 # graph front end imports
 from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
-    import AbstractPartitionedDataSpecableVertex
+import AbstractPartitionedDataSpecableVertex
 from spynnaker_graph_front_end.utilities.xml_interface import XMLInterface
 from spynnaker_graph_front_end.utilities.conf import config
+from spynnaker_graph_front_end import extra_pacman_algorithms
 
 # general imports
 import logging
-import traceback
 import math
 import os
 
@@ -82,160 +33,128 @@ import os
 logger = logging.getLogger(__name__)
 
 
-class SpiNNakerGraphFrontEnd(
-        FrontEndCommonConfigurationFunctions,
-        FrontEndCommonInterfaceFunctions, FrontEndCommonProvenanceFunctions):
+class SpiNNakerGraphFrontEnd(object):
     """
-    entrance class for the graph front end
+    Spinnaker
     """
 
-    def __init__(self, hostname=None, graph_label=None,
-                 executable_paths=None, database_socket_addresses=None):
-        """
-        generate a spinnaker grpah front end object
-        :param hostname:
-        :param graph_label:
-        :param executable_paths:
-        :return:the spinnaker graph front end object
-        """
-        FrontEndCommonProvenanceFunctions.__init__(self)
-        if hostname is None:
-            hostname = config.get("Machine", "machineName")
+    def __init__(
+            self, executable_finder, host_name=None, graph_label=None,
+            database_socket_addresses=None, algorithms=None,
+            partitioner_algorithm=None):
+
+        self._hostname = host_name
+
+        # mapping overloads
+        self._overloaded_partitioner_algorithm = partitioner_algorithm
+        self._overloaded_algortihms = algorithms
+
+        # update graph label if needed
         if graph_label is None:
-            graph_label = config.get("Application", "graph_label")
+            graph_label = "Application_graph"
 
-        if database_socket_addresses is None:
-            database_socket_addresses = list()
-            listen_port = config.getint("Database", "listen_port")
-            notify_port = config.getint("Database", "notify_port")
-            noftiy_hostname = config.get("Database", "notify_hostname")
-            database_socket_addresses.append(
-                SocketAddress(noftiy_hostname, notify_port, listen_port))
+        # pacman objects
+        self._partitionable_graph = PartitionableGraph(label=graph_label)
+        self._partitioned_graph = PartitionedGraph(label=graph_label)
+        self._graph_mapper = None
+        self._placements = None
+        self._router_tables = None
+        self._routing_infos = None
+        self._tags = None
+        self._machine = None
+        self._txrx = None
+        self._has_ran = False
+        self._reports_states = None
+        self._app_id = None
+        self._runtime = None
 
-        FrontEndCommonConfigurationFunctions.__init__(self, hostname,
-                                                      graph_label)
+        # database objects
+        self._database_socket_addresses = set()
+        if database_socket_addresses is not None:
+            self._database_socket_addresses.union(database_socket_addresses)
 
-        self._executable_paths = executable_paths
+        self._database_interface = None
+        self._create_database = None
 
-        application_file_folder = \
-            config.get("Reports", "defaultApplicationDataFilePath")
-        max_application_binaries = \
-            config.get("Reports", "max_application_binaries_kept")
-        max_reports_kept = config.get("Reports", "max_reports_kept")
-        default_report_folder = \
-            config.get("Reports", "defaultReportFilePath")
-        enabled_reports = config.get("Reports", "reportsEnabled")
-        write_provance = config.get("Reports", "writeProvanceData")
-        self._write_text_spec = config.get("Reports", "writeTextSpecs")
-        # TODO remove this self
-        self._app_id = config.getint("Application", "appID")
-        execute_data_spec_report = \
-            config.getboolean("Reports", "writeTextSpecs")
-        execute_partitioner_report = \
-            config.getboolean("Reports", "writePartitionerReports")
-        execute_placer_report = \
-            config.getboolean("Reports", "writePlacerReports")
-        execute_router_dat_based_report = \
-            config.getboolean("Reports", "writeRouterDatReport")
-        generate_performance_measurements = \
-            config.getboolean("Reports", "outputTimesForSections")
-        execute_router_report = \
-            config.getboolean("Reports", "writeRouterReports")
-        execute_write_reload_steps = \
-            config.getboolean("Reports", "writeReloadSteps")
-        generate_transciever_report = \
-            config.getboolean("Reports", "writeTransceiverReport")
-        execute_routing_info_report = \
-            config.getboolean("Reports", "writeRouterInfoReport")
-        generate_tag_report = \
-            config.getboolean("Reports", "writeTagAllocationReports")
-        in_debug_mode = config.get("Mode", "mode") == "Debug",
-        self._create_database = config.getboolean("Database", "create_database")
-        partitioner_algorithm = config.get("Partitioner", "algorithm")
-        placer_algorithm = config.get("Placer", "algorithm")
-        key_allocator_algorithm = config.get("KeyAllocator", "algorithm")
-        router_algorithm = config.get("Routing", "algorithm")
+        # Determine default executable folder location
+        # and add this default to end of list of search paths
+        self._executable_finder = executable_finder
 
-        wait_on_confirmation = config.getboolean(
-            "Database", "wait_on_confirmation")
-
-        downed_chips = config.get("Machine", "down_chips")
-        downed_cores = config.get("Machine", "down_cores")
-        self._machine_version = config.getint("Machine", "version")
-        bmp_details = config.get("Machine", "bmp_names")
-        number_of_boards = config.get("Machine", "number_of_boards")
-        if number_of_boards == "None":
-            number_of_boards = None
-        # sort out config param to be valid types
-        width = config.get("Machine", "width")
-        height = config.get("Machine", "height")
-        if width == "None":
-            width = None
-        else:
-            width = int(width)
-        if height == "None":
-            height = None
-        else:
-            height = int(height)
-
-        is_virtual = config.getboolean("Machine", "virtual_board")
-        virtual_has_wrap_arounds = config.getboolean(
-            "Machine", "requires_wrap_arounds"),
-        auto_detect_bmp = config.getboolean("Machine", "auto_detect_bmp")
-        board_version = config.getint("Machine", "version")
-
-        # set up the configuration methods
-        self._set_up_output_application_data_specifics(
-            application_file_folder, max_application_binaries)
-        self._set_up_report_specifics(
-            enabled_reports, self._write_text_spec, default_report_folder,
-            max_reports_kept, write_provance)
-
-        self._set_up_main_objects(
-            app_id=self._app_id,
-            execute_data_spec_report=execute_data_spec_report,
-            execute_partitioner_report=execute_partitioner_report,
-            execute_placer_report=execute_placer_report,
-            execute_router_dat_based_report=execute_router_dat_based_report,
-            execute_router_report=execute_router_report,
-            execute_routing_info_report=execute_routing_info_report,
-            execute_write_reload_steps=execute_write_reload_steps,
-            generate_performance_measurements=generate_performance_measurements,
-            generate_transciever_report=generate_transciever_report,
-            in_debug_mode=in_debug_mode, reports_are_enabled=enabled_reports,
-            generate_tag_report=generate_tag_report)
-
-        self._set_up_pacman_algorthms_listings(
-            partitioner_algorithm=partitioner_algorithm,
-            placer_algorithm=placer_algorithm,
-            key_allocator_algorithm=key_allocator_algorithm,
-            routing_algorithm=router_algorithm)
-
-        self._set_up_executable_specifics()
-
-        # set up the interfaces with the machine
-        FrontEndCommonInterfaceFunctions.__init__(
-            self, self._reports_states, self._report_default_directory,
-            self._app_data_runtime_folder)
-        self.setup_interfaces(
-            downed_chips=downed_chips, downed_cores=downed_cores,
-            hostname=hostname, bmp_details=bmp_details,
-            number_of_boards=number_of_boards, height=height, width=width,
-            is_virtual=is_virtual, auto_detect_bmp=auto_detect_bmp,
-            virtual_has_wrap_arounds=virtual_has_wrap_arounds,
-            board_version=board_version)
-
-        if self._create_database:
-            self._database_interface = DatabaseWriter(
-                self._app_data_runtime_folder, wait_on_confirmation,
-                database_socket_addresses)
-
+        # population holders
         self._none_labelled_vertex_count = 0
         self._none_labelled_edge_count = 0
-        self._time_scale_factor = 1
 
-        # Manager of buffered sending
-        self._send_buffer_manager = None
+        # holder for number of times the timer event should exuecte for the sim
+        self._no_machine_time_steps = None
+        self._machine_time_step = None
+
+        # state thats needed the first time around
+        if self._app_id is None:
+            self._app_id = config.getint("Machine", "appID")
+
+            if config.getboolean("Reports", "reportsEnabled"):
+                self._reports_states = ReportState(
+                    config.getboolean("Reports", "writePartitionerReports"),
+                    config.getboolean("Reports",
+                                      "writePlacerReportWithPartitionable"),
+                    config.getboolean("Reports",
+                                      "writePlacerReportWithoutPartitionable"),
+                    config.getboolean("Reports", "writeRouterReports"),
+                    config.getboolean("Reports", "writeRouterInfoReport"),
+                    config.getboolean("Reports", "writeTextSpecs"),
+                    config.getboolean("Reports", "writeReloadSteps"),
+                    config.getboolean("Reports", "writeTransceiverReport"),
+                    config.getboolean("Reports", "outputTimesForSections"),
+                    config.getboolean("Reports", "writeTagAllocationReports"))
+
+            # set up reports default folder
+            self._report_default_directory, this_run_time_string = \
+                helpful_functions.set_up_report_specifics(
+                    default_report_file_path=config.get(
+                        "Reports", "defaultReportFilePath"),
+                    max_reports_kept=config.getint(
+                        "Reports", "max_reports_kept"),
+                    app_id=self._app_id)
+
+            # set up application report folder
+            self._app_data_runtime_folder = \
+                helpful_functions.set_up_output_application_data_specifics(
+                    max_application_binaries_kept=config.getint(
+                        "Reports", "max_application_binaries_kept"),
+                    where_to_write_application_data_files=config.get(
+                        "Reports", "defaultApplicationDataFilePath"),
+                    app_id=self._app_id,
+                    this_run_time_string=this_run_time_string)
+
+        # set up machine targetted data
+        self._set_up_machine_specifics(host_name)
+
+        self._time_scale_factor = 1
+        logger.info("Setting time scale factor to {}."
+                    .format(self._time_scale_factor))
+
+        logger.info("Setting appID to %d." % self._app_id)
+
+        # get the machine time step
+        logger.info("Setting machine time step to {} micro-seconds."
+                    .format(self._machine_time_step))
+
+    def _set_up_machine_specifics(self, hostname):
+        self._machine_time_step = config.getint("Machine", "machineTimeStep")
+
+        if hostname is not None:
+            self._hostname = hostname
+            logger.warn("The machine name from PYNN setup is overriding the "
+                        "machine name defined in the spynnaker.cfg file")
+        elif config.has_option("Machine", "machineName"):
+            self._hostname = config.get("Machine", "machineName")
+        else:
+            raise Exception("A SpiNNaker machine must be specified in "
+                            "spynnaker.cfg.")
+        use_virtual_board = config.getboolean("Machine", "virtual_board")
+        if self._hostname == 'None' and not use_virtual_board:
+            raise Exception("A SpiNNaker machine must be specified in "
+                            "spynnaker.cfg.")
 
     def add_partitionable_vertex(self, vertex):
         """
@@ -270,21 +189,351 @@ class SpiNNakerGraphFrontEnd(
                 .format(self._app_id))
         self._partitioned_graph.add_subvertex(vertex)
 
-    def add_partitionable_edge(self, edge):
+    def add_partitionable_edge(self, edge, partition_id=None):
         """
 
         :param edge:
         :return:
         """
-        self._partitionable_graph.add_edge(edge)
+        self._partitionable_graph.add_edge(edge, partition_id)
 
-    def add_partitioned_edge(self, edge):
+    def add_partitioned_edge(self, edge, partition_id=None):
         """
 
         :param edge
         :return:
         """
-        self._partitioned_graph.add_subedge(edge)
+        self._partitioned_graph.add_subedge(edge, partition_id)
+
+    def run(self, run_time):
+        """
+
+        :param run_time:
+        :return:
+        """
+
+        # calculate number of machine time steps
+        self._calculate_number_of_machine_time_steps(run_time)
+
+        self._runtime = run_time
+
+        inputs = self._create_pacman_executor_inputs()
+        required_outputs = self._create_pacman_executor_outputs()
+        algorithms = self._create_algorithm_list(
+            config.get("Mode", "mode") == "Debug")
+        xml_paths = self._create_xml_paths()
+
+        pacman_exeuctor = helpful_functions.do_mapping(
+            inputs, algorithms, required_outputs, xml_paths,
+            config.getboolean("Reports", "outputTimesForSections"))
+
+        # gather provenance data from the executor itself if needed
+        if config.get("Reports", "writeProvanceData"):
+            pacman_executor_file_path = os.path.join(
+                pacman_exeuctor.get_item("ProvenanceFilePath"),
+                "PACMAN_provancence_data.xml")
+            pacman_exeuctor.write_provenance_data_in_xml(
+                pacman_executor_file_path,
+                pacman_exeuctor.get_item("MemoryTransciever"))
+
+        # sort out outputs datas
+        self._txrx = pacman_exeuctor.get_item("MemoryTransciever")
+        self._placements = pacman_exeuctor.get_item("MemoryPlacements")
+        self._router_tables = pacman_exeuctor.get_item("MemoryRoutingTables")
+        self._routing_infos = pacman_exeuctor.get_item("MemoryRoutingInfos")
+        self._tags = pacman_exeuctor.get_item("MemoryTags")
+        self._graph_mapper = pacman_exeuctor.get_item("MemoryGraphMapper")
+        self._partitioned_graph = \
+            pacman_exeuctor.get_item("MemoryPartitionedGraph")
+        self._machine = pacman_exeuctor.get_item("MemoryMachine")
+        self._database_interface = pacman_exeuctor.get_item("DatabaseInterface")
+        self._has_ran = pacman_exeuctor.get_item("RanToken")
+
+    @staticmethod
+    def _create_xml_paths():
+        # add the extra xml files from the cfg file
+        xml_paths = config.get("Mapping", "extra_xmls_paths")
+        if xml_paths == "None":
+            xml_paths = list()
+        else:
+            xml_paths = xml_paths.split(",")
+
+        xml_paths.append(
+            os.path.join(os.path.dirname(extra_pacman_algorithms.__file__),
+                         "spinnaker_graph_front_end_algorithms.xml"))
+        xml_paths.append(os.path.join(os.path.dirname(
+            pacman_algorithm_reports.__file__), "reports_metadata.xml"))
+
+        return xml_paths
+
+    def _create_algorithm_list(self, in_debug_mode):
+        if self._overloaded_algortihms is None:
+            algorithms = ""
+            algorithms += \
+                config.get("Mapping", "algorithms") + "," + \
+                config.get("Mapping", "interface_algorithms")
+
+            contains_a_partitionable_graph = \
+                len(self._partitionable_graph.vertices) > 0
+
+            # if using virutal machine, add to list of algorithms the virtual
+            # machine generator, otherwise add the standard machine generator
+            if config.getboolean("Machine", "virtual_board"):
+                algorithms += ",FrontEndCommonVirtualMachineInterfacer"
+            else:
+                if self._machine is None and self._txrx is None:
+                    algorithms += ",FrontEndCommonMachineInterfacer"
+                algorithms += ",FrontEndCommonApplicationRunner"
+
+                # if going to write provanence data after the run add the two
+                # provenance gatherers
+                if config.get("Reports", "writeProvanceData"):
+                    algorithms += ",FrontEndCommonProvenanceGatherer"
+
+                # if the end user wants reload script, add the reload script
+                # creator to the list
+                if config.getboolean("Reports", "writeReloadSteps"):
+                    algorithms += ",FrontEndCommonReloadScriptCreator"
+
+            if config.getboolean("Reports", "writeMemoryMapReport"):
+                algorithms += ",FrontEndCommonMemoryMapReport"
+
+            if config.getboolean("Reports", "writeNetworkSpecificationReport")\
+                    and contains_a_partitionable_graph:
+                algorithms += \
+                    ",FrontEndCommonNetworkSpecificationPartitionableReport"
+
+            # define mapping between output types and reports
+            if self._reports_states is not None \
+                    and self._reports_states.tag_allocation_report:
+                algorithms += ",TagReport"
+            if self._reports_states is not None \
+                    and self._reports_states.routing_info_report:
+                algorithms += ",routingInfoReports"
+            if self._reports_states is not None \
+                    and self._reports_states.router_report:
+                algorithms += ",RouterReports"
+            if self._reports_states is not None \
+                    and self._reports_states.partitioner_report\
+                    and contains_a_partitionable_graph:
+                algorithms += ",PartitionerReport"
+            if (self._reports_states is not None and
+                    self._reports_states.
+                    placer_report_with_partitionable_graph
+                    and contains_a_partitionable_graph):
+                algorithms += ",PlacerReportWithPartitionableGraph"
+            if (self._reports_states is not None and
+                    self._reports_states.
+                    placer_report_without_partitionable_graph):
+                algorithms += ",PlacerReportWithoutPartitionableGraph"
+            # add debug algorithms if needed
+            if in_debug_mode:
+                algorithms += ",ValidRoutesChecker"
+
+            # add partitioner algorithm if the partitionable graph has more than
+            #  0 entries
+            if contains_a_partitionable_graph:
+                algorithms += ",{}".format(
+                    config.get("Mapping", "partitionerAlgorithm"))
+
+                algorithms += \
+                    ",SpinnakerGraphFrontEndPartitionableGraphEdgeToKeyMapper"
+                algorithms += \
+                    ",FrontEndCommonPartitionableGraphApplicationDataLoader"
+                algorithms += ",FrontEndCommonPartitionableGraphHostExecute" \
+                              "DataSpecification"
+                algorithms += \
+                    ",FrontEndCommomPartitionableGraphDataSpecificationWriter"
+                algorithms += ",FrontEndCommonDatabaseWriter"
+            else:
+                algorithms += \
+                    ",SpinnakerGraphFrontEndPartitionedGraphEdgeToKeyMapper"
+                algorithms += ",SpinnakerGraphFrontEndPartitionedGraph" \
+                              "ApplicationDataLoader"
+                algorithms += ",SpinnakerGraphFrontEndPartitionedGraphData" \
+                              "SpecificationWriter"
+                algorithms += ",SpinnakerGraphFrontEndPartitionedGraphHost" \
+                              "BasedDataSpecificationExeuctor"
+                algorithms += ",SpynnakerGraphFrontEndDatabaseWriter"
+
+            return algorithms
+        else:
+            if self._overloaded_partitioner_algorithm is None:
+                return self._overloaded_algortihms
+            else:
+                algorithums = "{},{}".format(
+                    self._overloaded_partitioner_algorithm,
+                    self._overloaded_algortihms)
+                return algorithums
+
+    @staticmethod
+    def _create_pacman_executor_outputs():
+        # explicitly define what outputs spynnaker expects
+        required_outputs = list()
+        if config.getboolean("Machine", "virtual_board"):
+            required_outputs.extend([
+                "MemoryPlacements", "MemoryRoutingTables", "MemoryRoutingInfos",
+                "MemoryTags", "MemoryPartitionedGraph", "MemoryGraphMapper"])
+        else:
+            required_outputs.append("RanToken")
+        # if front end wants reload script, add requires reload token
+        if config.getboolean("Reports", "writeReloadSteps"):
+            required_outputs.append("ReloadToken")
+        return required_outputs
+
+    def _create_pacman_executor_inputs(self):
+        # make a folder for the json files to be stored in
+        json_folder = os.path.join(self._report_default_directory, "json_files")
+        if not os.path.exists(json_folder):
+            os.mkdir(json_folder)
+
+        # file path to store any provenance data to
+        provenance_file_path = os.path.join(self._report_default_directory,
+                                            "provance_data")
+        if not os.path.exists(provenance_file_path):
+            os.mkdir(provenance_file_path)
+
+        # translate config "None" to None
+        width = config.get("Machine", "width")
+        height = config.get("Machine", "height")
+        if width == "None":
+            width = None
+        else:
+            width = int(width)
+        if height == "None":
+            height = None
+        else:
+            height = int(height)
+
+        number_of_boards = config.get("Machine", "number_of_boards")
+        if number_of_boards == "None":
+            number_of_boards = None
+
+        scamp_socket_addresses = config.get("Machine", "scamp_connections_data")
+        if scamp_socket_addresses == "None":
+            scamp_socket_addresses = None
+
+        boot_port_num = config.get("Machine", "boot_connection_port_num")
+        if boot_port_num == "None":
+            boot_port_num = None
+        else:
+            boot_port_num = int(boot_port_num)
+
+        inputs = list()
+        if len(self.partitionable_graph.vertices) > 0:
+            inputs.append({'type': "MemoryPartitionableGraph",
+                           'value': self._partitionable_graph})
+        if len(self.partitioned_graph.subvertices) > 0:
+            inputs.append({'type': "MemoryPartitionedGraph",
+                           'value': self._partitioned_graph})
+
+        # add machine and transciever if they've already been ran
+        if self._machine is not None:
+            inputs.append({'type': 'MemoryExtendedMachine',
+                           'value': self._machine})
+        if self._txrx is not None:
+            inputs.append({'type': 'MemoryTransciever',
+                           'value': self._txrx})
+
+        inputs.append({'type': 'ReportFolder',
+                       'value': self._report_default_directory})
+        inputs.append({'type': "ApplicationDataFolder",
+                       'value': self._app_data_runtime_folder})
+        inputs.append({'type': 'IPAddress', 'value': self._hostname})
+
+        # basic input stuff
+        inputs.append({'type': "BMPDetails",
+                       'value': config.get("Machine", "bmp_names")})
+        inputs.append({'type': "DownedChipsDetails",
+                       'value': config.get("Machine", "down_chips")})
+        inputs.append({'type': "DownedCoresDetails",
+                       'value': config.get("Machine", "down_cores")})
+        inputs.append({'type': "BoardVersion",
+                       'value': config.getint("Machine", "version")})
+        inputs.append({'type': "NumberOfBoards", 'value': number_of_boards})
+        inputs.append({'type': "MachineWidth", 'value': width})
+        inputs.append({'type': "MachineHeight", 'value': height})
+        inputs.append({'type': "AutoDetectBMPFlag",
+                       'value': config.getboolean("Machine",
+                                                  "auto_detect_bmp")})
+        inputs.append({'type': "EnableReinjectionFlag",
+                       'value': config.getboolean("Machine",
+                                                  "enable_reinjection")})
+        inputs.append({'type': "ScampConnectionData",
+                       'value': scamp_socket_addresses})
+        inputs.append({'type': "BootPortNum", 'value': boot_port_num})
+        inputs.append({'type': "APPID", 'value': self._app_id})
+        inputs.append({'type': "RunTime", 'value': self._runtime})
+        inputs.append({'type': "TimeScaleFactor",
+                       'value': self._time_scale_factor})
+        inputs.append({'type': "MachineTimeStep",
+                       'value': self._machine_time_step})
+        inputs.append({'type': "DatabaseSocketAddresses",
+                       'value': self._database_socket_addresses})
+        inputs.append({'type': "DatabaseWaitOnConfirmationFlag",
+                       'value': config.getboolean("Database",
+                                                  "wait_on_confirmation")})
+        inputs.append({'type': "WriteTextSpecsFlag",
+                       'value': config.getboolean("Reports",
+                                                  "writeTextSpecs")})
+        inputs.append({'type': "ExecutableFinder",
+                       'value': self._executable_finder})
+        inputs.append({'type': "MachineHasWrapAroundsFlag",
+                       'value': config.getboolean("Machine",
+                                                  "requires_wrap_arounds")})
+        inputs.append({'type': "ReportStates", 'value': self._reports_states})
+        inputs.append({'type': "UserCreateDatabaseFlag",
+                       'value': config.get("Database", "create_database")})
+        inputs.append({'type': "ExecuteMapping",
+                       'value':  config.getboolean(
+                           "Database",
+                           "create_routing_info_to_atom_id_mapping")})
+        inputs.append({'type': "DatabaseSocketAddresses",
+                       'value': self._database_socket_addresses})
+        inputs.append({'type': "SendStartNotifications",
+                       'value': config.getboolean("Database",
+                                                  "send_start_notification")})
+        inputs.append({'type': "ProvenanceFilePath",
+                       'value': provenance_file_path})
+
+        # add paths for each file based version
+        inputs.append({'type': "FileCoreAllocationsFilePath",
+                       'value': os.path.join(
+                           json_folder, "core_allocations.json")})
+        inputs.append({'type': "FileSDRAMAllocationsFilePath",
+                       'value': os.path.join(
+                           json_folder, "sdram_allocations.json")})
+        inputs.append({'type': "FileMachineFilePath",
+                       'value': os.path.join(
+                           json_folder, "machine.json")})
+        inputs.append({'type': "FilePartitionedGraphFilePath",
+                       'value': os.path.join(
+                           json_folder, "partitioned_graph.json")})
+        inputs.append({'type': "FilePlacementFilePath",
+                       'value': os.path.join(
+                           json_folder, "placements.json")})
+        inputs.append({'type': "FileRouingPathsFilePath",
+                       'value': os.path.join(
+                           json_folder, "routing_paths.json")})
+        inputs.append({'type': "FileConstraintsFilePath",
+                       'value': os.path.join(
+                           json_folder, "constraints.json")})
+        return inputs
+
+    def _calculate_number_of_machine_time_steps(self, run_time):
+        if run_time is not None:
+            for vertex in self._partitionable_graph.vertices:
+                if isinstance(vertex, AbstractDataSpecableVertex):
+                    self._set_runtime_in_time_steps_for_model(vertex, run_time)
+            for vertex in self._partitioned_graph.subvertices:
+                if (isinstance(vertex, AbstractPartitionedDataSpecableVertex)
+                        or isinstance(vertex, AbstractDataSpecableVertex)):
+                    self._set_runtime_in_time_steps_for_model(vertex, run_time)
+        else:
+            self._no_machine_time_steps = None
+            logger.warn("You have set a runtime that will never end, this may"
+                        "cause the neural models to fail to partition "
+                        "correctly")
 
     def _set_runtime_in_time_steps_for_model(self, vertex, run_time):
         """
@@ -295,530 +544,17 @@ class SpiNNakerGraphFrontEnd(
         """
         self._no_machine_time_steps =\
             int((run_time * 1000.0) / vertex.machine_time_step)
-        ceiled_machine_time_steps = math.ceil((run_time * 1000.0) /
-                                              vertex.machine_time_step)
+        ceiled_machine_time_steps = \
+            math.ceil((run_time * 1000.0) / vertex.machine_time_step)
         if self._no_machine_time_steps != ceiled_machine_time_steps:
             raise exceptions.ConfigurationException(
                 "The runtime and machine time step combination "
                 "result in a factional number of machine runable "
                 "time steps and therefore spinnaker cannot "
                 "determine how many to run for")
-        vertex.set_no_machine_time_steps(
-            self._no_machine_time_steps)
+        vertex.set_no_machine_time_steps(self._no_machine_time_steps)
 
-    def run(self, run_time):
-        """
-
-        :param run_time:
-        :return:
-        """
-        # create network report if needed
-        if self._reports_states is not None:
-            if len(self._partitionable_graph.vertices) > 0:
-                reports.network_specification_partitionable_report(
-                    self._report_default_directory, self._partitionable_graph,
-                    self._hostname)
-            else:
-                reports.network_specification_report_partitioned_graph(
-                    self._report_default_directory, self._partitioned_graph,
-                    self._hostname)
-
-        # calculate number of machine time steps
-        if run_time is not None:
-            for vertex in self._partitionable_graph.vertices:
-                if isinstance(vertex, AbstractDataSpecableVertex):
-                    self._set_runtime_in_time_steps_for_model(vertex, run_time)
-            for vertex in self._partitioned_graph.subvertices:
-                if isinstance(vertex, AbstractPartitionedDataSpecableVertex):
-                    self._set_runtime_in_time_steps_for_model(vertex, run_time)
-                elif isinstance(vertex, AbstractDataSpecableVertex):
-                    self._set_runtime_in_time_steps_for_model(vertex, run_time)
-        else:
-            self._no_machine_time_steps = None
-            logger.warn("You have set a runtime that will never end, this may"
-                        "cause the neural models to fail to partition "
-                        "correctly")
-            for vertex in self._partitionable_graph.vertices:
-                if vertex.is_set_to_record_spikes():
-                    raise exceptions.ConfigurationException(
-                        "recording a population when set to infinite runtime "
-                        "is not currently supportable in this tool chain."
-                        "watch this space")
-
-        do_timing = config.getboolean("Reports", "outputTimesForSections")
-        if do_timing:
-            timer = Timer()
-        else:
-            timer = None
-
-        self.set_runtime(run_time)
-        logger.info("*** Running Mapper *** ")
-        if do_timing:
-            timer.start_timing()
-        self.map_model()
-        if do_timing:
-            logger.info("Time to map model: {}".format(timer.take_sample()))
-
-        # execute data spec generation
-        if do_timing:
-            timer.start_timing()
-        logger.info("*** Generating Output *** ")
-        logger.debug("")
-        executable_targets = self.generate_data_specifications()
-        if do_timing:
-            logger.info("Time to generate output: {}".format(
-                timer.take_sample()))
-
-        # execute data spec execution
-        if do_timing:
-            timer.start_timing()
-        processor_to_app_data_base_address = \
-            self.execute_data_specification_execution(
-                config.getboolean("SpecExecution", "specExecOnHost"),
-                self._hostname, self._placements, self._graph_mapper,
-                self._write_text_spec, self._app_data_runtime_folder,
-                self._machine)
-
-        if self._reports_states is not None:
-            reports.write_memory_map_report(self._report_default_directory,
-                                            processor_to_app_data_base_address)
-
-        if do_timing:
-            logger.info("Time to execute data specifications: {}".format(
-                timer.take_sample()))
-
-        if do_timing:
-            timer.start_timing()
-
-        logger.info("*** Loading tags ***")
-        self.load_tags(self._tags)
-
-        if self._do_load is True:
-            logger.info("*** Loading data ***")
-            self._load_application_data(
-                self._placements, self._graph_mapper,
-                processor_to_app_data_base_address, self._hostname,
-                self._app_data_runtime_folder)
-            self.load_routing_tables(self._router_tables, self._app_id)
-            logger.info("*** Loading executables ***")
-            self.load_executable_images(executable_targets, self._app_id)
-            logger.info("*** Loading buffers ***")
-            self.set_up_send_buffering(self._partitioned_graph,
-                                       self._placements, self._tags)
-        if do_timing:
-            logger.info("Time to load: {}".format(timer.take_sample()))
-
-        if self._do_run is True:
-            logger.info("*** Running simulation... *** ")
-            if do_timing:
-                timer.start_timing()
-            # every thing is in sync0. load the initial buffers
-            self._send_buffer_manager.load_initial_buffers()
-            if do_timing:
-                timer.take_sample()
-
-            wait_on_confirmation = config.getboolean(
-                "Database", "wait_on_confirmation")
-            send_start_notification = config.getboolean(
-                "Database", "send_start_notification")
-
-            self.wait_for_cores_to_be_ready(
-                executable_targets, self._app_id)
-
-            # wait till external app is ready for us to start if required
-            if (self._database_interface is not None and
-                    wait_on_confirmation):
-                logger.info(
-                    "*** Awaiting for a response from an external source "
-                    "to state its ready for the simulation to start ***")
-                self._database_interface.wait_for_confirmation()
-
-            self.start_all_cores(executable_targets, self._app_id)
-
-            if (self._database_interface is not None and
-                    send_start_notification):
-                self._database_interface.send_start_notification()
-
-            if self._runtime is None:
-                logger.info("Application is set to run forever - exiting")
-            else:
-                self.wait_for_execution_to_complete(
-                    executable_targets, self._app_id, self._runtime,
-                    self._time_scale_factor)
-            self._has_ran = True
-            if self._retrieve_provance_data:
-
-                progress = ProgressBar(self._placements.n_placements + 1,
-                                       "getting provenance data")
-
-                # retrieve provence data from central
-                file_path = os.path.join(self._report_default_directory,
-                                         "provance_data")
-
-                # check the directory doesnt already exist
-                if not os.path.exists(file_path):
-                    os.mkdir(file_path)
-
-                # write provanence data
-                self.write_provenance_data_in_xml(file_path, self._txrx)
-                progress.update()
-
-                # retrieve provenance data from any cores that provide data
-                for placement in self._placements.placements:
-                    if isinstance(placement.subvertex,
-                                  AbstractProvidesProvenanceData):
-                        core_file_path = os.path.join(
-                            file_path,
-                            "Provanence_data_for_{}_{}_{}_{}.xml".format(
-                                placement.subvertex.label,
-                                placement.x, placement.y, placement.p))
-                        placement.subvertex.write_provenance_data_in_xml(
-                            core_file_path, self._txrx, placement)
-                    progress.update()
-                progress.end()
-        elif isinstance(self._machine, VirtualMachine):
-            logger.info(
-                "*** Using a Virtual Machine so no simulation will occur")
-        else:
-            logger.info("*** No simulation requested: Stopping. ***")
-
-    def map_model(self):
-        """
-        executes the pacman compilation stack
-        """
-        pacman_report_state = \
-            self._reports_states.generate_pacman_report_states()
-
-        # self._add_virtual_chips()
-
-        # execute partitioner
-        if len(self._partitionable_graph.vertices) > 0:
-            self._execute_partitioner(pacman_report_state)
-
-        # execute placer
-        self._execute_placer(pacman_report_state)
-
-        # exeucte tag allocator
-        self._execute_tag_allocator(pacman_report_state)
-
-        # execute key allocator
-        self._execute_key_allocator(pacman_report_state)
-
-        # execute router
-        self._execute_router(pacman_report_state)
-
-    def _execute_tag_allocator(self, pacman_report_state):
-        """
-
-        :param pacman_report_state:
-        :return:
-        """
-        if self._tag_allocator_algorithm is None:
-            self._tag_allocator_algorithm = BasicTagAllocator()
-        else:
-            self._tag_allocator_algorithm = self._tag_allocator_algorithm()
-
-        # execute tag allocation
-        self._tags = self._tag_allocator_algorithm.allocate_tags(
-            self._machine, self._placements)
-
-        # generate reports
-        if (pacman_report_state is not None and
-                pacman_report_state.tag_allocation_report):
-            pacman_reports.tag_allocator_report(
-                self._report_default_directory, self._tags)
-
-    def _execute_key_allocator(self, pacman_report_state):
-        """ executes the key allocator
-
-        :param pacman_report_state:
-        :return:
-        """
-        if self._key_allocator_algorithm is None:
-            self._key_allocator_algorithm = BasicRoutingInfoAllocator()
-        else:
-            self._key_allocator_algorithm = self._key_allocator_algorithm()
-
-        # Generate an n_keys map for the graph and add constraints
-        n_keys_map = DictBasedPartitionedEdgeNKeysMap()
-        if len(self._partitionable_graph.vertices) > 0:
-            for edge in self._partitioned_graph.subedges:
-                vertex_slice = self._graph_mapper.get_subvertex_slice(
-                    edge.pre_subvertex)
-                super_edge = self._graph_mapper\
-                    .get_partitionable_edge_from_partitioned_edge(edge)
-
-                if not isinstance(super_edge.pre_vertex,
-                                  AbstractProvidesNKeysForEdge):
-                    n_keys_map.\
-                        set_n_keys_for_patitioned_edge(edge,
-                                                       vertex_slice.n_atoms)
-                else:
-                    n_keys_map.set_n_keys_for_patitioned_edge(
-                        edge,
-                        super_edge.pre_vertex.get_n_keys_for_partitioned_edge(
-                            edge, self._graph_mapper))
-
-                if isinstance(super_edge.pre_vertex,
-                              AbstractProvidesOutgoingEdgeConstraints):
-                    edge.add_constraints(
-                        super_edge.pre_vertex.get_outgoing_edge_constraints(
-                            edge, self._graph_mapper))
-                if isinstance(super_edge.post_vertex,
-                              AbstractProvidesIncomingEdgeConstraints):
-                    edge.add_constraints(
-                        super_edge.post_vertex.get_incoming_edge_constraints(
-                            edge, self._graph_mapper))
-        else:
-            for edge in self._partitioned_graph.subedges:
-                if not isinstance(edge.pre_subvertex,
-                                  AbstractProvidesNKeysForEdge):
-                    n_keys_map.set_n_keys_for_patitioned_edge(edge, 1)
-                else:
-                    n_keys_map.set_n_keys_for_patitioned_edge(
-                        edge,
-                        edge.pre_subvertex.get_n_keys_for_partitioned_edge(
-                            edge, self._graph_mapper))
-
-                if isinstance(edge, AbstractProvidesNKeysForEdge):
-                        n_keys = edge.\
-                            get_n_keys_for_partitioned_edge(edge,
-                                                            self._graph_mapper)
-                        n_keys_map.set_n_keys_for_patitioned_edge(edge, n_keys)
-
-                if isinstance(edge.pre_subvertex,
-                              AbstractProvidesOutgoingEdgeConstraints):
-                    edge.add_constraints(
-                        edge.pre_subvertex.get_outgoing_edge_constraints(
-                            edge, self._graph_mapper))
-                if isinstance(edge.post_subvertex,
-                              AbstractProvidesIncomingEdgeConstraints):
-                    edge.add_constraints(
-                        edge.post_subvertex.get_incoming_edge_constraints(
-                            edge, self._graph_mapper))
-
-        # execute routing info generator
-        self._routing_infos = \
-            self._key_allocator_algorithm.allocate_routing_info(
-                self._partitioned_graph, self._placements, n_keys_map)
-
-        # generate reports
-        if (pacman_report_state is not None and
-                pacman_report_state.routing_info_report):
-            pacman_reports.routing_info_reports(
-                self._report_default_directory, self._partitioned_graph,
-                self._routing_infos)
-
-    def _execute_router(self, pacman_report_state):
-        """ exectes the router algorithum
-
-        :param pacman_report_state:
-        :return:
-        """
-
-        # set up a default placer algorithm if none are specified
-        if self._router_algorithm is None:
-            self._router_algorithm = BasicDijkstraRouting()
-        else:
-            self._router_algorithm = self._router_algorithm()
-
-        self._router_tables = \
-            self._router_algorithm.route(
-                self._routing_infos, self._placements, self._machine,
-                self._partitioned_graph)
-
-        if pacman_report_state is not None and \
-                pacman_report_state.router_report:
-            pacman_reports.router_reports(
-                graph=self._partitionable_graph, hostname=self._hostname,
-                graph_to_sub_graph_mapper=self._graph_mapper,
-                placements=self._placements,
-                report_folder=self._report_default_directory,
-                include_dat_based=pacman_report_state.router_dat_based_report,
-                routing_tables=self._router_tables,
-                routing_info=self._routing_infos, machine=self._machine)
-
-        if self._in_debug_mode:
-
-            # check that all routes are valid and no cycles exist
-            valid_route_checker = ValidRouteChecker(
-                placements=self._placements, routing_infos=self._routing_infos,
-                routing_tables=self._router_tables, machine=self._machine,
-                partitioned_graph=self._partitioned_graph)
-            valid_route_checker.validate_routes()
-
-    def _execute_partitioner(self, pacman_report_state):
-        """ executes the partitioner function
-
-        :param pacman_report_state:
-        :return:
-        """
-
-        # execute partitioner or default partitioner (as seen fit)
-        if self._partitioner_algorithm is None:
-            self._partitioner_algorithm = BasicPartitioner()
-        else:
-            self._partitioner_algorithm = self._partitioner_algorithm()
-
-        # execute partitioner
-        self._partitioned_graph, self._graph_mapper = \
-            self._partitioner_algorithm.partition(self._partitionable_graph,
-                                                  self._machine)
-
-        # execute reports
-        if (pacman_report_state is not None and
-                pacman_report_state.partitioner_report):
-            pacman_reports.partitioner_reports(
-                self._report_default_directory, self._hostname,
-                self._partitionable_graph, self._graph_mapper)
-
-    def _execute_placer(self, pacman_report_state):
-        """ executes the placer
-
-        :param pacman_report_state:
-        :return:
-        """
-
-        # execute placer or default placer (as seen fit)
-        if self._placer_algorithm is None:
-            self._placer_algorithm = BasicPlacer()
-        else:
-            self._placer_algorithm = self._placer_algorithm()
-
-        # execute placer
-        self._placements = self._placer_algorithm.place(
-            self._partitioned_graph, self._machine)
-
-        # execute placer reports if needed
-        if (pacman_report_state is not None and
-                pacman_report_state.placer_report):
-            pacman_reports.placer_reports_without_partitionable_graph(
-                hostname=self._hostname, sub_graph=self._partitioned_graph,
-                machine=self._machine, placements=self._placements,
-                report_folder=self._report_default_directory)
-
-    def generate_data_specifications(self):
-        """ generates the dsg for the graph.
-
-        :return:
-        """
-
-        # iterate though subvertexes and call generate_data_spec for each
-        # vertex
-        executable_targets = ExecutableTargets()
-
-        # create a progress bar for end users
-        progress_bar = ProgressBar(len(list(self._placements.placements)),
-                                   "Generating data specifications")
-        for placement in self._placements.placements:
-            binary_name = None
-            if len(self._partitionable_graph.vertices) > 0:
-                associated_vertex =\
-                    self._graph_mapper.get_vertex_from_subvertex(
-                        placement.subvertex)
-
-                # if the vertex can generate a DSG, call it
-                if isinstance(associated_vertex, AbstractDataSpecableVertex):
-                    ip_tags = self._tags.get_ip_tags_for_vertex(
-                        placement.subvertex)
-                    reverse_ip_tags = \
-                        self._tags.get_reverse_ip_tags_for_vertex(
-                            placement.subvertex)
-                    associated_vertex.generate_data_spec(
-                        placement.subvertex, placement,
-                        self._partitioned_graph, self._partitionable_graph,
-                        self._routing_infos, self._hostname,
-                        self._graph_mapper, self._report_default_directory,
-                        ip_tags, reverse_ip_tags, self._write_text_specs,
-                        self._app_data_runtime_folder)
-                    progress_bar.update()
-
-                    # Get name of binary from vertex
-                    binary_name = associated_vertex.get_binary_file_name()
-
-                    # Attempt to find this within search paths
-                    binary_path = self._executable_paths.get_executable_path(
-                        binary_name)
-                    if binary_path is None:
-                        raise exceptions.ExecutableNotFoundException(
-                            binary_name)
-
-                    if not executable_targets.has_binary(binary_path):
-                        executable_targets.add_binary(binary_path)
-                    executable_targets.add_processor(
-                        binary_path, placement.x, placement.y, placement.p)
-            else:
-                if isinstance(placement.subvertex,
-                              AbstractPartitionedDataSpecableVertex):
-                    ip_tags = self._tags.get_ip_tags_for_vertex(
-                        placement.subvertex)
-                    reverse_ip_tags = \
-                        self._tags.get_reverse_ip_tags_for_vertex(
-                            placement.subvertex)
-                    placement.subvertex.generate_data_spec(
-                        placement, self._partitioned_graph,
-                        self._routing_infos, self._hostname,
-                        self._report_default_directory, ip_tags,
-                        reverse_ip_tags, self._write_text_specs,
-                        self._app_data_runtime_folder)
-
-                    progress_bar.update()
-
-                    # Get name of binary from vertex
-                    binary_name = placement.subvertex.get_binary_file_name()
-
-                    # Attempt to find this within search paths
-                    binary_path = self._executable_paths.get_executable_path(
-                        binary_name)
-                    if binary_path is None:
-                        raise exceptions.ExecutableNotFoundException(
-                            binary_name)
-
-                    if not executable_targets.has_binary(binary_path):
-                        executable_targets.add_binary(binary_path)
-                    executable_targets.add_processor(
-                        binary_path, placement.x, placement.y, placement.p)
-                else:
-                    ip_tags = self._tags.get_ip_tags_for_vertex(
-                        placement.subvertex)
-                    reverse_ip_tags = \
-                        self._tags.get_reverse_ip_tags_for_vertex(
-                            placement.subvertex)
-                    progress_bar.update()
-
-                    # Get name of binary from vertex
-                    binary_name = placement.subvertex.get_binary_file_name()
-
-                    # Attempt to find this within search paths
-                    binary_path = self._executable_paths.get_executable_path(
-                        binary_name)
-                    if binary_path is None:
-                        raise exceptions.ExecutableNotFoundException(
-                            binary_name)
-
-                    if not executable_targets.has_binary(binary_path):
-                        executable_targets.add_binary(binary_path)
-                    executable_targets.add_processor(
-                        binary_path, placement.x, placement.y, placement.p)
-
-        # finish the progress bar
-        progress_bar.end()
-
-        return executable_targets
-
-    def stop(self):
-        """
-        kills database if running
-        :return:
-        """
-
-        if self._create_database:
-            self._database_interface.stop()
-
-        # stop the transciever
-        self._txrx.close()
-
-    def read_xml_file(self, file_path):
+    def read_partitionable_graph_xml_file(self, file_path):
         """
 
         :param file_path:
@@ -827,196 +563,215 @@ class SpiNNakerGraphFrontEnd(
         xml_interface = XMLInterface(file_path)
         self._partitionable_graph = xml_interface.read_in_file()
 
+    def read_partitioned_graph_xml_file(self, file_path):
+        """
+
+        :param file_path:
+        :return:
+        """
+        xml_interface = XMLInterface(file_path)
+        self._partitioned_graph = xml_interface.read_in_file()
+
     def get_machine_dimensions(self):
         """
         method for end users to get the machine dimensions
         :return:
         """
+        if self._machine is None:
+            self._run_algorithms_for_machine_gain()
+
         return {'x': self._machine.max_chip_x, 'y': self._machine.max_chip_y}
 
-    # TODO THIS NEEDS REMOVING AND FIXING
-    def host_based_data_specification_execution(
-            self, hostname, placements, graph_mapper, write_text_specs,
-            application_data_runtime_folder, machine):
-        """
-
-        :param hostname:
-        :param placements:
-        :param graph_mapper:
-        :param write_text_specs:
-        :param application_data_runtime_folder:
-        :return:
-        """
-        space_based_memory_tracker = dict()
-        processor_to_app_data_base_address = dict()
-
-        # create a progress bar for end users
-        progress_bar = ProgressBar(len(list(placements.placements)),
-                                   "Executing data specifications")
-
-        for placement in placements.placements:
-            if graph_mapper is not None:
-                associated_vertex = graph_mapper.get_vertex_from_subvertex(
-                    placement.subvertex)
-            else:
-                associated_vertex = placement.subvertex
-
-            # if the vertex can generate a DSG, call it
-            if (isinstance(associated_vertex, AbstractDataSpecableVertex) or
-                isinstance(associated_vertex,
-                           AbstractPartitionedDataSpecableVertex)):
-
-                data_spec_file_path = \
-                    associated_vertex.get_data_spec_file_path(
-                        placement.x, placement.y, placement.p, hostname,
-                        application_data_runtime_folder)
-                app_data_file_path = \
-                    associated_vertex.get_application_data_file_path(
-                        placement.x, placement.y, placement.p, hostname,
-                        application_data_runtime_folder)
-                data_spec_reader = FileDataReader(data_spec_file_path)
-                data_writer = FileDataWriter(app_data_file_path)
-
-                # locate current memory requirement
-                current_memory_available = SDRAM.DEFAULT_SDRAM_BYTES
-                memory_tracker_key = (placement.x, placement.y)
-                if memory_tracker_key in space_based_memory_tracker:
-                    current_memory_available = space_based_memory_tracker[
-                        memory_tracker_key]
-
-                # generate a file writer for dse report (app pointer table)
-                report_writer = None
-                if write_text_specs:
-                    new_report_directory = os.path.join(
-                        self._report_default_directory, "data_spec_text_files")
-
-                    if not os.path.exists(new_report_directory):
-                        os.mkdir(new_report_directory)
-
-                    file_name = "{}_DSE_report_for_{}_{}_{}.txt".format(
-                        hostname, placement.x, placement.y, placement.p)
-                    report_file_path = os.path.join(new_report_directory,
-                                                    file_name)
-                    report_writer = FileDataWriter(report_file_path)
-
-                # generate data spec executor
-                host_based_data_spec_executor = DataSpecificationExecutor(
-                    data_spec_reader, data_writer, current_memory_available,
-                    report_writer)
-
-                # update memory calc and run data spec executor
-                bytes_written_by_spec = None
-                # noinspection PyBroadException
-                try:
-                    bytes_used_by_spec, bytes_written_by_spec = \
-                        host_based_data_spec_executor.execute()
-                except:
-                    logger.error("Error executing data specification for {}"
-                                 .format(associated_vertex))
-                    traceback.print_exc()
-
-                # update base address mapper
-                processor_mapping_key = (placement.x, placement.y, placement.p)
-                processor_to_app_data_base_address[processor_mapping_key] = {
-                    'start_address':
-                        ((SDRAM.DEFAULT_SDRAM_BYTES -
-                          current_memory_available) +
-                         constants.SDRAM_BASE_ADDR),
-                    'memory_used': bytes_used_by_spec,
-                    'memory_written': bytes_written_by_spec}
-
-                space_based_memory_tracker[memory_tracker_key] = \
-                    current_memory_available - bytes_used_by_spec
-
-            # update the progress bar
-            progress_bar.update()
-
-        # close the progress bar
-        progress_bar.end()
-        return processor_to_app_data_base_address
-
-    # TODO THIS NEEDS REMOVING AND FIXING
-    def execute_data_specification_execution(
-            self, host_based_execution, hostname, placements, graph_mapper,
-            write_text_specs, runtime_application_data_folder, machine):
-        """
-
-        :param host_based_execution:
-        :param hostname:
-        :param placements:
-        :param graph_mapper:
-        :param write_text_specs:
-        :param runtime_application_data_folder:
-        :return:
-        """
-        if host_based_execution:
-            return self.host_based_data_specification_execution(
-                hostname, placements, graph_mapper, write_text_specs,
-                self._app_data_folder, machine)
+    def _run_algorithms_for_machine_gain(self):
+        inputs = self._create_pacman_executor_inputs()
+        algorthims = ""
+        if config.getboolean("Machine", "virtual_board"):
+            algorthims += "FrontEndCommonVirtualMachineInterfacer"
         else:
-            return self._chip_based_data_specification_execution(hostname)
+            algorthims += "FrontEndCommonMachineInterfacer"
+        required_outputs = list()
+        required_outputs.append("MemoryMachine")
+        xml_paths = list()
 
-    # TODO THIS NEEDS REMOVING AND FIXING
-    def _load_application_data(
-            self, placements, vertex_to_subvertex_mapper,
-            processor_to_app_data_base_address, hostname,
-            app_data_folder, verify=False):
+        pacman_exeuctor = helpful_functions.do_mapping(
+            inputs, algorthims, required_outputs, xml_paths,
+            config.getboolean("Reports", "outputTimesForSections"))
 
-        # go through the placements and see if there's any application data to
-        # load
-        progress_bar = ProgressBar(len(list(placements.placements)),
-                                   "Loading application data onto the machine")
-        for placement in placements.placements:
-            if vertex_to_subvertex_mapper is not None:
-                associated_vertex = \
-                    vertex_to_subvertex_mapper.get_vertex_from_subvertex(
-                        placement.subvertex)
-            else:
-                associated_vertex = placement.subvertex
+        self._machine = pacman_exeuctor.get_item("MemoryMachine")
+        if not config.getboolean("Machine", "virtual_board"):
+            self._txrx = pacman_exeuctor.get_item("MemoryTransciever")
 
-            if (isinstance(associated_vertex, AbstractDataSpecableVertex) or
-                isinstance(associated_vertex,
-                           AbstractPartitionedDataSpecableVertex)):
-                logger.debug("loading application data for vertex {}"
-                             .format(associated_vertex.label))
-                key = (placement.x, placement.y, placement.p)
-                start_address = \
-                    processor_to_app_data_base_address[key]['start_address']
-                memory_written = \
-                    processor_to_app_data_base_address[key]['memory_written']
-                file_path_for_application_data = \
-                    associated_vertex.get_application_data_file_path(
-                        placement.x, placement.y, placement.p, hostname,
-                        app_data_folder)
-                application_data_file_reader = SpinnmanFileDataReader(
-                    file_path_for_application_data)
-                logger.debug("writing application data for vertex {}"
-                             .format(associated_vertex.label))
-                self._txrx.write_memory(
-                    placement.x, placement.y, start_address,
-                    application_data_file_reader, memory_written)
+    @property
+    def app_id(self):
+        """
 
-                # update user 0 so that it points to the start of the
-                # applications data region on sdram
-                logger.debug("writing user 0 address for vertex {}"
-                             .format(associated_vertex.label))
-                user_o_register_address = \
-                    self._txrx.get_user_0_register_address_from_core(
-                        placement.x, placement.y, placement.p)
-                self._txrx.write_memory(placement.x, placement.y,
-                                        user_o_register_address, start_address)
+        :return:
+        """
+        return self._app_id
 
-                # add lines to rerun_script if requested
-                if self._reports_states.transciever_report:
-                    self._reload_script.add_application_data(
-                        file_path_for_application_data, placement,
-                        start_address)
-            progress_bar.update()
-        progress_bar.end()
+    @property
+    def has_ran(self):
+        """
 
+        :return:
+        """
+        return self._has_ran
 
-    def get_txrx(self):
+    @property
+    def machine_time_step(self):
+        """
+
+        :return:
+        """
+        return self._machine_time_step
+
+    @property
+    def no_machine_time_steps(self):
+        """
+
+        :return:
+        """
+        return self._no_machine_time_steps
+
+    @property
+    def timescale_factor(self):
+        """
+
+        :return:
+        """
+        return self._time_scale_factor
+
+    @property
+    def partitioned_graph(self):
+        """
+
+        :return:
+        """
+        return self._partitioned_graph
+
+    @property
+    def partitionable_graph(self):
+        """
+
+        :return:
+        """
+        return self._partitionable_graph
+
+    @property
+    def placements(self):
+        """
+
+        :return:
+        """
+        return self._placements
+
+    @property
+    def transceiver(self):
+        """
+
+        :return:
+        """
         return self._txrx
 
-    def _chip_based_data_specification_execution(self, hostname):
-        pass
+    @property
+    def graph_mapper(self):
+        """
+
+        :return:
+        """
+        return self._graph_mapper
+
+    @property
+    def routing_infos(self):
+        """
+
+        :return:
+        """
+        return self._routing_infos
+
+    def set_app_id(self, value):
+        """
+
+        :param value:
+        :return:
+        """
+        self._app_id = value
+
+    def get_current_time(self):
+        """
+
+        :return:
+        """
+        if self._has_ran:
+            return float(self._runtime)
+        return 0.0
+
+    def __repr__(self):
+        return "SpiNNaker Graph Front End object for machine {}"\
+            .format(self._hostname)
+
+    def stop(self, turn_off_machine=None, clear_routing_tables=None,
+             clear_tags=None):
+        """
+        :param turn_off_machine: decides if the machine should be powered down\
+            after running the exeuction. Note that this powers down all boards\
+            connected to the BMP connections given to the transciever
+        :type turn_off_machine: bool
+        :param clear_routing_tables: informs the tool chain if it\
+            should turn off the clearing of the routing tables
+        :type clear_routing_tables: bool
+        :param clear_tags: informs the tool chain if it should clear the tags\
+            off the machine at stop
+        :type clear_tags: boolean
+        :return: None
+        """
+
+        # if not a virtual machine, then shut down stuff on the board
+        if not config.getboolean("Machine", "virtual_board"):
+
+            if turn_off_machine is None:
+                turn_off_machine = \
+                    config.getboolean("Machine", "turn_off_machine")
+
+            if clear_routing_tables is None:
+                clear_routing_tables = config.getboolean(
+                    "Machine", "clear_routing_tables")
+
+            if clear_tags is None:
+                clear_tags = config.getboolean("Machine", "clear_tags")
+
+            # if stopping on machine, clear iptags and
+            if clear_tags:
+                for ip_tag in self._tags.ip_tags:
+                    self._txrx.clear_ip_tag(
+                        ip_tag.tag, board_address=ip_tag.board_address)
+                for reverse_ip_tag in self._tags.reverse_ip_tags:
+                    self._txrx.clear_ip_tag(
+                        reverse_ip_tag.tag,
+                        board_address=reverse_ip_tag.board_address)
+
+            # if clearing routing table entries, clear
+            if clear_routing_tables:
+                for router_table in self._router_tables.routing_tables:
+                    if not self._machine.get_chip_at(router_table.x,
+                                                     router_table.y).virtual:
+                        self._txrx.clear_multicast_routes(router_table.x,
+                                                          router_table.y)
+
+            # execute app stop
+            # self._txrx.stop_application(self._app_id)
+            if self._create_database:
+                self._database_interface.stop()
+
+            # stop the transciever
+            if turn_off_machine:
+                logger.info("Turning off machine")
+            self._txrx.close(power_off_machine=turn_off_machine)
+
+    def _add_socket_address(self, socket_address):
+        """
+
+        :param socket_address:
+        :return:
+        """
+        self._database_socket_addresses.add(socket_address)
