@@ -1,9 +1,5 @@
 #include "../db-typedefs.h"
 #include "../sdram_writer.h"
-#include <data_specification.h>
-#include <string.h>
-
-#include <debug.h>
 
 value_entry* pull(uint32_t k_info, void* k){
 
@@ -18,8 +14,11 @@ value_entry* pull(uint32_t k_info, void* k){
 
     uint32_t current_word = 1;
 
+    //Scan current region of SDRAM until the point where master stopped writing
     while(current_addr < end_addr){
 
+        //Get 32 bit information for the database entry
+        // [4 bits key type, 12 bits key size, 4 bits value type, 12 bits value size]
         uint32_t info = *current_addr;
 
         current_addr++;

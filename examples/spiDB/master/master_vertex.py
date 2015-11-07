@@ -14,6 +14,14 @@ from spinn_front_end_common.utilities import constants
 from data_specification.data_specification_generator import \
     DataSpecificationGenerator
 
+from pacman.model.constraints.tag_allocator_constraints \
+    .tag_allocator_require_reverse_iptag_constraint \
+    import TagAllocatorRequireReverseIptagConstraint
+
+from spinn_front_end_common.abstract_models.\
+    abstract_provides_outgoing_edge_constraints \
+    import AbstractProvidesOutgoingEdgeConstraints
+
 from enum import Enum
 
 import logging
@@ -29,7 +37,7 @@ class MasterVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
 
     CORE_APP_IDENTIFIER = 0xBEEF
 
-    def __init__(self, label, machine_time_step, time_scale_factor, constraints=None):
+    def __init__(self, label, machine_time_step, time_scale_factor,constraints=None):
 
         resoruces = ResourceContainer(cpu=CPUCyclesPerTickResource(45),
                                       dtcm=DTCMResource(100),
@@ -39,6 +47,9 @@ class MasterVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
             self, label=label, resources_required=resoruces,
             constraints=constraints)
         AbstractPartitionedDataSpecableVertex.__init__(self)
+
+        #self.add_constraint(TagAllocatorRequireReverseIptagConstraint(port, sdp_port, board_address, tag))
+
         self._machine_time_step = machine_time_step
         self._time_scale_factor = time_scale_factor
 
@@ -81,18 +92,21 @@ class MasterVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
 
         spec = DataSpecificationGenerator(data_writer, report_writer)
         # Setup words + 1 for flags + 1 for recording size
-        setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 2) * 4
+        setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 3) * 4 #4 for words
 
         # Reserve SDRAM space for memory areas:
 
         # Create the data regions for hello world
         self._reserve_memory_regions(spec, setup_size)
-        self._write_basic_setup_info(spec, self.CORE_APP_IDENTIFIER,
+        self._write_setup_info(spec, self.CORE_APP_IDENTIFIER,
                                      self.DATA_REGIONS.SYSTEM.value)
 
         # End-of-Spec:
         spec.end_specification()
+
         data_writer.close()
+
+        return [data_writer.filename]
 
     def _reserve_memory_regions(self, spec, system_size):
         """
@@ -111,7 +125,7 @@ class MasterVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
                                    size=self._string_data_size,
                                    label="inputs")
 
-    def _write_basic_setup_info(self, spec, core_app_identifier, region_id):
+    def _write_setup_info(self, spec, core_app_identifier, region_id):
         """
          Write this to the system region (to be picked up by the simulation):
         :param spec:
@@ -119,6 +133,7 @@ class MasterVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         :param region_id:
         :return:
         """
+        self._write_basic_setup_info(spec, region_id)
         spec.switch_write_focus(region=region_id)
 
         spec.write_value(data=core_app_identifier)

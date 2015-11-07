@@ -6,19 +6,56 @@
 #include "db-typedefs.h"
 
 typedef struct unreplied_query{
-    uint8_t retries;
+    uint8_t     retries;
+    uint32_t    time_sent;
 
-    uint32_t message_id;
-    dbCommand cmd;
-
-    uint32_t info;
-    void* data;
-
-    uint32_t time_sent;
+    sdp_msg_t*  msg;
 } unreplied_query;
 
 extern uint32_t time;
 
+sdp_msg_t* init_boss_sdp(spiDBquery* q, uint32_t message_id){
+
+    sdp_msg_t* msg   = create_sdp_header(0x0001, 1); //todo
+
+    msg->cmd_rc = q->cmd;
+    msg->seq    = message_id;
+
+    msg->arg2   = NULL;
+    msg->arg3   = NULL;
+
+    switch(q->cmd){
+        case PUT:;  msg->arg1 = to_info2(q->k_type, q->k_size, q->v_type, q->v_size);
+
+                    memcpy(msg->data, q->k, q->k_size);
+                    memcpy(&msg->data[q->k_size], q->v, q->v_size);
+
+                    msg->length = sizeof(sdp_hdr_t) + 16 + q->k_size + q->v_size;
+
+                    break;
+        case PULL:; msg->arg1 = to_info1(q->k_type, q->k_size);
+
+                    memcpy(msg->data, q->k, q->k_size);
+
+                    msg->length = sizeof(sdp_hdr_t) + 16 + q->k_size;
+
+                    break;
+        default:    return NULL;
+                    break;
+    }
+
+    return msg;
+}
+
+unreplied_query* init_unreplied_query(sdp_msg_t* msg){
+    unreplied_query* uq = (unreplied_query*) sark_alloc(1, sizeof(unreplied_query));
+    uq->retries      = 0;
+    uq->time_sent    = time;
+    uq->msg          = msg;
+
+    return uq;
+}
+/*
 unreplied_query* init_unreplied_query_from_msg(sdp_msg_t msg){
     unreplied_query* q = (unreplied_query*) sark_alloc(1, sizeof(unreplied_query));
     q->retries      = 0;
@@ -30,7 +67,7 @@ unreplied_query* init_unreplied_query_from_msg(sdp_msg_t msg){
     return q;
 }
 
-unreplied_query* init_unreplied_query(dbCommand cmd, uint32_t message_id, uint32_t info, void* data){
+unreplied_query* init_unreplied_query(interChipCommand cmd, uint32_t message_id, uint32_t info, void* data){
     unreplied_query* q = (unreplied_query*) sark_alloc(1, sizeof(unreplied_query));
     q->retries      = 0;
     q->cmd          = cmd;
@@ -39,7 +76,7 @@ unreplied_query* init_unreplied_query(dbCommand cmd, uint32_t message_id, uint32
     q->data         = data;
     q->time_sent    = time;
     return q;
-}
+}*/
 
 unreplied_query* remove_from_unreplied_queue(double_linked_list* queue, uint32_t message_id){
 
@@ -48,7 +85,7 @@ unreplied_query* remove_from_unreplied_queue(double_linked_list* queue, uint32_t
     while(entry != NULL){
         unreplied_query* q = (unreplied_query*)entry->data;
 
-        if(q->message_id == message_id){
+        if(q->msg->seq == message_id){
 
           if(*queue->head == entry){
             *queue->head = entry->next;
@@ -77,7 +114,7 @@ void print_unreplied_queue(double_linked_list* queue){
 
     while(entry != NULL){
         unreplied_query* q = (unreplied_query*)entry->data;
-        log_info("[id: %d, retries: %d]", q->message_id, q->retries);
+        log_info("[id: %d, retries: %d]", q->msg->seq, q->retries);
         entry = entry->next;
     }
 }

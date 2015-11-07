@@ -1,4 +1,4 @@
-/****a* master.c/master_summary
+/***** master.c/master_summary
 *
 * COPYRIGHT
 *  Copyright (c) The University of Manchester, 2011. All rights reserved.
@@ -8,8 +8,6 @@
 *  Author: Arthur Ceccotti
 *******/
 
-#define LOG_LEVEL 50 //TODO hmmm
-
 #include "spin1_api.h"
 #include "common-typedefs.h"
 #include "../db-typedefs.h"
@@ -17,77 +15,97 @@
 #include "put.h"
 #include "../sdp_utils.h"
 #include <data_specification.h>
-#include <debug.h>
 #include <sark.h>
+#include "../double_linked_list.h"
+#include "../message_queue.h"
+//#include "eieio_interface.h"
+//#include "reverse_iptag_multicast_source.c"
 
-address_t* current;
+#include <debug.h>
 
-sdp_msg_t send_sdp_PULL(uint8_t dest_core, uint32_t info, void* k){
+// Globals
+uint32_t time               = 0;
+uint32_t current_message_id = 0;
 
-    sdp_msg_t msg = create_sdp_header(dest_core);
+const double_linked_list* unreplied_pulls;
 
-    // ======================== SCP ========================
-    msg.cmd_rc      = PULL; // TODO hmmm apparently cmd_rc is supposed to be used for something else
-    msg.seq         = 1; // TODO error checking...
+address_t* master_k_current_addr;
 
-    msg.arg1        = info;
-    msg.arg2        = *current;
-    append(current, k,1); // Store into sdram and pass a pointer to it
+/*  Send acknowledgement to core which replied to a PULL request. */
 
-    msg.length      = sizeof(sdp_hdr_t) + 16;
+/*
+void master_pull_reply_ack(uint32_t message_id, uint32_t core_id){
+    sdp_msg_t* msg = create_internal_sdp_header(core_id);
 
-    spin1_send_sdp_msg(&msg, SDP_TIMEOUT); //message, timeout
+    msg->cmd_rc      = MASTER_PULL_REPLY_ACK;
+    msg->seq         = message_id;
 
-    return msg;
+    msg->length      = sizeof(sdp_hdr_t) + 16;
+
+    spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
 }
+*/
 
-core_dsg* core_dsgs;
+void master_pull(sdp_msg_t* msg){
 
-core_dsg get_core_dsgs(uint32_t core_id) {
+    //address_t address_k = append(master_k_current_addr, k,1); // Store into sdram and pass a pointer to it
 
-    // Get pointer to 1st virtual processor info struct in SRAM
-    vcpu_t *sark_virtual_processor_info = (vcpu_t*) SV_VCPU;
+    //msg->srce_addr   = spin1_get_chip_id();
+    //msg->srce_port   = (SDP_PORT << PORT_SHIFT) | spin1_get_core_id();
 
-    // Get the address this core's DTCM data starts at from the user data member
-    // of the structure associated with this virtual processor
-    address_t address = (address_t) sark_virtual_processor_info[core_id].user0;
+    // Message source is still BOSS
 
-    core_dsg dsg;
+    // Destination core is on the same chip
+    msg->dest_addr   = spin1_get_chip_id();
 
-    address_t data_address = data_specification_get_region(DB_DATA_REGION, address);
-
-    dsg.data_start      = (address_t*) sark_alloc(1, sizeof(address_t));
-    dsg.data_current    = (address_t*) sark_alloc(1, sizeof(address_t));
-
-    //dsg.system_address = data_specification_get_region(SYSTEM_REGION, address);
-    *dsg.data_start     = data_address; //used to store size
-    *dsg.data_current   = data_address+1;//start from next word
-
-    return dsg;
-}
-
-
-#define FIRST_SLAVE 2
-#define LAST_SLAVE  16
-
-void master_pull(uint32_t k_info, void* k){
-    log_info("Sending PULL broadcast");
     for(int i=FIRST_SLAVE; i<=LAST_SLAVE; i++){
-        send_sdp_PULL(i, k_info, k);
+        //sdp_msg_t* msg = create_internal_sdp_header(i);
+
+
+        msg->dest_port   = (SDP_PORT << PORT_SHIFT) | i;
+
+        // ======================== SCP ========================
+        /*
+        msg->cmd_rc      = PULL;
+        msg->seq         = message_id;
+
+        msg->arg1        = info;
+        msg->arg2        = address_k;
+        msg->arg3        = NULL;
+
+        msg->length      = sizeof(sdp_hdr_t) + 16;
+        */
+
+        spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
     }
 }
+/*
+void master_pull_retry(unreplied_query* q){
+    if(!q){return;}
 
-void print_core_infos(){
-    for(int i=FIRST_SLAVE; i<=LAST_SLAVE; i++){
-        log_info("core_dsg[%d].data_start = %08x", i, *core_dsgs[i].data_start);
+    q->retries++;
+
+    master_pull_r(q->info, q->data, true, q->message_id);
+
+    if(q->retries >= MAX_RETRIES){
+
+        log_info("PULL at [time: %d, rtt: %d, retries: %d] -> NULL (tried too many times)",
+                 time, time - q->time_sent, q->retries);
+
+        remove_from_unreplied_queue(unreplied_pulls, q->message_id); //todo ineffient removing here like this
     }
 }
+*/
+
+core_data_address_t* core_data_addresses;
 
 uint32_t p = 2;
 
 bool round_robin_put(uint32_t info, void* k, void* v){
 
-    bool success = put(core_dsgs[p++], info, k, v);
+    log_info("Put data at %08x", core_data_addresses[p].data_start);
+
+    bool success = put(core_data_addresses[p++], info, k, v);
 
     if(p > LAST_SLAVE){ p = FIRST_SLAVE; }
 
@@ -96,49 +114,95 @@ bool round_robin_put(uint32_t info, void* k, void* v){
 
 void update (uint ticks, uint b)
 {
-    // I give it a few ticks between reading and writing, just in case
-    // the IO operations take a bit of time
-    uint32_t zero = 0;
-    uint32_t one = 1;
-    uint32_t two = 2;
-    uint32_t three = 3;
+    time++;
 
-    //todo im giving them time to prepare..
-    if(ticks == 100){
+    if(ticks == 50){
         //ignore 0,1 and 17
         for(int i=2; i<NUM_CPUS-1; i++){
-            core_dsgs[i] = get_core_dsgs(i);
+            core_data_addresses[i] = get_core_data_address(i);
         }
 
-        print_core_infos();
+        print_core_data_addresses(core_data_addresses);
     }
-    else if(ticks == 200){
-        for(int i = 0; i < 100; i++){
-            round_robin_put(to_info2(UINT32, UINT32, &i, &i), &i, &i);
+
+
+    /*
+    if(ticks > 50 && ticks % 10 == 0 && unreplied_pulls->size > 0){
+
+        list_entry* entry = *unreplied_pulls->head;
+
+        while(entry != NULL){
+
+            unreplied_query* q = (unreplied_query*)entry->data;
+
+            master_pull_retry(q);
+
+            entry = entry->next;
         }
     }
-    else if(ticks == 300){
-        master_pull(to_info1(UINT32, &zero), &zero); //core 2
-        master_pull(to_info1(UINT32, &one), &one); //core 3
-        master_pull(to_info1(UINT32, &two), &two); //core 4
-        master_pull(to_info1(UINT32, &three), &three); //core 5
-    }
+    */
 }
+
+/*
+    if(!is_retry){ //Ie first time it's sent
+        push(unreplied_pulls, init_unreplied_query(MASTER_PULL, current_message_id, info, k));
+        current_message_id++;
+    }
+*/
 
 void sdp_packet_callback(uint mailbox, uint port) {
 
-    use(port); // TODO is this wait for port to be free?
     sdp_msg_t* msg = (sdp_msg_t*) mailbox;
+    log_info("Received a packet!!!!!!!!!!!!!!!!!!!!");
+    //print_msg(msg);
+
+    uint32_t info = msg->arg1;
 
     switch(msg->cmd_rc){
-        case PULL:; uint32_t info = msg->arg1;
-                    void* v = msg->arg2; //pointer to the data from master
+        case PUT:; //coming from boss
+                                    log_info("Doing round robin put");
 
-                    log_info("Core %d replied PULL with data = %d (%s)",
-                             msg->srce_port & 0x1F, *((uint32_t*)v), (char*)v);
+                                    bool p = round_robin_put(info, msg->data, &msg->data[k_size_from_info2(info)]);
 
-                    //send acknowledgement back!!!
-                    break;
+                                    //what if it failed? todo
+
+                                    revert_src_dest(msg);
+                                    msg->cmd_rc = PUT_REPLY;
+                                    //todo trim data
+
+                                    log_info("replying back...");
+                                    print_msg(msg);
+                                    spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
+
+                                    break;
+        case PULL:; //coming from boss
+                                    log_info("Received pull request");
+
+                                    //push(unreplied_pulls, init_unreplied_query(msg));
+
+                                    master_pull(msg);
+                                    break;
+        case PULL_REPLY:;  //coming from SLAVE
+
+                           /*
+                                    log_info("Received pull reply");
+                                    void* v = msg->data; //pointer to the data from master
+
+                                    unreplied_query* uq = remove_from_unreplied_queue(unreplied_pulls, msg->seq);
+
+                                    if(!uq){  //we are not expecting this PULL reply anymore (may be a duplicate)
+                                        break;
+                                    }
+
+                                    //forward it to
+                                    msg->dest_port = uq->srce_port;
+                                    msg->dest_addr = uq->srce_addr;
+
+                                    spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
+
+                                    //master_pull_reply_ack(msg->seq, msg->srce_port & 0x1F);// todo can just be the port itself...
+                           */
+                                    break;
         default:
                     break;
     }
@@ -149,23 +213,26 @@ void sdp_packet_callback(uint mailbox, uint port) {
 
 void c_main()
 {
-    log_info("Initializing Master...");
+    log_info("Initializing Master for chip %04x", spin1_get_chip_id());
 
     if (!initialize()) {
         rt_error(RTE_SWERR);
     }
 
-    core_dsgs = (core_dsg*) sark_alloc(NUM_CPUS, sizeof(core_dsg));
+    //Global assignments
+    unreplied_pulls = init_double_linked_list();
 
-    current  = (address_t*) sark_alloc(1, sizeof(address_t));
-    *current = data_region;
+    core_data_addresses = (core_data_address_t*) sark_alloc(NUM_CPUS, sizeof(core_data_address_t));
+
+    master_k_current_addr  = (address_t*) sark_alloc(1, sizeof(address_t));
+    *master_k_current_addr = data_region;
 
     // set timer tick value to 100ms
     spin1_set_timer_tick(100);
 
     // register callbacks
-    spin1_callback_on (TIMER_TICK, update, 0);
-    spin1_callback_on (SDP_PACKET_RX, sdp_packet_callback, 1);
+    spin1_callback_on (TIMER_TICK, update, 1);
+    spin1_callback_on (SDP_PACKET_RX, sdp_packet_callback, -1);
 
     simulation_run();
 }

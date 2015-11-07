@@ -6,6 +6,40 @@
 #include <data_specification.h>
 #include <string.h>
 #include "db-typedefs.h"
+#include <debug.h>
+
+typedef struct core_data_address_t {
+    address_t* data_start;
+    address_t* data_current;
+} core_data_address_t;
+
+core_data_address_t get_core_data_address(uint32_t core_id) {
+
+    // Get pointer to 1st virtual processor info struct in SRAM
+    vcpu_t *sark_virtual_processor_info = (vcpu_t*) SV_VCPU;
+
+    // Get the address this core's DTCM data starts at from the user data member
+    // of the structure associated with this virtual processor
+    address_t address = (address_t) sark_virtual_processor_info[core_id].user0;
+
+    core_data_address_t core_data_address;
+    core_data_address.data_start      = (address_t*) sark_alloc(1, sizeof(address_t));
+    core_data_address.data_current    = (address_t*) sark_alloc(1, sizeof(address_t));
+
+    address_t data_address = data_specification_get_region(DB_DATA_REGION, address);
+
+    *core_data_address.data_start     = data_address; //used to store size
+    *core_data_address.data_current   = data_address+1;//start from next word
+
+    return core_data_address;
+}
+
+void print_core_data_addresses(core_data_address_t* core_data_addresses){
+    for(int i=FIRST_SLAVE; i<=LAST_SLAVE; i++){
+        log_info("core_dsg[%d].data_start = %08x", i, *core_data_addresses[i].data_start);
+    }
+}
+
 
 typedef struct reader_t {
     address_t start_addr;
@@ -14,51 +48,28 @@ typedef struct reader_t {
 
 reader_t reader;
 
+
 void reader_init(address_t region){
     reader.size_words_addr = (address_t) &region[0];
     reader.start_addr      = (address_t) &region[1];
 }
 
-/*bool writer_init(address_t region, uint32_t size_bytes){
-
-    writer.start     = (address_t) &region[0];
-    writer.current   = (address_t) &region[0];
-    writer.end       = writer.start + size_bytes;
-
-    writer.current_size = 0;
-
-    return true;
-}*/
-
-/*
-void clear(){
-    for(address_t addr = writer.start; addr <= writer.current; addr++){
-        *addr = 0;
-    }
-}
-*/
-
 // returns address of where data was written. NULL if not written
-bool append(address_t* address, void* data, uint32_t size_words){ //TODO should it be bytes??
+address_t append(address_t* address, void* data, uint32_t size_bytes){
 
-    if(!data || size_words <= 0){ return false; }
+    if(!data || size_bytes <= 0){ return NULL; }
 
     // If there's space to record
     //if (writer.current + size_words <= writer.end) {
 
+        address_t address_stored = *address;
+
         // Copy data into recording channel
-        memcpy(*address, data, size_words << 2); // <<2 because it takes bytes
+        memcpy(*address, data, size_bytes); // <<2 because it takes bytes
 
-        *address += size_words;
+        *address += (size_bytes+3)/4; //todo fuck no. size words
 
-        //address_t addr = writer.current;
-
-        // Update current pointer
-        //writer.current += size_words;
-
-        //writer.current_size += size_words;
-
-        return true;
+        return address_stored;
     //} else {
     //    return false;
     //}
@@ -71,30 +82,6 @@ bool write(address_t address, void* data, uint32_t size_words){ //TODO should it
 
     return true;
 }
-
-
-/*address_t write(address_t address, void* data, uint32_t size_words){ //TODO should it be bytes??
-
-    if(!data || size_words <= 0){ return false; }
-
-    // If there's space to record
-    if (writer.current + size_words <= writer.end) {
-
-        // Copy data into recording channel
-        memcpy(writer.current, data, size_words << 2); // <<2 because it takes bytes
-
-        address_t addr = writer.current;
-
-        // Update current pointer
-        writer.current += size_words;
-
-        writer.current_size += size_words;
-
-        return addr;
-    } else {
-        return NULL;
-    }
-}*/
 
 address_t system_region;
 address_t data_region;
@@ -118,12 +105,7 @@ static bool initialize() {
     log_info("System region: %08x", system_region);
     log_info("Data region: %08x", data_region);
 
-    uint32_t data_region_size = 500;
-
-    //, data_region_size todo how about the size?
-    reader_init(data_region);
-
-    //todo clear data at the start?
+    reader_init(data_region); //todo size should not be hardcoded
 
     log_info("Initialization completed successfully!");
     return true;
