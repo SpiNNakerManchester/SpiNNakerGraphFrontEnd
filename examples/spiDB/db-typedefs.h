@@ -16,10 +16,12 @@ typedef enum regions_e {
 typedef enum spiDBcommand {
     PUT = 0,
     PULL,
+
     PUT_REPLY,
     PULL_REPLY,
-    SLAVE_PULL_REPLY,
-    MASTER_PULL_REPLY_ACK,
+
+    PUT_REPLY_ACK, //still needs implementing...
+    PULL_REPLY_ACK
 } spiDBcommand;
 
 typedef struct spiDBquery {
@@ -34,6 +36,11 @@ typedef struct spiDBquery {
     size_t   v_size;
     uchar v[128];
 } spiDBquery;
+
+/*typedef struct spiDBreply {
+
+
+} spiDBreply;*/
 
 typedef struct value_entry {
     var_type type;
@@ -51,7 +58,7 @@ uint16_t get_size_bytes(void* data, var_type t){
 }
 
 uint32_t to_info1(var_type type, size_t size){
-    return  size | ((type) << 12);
+    return  ((type) << 12) | size;
 }
 
 /*

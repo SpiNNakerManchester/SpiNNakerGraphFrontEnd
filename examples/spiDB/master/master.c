@@ -27,7 +27,8 @@
 uint32_t time               = 0;
 uint32_t current_message_id = 0;
 
-const double_linked_list* unreplied_pulls;
+const double_linked_list* unacknowledged_puts;
+const double_linked_list* recent_messages_queue;
 
 address_t* master_k_current_addr;
 
@@ -99,24 +100,49 @@ void master_pull_retry(unreplied_query* q){
 
 core_data_address_t* core_data_addresses;
 
+uint8_t  core_with_less_data = FIRST_SLAVE;
+
+bool balanced_put(uint32_t info, void* k, void* v){
+
+    uint32_t bytes_in_core_with_less_data = **core_data_addresses[core_with_less_data].data_start;
+
+    log_info("Core with less data is: %d with bytes: %d", core_with_less_data, bytes_in_core_with_less_data);
+
+    bool success = put(core_data_addresses[core_with_less_data], info, k, v);
+
+    for(int i=FIRST_SLAVE; i <= LAST_SLAVE; i++){
+        if(**core_data_addresses[i].data_start < bytes_in_core_with_less_data){
+            core_with_less_data = i;
+        }
+    }
+
+    log_info("NEW -- Core with less data is: %d with bytes: %d", core_with_less_data, bytes_in_core_with_less_data);
+
+    return success;
+
+}
+
+/*
 uint32_t p = 2;
 
 bool round_robin_put(uint32_t info, void* k, void* v){
 
     log_info("Put data at %08x", core_data_addresses[p].data_start);
 
-    bool success = put(core_data_addresses[p++], info, k, v);
 
     if(p > LAST_SLAVE){ p = FIRST_SLAVE; }
 
     return success;
 }
+*/
 
 void update (uint ticks, uint b)
 {
     time++;
 
-    if(ticks == 50){
+    age_recently_received_queries(recent_messages_queue);
+
+    if(ticks == 50){ //todo..... do I need to give time for cores to get ready?
         //ignore 0,1 and 17
         for(int i=2; i<NUM_CPUS-1; i++){
             core_data_addresses[i] = get_core_data_address(i);
@@ -124,37 +150,21 @@ void update (uint ticks, uint b)
 
         print_core_data_addresses(core_data_addresses);
     }
-
-
-    /*
-    if(ticks > 50 && ticks % 10 == 0 && unreplied_pulls->size > 0){
-
-        list_entry* entry = *unreplied_pulls->head;
-
-        while(entry != NULL){
-
-            unreplied_query* q = (unreplied_query*)entry->data;
-
-            master_pull_retry(q);
-
-            entry = entry->next;
-        }
-    }
-    */
 }
-
-/*
-    if(!is_retry){ //Ie first time it's sent
-        push(unreplied_pulls, init_unreplied_query(MASTER_PULL, current_message_id, info, k));
-        current_message_id++;
-    }
-*/
 
 void sdp_packet_callback(uint mailbox, uint port) {
 
     sdp_msg_t* msg = (sdp_msg_t*) mailbox;
-    log_info("Received a packet!!!!!!!!!!!!!!!!!!!!");
     //print_msg(msg);
+
+    if(is_duplicate_query(recent_messages_queue, msg->seq)){
+        log_info("Duplicate. Ignore.");
+        spin1_msg_free(msg);
+        return; //duplicate
+    }
+    else{
+        push(recent_messages_queue, init_recently_received_query(msg->seq));
+    }
 
     uint32_t info = msg->arg1;
 
@@ -162,13 +172,10 @@ void sdp_packet_callback(uint mailbox, uint port) {
         case PUT:; //coming from boss
                                     log_info("Doing round robin put");
 
-                                    bool p = round_robin_put(info, msg->data, &msg->data[k_size_from_info2(info)]);
-
-                                    //what if it failed? todo
+                                    bool p = balanced_put(info, msg->data, &msg->data[k_size_from_info2(info)]);
 
                                     revert_src_dest(msg);
                                     msg->cmd_rc = PUT_REPLY;
-                                    //todo trim data
 
                                     log_info("replying back...");
                                     print_msg(msg);
@@ -220,7 +227,8 @@ void c_main()
     }
 
     //Global assignments
-    unreplied_pulls = init_double_linked_list();
+    //unreplied_pulls = init_double_linked_list();
+    recent_messages_queue = init_double_linked_list();
 
     core_data_addresses = (core_data_address_t*) sark_alloc(NUM_CPUS, sizeof(core_data_address_t));
 

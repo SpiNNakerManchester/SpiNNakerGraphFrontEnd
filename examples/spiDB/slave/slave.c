@@ -63,9 +63,9 @@ void sdp_reply_pull_request_retry(uint32_t info, void* v, uint32_t message_id){
 void update(uint ticks, uint b){
     time++;
 
-    /*
     age_recently_received_queries(recent_messages_queue);
 
+    /*
     if(time % 10 == 0 && unacknowledged_replies->size > 0){
 
         list_entry* entry = *unacknowledged_replies->head;
@@ -98,7 +98,7 @@ void sdp_packet_callback(uint mailbox, uint port) {
     void* k       = msg->data; //pointer to the data from master
 
     switch(msg->cmd_rc){
-        case PULL:; log_info("Received PULL id %d", msg->seq);
+        case PULL:; log_info("Received PULL id %d on k=(%s) - Info %08x", msg->seq, msg->data, info);
                             //log_info("Received PULL id %d on k=%d", msg->seq, *((uint32_t*)k));
 
                     if(is_duplicate_query(recent_messages_queue, msg->seq)){
@@ -114,13 +114,17 @@ void sdp_packet_callback(uint mailbox, uint port) {
                     value_entry* value_entry_ptr = pull(info, k);
 
                     if(value_entry_ptr){
-                        log_info("Replying PULL request id %d at time * %d * with data (s: %s)",
-                                 msg->seq, time, (char*)value_entry_ptr->data);
+                        log_info("Replying PULL request id %d at time * %d * with data (s: %s) of size %d",
+                                 msg->seq, time, (char*)value_entry_ptr->data, value_entry_ptr->size);
 
                         revert_src_dest(msg);
                         msg->cmd_rc = PULL_REPLY;
-                        msg->arg1 = to_info1(value_entry_ptr->type, value_entry_ptr->size); //or simply use arg2 arg3
+                        //to_info1(value_entry_ptr->type, value_entry_ptr->size); //or simply use arg2 arg3
+                        msg->arg1 = value_entry_ptr->type;
+                        msg->arg2 = value_entry_ptr->size;
+
                         memcpy(msg->data, value_entry_ptr->data, value_entry_ptr->size);
+                        msg->length = sizeof(sdp_hdr_t) + 16 + value_entry_ptr->size;
 
                         print_msg(msg);
 
@@ -160,7 +164,6 @@ void c_main()
 
     recent_messages_queue   = init_double_linked_list();
     unacknowledged_replies  = init_double_linked_list();
-
 
     // register callbacks
     spin1_callback_on (TIMER_TICK, update, 1);

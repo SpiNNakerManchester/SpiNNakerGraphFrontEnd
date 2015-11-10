@@ -121,7 +121,7 @@ void print_unreplied_queue(double_linked_list* queue){
 
 // ############################################################################################################
 
-#define RECENT_MESSAGE_CACHE_TTL 8
+#define RECENT_MESSAGE_CACHE_TTL 10
 
 typedef struct recently_received_query{
 
