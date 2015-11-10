@@ -139,8 +139,7 @@ class HeatDemoVertexPartitioned(
 
         # Create the data regions for the spike source array:
         self._reserve_memory_regions(spec, setup_size)
-        self._write_setup_info(spec, self.CORE_APP_IDENTIFIER,
-                               self.DATA_REGIONS.SYSTEM.value)
+        self._write_basic_setup_info(spec, self.DATA_REGIONS.SYSTEM.value)
         self._write_tranmssion_keys(spec, routing_info, sub_graph)
         self._write_key_data(spec, routing_info, sub_graph)
         self._write_temp_data(spec)
@@ -180,20 +179,6 @@ class HeatDemoVertexPartitioned(
                                    size=self.OUPUT_KEY_SIZE, label="outputs")
         spec.reserve_memory_region(region=self.DATA_REGIONS.TEMP_VALUE.value,
                                    size=self.TEMP_VALUE_SIZE, label="temp")
-
-    def _write_setup_info(self, spec, core_app_identifier, region_id):
-        """
-         Write this to the system region (to be picked up by the simulation):
-        :param spec:
-        :param core_app_identifier:
-        :param region_id:
-        :return:
-        """
-        self._write_basic_setup_info(spec, region_id)
-        spec.switch_write_focus(region=region_id)
-        spec.write_value(data=core_app_identifier)
-        spec.write_value(data=self._machine_time_step * self._time_scale_factor)
-        spec.write_value(data=self._no_machine_time_steps)
 
     def _write_tranmssion_keys(self, spec, routing_info, subgraph):
         """

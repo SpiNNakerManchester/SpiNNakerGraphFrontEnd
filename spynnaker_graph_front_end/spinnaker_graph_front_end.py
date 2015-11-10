@@ -67,6 +67,13 @@ class SpiNNakerGraphFrontEnd(object):
         self._reports_states = None
         self._app_id = None
         self._runtime = None
+        self._current_run_ms = None
+        self._buffer_manager = None
+
+        # holders for data needed for reset when nothing changes in the
+        # application graph
+        self._processor_to_app_data_base_address_mapper = None
+        self._vertex_to_app_data_file_paths = None
 
         # database objects
         self._database_socket_addresses = set()
@@ -87,6 +94,11 @@ class SpiNNakerGraphFrontEnd(object):
         # holder for number of times the timer event should exuecte for the sim
         self._no_machine_time_steps = None
         self._machine_time_step = None
+        self._no_sync_changes = 0
+
+        # holder for the exeuctable targets (which we will need for reset and
+        # pause and resume functionality
+        self._executable_targets = None
 
         # state thats needed the first time around
         if self._app_id is None:
@@ -213,11 +225,11 @@ class SpiNNakerGraphFrontEnd(object):
         """
 
         # calculate number of machine time steps
-        self._calculate_number_of_machine_time_steps(run_time)
-
+        total_run_time = self._calculate_number_of_machine_time_steps(run_time)
+        self._current_run_ms = run_time
         self._runtime = run_time
 
-        inputs = self._create_pacman_executor_inputs()
+        inputs = self._create_pacman_executor_inputs(total_run_time)
         required_outputs = self._create_pacman_executor_outputs()
         algorithms = self._create_algorithm_list(
             config.get("Mode", "mode") == "Debug")
@@ -249,6 +261,9 @@ class SpiNNakerGraphFrontEnd(object):
         self._database_interface = pacman_exeuctor.get_item("DatabaseInterface")
         self._has_ran = pacman_exeuctor.get_item("RanToken")
 
+        # reset the reset flag to say the last thing was not a reset call
+        self._current_run_ms = total_run_time
+
     @staticmethod
     def _create_xml_paths():
         # add the extra xml files from the cfg file
@@ -268,10 +283,24 @@ class SpiNNakerGraphFrontEnd(object):
 
     def _create_algorithm_list(self, in_debug_mode):
         if self._overloaded_algortihms is None:
-            algorithms = ""
-            algorithms += \
+            algorithms = list()
+
+            algorithm_names = \
                 config.get("Mapping", "algorithms") + "," + \
                 config.get("Mapping", "interface_algorithms")
+
+            algorithm_strings = algorithm_names.split(",")
+            for algorithm_string in algorithm_strings:
+                split_string = algorithm_string.split(":")
+                if len(split_string) == 1:
+                    algorithms.append(split_string[0])
+                else:
+                    raise exceptions.ConfigurationException(
+                        "The tool chain expects config params of list of 1 "
+                        "element with ,. Where the elements are either: the "
+                        "algorithum_name:algorithm_config_file_path, or "
+                        "algorithum_name if its a interal to pacman algorithm."
+                        " Please rectify this and try again")
 
             contains_a_partitionable_graph = \
                 len(self._partitionable_graph.vertices) > 0
@@ -279,82 +308,88 @@ class SpiNNakerGraphFrontEnd(object):
             # if using virutal machine, add to list of algorithms the virtual
             # machine generator, otherwise add the standard machine generator
             if config.getboolean("Machine", "virtual_board"):
-                algorithms += ",FrontEndCommonVirtualMachineInterfacer"
+                algorithms.append("FrontEndCommonVirtualMachineInterfacer")
             else:
                 if self._machine is None and self._txrx is None:
-                    algorithms += ",FrontEndCommonMachineInterfacer"
-                algorithms += ",FrontEndCommonApplicationRunner"
+                    algorithms.append("FrontEndCommonMachineInterfacer")
+                algorithms.append("FrontEndCommonApplicationRunner")
 
                 # if going to write provanence data after the run add the two
                 # provenance gatherers
                 if config.get("Reports", "writeProvanceData"):
-                    algorithms += ",FrontEndCommonProvenanceGatherer"
+                    algorithms.append("FrontEndCommonProvenanceGatherer")
 
                 # if the end user wants reload script, add the reload script
                 # creator to the list
                 if config.getboolean("Reports", "writeReloadSteps"):
-                    algorithms += ",FrontEndCommonReloadScriptCreator"
+                    algorithms.append("FrontEndCommonReloadScriptCreator")
 
             if config.getboolean("Reports", "writeMemoryMapReport"):
-                algorithms += ",FrontEndCommonMemoryMapReport"
+                algorithms.append("FrontEndCommonMemoryMapReport")
 
             if config.getboolean("Reports", "writeNetworkSpecificationReport")\
                     and contains_a_partitionable_graph:
-                algorithms += \
-                    ",FrontEndCommonNetworkSpecificationPartitionableReport"
+                algorithms.append(
+                    "FrontEndCommonNetworkSpecificationPartitionableReport")
 
             # define mapping between output types and reports
             if self._reports_states is not None \
                     and self._reports_states.tag_allocation_report:
-                algorithms += ",TagReport"
+                algorithms.append("TagReport")
             if self._reports_states is not None \
                     and self._reports_states.routing_info_report:
-                algorithms += ",routingInfoReports"
+                algorithms.append("routingInfoReports")
             if self._reports_states is not None \
                     and self._reports_states.router_report:
-                algorithms += ",RouterReports"
+                algorithms.append("RouterReports")
             if self._reports_states is not None \
                     and self._reports_states.partitioner_report\
                     and contains_a_partitionable_graph:
-                algorithms += ",PartitionerReport"
+                algorithms.append("PartitionerReport")
             if (self._reports_states is not None and
                     self._reports_states.
                     placer_report_with_partitionable_graph
                     and contains_a_partitionable_graph):
-                algorithms += ",PlacerReportWithPartitionableGraph"
+                algorithms.append("PlacerReportWithPartitionableGraph")
             if (self._reports_states is not None and
                     self._reports_states.
                     placer_report_without_partitionable_graph):
-                algorithms += ",PlacerReportWithoutPartitionableGraph"
+                algorithms.append("PlacerReportWithoutPartitionableGraph")
             # add debug algorithms if needed
             if in_debug_mode:
-                algorithms += ",ValidRoutesChecker"
+                algorithms.append("ValidRoutesChecker")
 
             # add partitioner algorithm if the partitionable graph has more than
             #  0 entries
             if contains_a_partitionable_graph:
-                algorithms += ",{}".format(
-                    config.get("Mapping", "partitionerAlgorithm"))
+                algorithms.append("{}".format(
+                    config.get("Mapping", "partitionerAlgorithm")))
+                algorithms.append("MallocBasedChipIDAllocator")
 
-                algorithms += \
-                    ",SpinnakerGraphFrontEndPartitionableGraphEdgeToKeyMapper"
-                algorithms += \
-                    ",FrontEndCommonPartitionableGraphApplicationDataLoader"
-                algorithms += ",FrontEndCommonPartitionableGraphHostExecute" \
-                              "DataSpecification"
-                algorithms += \
-                    ",FrontEndCommomPartitionableGraphDataSpecificationWriter"
-                algorithms += ",FrontEndCommonDatabaseWriter"
+                algorithms.append(
+                    "SpinnakerGraphFrontEndPartitionableGraphEdgeToKeyMapper")
+                algorithms.append(
+                    "FrontEndCommonPartitionableGraphApplicationDataLoader")
+                algorithms.append(
+                    "FrontEndCommonPartitionableGraphHost"
+                    "ExecuteDataSpecification")
+                algorithms.append(
+                    "FrontEndCommomPartitionableGraphDataSpecificationWriter")
+                algorithms.append("FrontEndCommonDatabaseWriter")
             else:
-                algorithms += \
-                    ",SpinnakerGraphFrontEndPartitionedGraphEdgeToKeyMapper"
-                algorithms += ",SpinnakerGraphFrontEndPartitionedGraph" \
-                              "ApplicationDataLoader"
-                algorithms += ",SpinnakerGraphFrontEndPartitionedGraphData" \
-                              "SpecificationWriter"
-                algorithms += ",SpinnakerGraphFrontEndPartitionedGraphHost" \
-                              "BasedDataSpecificationExeuctor"
-                algorithms += ",SpynnakerGraphFrontEndDatabaseWriter"
+                algorithms.append("MallocBasedPartitionedChipIDAllocator")
+                algorithms.append(
+                    "SpinnakerGraphFrontEndPartitionedGraphEdgeToKeyMapper")
+                algorithms.append(
+                    "SpinnakerGraphFrontEndPartitionedGraph"
+                    "ApplicationDataLoader")
+                algorithms.append(
+                    "SpinnakerGraphFrontEndPartitionedGraphData"
+                    "SpecificationWriter")
+                algorithms.append(
+                    "SpinnakerGraphFrontEndPartitionedGraphHost"
+                    "BasedDataSpecificationExeuctor")
+                algorithms.append("SpynnakerGraphFrontEndDatabaseWriter")
 
             return algorithms
         else:
@@ -381,17 +416,63 @@ class SpiNNakerGraphFrontEnd(object):
             required_outputs.append("ReloadToken")
         return required_outputs
 
-    def _create_pacman_executor_inputs(self):
-        # make a folder for the json files to be stored in
-        json_folder = os.path.join(self._report_default_directory, "json_files")
-        if not os.path.exists(json_folder):
-            os.mkdir(json_folder)
+    def _create_pacman_executor_inputs(self, total_runtime):
+        application_graph_changed = True
+        inputs = list()
 
         # file path to store any provenance data to
-        provenance_file_path = os.path.join(self._report_default_directory,
-                                            "provance_data")
+        provenance_file_path = \
+            os.path.join(self._report_default_directory, "provance_data")
         if not os.path.exists(provenance_file_path):
-            os.mkdir(provenance_file_path)
+                os.mkdir(provenance_file_path)
+
+        # all modes need the NoSyncChanges
+        if application_graph_changed:
+            self._no_sync_changes = 0
+        inputs.append({'type': "NoSyncChanges", 'value': self._no_sync_changes})
+
+        # support resetting the machine during start up
+        if (config.getboolean("Machine", "ResetMachineOnStartupFlag") and
+                not self._has_ran):
+            inputs.append({"type": "ResetMachineOnStartupFlag", 'value': True})
+        else:
+            inputs.append({"type": "ResetMachineOnStartupFlag", 'value': False})
+
+        if self._txrx is not None:
+            inputs.append({"type": "MemoryTransciever", 'value': self._txrx})
+
+        if self._machine is not None:
+            inputs.append({"type": "MemoryMachine", 'value': self._machine})
+
+        # support runtime updator
+        if self._has_ran:
+            no_machine_time_steps =\
+                int(((total_runtime - self._current_run_ms) * 1000.0)
+                    / self._machine_time_step)
+            inputs.append({'type': "RunTimeMachineTimeSteps",
+                           'value': no_machine_time_steps})
+
+        # FrontEndCommonPartitionableGraphApplicationDataLoader after a
+        # reset and no changes
+        if not self._has_ran and not application_graph_changed:
+            inputs.append(({
+                'type': "ProcessorToAppDataBaseAddress",
+                "value": self._processor_to_app_data_base_address_mapper}))
+            inputs.append({"type": "VertexToAppDataFilePaths",
+                           'value': self._vertex_to_app_data_file_paths})
+            inputs.append({'type': "WriteCheckerFlag",
+                           'value': config.getboolean(
+                               "Mode", "verify_writes")})
+
+        # the application graph has changed, so new binaries are being
+        # loaded and therefore sync mode starts at zero again.
+        self._no_sync_changes = 0
+
+        # make a folder for the json files to be stored in
+        json_folder = os.path.join(
+            self._report_default_directory, "json_files")
+        if not os.path.exists(json_folder):
+            os.mkdir(json_folder)
 
         # translate config "None" to None
         width = config.get("Machine", "width")
@@ -409,7 +490,8 @@ class SpiNNakerGraphFrontEnd(object):
         if number_of_boards == "None":
             number_of_boards = None
 
-        scamp_socket_addresses = config.get("Machine", "scamp_connections_data")
+        scamp_socket_addresses = config.get("Machine",
+                                            "scamp_connections_data")
         if scamp_socket_addresses == "None":
             scamp_socket_addresses = None
 
@@ -419,21 +501,12 @@ class SpiNNakerGraphFrontEnd(object):
         else:
             boot_port_num = int(boot_port_num)
 
-        inputs = list()
         if len(self.partitionable_graph.vertices) > 0:
             inputs.append({'type': "MemoryPartitionableGraph",
                            'value': self._partitionable_graph})
         if len(self.partitioned_graph.subvertices) > 0:
             inputs.append({'type': "MemoryPartitionedGraph",
                            'value': self._partitioned_graph})
-
-        # add machine and transciever if they've already been ran
-        if self._machine is not None:
-            inputs.append({'type': 'MemoryExtendedMachine',
-                           'value': self._machine})
-        if self._txrx is not None:
-            inputs.append({'type': 'MemoryTransciever',
-                           'value': self._txrx})
 
         inputs.append({'type': 'ReportFolder',
                        'value': self._report_default_directory})
@@ -450,7 +523,8 @@ class SpiNNakerGraphFrontEnd(object):
                        'value': config.get("Machine", "down_cores")})
         inputs.append({'type': "BoardVersion",
                        'value': config.getint("Machine", "version")})
-        inputs.append({'type': "NumberOfBoards", 'value': number_of_boards})
+        inputs.append({'type': "NumberOfBoards",
+                       'value': number_of_boards})
         inputs.append({'type': "MachineWidth", 'value': width})
         inputs.append({'type': "MachineHeight", 'value': height})
         inputs.append({'type': "AutoDetectBMPFlag",
@@ -463,7 +537,7 @@ class SpiNNakerGraphFrontEnd(object):
                        'value': scamp_socket_addresses})
         inputs.append({'type': "BootPortNum", 'value': boot_port_num})
         inputs.append({'type': "APPID", 'value': self._app_id})
-        inputs.append({'type': "RunTime", 'value': self._runtime})
+        inputs.append({'type': "RunTime", 'value': self._current_run_ms})
         inputs.append({'type': "TimeScaleFactor",
                        'value': self._time_scale_factor})
         inputs.append({'type': "MachineTimeStep",
@@ -471,17 +545,21 @@ class SpiNNakerGraphFrontEnd(object):
         inputs.append({'type': "DatabaseSocketAddresses",
                        'value': self._database_socket_addresses})
         inputs.append({'type': "DatabaseWaitOnConfirmationFlag",
-                       'value': config.getboolean("Database",
-                                                  "wait_on_confirmation")})
+                       'value': config.getboolean(
+                           "Database", "wait_on_confirmation")})
+        inputs.append({'type': "WriteCheckerFlag",
+                       'value': config.getboolean(
+                           "Mode", "verify_writes")})
         inputs.append({'type': "WriteTextSpecsFlag",
-                       'value': config.getboolean("Reports",
-                                                  "writeTextSpecs")})
+                       'value': config.getboolean(
+                           "Reports", "writeTextSpecs")})
         inputs.append({'type': "ExecutableFinder",
                        'value': self._executable_finder})
         inputs.append({'type': "MachineHasWrapAroundsFlag",
-                       'value': config.getboolean("Machine",
-                                                  "requires_wrap_arounds")})
-        inputs.append({'type': "ReportStates", 'value': self._reports_states})
+                       'value': config.getboolean(
+                           "Machine", "requires_wrap_arounds")})
+        inputs.append({'type': "ReportStates",
+                       'value': self._reports_states})
         inputs.append({'type': "UserCreateDatabaseFlag",
                        'value': config.get("Database", "create_database")})
         inputs.append({'type': "ExecuteMapping",
@@ -491,8 +569,8 @@ class SpiNNakerGraphFrontEnd(object):
         inputs.append({'type': "DatabaseSocketAddresses",
                        'value': self._database_socket_addresses})
         inputs.append({'type': "SendStartNotifications",
-                       'value': config.getboolean("Database",
-                                                  "send_start_notification")})
+                       'value': config.getboolean(
+                           "Database", "send_start_notification")})
         inputs.append({'type': "ProvenanceFilePath",
                        'value': provenance_file_path})
 
@@ -507,7 +585,7 @@ class SpiNNakerGraphFrontEnd(object):
                        'value': os.path.join(
                            json_folder, "machine.json")})
         inputs.append({'type': "FilePartitionedGraphFilePath",
-                       'value': os.path.join(
+                       'value':os.path.join(
                            json_folder, "partitioned_graph.json")})
         inputs.append({'type': "FilePlacementFilePath",
                        'value': os.path.join(
@@ -518,10 +596,23 @@ class SpiNNakerGraphFrontEnd(object):
         inputs.append({'type': "FileConstraintsFilePath",
                        'value': os.path.join(
                            json_folder, "constraints.json")})
+
+        if self._has_ran:
+            logger.warn(
+                "The graph has changed since the original graph was loaded "
+                "and ran. Therefore decisions made during the mapping "
+                "process will be incorrect now, and therefore mapping "
+                "needs to be redone. Sorry. Please note that any "
+                "recorded data will also have been lost. If you were "
+                "wanting this daya, please rerun your script and extract"
+                "the data before recalling run. Thank you")
+
         return inputs
 
     def _calculate_number_of_machine_time_steps(self, run_time):
         if run_time is not None:
+            if self._current_run_ms is not None:
+                run_time += self._current_run_ms
             for vertex in self._partitionable_graph.vertices:
                 if isinstance(vertex, AbstractDataSpecableVertex):
                     self._set_runtime_in_time_steps_for_model(vertex, run_time)
@@ -534,6 +625,8 @@ class SpiNNakerGraphFrontEnd(object):
             logger.warn("You have set a runtime that will never end, this may"
                         "cause the neural models to fail to partition "
                         "correctly")
+        return run_time
+
 
     def _set_runtime_in_time_steps_for_model(self, vertex, run_time):
         """
@@ -583,12 +676,12 @@ class SpiNNakerGraphFrontEnd(object):
         return {'x': self._machine.max_chip_x, 'y': self._machine.max_chip_y}
 
     def _run_algorithms_for_machine_gain(self):
-        inputs = self._create_pacman_executor_inputs()
-        algorthims = ""
+        inputs = self._create_pacman_executor_inputs(self._current_run_ms)
+        algorthims = list()
         if config.getboolean("Machine", "virtual_board"):
-            algorthims += "FrontEndCommonVirtualMachineInterfacer"
+            algorthims.append("FrontEndCommonVirtualMachineInterfacer")
         else:
-            algorthims += "FrontEndCommonMachineInterfacer"
+            algorthims.append("FrontEndCommonMachineInterfacer")
         required_outputs = list()
         required_outputs.append("MemoryMachine")
         xml_paths = list()
