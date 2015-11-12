@@ -14,12 +14,12 @@ typedef struct unreplied_query{
 
 extern uint32_t time;
 
-sdp_msg_t* init_boss_sdp(spiDBquery* q, uint32_t message_id){
+sdp_msg_t* init_boss_sdp(spiDBquery* q){
 
-    sdp_msg_t* msg   = create_sdp_header(0x0001, 1); //todo
+    sdp_msg_t* msg   = create_sdp_header(0, 1); // chip 0, core 1 (master)
 
     msg->cmd_rc = q->cmd;
-    msg->seq    = message_id;
+    msg->seq    = q->id;
 
     msg->arg2   = NULL;
     msg->arg3   = NULL;
@@ -27,15 +27,15 @@ sdp_msg_t* init_boss_sdp(spiDBquery* q, uint32_t message_id){
     switch(q->cmd){
         case PUT:;  msg->arg1 = to_info2(q->k_type, q->k_size, q->v_type, q->v_size);
 
-                    memcpy(msg->data, q->k, q->k_size);
-                    memcpy(&msg->data[q->k_size], q->v, q->v_size);
+                    memcpy(msg->data, q->k_v, q->k_size + q->v_size);
+                    //memcpy(&msg->data[q->k_size], q->v, q->v_size);
 
                     msg->length = sizeof(sdp_hdr_t) + 16 + q->k_size + q->v_size;
 
                     break;
         case PULL:; msg->arg1 = to_info1(q->k_type, q->k_size);
 
-                    memcpy(msg->data, q->k, q->k_size);
+                    memcpy(msg->data, q->k_v, q->k_size);
 
                     msg->length = sizeof(sdp_hdr_t) + 16 + q->k_size;
 

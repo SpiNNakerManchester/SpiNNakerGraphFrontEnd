@@ -21,7 +21,7 @@ import os
 logger = logging.getLogger(__name__)
 
 front_end.setup(graph_label="hello_world",
-                model_binary_module=file(os.getcwd() + "/../model_binaries/hello_world.aplx"))
+                model_binary_modules=[file(os.getcwd() + "/../model_binaries/hello_world.aplx")])
 
 dimenions = front_end.get_machine_dimensions()
 

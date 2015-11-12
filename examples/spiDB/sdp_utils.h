@@ -7,13 +7,14 @@
 #define MAX_RETRIES     3
 
 void revert_src_dest(sdp_msg_t* msg){
-    uchar dest_port_tmp = msg->dest_port;
-    uchar dest_addr_tmp = msg->dest_addr;
+    uint16_t dest_port = msg->dest_port;
+    uint16_t dest_addr = msg->dest_addr;
 
     msg->dest_port = msg->srce_port;
     msg->dest_addr = msg->srce_addr;
-    msg->srce_port = dest_port_tmp;
-    msg->srce_addr = dest_addr_tmp;
+
+    msg->srce_port = dest_port;
+    msg->srce_addr = dest_addr;
 }
 
 sdp_msg_t* create_sdp_header(uint32_t dest_chip, uint32_t dest_core){

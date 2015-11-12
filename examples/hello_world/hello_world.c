@@ -46,7 +46,7 @@ void record_data() {
     strcat(hello_me, core_chars);
 
     bool recorded = recording_record(e_recording_channel_spike_history,
-                                     hello_me, strlen(hello_me) *data_address[1] sizeof(char));
+                                     hello_me, strlen(hello_me));
 
     if(recorded){ log_info("Hello World recorded successfully!"); }
     else        { log_error("Hello World was not recorded...");   }

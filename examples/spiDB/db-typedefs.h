@@ -5,7 +5,7 @@
 #define FIRST_SLAVE     2
 #define LAST_SLAVE      16
 
-typedef enum { NUL, UINT32, STRING } var_type;
+typedef enum { UINT32, STRING } var_type;
 
 typedef enum regions_e {
     SYSTEM_REGION, DB_DATA_REGION
@@ -25,16 +25,17 @@ typedef enum spiDBcommand {
 } spiDBcommand;
 
 typedef struct spiDBquery {
+    uint32_t     id;
     spiDBcommand cmd;
 
     var_type k_type;
     size_t   k_size;
-    uchar k[128];
 
     //these are ignored in case of a PULL
     var_type v_type;
     size_t   v_size;
-    uchar v[128];
+
+    uchar k_v[256];
 } spiDBquery;
 
 /*typedef struct spiDBreply {
@@ -47,15 +48,6 @@ typedef struct value_entry {
     size_t size;
     void* data;
 } value_entry;
-
-uint16_t get_size_bytes(void* data, var_type t){
-    switch(t){
-        case UINT32: return sizeof(uint32_t);
-        case STRING: return strlen((char*)data) * sizeof(char);
-        case NUL:
-        default:     return 0;
-    }
-}
 
 uint32_t to_info1(var_type type, size_t size){
     return  ((type) << 12) | size;

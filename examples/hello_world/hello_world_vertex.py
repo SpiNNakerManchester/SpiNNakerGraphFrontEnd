@@ -81,7 +81,7 @@ class HelloWorldVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex)
 
         spec = DataSpecificationGenerator(data_writer, report_writer)
         # Setup words + 1 for flags + 1 for recording size
-        setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 2) * 4
+        setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 3) * 4
 
         # Reserve SDRAM space for memory areas:
 
