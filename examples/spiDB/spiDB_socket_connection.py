@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 class dbCommands(Enum):
     PUT  = 0
     PULL = 1
+    CLEAR = 2
 
 def var_type(a):
     if type(a) is int:
@@ -26,11 +27,25 @@ def var_type(a):
 
     return 0
 
+def sizeof(a):
+    if type(a) is str:
+        return len(a)
+    elif type(a) is int:
+        return 4
+
+    return 0
+
 def bytearray(a):
     if type(a) is str:
         return a
     elif type(a) is int:
+        """
+        bytes = [a >> i & 0xff for i in (24,16,8,0)]
+        return struct.pack('IIII', bytes[0], bytes[1], bytes[2], bytes[3])[0]
+        """
         return struct.pack('I', a)[0]
+
+    return 0
 
 class sdp_packet():
     def __init__(self, bytestring):
@@ -97,29 +112,36 @@ class SpiDBSocketConnection(Thread):
         self.current_message_id = -1
         self.command_buffer = []
 
+    def clear(self):
+        self.current_message_id += 1
+
+        s = struct.pack("IB", self.current_message_id, dbCommands.CLEAR.value)
+
+        return self.current_message_id, s
+
     def put(self, k, v):
         k_str = bytearray(k)
         v_str = bytearray(v)
         self.current_message_id += 1
 
-        k_size   = len(k_str)
-        v_size   = len(v_str)
+        k_size   = sizeof(k)
+        v_size   = sizeof(v)
         k_v_size = k_size+v_size
 
         s = struct.pack("IBBIBI{}s".format(k_v_size),
                         self.current_message_id, dbCommands.PUT.value,
-                        var_type(k), len(k_str),
-                        var_type(v), len(v_str), "{}{}".format(k_str, v_str))
+                        var_type(k), k_size,
+                        var_type(v), v_size, "{}{}".format(k_str, v_str))
 
         #print ":".join("{:02x}".format(ord(c)) for c in s)
 
-        return (self.current_message_id, s)
+        return self.current_message_id, s
 
     def pull(self, k):
         k_str = bytearray(k)
         self.current_message_id += 1
 
-        k_size   = len(k_str)
+        k_size   = sizeof(k)
 
         s = struct.pack("IBBIBI{}s".format(k_size),
                         self.current_message_id, dbCommands.PULL.value,
@@ -127,7 +149,7 @@ class SpiDBSocketConnection(Thread):
                         0, 0,
                         k_str)
 
-        return (self.current_message_id, s)
+        return self.current_message_id, s
 
     def flush(self, id_bytestrings):
 
@@ -153,6 +175,7 @@ class SpiDBSocketConnection(Thread):
     def run(self):
         time.sleep(9) #todo hmmmmmmmmmm
 
+        """
         self.command_buffer = [self.put("A","A"),
                                self.put("B","B"),
                                self.put("C","C"),
@@ -163,16 +186,22 @@ class SpiDBSocketConnection(Thread):
                                ]
         print self.flush(self.command_buffer)
         self.command_buffer = []
+        """
 
         while True:
             try:
                 #do the loop through TODO
                 cmd = raw_input("> ")
 
-                if(cmd == "flush"):
+                if cmd == "flush":
                     print self.flush(self.command_buffer)
                     self.command_buffer = []
-                elif(cmd == "exit"):
+                elif cmd == "clear":
+                    self.conn.send_to(self.clear()[1], (self.ip_address, self.port))
+                    self.command_buffer = []
+                elif cmd.startswith("put") or cmd.startswith("pull"):
+                    self.command_buffer.append(eval("self.{}".format(cmd)))
+                elif cmd == "exit":
                     sys.exit(0)
                 else:
                     self.command_buffer.append(eval(cmd))

@@ -34,19 +34,17 @@ const uint16_t board_dimentions_y = 2;
 
 static circular_buffer sdp_buffer;
 
-void broadcast_pull(unreplied_query* uq){
+void broadcast(sdp_msg_t* msg){
     //todo for loop it
-    uq->msg->dest_addr = 0x0001;
-    spin1_send_sdp_msg(uq->msg, SDP_TIMEOUT); //message, timeout
 
-    log_info("broadcasting pull with message");
-    print_msg(uq->msg);
+    msg->dest_addr = 0x0001;
+    spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
 
-    uq->msg->dest_addr = 0x0100;
-    spin1_send_sdp_msg(uq->msg, SDP_TIMEOUT); //message, timeout
+    msg->dest_addr = 0x0100;
+    spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
 
-    uq->msg->dest_addr = 0x0101;
-    spin1_send_sdp_msg(uq->msg, SDP_TIMEOUT); //message, timeout
+    msg->dest_addr = 0x0101;
+    spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
 }
 
 uint32_t** chip_current_sizes;
@@ -86,7 +84,14 @@ void send_spiDBquery(spiDBquery* q){
 
                     break;
         case PULL:  push(unreplied_pulls, uq);
-                    broadcast_pull(uq);
+                    broadcast(msg);
+                    break;
+        case CLEAR:;for(int x=0; x < board_dimentions_x; x++){
+                        for(int y=0; y < board_dimentions_y; y++){
+                            chip_current_sizes[x][y] = 0;
+                        }
+                    }
+                    broadcast(msg);
                     break;
         default:    log_error("Invalid spiDBquery.cmd %d", q->cmd);
                     break;
@@ -235,7 +240,6 @@ void process_requests(uint arg0, uint arg1){
         if(msg->srce_port == PORT_ETH){ //coming from host
             spiDBquery* query = (spiDBquery*) &(msg->cmd_rc);
             printQuery(query);
-            log_info("send_spiDBquery======");
             send_spiDBquery(query);
         }
         else{
@@ -316,8 +320,8 @@ void c_main()
 
     // register callbacks
     spin1_callback_on(SDP_PACKET_RX,    sdp_packet_callback, -1);
+    spin1_callback_on(TIMER_TICK,       update,              0);
     spin1_callback_on(USER_EVENT,       process_requests,    1);
-    spin1_callback_on(TIMER_TICK,       update,              2);
 
     simulation_run();
 }

@@ -16,6 +16,7 @@ typedef enum regions_e {
 typedef enum spiDBcommand {
     PUT = 0,
     PULL,
+    CLEAR,
 
     PUT_REPLY,
     PULL_REPLY,

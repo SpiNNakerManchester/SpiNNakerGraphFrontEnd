@@ -86,6 +86,16 @@ void process_requests(uint arg0, uint arg1){
         uint32_t info = msg->arg1;
         void* k       = msg->data; //pointer to the data from master
 
+        log_info("msg->data[0] is %d:", msg->data[0]);
+        log_info("msg->data[1] is %d:", msg->data[1]);
+        log_info("msg->data[2is %d:", msg->data[2]);
+        log_info("msg->data[3 is %d:", msg->data[3]);
+        log_info("msg->data[4 is %d:", msg->data[4]);
+        log_info("msg->data[5] is %d:", msg->data[5]);
+
+        log_info("k is %08x", k);
+        log_info("*((uint32_t*)k) %d", *((uint32_t*)k));
+
         switch(msg->cmd_rc){
             case PULL:; log_info("Received PULL id %d on k=(%s) - Info %08x", msg->seq, msg->data, info);
                                 //log_info("Received PULL id %d on k=%d", msg->seq, *((uint32_t*)k));

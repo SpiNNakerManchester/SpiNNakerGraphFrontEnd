@@ -32,8 +32,6 @@ static circular_buffer sdp_buffer;
 const double_linked_list* unacknowledged_puts;
 const double_linked_list* recent_messages_queue;
 
-address_t* master_k_current_addr;
-
 /*  Send acknowledgement to core which replied to a PULL request. */
 
 /*
@@ -90,6 +88,14 @@ void master_pull_retry(unreplied_query* q){
 
 core_data_address_t* core_data_addresses;
 
+void quick_clear(){
+    for(int i=FIRST_SLAVE; i <= LAST_SLAVE; i++){
+        //set data written for each core to zero. Similar to quick format. The data still exists
+        **core_data_addresses[i].data_start = 0;
+        *core_data_addresses[i].data_current = *core_data_addresses[i].data_start+1;
+    }
+}
+
 uint8_t  core_with_less_data = FIRST_SLAVE;
 
 bool balanced_put(uint32_t info, void* k, void* v){
@@ -125,7 +131,6 @@ void update (uint ticks, uint b)
 }
 
 void sdp_packet_callback(uint mailbox, uint port) {
-    log_info("======================================= Received request... mailbox: %08x", mailbox);
 
     // If there was space, add packet to the ring buffer
     if (circular_buffer_add(sdp_buffer, mailbox)) {
@@ -137,10 +142,8 @@ void sdp_packet_callback(uint mailbox, uint port) {
 void process_requests(uint arg0, uint arg1){
 
     uint32_t* mailbox_ptr;
-    circular_buffer_print_buffer(sdp_buffer);
     while(circular_buffer_get_next(sdp_buffer, mailbox_ptr)){
 
-        log_info("======================================= Processing request... -> %08x", *mailbox_ptr);
 
         sdp_msg_t* msg = (sdp_msg_t*) (*mailbox_ptr);
 
@@ -160,6 +163,8 @@ void process_requests(uint arg0, uint arg1){
 
         uint32_t info = msg->arg1;
 
+        log_info("received something....");
+
         switch(msg->cmd_rc){
             case PUT:; //coming from boss
                                         log_info("Received put request");
@@ -176,9 +181,10 @@ void process_requests(uint arg0, uint arg1){
 
                                         //push(unreplied_pulls, init_unreplied_query(msg));
 
-                                        log_info("issue master pull!");
-
                                         master_pull(msg);
+                                        break;
+            case CLEAR:;                log_info("Received clear request");
+                                        quick_clear();
                                         break;
             case PULL_REPLY:;  //coming from SLAVE
 
@@ -223,9 +229,6 @@ void c_main()
     recent_messages_queue = init_double_linked_list();
 
     core_data_addresses = (core_data_address_t*) sark_alloc(NUM_CPUS, sizeof(core_data_address_t));
-
-    master_k_current_addr  = (address_t*) sark_alloc(1, sizeof(address_t));
-    *master_k_current_addr = data_region;
 
     // set timer tick value to 100 milliseconds
     spin1_set_timer_tick(100);

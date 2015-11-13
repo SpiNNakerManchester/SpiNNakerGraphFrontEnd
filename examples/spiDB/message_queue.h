@@ -21,8 +21,8 @@ sdp_msg_t* init_boss_sdp(spiDBquery* q){
     msg->cmd_rc = q->cmd;
     msg->seq    = q->id;
 
-    msg->arg2   = NULL;
-    msg->arg3   = NULL;
+    msg->arg2   = 0;
+    msg->arg3   = 0;
 
     switch(q->cmd){
         case PUT:;  msg->arg1 = to_info2(q->k_type, q->k_size, q->v_type, q->v_size);
@@ -39,6 +39,8 @@ sdp_msg_t* init_boss_sdp(spiDBquery* q){
 
                     msg->length = sizeof(sdp_hdr_t) + 16 + q->k_size;
 
+                    break;
+        case CLEAR:;msg->arg1 = 0;
                     break;
         default:    return NULL;
                     break;
