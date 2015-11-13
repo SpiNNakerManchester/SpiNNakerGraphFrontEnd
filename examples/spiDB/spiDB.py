@@ -12,9 +12,9 @@ Author: Arthur Ceccotti
 import logging
 
 import spynnaker_graph_front_end as front_end
-from slave.slave_vertex import SlaveVertex
-from master.master_vertex import MasterVertex
-from boss.boss_vertex import BossVertex
+from core_cluster_slave.cluster_slave_vertex import ClusterSlaveVertex
+from core_cluster_head.cluster_head_vertex import ClusterHeadVertex
+from core_root.root_vertex import RootVertex
 
 from spiDB_socket_connection import SpiDBSocketConnection
 
@@ -23,8 +23,9 @@ import os
 logger = logging.getLogger(__name__)
 
 front_end.setup(graph_label="spiDB",
-                model_binary_modules=[file(os.getcwd() + "/../model_binaries/slave.aplx"),
-                                      file(os.getcwd() + "/../model_binaries/master.aplx")])
+                model_binary_modules=[file(os.getcwd() + "/../model_binaries/root.aplx"),
+                                      file(os.getcwd() + "/../model_binaries/cluster_head.aplx"),
+                                      file(os.getcwd() + "/../model_binaries/cluster_slave.aplx")])
 
 #dimenions = front_end.get_machine_dimensions() #todo with the new changes this gets broken
 
@@ -52,19 +53,19 @@ total_number_of_slaves = 15
 vertices = list()
 
 master_vertex = front_end.add_partitioned_vertex(
-    BossVertex,
+    RootVertex,
     {'label': 'Boss',
      'machine_time_step': machine_time_step,
      'time_scale_factor': time_scale_factor,
      'port': machine_port},
-    label="Boss")
+    label="root")
 
 for x_position in range(0, total_number_of_slaves):
         v = front_end.add_partitioned_vertex(
-            SlaveVertex,
+            ClusterSlaveVertex,
             {'machine_time_step': machine_time_step,
              'time_scale_factor': time_scale_factor},
-             label="Slave{}".format(x_position))
+             label="slave{}".format(x_position))
         vertices.append(v)
 
 
@@ -72,20 +73,20 @@ for x_position in range(0, total_number_of_slaves):
 #TODO LABELS
 for c in range(0, 3):
     master_vertex = front_end.add_partitioned_vertex(
-        MasterVertex,
+        ClusterHeadVertex,
         {'label': 'Master',
          'machine_time_step': machine_time_step,
          'time_scale_factor': time_scale_factor},
-        label="Master{}".format(c))
+        label="head{}".format(c))
     vertices.append(master_vertex)
 
 
     for x_position in range(0, total_number_of_slaves):
             v = front_end.add_partitioned_vertex(
-                SlaveVertex,
+                ClusterSlaveVertex,
                 {'machine_time_step': machine_time_step,
                  'time_scale_factor': time_scale_factor},
-                 label="Slave{}".format(x_position))
+                 label="slave{}".format(x_position))
             vertices.append(v)
 
 sst = SpiDBSocketConnection() #starts thread

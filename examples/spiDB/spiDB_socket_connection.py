@@ -15,9 +15,13 @@ from enum import Enum
 logger = logging.getLogger(__name__)
 
 class dbCommands(Enum):
-    PUT  = 0
-    PULL = 1
+    PUT   = 0
+    PULL  = 1
     CLEAR = 2
+
+class dbDataType(Enum):
+    INT     = 0
+    STRING  = 1
 
 def var_type(a):
     if type(a) is int:
@@ -27,23 +31,11 @@ def var_type(a):
 
     return 0
 
-def sizeof(a):
-    if type(a) is str:
-        return len(a)
-    elif type(a) is int:
-        return 4
-
-    return 0
-
 def bytearray(a):
     if type(a) is str:
         return a
     elif type(a) is int:
-        """
-        bytes = [a >> i & 0xff for i in (24,16,8,0)]
-        return struct.pack('IIII', bytes[0], bytes[1], bytes[2], bytes[3])[0]
-        """
-        return struct.pack('I', a)[0]
+        return struct.pack('I', a)
 
     return 0
 
@@ -53,28 +45,42 @@ class sdp_packet():
 
         (self.cmd_rc, self.seq, self.arg1, self.arg2, self.arg3) = header
 
-        #arg2 represents info. first 12 bits are the size
-        self.data = struct.unpack_from("{}s".format(self.arg2 & 0xFFF), bytestring, struct.calcsize("HHIII"))[0]
+        self.chip_x = (self.arg1 & 0x00FF0000) >> 16
+        self.chip_y = (self.arg1 & 0x0000FF00) >> 8
+        self.core   = (self.arg1 & 0x000000FF)
+
+        self.data_type = (self.arg2 & 0xF000) >> 12
+        self.data_size = (self.arg2 & 0x0FFF)
+
+        #arg2 represents info. least significant 12 bits are the size
+        self.data = struct.unpack_from("{}s".format(self.data_size), bytestring, struct.calcsize("HHIII"))[0]
+
 
     def __str__(self):
         return "cmd_rc: {}, seq: {}, arg1: {}, arg2: {}, arg3: {}, data: {}"\
                 .format(self.cmd_rc, self.seq, self.arg1, self.arg2, self.arg3, self.data)
 
     def reply_data(self):
-        self.chip_x = (self.arg1 & 0x00FF0000) >> 16
-        self.chip_y = (self.arg1 & 0x0000FF00) >> 8
-        self.core   = (self.arg1 & 0x000000FF)
-
         if self.core is 255:
-            return "FAIL - (id: {}, rtt: {})"\
+            return "FAIL - id: {}, rtt: {}"\
                 .format(self.seq, self.arg3)
 
         if self.cmd_rc is dbCommands.PUT.value:
-            return "OK - (id: {}, rtt: {}ms, chip: {}-{}, core: {})"\
-                .format(self.seq, self.arg3/1000000.0, self.chip_x, self.chip_y, self.core)
+            return "OK - id: {}, rtt: {}ms, chip: {}-{}, core: {}"\
+                .format(self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core)
+        elif self.cmd_rc is dbCommands.PULL.value:
+            if self.data_type is dbDataType.INT.value:
+                d = "(int) {}".format(struct.unpack('I', self.data)[0])
+            elif self.data_type is dbDataType.STRING.value:
+                d = "(string) {}".format(self.data)
+            else:
+                d = "(byte[]) {}".format(":".join("{:02x}".format(ord(c)) for c in self.data))
+
+            return "OK - id: {}, rtt: {}ms, chip: {}-{}, core: {}, data: {}"\
+                .format(self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core, d)
         else:
-            return "OK - (id: {}, rtt: {}ms, chip: {}-{}, core: {}, data: {})"\
-                .format(self.seq, self.arg3/1000000.0, self.chip_x, self.chip_y, self.core, self.data)
+            return "FAIL - invalid return cmd_rc: {} - id: {}, rtt: {}ms, chip: {}-{}, core: {}"\
+                .format(self.cmd_rc, self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core)
 
 class SpiDBSocketConnection(Thread):
     """ A connection from the toolchain which will be notified\
@@ -102,7 +108,7 @@ class SpiDBSocketConnection(Thread):
         self.conn = UDPConnection()
 
         Thread.__init__(self,
-                        name="spynnaker database connection for {}"
+                        name="spiDB_socket_connection{}"
                         .format(local_port))
 
         self.ip_address = "192.168.240.253" #todo should not be hardcoded
@@ -122,11 +128,16 @@ class SpiDBSocketConnection(Thread):
     def put(self, k, v):
         k_str = bytearray(k)
         v_str = bytearray(v)
+
         self.current_message_id += 1
 
-        k_size   = sizeof(k)
-        v_size   = sizeof(v)
+        k_size   = len(k_str)
+        v_size   = len(v_str)
         k_v_size = k_size+v_size
+
+        #root
+        #cluster head
+        #cluster slaves
 
         s = struct.pack("IBBIBI{}s".format(k_v_size),
                         self.current_message_id, dbCommands.PUT.value,
@@ -141,7 +152,7 @@ class SpiDBSocketConnection(Thread):
         k_str = bytearray(k)
         self.current_message_id += 1
 
-        k_size   = sizeof(k)
+        k_size   = len(k_str)
 
         s = struct.pack("IBBIBI{}s".format(k_size),
                         self.current_message_id, dbCommands.PULL.value,
@@ -173,24 +184,10 @@ class SpiDBSocketConnection(Thread):
         return ret
 
     def run(self):
-        time.sleep(9) #todo hmmmmmmmmmm
-
-        """
-        self.command_buffer = [self.put("A","A"),
-                               self.put("B","B"),
-                               self.put("C","C"),
-                               self.put("D","D"),
-                               self.put("E","E"),
-                               self.put("F","F"),
-                               self.put("G","G")
-                               ]
-        print self.flush(self.command_buffer)
-        self.command_buffer = []
-        """
+        time.sleep(9) #todo change!!!!
 
         while True:
             try:
-                #do the loop through TODO
                 cmd = raw_input("> ")
 
                 if cmd == "flush":

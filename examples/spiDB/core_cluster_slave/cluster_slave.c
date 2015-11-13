@@ -34,33 +34,9 @@ static circular_buffer sdp_buffer;
 void update(uint ticks, uint b){
     time++;
 
-    return; //todo
+    return;
 
-    age_recently_received_queries(recent_messages_queue);
-
-    /*
-    if(time % 10 == 0 && unacknowledged_replies->size > 0){
-
-        list_entry* entry = *unacknowledged_replies->head;
-
-        while(entry != NULL){
-
-            unreplied_query* q = (unreplied_query*)entry->data;
-            q->retries++;
-
-            log_info("Retrying id %d ", q->message_id);
-            sdp_reply_pull_request_retry(q->info, q->data, q->message_id);
-
-            if(q->retries >= MAX_RETRIES){
-                log_info("Tried sending message id %d too many times. Removing from queue", q->message_id);
-                remove_from_unreplied_queue(unacknowledged_replies,q->message_id); //todo ineffient removing here like this
-            }
-
-            entry = entry->next;
-        }
-    }
-    */
-
+    age_recently_received_queries(recent_messages_queue);  //todo
 }
 
 void sdp_packet_callback(uint mailbox, uint port) {
@@ -84,17 +60,7 @@ void process_requests(uint arg0, uint arg1){
         sdp_msg_t* msg = (sdp_msg_t*) (*mailbox_ptr);
 
         uint32_t info = msg->arg1;
-        void* k       = msg->data; //pointer to the data from master
-
-        log_info("msg->data[0] is %d:", msg->data[0]);
-        log_info("msg->data[1] is %d:", msg->data[1]);
-        log_info("msg->data[2is %d:", msg->data[2]);
-        log_info("msg->data[3 is %d:", msg->data[3]);
-        log_info("msg->data[4 is %d:", msg->data[4]);
-        log_info("msg->data[5] is %d:", msg->data[5]);
-
-        log_info("k is %08x", k);
-        log_info("*((uint32_t*)k) %d", *((uint32_t*)k));
+        uchar* k      = msg->data; //pointer to the data from master
 
         switch(msg->cmd_rc){
             case PULL:; log_info("Received PULL id %d on k=(%s) - Info %08x", msg->seq, msg->data, info);
@@ -114,7 +80,7 @@ void process_requests(uint arg0, uint arg1){
 
                         if(value_entry_ptr){
                             log_info("Replying PULL request id %d at time * %d * with data (s: %s) of size %d",
-                                     msg->seq, time, (char*)value_entry_ptr->data, value_entry_ptr->size);
+                                     msg->seq, time, value_entry_ptr->data, value_entry_ptr->size);
 
                             revert_src_dest(msg);
                             msg->cmd_rc = PULL_REPLY;
@@ -133,18 +99,8 @@ void process_requests(uint arg0, uint arg1){
                             log_info("Not found...");
                         }
                         break;
-            /*
-            case MASTER_PULL_REPLY_ACK:     log_info("Received pull acknowledgement at %d. Removing id %d from queue.", time, msg->seq);
-                                            if(!remove_from_unreplied_queue(unacknowledged_replies, msg->seq)){
-                                                log_info("[Warning] Pull reply ACK did not belong to me!!"); //or was too old... don't know
-                                            }
-                                            break;
-
-            case SLAVE_PULL_REPLY:;         log_info("[WARNING] Slave received PULL_REPLY query.");
-                                            break;
-            */
-            default:                log_info("[Warning] cmd_rc not recognized: %d WITH ID %d from core %d", msg->cmd_rc, msg->seq, msg->srce_port & 0x1F);
-                                    break;
+            default:    log_info("[Warning] cmd_rc not recognized: %d WITH ID %d from core %d", msg->cmd_rc, msg->seq, msg->srce_port & 0x1F);
+                        break;
         }
 
         // free the message to stop overload

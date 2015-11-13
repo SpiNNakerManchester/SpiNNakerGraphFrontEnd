@@ -47,7 +47,7 @@ typedef struct spiDBquery {
 typedef struct value_entry {
     var_type type;
     size_t size;
-    void* data;
+    uchar* data;
 } value_entry;
 
 uint32_t to_info1(var_type type, size_t size){

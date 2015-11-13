@@ -1,5 +1,5 @@
-APP = boss
+APP = root
 BUILD_DIR = build/
-OBJECTS = boss.o
+OBJECTS = root.o
 
 include ../Makefile.common

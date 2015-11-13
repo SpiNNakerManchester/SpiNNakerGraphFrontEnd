@@ -14,21 +14,13 @@ from spinn_front_end_common.utilities import constants
 from data_specification.data_specification_generator import \
     DataSpecificationGenerator
 
-from pacman.model.constraints.tag_allocator_constraints \
-    .tag_allocator_require_reverse_iptag_constraint \
-    import TagAllocatorRequireReverseIptagConstraint
-
-from spinn_front_end_common.abstract_models.\
-    abstract_provides_outgoing_edge_constraints \
-    import AbstractProvidesOutgoingEdgeConstraints
-
 from enum import Enum
 
 import logging
 
 logger = logging.getLogger(__name__)
 
-class BossVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
+class ClusterSlaveVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
@@ -37,8 +29,7 @@ class BossVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
 
     CORE_APP_IDENTIFIER = 0xBEEF
 
-    def __init__(self, label, machine_time_step, time_scale_factor, port,
-                 constraints=None, board_address=None, sdp_port=1, tag=None):
+    def __init__(self, label, machine_time_step, time_scale_factor, constraints=None):
 
         resoruces = ResourceContainer(cpu=CPUCyclesPerTickResource(45),
                                       dtcm=DTCMResource(100),
@@ -48,9 +39,6 @@ class BossVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
             self, label=label, resources_required=resoruces,
             constraints=constraints)
         AbstractPartitionedDataSpecableVertex.__init__(self)
-
-        self.add_constraint(TagAllocatorRequireReverseIptagConstraint(port, sdp_port, board_address, tag))
-
         self._machine_time_step = machine_time_step
         self._time_scale_factor = time_scale_factor
 
@@ -59,10 +47,10 @@ class BossVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         self.placement = None
 
     def get_binary_file_name(self):
-        return "boss.aplx"
+        return "cluster_slave.aplx"
 
     def model_name(self):
-        return "BossVertex"
+        return "ClusterSlaveVertex"
 
     def generate_data_spec(
             self, placement, sub_graph, routing_info, hostname, report_folder,
@@ -93,7 +81,7 @@ class BossVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
 
         spec = DataSpecificationGenerator(data_writer, report_writer)
         # Setup words + 1 for flags + 1 for recording size
-        setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 3) * 4 #4 for words
+        setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 3) * 4
 
         # Reserve SDRAM space for memory areas:
 

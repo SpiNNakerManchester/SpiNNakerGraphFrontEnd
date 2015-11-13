@@ -96,11 +96,6 @@ void send_spiDBquery(spiDBquery* q){
         default:    log_error("Invalid spiDBquery.cmd %d", q->cmd);
                     break;
     }
-
-    //print_unreplied_queue(unreplied_puts);
-
-    //print_msg(uq->msg);
-
 }
 
 void send_failed_spiDBquery(unreplied_query* uq){ //source is -1
@@ -205,9 +200,10 @@ void send_successful_spiDBqueryReply(sdp_msg_t* reply_msg, unreplied_query* uq){
 
                             message_to_host->length = sizeof(sdp_hdr_t) + 16;
                             break;
+
         case PULL_REPLY:;   message_to_host->cmd_rc = PULL;
 
-                            message_to_host->arg2 = to_info1(reply_msg->arg1, reply_msg->arg2); //data type & size
+                            message_to_host->arg2 = to_info1(reply_msg->arg1, reply_msg->arg2); //value type & size
 
                             uint32_t data_size = reply_msg->arg2;
 
@@ -268,7 +264,6 @@ void process_requests(uint arg0, uint arg1){
 
                                     if(!uq){
                                         log_info("Received a PULL_REPLY with unexpected id %d", msg->seq);
-                                        log_info("Unreplied pulls is...");
                                         print_unreplied_queue(unreplied_pulls);
                                     break;}
 

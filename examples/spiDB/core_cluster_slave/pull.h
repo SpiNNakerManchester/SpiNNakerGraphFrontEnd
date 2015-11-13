@@ -1,7 +1,16 @@
 #include "../db-typedefs.h"
 #include "../sdram_writer.h"
 
-value_entry* pull(uint32_t k_info, void* k){
+
+bool arr_equals(uchar* a, uchar* b, uint32_t n){
+    for(uint32_t i = 0; i < n; i++){
+        try(a[i] == b[i]);
+    }
+
+    return true;
+}
+
+value_entry* pull(uint32_t k_info, uchar* k){
 
     var_type k_type = (k_info & 0x0000F000) >> 12;
     uint16_t k_size =  k_info & 0x00000FFF;
@@ -37,26 +46,13 @@ value_entry* pull(uint32_t k_info, void* k){
             continue;
         }
 
-        void* k_found = (void*)current_addr;
+        uchar* k_found = (uchar*)current_addr;
         current_addr += k_size_words;
 
-        void* v_found = (void*)current_addr;
+        uchar* v_found = (uchar*)current_addr;
         current_addr += v_size_words;
 
-        bool k_eq = false;
-
-        switch(k_type){
-            case STRING:;
-                k_eq = strncmp((char*)k, (char*)k_found, k_size) == 0;
-                break;
-            case UINT32:;
-                k_eq = *((uint32_t*)k) == *((uint32_t*)k_found);
-                break;
-            default:;
-                continue;
-        }
-
-        if(k_eq){
+        if(arr_equals(k,k_found,k_size)){
             value_entry* v = (value_entry*)sark_alloc(1, sizeof(value_entry));
             v->data = v_found;
             v->size = v_size;

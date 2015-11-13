@@ -20,7 +20,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class SlaveVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
+class ClusterHeadVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
@@ -29,7 +29,7 @@ class SlaveVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
 
     CORE_APP_IDENTIFIER = 0xBEEF
 
-    def __init__(self, label, machine_time_step, time_scale_factor, constraints=None):
+    def __init__(self, label, machine_time_step, time_scale_factor,constraints=None):
 
         resoruces = ResourceContainer(cpu=CPUCyclesPerTickResource(45),
                                       dtcm=DTCMResource(100),
@@ -39,6 +39,9 @@ class SlaveVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
             self, label=label, resources_required=resoruces,
             constraints=constraints)
         AbstractPartitionedDataSpecableVertex.__init__(self)
+
+        #self.add_constraint(TagAllocatorRequireReverseIptagConstraint(port, sdp_port, board_address, tag))
+
         self._machine_time_step = machine_time_step
         self._time_scale_factor = time_scale_factor
 
@@ -47,10 +50,10 @@ class SlaveVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         self.placement = None
 
     def get_binary_file_name(self):
-        return "slave.aplx"
+        return "cluster_head.aplx"
 
     def model_name(self):
-        return "SlaveVertex"
+        return "ClusterHeadVertex"
 
     def generate_data_spec(
             self, placement, sub_graph, routing_info, hostname, report_folder,
@@ -81,7 +84,7 @@ class SlaveVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
 
         spec = DataSpecificationGenerator(data_writer, report_writer)
         # Setup words + 1 for flags + 1 for recording size
-        setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 3) * 4
+        setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 3) * 4 #4 for words
 
         # Reserve SDRAM space for memory areas:
 

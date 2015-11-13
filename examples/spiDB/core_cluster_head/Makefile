@@ -1,5 +1,5 @@
-APP = slave
+APP = cluster_head
 BUILD_DIR = build/
-OBJECTS = slave.o
+OBJECTS = cluster_head.o
 
 include ../Makefile.common

@@ -28,7 +28,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class MasterVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
+class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
@@ -37,7 +37,8 @@ class MasterVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
 
     CORE_APP_IDENTIFIER = 0xBEEF
 
-    def __init__(self, label, machine_time_step, time_scale_factor,constraints=None):
+    def __init__(self, label, machine_time_step, time_scale_factor, port,
+                 constraints=None, board_address=None, sdp_port=1, tag=None):
 
         resoruces = ResourceContainer(cpu=CPUCyclesPerTickResource(45),
                                       dtcm=DTCMResource(100),
@@ -48,7 +49,7 @@ class MasterVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
             constraints=constraints)
         AbstractPartitionedDataSpecableVertex.__init__(self)
 
-        #self.add_constraint(TagAllocatorRequireReverseIptagConstraint(port, sdp_port, board_address, tag))
+        self.add_constraint(TagAllocatorRequireReverseIptagConstraint(port, sdp_port, board_address, tag))
 
         self._machine_time_step = machine_time_step
         self._time_scale_factor = time_scale_factor
@@ -58,10 +59,10 @@ class MasterVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         self.placement = None
 
     def get_binary_file_name(self):
-        return "master.aplx"
+        return "root.aplx"
 
     def model_name(self):
-        return "MasterVertex"
+        return "RootVertex"
 
     def generate_data_spec(
             self, placement, sub_graph, routing_info, hostname, report_folder,
