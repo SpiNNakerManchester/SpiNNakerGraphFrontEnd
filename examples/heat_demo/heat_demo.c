@@ -95,7 +95,7 @@ static uint32_t simulation_ticks;
 static uint32_t infinite_run;
 //! the unqieu identifier of this model, so that it can tell if the data its
 //! reading is for itself.
-#define APPLICATION_MAGIC_NUMBER e59ff018
+#define APPLICATION_MAGIC_NUMBER 0xABCD
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
