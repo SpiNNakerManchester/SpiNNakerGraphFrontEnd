@@ -340,7 +340,7 @@ void update (uint ticks, uint b)
 
     log_debug("on tick %d", ticks);
     // check that the run time hasnt already alapsed and thus needs to be killed
-    if ((infinite_run != TRUE) && (ticks == simulation_ticks)){
+    if ((infinite_run != TRUE) && (ticks >= simulation_ticks)){
         log_info("Simulation complete.\n");
         spin1_exit(0);
         return;
@@ -456,7 +456,7 @@ static bool initialize(uint32_t *timer_period) {
     }
 
     // output message about length of time to run
-    log_debug("i plan to run for %d timer ticks", simulation_ticks);
+    log_info("i plan to run for %d timer ticks", simulation_ticks);
 
     // initlise transmission keys
     address_t transmission_region_address =  data_specification_get_region(

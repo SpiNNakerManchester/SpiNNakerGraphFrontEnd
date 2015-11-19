@@ -94,14 +94,16 @@ for x_position in range(0, max_x_element_id):
              'post_subvertex': vertices[x_position][y_position],
              'n_keys': 3},
             label="injector edge for vertex {}"
-                  .format(vertices[x_position][y_position].label))
+                  .format(vertices[x_position][y_position].label),
+            partition_id="COMMANDS")
         # add a link from the heat element to the live packet gatherer
         front_end.add_partitioned_edge(
             MultiCastPartitionedEdge,
             {'pre_subvertex': vertices[x_position][y_position],
              'post_subvertex': live_gatherer},
             label="gatherer edge from vertex {} to live packet gatherer"
-                  .format(vertices[x_position][y_position].label))
+                  .format(vertices[x_position][y_position].label),
+            partition_id="GATHERER")
 
         # check for the likely hood for a N link (incoming to south)
         if (x_position + 1) < max_x_element_id:
@@ -112,7 +114,8 @@ for x_position in range(0, max_x_element_id):
                  'direction': HeatDemoEdge.DIRECTIONS.SOUTH},
                 label="North edge between heat elements {}:{}"
                       .format(vertices[x_position][y_position],
-                              vertices[x_position + 1][y_position]),)
+                              vertices[x_position + 1][y_position]),
+                partition_id="TRANSMISSION")
         else:
             front_end.add_partitioned_edge(
                 HeatDemoEdge,
@@ -120,7 +123,9 @@ for x_position in range(0, max_x_element_id):
                  'post_subvertex': vertices[x_position][y_position],
                  'direction': HeatDemoEdge.DIRECTIONS.NORTH},
                 label="injected temp for north edge of fabric for heat element"
-                      "{}".format(vertices[x_position][y_position]),)
+                      "{}".format(vertices[x_position][y_position]),
+                partition_id="INJECTED_TEMP")
+
         # check for the likely hood for a E link
         if (y_position + 1) < max_y_element_id:
             front_end.add_partitioned_edge(
@@ -130,7 +135,8 @@ for x_position in range(0, max_x_element_id):
                  'direction': HeatDemoEdge.DIRECTIONS.WEST},
                 label="East edge between heat elements {}:{}"
                       .format(vertices[x_position][y_position],
-                              vertices[x_position][y_position + 1]),)
+                              vertices[x_position][y_position + 1]),
+                partition_id="TRANSMISSION")
         else:
             front_end.add_partitioned_edge(
                 HeatDemoEdge,
@@ -138,7 +144,8 @@ for x_position in range(0, max_x_element_id):
                  'post_subvertex': vertices[x_position][y_position],
                  'direction': HeatDemoEdge.DIRECTIONS.EAST},
                 label="Injected temp for East edge of fabric for heat element"
-                      " {}".format(vertices[x_position][y_position]),)
+                      " {}".format(vertices[x_position][y_position]),
+                partition_id="INJECTED_TEMP")
         # check for the likely hood for a S link
         if (y_position - 1) >= 0:
             front_end.add_partitioned_edge(
@@ -148,7 +155,8 @@ for x_position in range(0, max_x_element_id):
                  'direction': HeatDemoEdge.DIRECTIONS.NORTH},
                 label="South edge between heat elements {}:{}"
                       .format(vertices[x_position][y_position],
-                              vertices[x_position][y_position - 1]),)
+                              vertices[x_position][y_position - 1]),
+                partition_id="TRANSMISSION")
         else:
             front_end.add_partitioned_edge(
                 HeatDemoEdge,
@@ -156,7 +164,8 @@ for x_position in range(0, max_x_element_id):
                  'post_subvertex': vertices[x_position][y_position],
                  'direction': HeatDemoEdge.DIRECTIONS.SOUTH},
                 label="Injected temp for South edge of fabric for heat element"
-                      " {}".format(vertices[x_position][y_position]),)
+                      " {}".format(vertices[x_position][y_position]),
+                partition_id="INJECTED_TEMP")
         # check for the likely hood for a W link
         if (x_position - 1) >= 0:
             front_end.add_partitioned_edge(
@@ -166,7 +175,8 @@ for x_position in range(0, max_x_element_id):
                  'direction': HeatDemoEdge.DIRECTIONS.EAST},
                 label="West edge between heat elements {}:{}"
                       .format(vertices[x_position][y_position],
-                              vertices[x_position - 1][y_position]),)
+                              vertices[x_position - 1][y_position]),
+                partition_id="TRANSMISSION")
         else:
             front_end.add_partitioned_edge(
                 HeatDemoEdge,
@@ -174,7 +184,8 @@ for x_position in range(0, max_x_element_id):
                  'post_subvertex': vertices[x_position][y_position],
                  'direction': HeatDemoEdge.DIRECTIONS.WEST},
                 label="Injected temp for West edge of fabric for heat element"
-                      " {}".format(vertices[x_position][y_position]))
+                      " {}".format(vertices[x_position][y_position]),
+                partition_id="INJECTED_TEMP")
 
 
 # Set up the live connection for sending and receiving spikes
