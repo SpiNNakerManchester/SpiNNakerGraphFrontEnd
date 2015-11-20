@@ -18,11 +18,11 @@ from spinn_front_end_common.abstract_models.abstract_data_specable_vertex \
     import AbstractDataSpecableVertex
 
 # graph front end imports
-from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
+from spinnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
 import AbstractPartitionedDataSpecableVertex
-from spynnaker_graph_front_end.utilities.xml_interface import XMLInterface
-from spynnaker_graph_front_end.utilities.conf import config
-from spynnaker_graph_front_end import extra_pacman_algorithms
+from spinnaker_graph_front_end.utilities.xml_interface import XMLInterface
+from spinnaker_graph_front_end.utilities.conf import config
+from spinnaker_graph_front_end import extra_pacman_algorithms
 
 # general imports
 import logging
@@ -242,10 +242,11 @@ class SpiNNakerGraphFrontEnd(object):
         self._router_tables = pacman_exeuctor.get_item("MemoryRoutingTables")
         self._routing_infos = pacman_exeuctor.get_item("MemoryRoutingInfos")
         self._tags = pacman_exeuctor.get_item("MemoryTags")
-        self._graph_mapper = pacman_exeuctor.get_item("MemoryGraphMapper")
+        if len(self._partitionable_graph.vertices) != 0:
+            self._graph_mapper = pacman_exeuctor.get_item("MemoryGraphMapper")
         self._partitioned_graph = \
             pacman_exeuctor.get_item("MemoryPartitionedGraph")
-        self._machine = pacman_exeuctor.get_item("MemoryMachine")
+        self._machine = pacman_exeuctor.get_item("MemoryExtendedMachine")
         self._database_interface = pacman_exeuctor.get_item("DatabaseInterface")
         self._has_ran = pacman_exeuctor.get_item("RanToken")
 
@@ -338,8 +339,6 @@ class SpiNNakerGraphFrontEnd(object):
 
                 algorithms += \
                     ",SpinnakerGraphFrontEndPartitionableGraphEdgeToKeyMapper"
-                algorithms += \
-                    ",FrontEndCommonPartitionableGraphApplicationDataLoader"
                 algorithms += ",FrontEndCommonPartitionableGraphHostExecute" \
                               "DataSpecification"
                 algorithms += \
@@ -348,13 +347,15 @@ class SpiNNakerGraphFrontEnd(object):
             else:
                 algorithms += \
                     ",SpinnakerGraphFrontEndPartitionedGraphEdgeToKeyMapper"
-                algorithms += ",SpinnakerGraphFrontEndPartitionedGraph" \
-                              "ApplicationDataLoader"
                 algorithms += ",SpinnakerGraphFrontEndPartitionedGraphData" \
                               "SpecificationWriter"
                 algorithms += ",SpinnakerGraphFrontEndPartitionedGraphHost" \
                               "BasedDataSpecificationExeuctor"
                 algorithms += ",SpynnakerGraphFrontEndDatabaseWriter"
+            # application data loader is agnostic to graph
+            algorithms += \
+                ",FrontEndCommonPartitionableGraphApplicationDataLoader"
+            algorithms += ",FrontEndCommonNotificationProtocol"
 
             return algorithms
         else:
@@ -368,7 +369,7 @@ class SpiNNakerGraphFrontEnd(object):
 
     @staticmethod
     def _create_pacman_executor_outputs():
-        # explicitly define what outputs spynnaker expects
+        # explicitly define what outputs graph front end expects
         required_outputs = list()
         if config.getboolean("Machine", "virtual_board"):
             required_outputs.extend([
@@ -476,6 +477,8 @@ class SpiNNakerGraphFrontEnd(object):
         inputs.append({'type': "WriteTextSpecsFlag",
                        'value': config.getboolean("Reports",
                                                   "writeTextSpecs")})
+        inputs.append({'type': "WriteCheckerFlag",
+                       'value': config.getboolean("Mode", "verify_writes")})
         inputs.append({'type': "ExecutableFinder",
                        'value': self._executable_finder})
         inputs.append({'type': "MachineHasWrapAroundsFlag",

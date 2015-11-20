@@ -4,7 +4,7 @@ from spinn_front_end_common.abstract_models.\
 from spinn_front_end_common.utilities.executable_targets import \
     ExecutableTargets
 from spinn_front_end_common.utilities import exceptions
-from spynnaker_graph_front_end.\
+from spinnaker_graph_front_end.\
     abstract_partitioned_data_specable_vertex import \
     AbstractPartitionedDataSpecableVertex
 
