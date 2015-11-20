@@ -19,11 +19,8 @@ class GraphFrontEndDataBaseWriter(DatabaseWriter):
     spynnaker front end
     """
 
-    def __init__(self, database_directory, wait_for_read_confirmation,
-                 socket_addresses):
-        DatabaseWriter.__init__(
-            self, database_directory, wait_for_read_confirmation,
-            socket_addresses)
+    def __init__(self, database_directory):
+        DatabaseWriter.__init__(self, database_directory)
 
     def create_partitioned_atom_to_event_id_mapping(
             self, partitioned_graph, routing_infos):
@@ -33,16 +30,10 @@ class GraphFrontEndDataBaseWriter(DatabaseWriter):
         :param routing_infos:
         :return:
         """
-        self._thread_pool.apply_async(
-            self._create_partitioned_atom_to_event_id_mapping,
-            args=[partitioned_graph, routing_infos])
 
-    def _create_partitioned_atom_to_event_id_mapping(
-            self, partitioned_graph, routing_infos):
         # noinspection PyBroadException
         try:
             import sqlite3 as sqlite
-            self._lock_condition.acquire()
             connection = sqlite.connect(self._database_path)
             cur = connection.cursor()
             # create table
@@ -74,6 +65,5 @@ class GraphFrontEndDataBaseWriter(DatabaseWriter):
                             .format(vertex_id, key, 0))
             connection.commit()
             connection.close()
-            self._lock_condition.release()
         except Exception:
             traceback.print_exc()

@@ -95,7 +95,7 @@ static uint32_t simulation_ticks;
 static uint32_t infinite_run;
 //! the unqieu identifier of this model, so that it can tell if the data its
 //! reading is for itself.
-#define APPLICATION_MAGIC_NUMBER 0xABCD
+#define APPLICATION_MAGIC_NUMBER 0x863e6624
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
@@ -342,8 +342,8 @@ void update (uint ticks, uint b)
     // check that the run time hasnt already alapsed and thus needs to be killed
     if ((infinite_run != TRUE) && (ticks >= simulation_ticks)){
         log_info("Simulation complete.\n");
-        spin1_exit(0);
-        return;
+        // falls into the apuse resume mode of operating
+        simulation_handle_pause_resume(update, 1);
     }
 
     if (updating)
@@ -572,7 +572,10 @@ void c_main()
     // register callbacks
     spin1_callback_on (MCPL_PACKET_RECEIVED, receive_data, 0);
     spin1_callback_on (MC_PACKET_RECEIVED, receive_data_void, 0);
-    spin1_callback_on (TIMER_TICK, update, 0);
+    spin1_callback_on (TIMER_TICK, update, 1);
+
+    // Set up callback listening to SDP messages
+    simulation_register_simulation_sdp_callback(&simulation_ticks, 0);
 
     #ifdef DEBUG
         // initialise variables

@@ -254,7 +254,8 @@ class SpiNNakerGraphFrontEnd(object):
         self._router_tables = pacman_exeuctor.get_item("MemoryRoutingTables")
         self._routing_infos = pacman_exeuctor.get_item("MemoryRoutingInfos")
         self._tags = pacman_exeuctor.get_item("MemoryTags")
-        self._graph_mapper = pacman_exeuctor.get_item("MemoryGraphMapper")
+        if len(self._partitionable_graph.vertices) != 0:
+            self._graph_mapper = pacman_exeuctor.get_item("MemoryGraphMapper")
         self._partitioned_graph = \
             pacman_exeuctor.get_item("MemoryPartitionedGraph")
         self._machine = pacman_exeuctor.get_item("MemoryMachine")
@@ -369,8 +370,6 @@ class SpiNNakerGraphFrontEnd(object):
                 algorithms.append(
                     "SpinnakerGraphFrontEndPartitionableGraphEdgeToKeyMapper")
                 algorithms.append(
-                    "FrontEndCommonPartitionableGraphApplicationDataLoader")
-                algorithms.append(
                     "FrontEndCommonPartitionableGraphHost"
                     "ExecuteDataSpecification")
                 algorithms.append(
@@ -381,15 +380,16 @@ class SpiNNakerGraphFrontEnd(object):
                 algorithms.append(
                     "SpinnakerGraphFrontEndPartitionedGraphEdgeToKeyMapper")
                 algorithms.append(
-                    "SpinnakerGraphFrontEndPartitionedGraph"
-                    "ApplicationDataLoader")
-                algorithms.append(
                     "SpinnakerGraphFrontEndPartitionedGraphData"
                     "SpecificationWriter")
+                algorithms.append("FrontEndCommonNotificationProtocol")
                 algorithms.append(
                     "SpinnakerGraphFrontEndPartitionedGraphHost"
                     "BasedDataSpecificationExeuctor")
                 algorithms.append("SpiNNakerGraphFrontEndDatabaseWriter")
+            # application data loader is agnostic to graph
+            algorithms.append(
+                    "FrontEndCommonPartitionableGraphApplicationDataLoader")
 
             return algorithms
         else:
