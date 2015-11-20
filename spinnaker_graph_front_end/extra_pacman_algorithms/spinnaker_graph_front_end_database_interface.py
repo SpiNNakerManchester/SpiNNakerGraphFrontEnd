@@ -9,7 +9,7 @@ from pacman.utilities.utility_objs.progress_bar import ProgressBar
 from spinn_front_end_common.utilities import helpful_functions
 
 # graph front end imports
-from spynnaker_graph_front_end.utilities.database.\
+from spinnaker_graph_front_end.utilities.database.\
     graph_front_end_database_writer import GraphFrontEndDataBaseWriter
 
 

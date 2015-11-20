@@ -11,7 +11,7 @@ from spinn_front_end_common.abstract_models.\
     AbstractDataSpecableVertex
 
 # graph front end imports
-from spynnaker_graph_front_end.\
+from spinnaker_graph_front_end.\
     abstract_partitioned_data_specable_vertex import \
     AbstractPartitionedDataSpecableVertex
 

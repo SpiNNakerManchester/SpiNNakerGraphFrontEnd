@@ -1,5 +1,5 @@
 from spinn_front_end_common.interface.executable_finder import ExecutableFinder
-from spynnaker_graph_front_end.utilities import conf
+from utilities import conf
 
 from ._version import __version__, __version_name__, __version_month__,\
     __version_year__
@@ -42,7 +42,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
 
     :return:
     """
-    from spynnaker_graph_front_end.spinnaker_graph_front_end import \
+    from spinnaker_graph_front_end import \
         SpiNNakerGraphFrontEnd
     import spinnaker_graph_front_end
     import os

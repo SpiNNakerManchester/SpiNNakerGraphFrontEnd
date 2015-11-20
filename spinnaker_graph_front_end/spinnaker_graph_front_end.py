@@ -18,11 +18,11 @@ from spinn_front_end_common.abstract_models.abstract_data_specable_vertex \
     import AbstractDataSpecableVertex
 
 # graph front end imports
-from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
+from abstract_partitioned_data_specable_vertex \
 import AbstractPartitionedDataSpecableVertex
-from spynnaker_graph_front_end.utilities.xml_interface import XMLInterface
-from spynnaker_graph_front_end.utilities.conf import config
-from spynnaker_graph_front_end import extra_pacman_algorithms
+from utilities.xml_interface import XMLInterface
+from utilities.conf import config
+import extra_pacman_algorithms
 
 # general imports
 import logging
@@ -389,7 +389,7 @@ class SpiNNakerGraphFrontEnd(object):
                 algorithms.append(
                     "SpinnakerGraphFrontEndPartitionedGraphHost"
                     "BasedDataSpecificationExeuctor")
-                algorithms.append("SpynnakerGraphFrontEndDatabaseWriter")
+                algorithms.append("SpiNNakerGraphFrontEndDatabaseWriter")
 
             return algorithms
         else:
@@ -403,7 +403,7 @@ class SpiNNakerGraphFrontEnd(object):
 
     @staticmethod
     def _create_pacman_executor_outputs():
-        # explicitly define what outputs spynnaker expects
+        # explicitly define what outputs the graph front end expects
         required_outputs = list()
         if config.getboolean("Machine", "virtual_board"):
             required_outputs.extend([

@@ -167,7 +167,7 @@
             </parameter>
         </produces_outputs>
     </algorithm>
-<algorithm name="SpynnakerGraphFrontEndDatabaseWriter">
+<algorithm name="SpiNNakerGraphFrontEndDatabaseWriter">
         <python_module>spynnaker_graph_front_end.extra_pacman_algorithms.spinnaker_graph_front_end_database_interface</python_module>
         <python_class>SpinnakerGraphFrontEndDatabaseInterface</python_class>
         <required_inputs>
