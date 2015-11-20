@@ -14,8 +14,8 @@ import shutil
 import string
 import sys
 
-import spynnaker_graph_front_end
-from spynnaker_graph_front_end.utilities.conf import log
+import spinnaker_graph_front_end
+from spinnaker_graph_front_end.utilities.conf import log
 
 read = list()
 
@@ -39,7 +39,7 @@ def _install_cfg():
 
 # Create a config, read global defaults and then read in additional files
 config = ConfigParser.RawConfigParser()
-default = os.path.join(os.path.dirname(spynnaker_graph_front_end.__file__),
+default = os.path.join(os.path.dirname(spinnaker_graph_front_end.__file__),
                        os.pardir)
 default = os.path.join(default,
                        "spiNNakerGraphFrontEnd.cfg")
