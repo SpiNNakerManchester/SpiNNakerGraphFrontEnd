@@ -55,24 +55,9 @@ void reader_init(address_t region){
 }
 
 // returns address of where data was written. NULL if not written
-address_t append(address_t* address, void* data, uint32_t size_bytes){
-
-    if(!data || size_bytes <= 0){ return NULL; }
-
-    // If there's space to record
-    //if (writer.current + size_words <= writer.end) {
-
-        address_t address_stored = *address;
-
-        // Copy data into recording channel
-        memcpy(*address, data, size_bytes); // <<2 because it takes bytes
-
-        *address += (size_bytes+3)/4; //todo fuck no. size words
-
-        return address_stored;
-    //} else {
-    //    return false;
-    //}
+void append(address_t* address, void* data, uint32_t size_bytes){
+    memcpy(*address, data, size_bytes);
+    *address += (size_bytes+3) >> 2;
 }
 
 bool write(address_t address, void* data, uint32_t size_words){ //TODO should it be bytes??
@@ -81,6 +66,12 @@ bool write(address_t address, void* data, uint32_t size_words){ //TODO should it
     memcpy(address, data, size_words << 2);
 
     return true;
+}
+
+void clear(address_t address, size_t words){
+    for(size_t i = 0; i < words; i++){
+        address[i] = 0;
+    }
 }
 
 address_t system_region;
@@ -100,7 +91,10 @@ static bool initialize() {
     }
 
     system_region = data_specification_get_region(SYSTEM_REGION, address);
+    check_sdram(system_region);
+
     data_region   = data_specification_get_region(DB_DATA_REGION, address);
+    check_sdram(data_region);
 
     log_info("System region: %08x", system_region);
     log_info("Data region: %08x", data_region);

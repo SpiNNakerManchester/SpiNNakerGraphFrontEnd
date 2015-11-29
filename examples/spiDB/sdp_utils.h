@@ -54,7 +54,6 @@ sdp_msg_t* create_sdp_header_to_host(){
     return msg;
 }
 
-
 void print_msg(sdp_msg_t* msg){
   log_info("=============================================");
   log_info("================= SDP INFO ==================");

@@ -8,6 +8,11 @@
 *  Author: Arthur Ceccotti
 *******/
 
+#define LOG_LEVEL 40 //debug
+
+#undef PRODUCTION_CODE
+#undef NDEBUG
+
 #include "spin1_api.h"
 #include "common-typedefs.h"
 #include "../db-typedefs.h"
@@ -18,6 +23,7 @@
 #include <circular_buffer.h>
 #include "../double_linked_list.h"
 #include "../message_queue.h"
+#include "unit_tests/root_put_tests.c"
 
 #include <debug.h>
 
@@ -26,31 +32,45 @@
 // Globals
 uint32_t time               = 0; //represents the microseconds
 
-const double_linked_list* unreplied_puts;
-const double_linked_list* unreplied_pulls;
-
-const uint16_t board_dimentions_x = 2;
-const uint16_t board_dimentions_y = 2;
+double_linked_list* unreplied_puts;
+double_linked_list* unreplied_pulls;
 
 static circular_buffer sdp_buffer;
 
 void broadcast(sdp_msg_t* msg){
-    //todo for loop it
+    for(uint8_t chipx = 0; chipx < CHIP_X_SIZE; chipx++){
+        for(uint8_t chipy = 0; chipy < CHIP_Y_SIZE; chipy++){
+            for(uint8_t core = FIRST_SLAVE; core <= LAST_SLAVE; core++){
+                if(chipx == 0 && chipy == 0 && core == ROOT_CORE){
+                    continue; //don't send it to itself
+                }
 
-    msg->dest_addr = 0x0001;
-    spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
-
-    msg->dest_addr = 0x0100;
-    spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
-
-    msg->dest_addr = 0x0101;
-    spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
+                msg->dest_addr = (chipx << 8) | chipy; //[1 byte x, 1 byte y]
+                msg->dest_port = (SDP_PORT << PORT_SHIFT) | core;
+                spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
+            }
+        }
+    }
 }
 
-uint32_t** chip_current_sizes;
+uint32_t*** core_db_current_sizes;
 
 uint8_t x_chip_with_less_data = 0;
 uint8_t y_chip_with_less_data = 1;
+
+uint32_t hash(uchar* bytes, size_t size){
+    uint32_t h = 5381;
+
+    for(uint16_t i = 0; i < size; i++){
+        h = ((h << 5) + h) + bytes[i] ^ (bytes[i] << 28);
+    }
+
+    return h;
+}
+
+uint8_t rrb_chipx = 0;
+uint8_t rrb_chipy = 0;
+uint8_t rrb_core  = 2;
 
 void send_spiDBquery(spiDBquery* q){
 
@@ -58,44 +78,77 @@ void send_spiDBquery(spiDBquery* q){
 
     unreplied_query* uq = init_unreplied_query(msg);
 
-    switch(q->cmd){
-        case PUT:   push(unreplied_puts,  uq);
-                    //todo what if it is itself?
+    if(q->cmd == PUT){
+        push(unreplied_puts,  uq);
+    }
+    else if(q->cmd == PULL) {
+        push(unreplied_pulls,  uq);
+    }
 
-                    msg->dest_addr = (x_chip_with_less_data << 8) | y_chip_with_less_data; //[1 byte x, 1 byte y]
+    #ifdef DB_HASH_TABLE
+        switch(q->cmd){
+            case PUT:;
+            case PULL:;
+                        // core_db_current_sizes
+                        uint32_t h = hash(q->k_v, q->k_size);
 
-                    spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
+                        uint8_t  chip_id_x = ((h & 0xF0000000) >> 28) % CHIP_X_SIZE;
+                        uint8_t  chip_id_y = ((h & 0x0F000000) >> 24) % CHIP_Y_SIZE;
+                        uint8_t  core_id   = (((h & 0x00F80000) >> 19) % CORE_SIZE) + FIRST_SLAVE;
 
-                    chip_current_sizes[x_chip_with_less_data][y_chip_with_less_data] += 1 + (q->k_size+3)/4 + (q->v_size+3)/4;
+                        msg->dest_addr = (chip_id_x << 8) | chip_id_y; //[1 byte x, 1 byte y]
+                        msg->dest_port = (SDP_PORT << PORT_SHIFT) | core_id;
+                        msg->arg2      = h; //send hash
 
-                    for(int x=0; x < board_dimentions_x; x++){
-                        for(int y=0; y < board_dimentions_y; y++){
-                            log_info("chip_current_sizes[x=%d][y=%d] -> %d", x, y, chip_current_sizes[x][y]);
-                            if(x == 0 && y == 0){
-                                continue;//todo avoid doing it itself for now
-                            }
+                        spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
+                        break;
+            default:    break;
+        }
+    #else
+        switch(q->cmd){
+            case PUT:
+                        /*
+                        rrb_core = (rrb_core+1 % LAST_SLAVE) + FIRST_SLAVE;
 
-                            if(chip_current_sizes[x][y] < chip_current_sizes[x_chip_with_less_data][y_chip_with_less_data]){
-                                x_chip_with_less_data = x;
-                                y_chip_with_less_data = y;
+                        if(rrb_core == FIRST_SLAVE){
+                            rrb_chipx = (rrb_chipx+1) % CHIP_X_SIZE;
+
+                            if(rrb_chipx == 0){
+                                rrb_chipy = (rrb_chipy+1) % CHIP_Y_SIZE;
                             }
                         }
-                    }
+                        */
 
-                    break;
-        case PULL:  push(unreplied_pulls, uq);
-                    broadcast(msg);
-                    break;
-        case CLEAR:;for(int x=0; x < board_dimentions_x; x++){
+                        msg->dest_addr = (rrb_chipx << 8) | rrb_chipy; //[1 byte x, 1 byte y]
+                        msg->dest_port = (SDP_PORT << PORT_SHIFT) | rrb_core;
+
+                        log_info("Sending PUT to (%d,%d,%d)", rrb_chipx, rrb_chipy, rrb_core);
+                        print_msg(msg);
+                        log_info("-------------------");
+
+                        spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
+            case PULL:
+                        broadcast(msg);
+                        break;
+            default:    break;
+        }
+
+    #endif
+
+    /*
+        case CLEAR:;
+                    for(int x=0; x < board_dimentions_x; x++){
                         for(int y=0; y < board_dimentions_y; y++){
                             chip_current_sizes[x][y] = 0;
                         }
                     }
                     broadcast(msg);
+
                     break;
         default:    log_error("Invalid spiDBquery.cmd %d", q->cmd);
                     break;
-    }
+    */
+
 }
 
 void send_failed_spiDBquery(unreplied_query* uq){ //source is -1
@@ -106,7 +159,7 @@ void send_failed_spiDBquery(unreplied_query* uq){ //source is -1
     message_to_host->seq    = uq->msg->seq;
     message_to_host->arg1   = -1;
     message_to_host->arg2   = 0;
-    message_to_host->arg3   = time - uq->time_sent; //round trip time. todo what unit of measurement is this?
+    message_to_host->arg3   = time - uq->time_sent; //round trip time
 
     message_to_host->length = sizeof(sdp_hdr_t) + 16;
 
@@ -115,6 +168,19 @@ void send_failed_spiDBquery(unreplied_query* uq){ //source is -1
 
 void update (uint ticks, uint b){
     time += TIMER_PERIOD;
+
+    //if TEST MODE!!!! todo
+    if(ticks == 10){
+        test_put(STRING, "Hello", STRING, "World");
+    }
+/*    else if(ticks == 20){
+
+    }
+
+    if(ticks == 100){
+        test_pull(STRING, "Hello");
+        test_pull(STRING, "ABCDEF");
+    }*/
 
     return; //for now.... TODO
 
@@ -163,22 +229,6 @@ void update (uint ticks, uint b){
     }
 }
 
-void printQuery(spiDBquery* q){
-  log_info("=============================================");
-  log_info("=================== QUERY ===================");
-  log_info("  id:        %08x", q->id);
-  log_info("  cmd:       %04x -> %s", q->cmd, q->cmd == PUT ? "PUT" : "PULL");
-  log_info("                                             ");
-  log_info("  k_type:    %04x", q->k_type);
-  log_info("  k_size:    %04x", q->k_size);
-  log_info("                                             ");
-  log_info("  v_type:    %04x", q->v_type);
-  log_info("  v_size:    %04x", q->v_size);
-  log_info("                                             ");
-  log_info("  k_v:       %s", q->k_v);
-  log_info("=============================================");
-}
-
 void send_successful_spiDBqueryReply(sdp_msg_t* reply_msg, unreplied_query* uq){
 
     uint8_t srce_core_id = reply_msg->srce_port & 0x1F;
@@ -194,18 +244,21 @@ void send_successful_spiDBqueryReply(sdp_msg_t* reply_msg, unreplied_query* uq){
     message_to_host->arg3   = time - uq->time_sent; //round trip time. todo what unit of measurement is this?
 
     switch(reply_msg->cmd_rc){
-        case PUT_REPLY:;    message_to_host->cmd_rc = PUT;
+        case PUT_REPLY:;
+                            message_to_host->cmd_rc = PUT;
 
                             message_to_host->arg2 = 0; //info
 
                             message_to_host->length = sizeof(sdp_hdr_t) + 16;
                             break;
 
-        case PULL_REPLY:;   message_to_host->cmd_rc = PULL;
-
-                            message_to_host->arg2 = to_info1(reply_msg->arg1, reply_msg->arg2); //value type & size
+        case PULL_REPLY:;
+                            message_to_host->cmd_rc = PULL;
 
                             uint32_t data_size = reply_msg->arg2;
+                            var_type data_type = reply_msg->arg1;
+
+                            message_to_host->arg2 = to_info1(data_type, data_size); //value type & size
 
                             memcpy(message_to_host->data, reply_msg->data, data_size);
 
@@ -213,6 +266,8 @@ void send_successful_spiDBqueryReply(sdp_msg_t* reply_msg, unreplied_query* uq){
                             break;
         default:            return;
     }
+
+    //print_msg(message_to_host);
 
     //uint status = spin1_int_disable();
     spin1_send_sdp_msg(message_to_host, SDP_TIMEOUT); //message, timeout
@@ -239,43 +294,39 @@ void process_requests(uint arg0, uint arg1){
             send_spiDBquery(query);
         }
         else{
+            test_message(msg);
+
             unreplied_query* uq = NULL;
 
-            uint status;
-
             switch(msg->cmd_rc){
-                case PUT_REPLY:;    uq = remove_from_unreplied_queue(unreplied_puts, msg->seq);
+                case PUT_REPLY:;
+                    uq = remove_from_unreplied_queue(unreplied_puts, msg->seq);
 
-                                    if(!uq){
-                                        log_info("Received a PUT_REPLY with unexpected id %d", msg->seq);
-                                        log_info("Unreplied puts is...");
-                                        print_unreplied_queue(unreplied_puts);
-                                    break;}
+                    check(uq, "Received a PUT_REPLY with unexpected id %d", msg->seq);
+                    if(!uq){print_unreplied_queue(unreplied_puts);break;}
 
-                                    log_info("Received a PUT_REPLY [id: %d, time: %d, rtt: %d, retries: %d]",
-                                              uq->msg->seq, time, time - uq->time_sent, uq->retries);
+                    log_info("Received a PUT_REPLY [id: %d, time: %d, rtt: %d, retries: %d]",
+                              uq->msg->seq, time, time - uq->time_sent, uq->retries);
 
-                                    send_successful_spiDBqueryReply(msg, uq);
+                    send_successful_spiDBqueryReply(msg, uq);
+                    break;
 
-                                    //print_unreplied_queue(unreplied_puts);
-                                    break;
+                case PULL_REPLY:;
+                    uq = remove_from_unreplied_queue(unreplied_pulls, msg->seq);
 
-                case PULL_REPLY:;   uq = remove_from_unreplied_queue(unreplied_pulls, msg->seq);
+                    check(uq, "Received a PULL_REPLY with unexpected id %d", msg->seq);
+                    if(!uq){print_unreplied_queue(unreplied_pulls);break;}
 
-                                    if(!uq){
-                                        log_info("Received a PULL_REPLY with unexpected id %d", msg->seq);
-                                        print_unreplied_queue(unreplied_pulls);
-                                    break;}
+                    log_info("Received a PULL_REPLY [id: %d, time: %d, rtt: %d, retries: %d]",
+                              uq->msg->seq, time, time - uq->time_sent, uq->retries);
 
-                                    log_info("Received a PULL_REPLY [id: %d, time: %d, rtt: %d, retries: %d]",
-                                              uq->msg->seq, time, time - uq->time_sent, uq->retries);
+                    send_successful_spiDBqueryReply(msg, uq);
 
-                                    send_successful_spiDBqueryReply(msg, uq);
-
-                                    break;
-                default:;           log_info("Received invalid reply with id: %d, cmd_rc: %02x", msg->seq, msg->cmd_rc);
-                                    print_msg(msg);
-                                    break;
+                    break;
+                default:;
+                    sentinel("Received invalid reply with id: %d, cmd_rc: %02x", msg->seq, msg->cmd_rc);
+                    print_msg(msg);
+                    break;
             }
 
         }
@@ -289,7 +340,7 @@ void process_requests(uint arg0, uint arg1){
 
 void c_main()
 {
-    log_info("Initializing Boss...");
+    log_info("Initializing Root...");
 
     if (!initialize()) {
         rt_error(RTE_SWERR);
@@ -302,14 +353,19 @@ void c_main()
     unreplied_puts  = init_double_linked_list();
     unreplied_pulls = init_double_linked_list();
 
-    sdp_buffer = circular_buffer_initialize(100); //todo size...
+    sdp_buffer = circular_buffer_initialize(100);
 
-    chip_current_sizes = (uint32_t**) sark_alloc(board_dimentions_x, sizeof(uint32_t*));
-    for(int x = 0; x < board_dimentions_x; x++){
-        chip_current_sizes[x] = (uint32_t*) sark_alloc(board_dimentions_y, sizeof(uint32_t));
+    core_db_current_sizes = (size_t***) sark_alloc(CHIP_X_SIZE, sizeof(size_t**));
 
-        for(int y = 0; y < board_dimentions_y; y++){
-            chip_current_sizes[x][y] = 0;
+    for(int x = 0; x < CHIP_X_SIZE; x++){
+        core_db_current_sizes[x] = (size_t**) sark_alloc(CHIP_Y_SIZE, sizeof(size_t*));
+
+        for(int y = 0; y < CHIP_Y_SIZE; y++){
+            core_db_current_sizes[x][y] = (size_t*) sark_alloc(CORE_SIZE, sizeof(size_t));
+
+            for(int c = 0; c < CORE_SIZE; c++){
+                 core_db_current_sizes[x][y][c] = 0;
+            }
         }
     }
 

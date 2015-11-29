@@ -1,9 +1,18 @@
 #ifndef __DB_TYPEDEFS_H__
 #define __DB_TYPEDEFS_H__
 
-#define MASTER_CORE_ID  1
-#define FIRST_SLAVE     2
-#define LAST_SLAVE      16
+#define DB_HASH_TABLE
+
+#define CHIP_X_SIZE 2
+#define CHIP_Y_SIZE 2
+#define CORE_SIZE   16
+
+#define ROOT_CORE       1
+#define FIRST_SLAVE     1
+#define LAST_SLAVE      CORE_SIZE
+
+                                          //words
+#define CORE_DATABASE_SIZE_WORDS (120000000 >> 2) / CORE_SIZE
 
 typedef enum { UINT32, STRING } var_type;
 
@@ -16,6 +25,7 @@ typedef enum regions_e {
 typedef enum spiDBcommand {
     PUT = 0,
     PULL,
+
     CLEAR,
 
     PUT_REPLY,
@@ -67,6 +77,10 @@ uint32_t to_info2(var_type k_type, size_t k_size, var_type v_type, size_t v_size
     return (to_info1(k_type,k_size) << 16) | to_info1(v_type,v_size);
 }
 
+var_type k_type_from_info2(uint32_t info){
+    return (info & 0xF0000000) >> 28;
+}
+
 size_t k_size_from_info2(uint32_t info){
     return (info & 0x0FFF0000) >> 16;
 }
@@ -75,5 +89,12 @@ size_t v_size_from_info2(uint32_t info){
     return info & 0x00000FFF;
 }
 
+bool arr_equals(uchar* a, uchar* b, uint32_t n){
+    for(uint32_t i = 0; i < n; i++){
+        try(a[i] == b[i]);
+    }
+
+    return true;
+}
 
 #endif

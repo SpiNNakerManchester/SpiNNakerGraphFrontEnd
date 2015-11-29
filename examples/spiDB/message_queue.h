@@ -16,7 +16,7 @@ extern uint32_t time;
 
 sdp_msg_t* init_boss_sdp(spiDBquery* q){
 
-    sdp_msg_t* msg   = create_sdp_header(0, 1); // chip 0, core 1 (master)
+    sdp_msg_t* msg   = create_sdp_header(0, 1); // chip 0, core 1 (master) //todo change
 
     msg->cmd_rc = q->cmd;
     msg->seq    = q->id;
@@ -25,15 +25,16 @@ sdp_msg_t* init_boss_sdp(spiDBquery* q){
     msg->arg3   = 0;
 
     switch(q->cmd){
-        case PUT:;  msg->arg1 = to_info2(q->k_type, q->k_size, q->v_type, q->v_size);
+        case PUT:;
+                    msg->arg1 = to_info2(q->k_type, q->k_size, q->v_type, q->v_size);
 
                     memcpy(msg->data, q->k_v, q->k_size + q->v_size);
-                    //memcpy(&msg->data[q->k_size], q->v, q->v_size);
 
                     msg->length = sizeof(sdp_hdr_t) + 16 + q->k_size + q->v_size;
 
                     break;
-        case PULL:; msg->arg1 = to_info1(q->k_type, q->k_size);
+        case PULL:;
+                    msg->arg1 = to_info1(q->k_type, q->k_size);
 
                     memcpy(msg->data, q->k_v, q->k_size);
 
@@ -79,6 +80,22 @@ unreplied_query* init_unreplied_query(interChipCommand cmd, uint32_t message_id,
     q->time_sent    = time;
     return q;
 }*/
+
+unreplied_query* get_unreplied_query(double_linked_list* queue, uint32_t message_id){
+    list_entry* entry = *queue->head;
+
+    while(entry != NULL){
+        unreplied_query* q = (unreplied_query*)entry->data;
+
+        if(q->msg->seq == message_id){
+            return q;
+        }
+
+        entry = entry->next;
+    }
+
+    return NULL;
+}
 
 unreplied_query* remove_from_unreplied_queue(double_linked_list* queue, uint32_t message_id){
 

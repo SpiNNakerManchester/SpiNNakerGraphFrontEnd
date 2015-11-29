@@ -14,6 +14,13 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
+def dbCommandStr(value):
+    if(value is 0):
+        return "PUT"
+    if(value is 1):
+        return "PULL"
+    return "?"
+
 class dbCommands(Enum):
     PUT   = 0
     PULL  = 1
@@ -55,7 +62,6 @@ class sdp_packet():
         #arg2 represents info. least significant 12 bits are the size
         self.data = struct.unpack_from("{}s".format(self.data_size), bytestring, struct.calcsize("HHIII"))[0]
 
-
     def __str__(self):
         return "cmd_rc: {}, seq: {}, arg1: {}, arg2: {}, arg3: {}, data: {}"\
                 .format(self.cmd_rc, self.seq, self.arg1, self.arg2, self.arg3, self.data)
@@ -66,8 +72,8 @@ class sdp_packet():
                 .format(self.seq, self.arg3)
 
         if self.cmd_rc is dbCommands.PUT.value:
-            return "OK - id: {}, rtt: {}ms, chip: {}-{}, core: {}"\
-                .format(self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core)
+            return "{}: OK - id: {}, rtt: {}ms, chip: {}-{}, core: {}"\
+                .format(dbCommandStr(self.cmd_rc), self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core)
         elif self.cmd_rc is dbCommands.PULL.value:
             if self.data_type is dbDataType.INT.value:
                 d = "(int) {}".format(struct.unpack('I', self.data)[0])
@@ -76,8 +82,8 @@ class sdp_packet():
             else:
                 d = "(byte[]) {}".format(":".join("{:02x}".format(ord(c)) for c in self.data))
 
-            return "OK - id: {}, rtt: {}ms, chip: {}-{}, core: {}, data: {}"\
-                .format(self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core, d)
+            return "{} OK - id: {}, rtt: {}ms, chip: {}-{}, core: {}, data: {}"\
+                .format(dbCommandStr(self.cmd_rc), self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core, d)
         else:
             return "FAIL - invalid return cmd_rc: {} - id: {}, rtt: {}ms, chip: {}-{}, core: {}"\
                 .format(self.cmd_rc, self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core)
@@ -176,7 +182,9 @@ class SpiDBSocketConnection(Thread):
         for i, id_bytestring in enumerate(id_bytestrings):
             try:
                 bytestring = self.conn.receive(1)
+                #print ":".join("{:02x}".format(ord(c)) for c in bytestring)
                 sdp_h = sdp_packet(bytestring)
+                #print "sdp_packet : {}".format(sdp_h)
                 ret[id_to_index[sdp_h.seq]] = sdp_h.reply_data()
             except:
                 pass

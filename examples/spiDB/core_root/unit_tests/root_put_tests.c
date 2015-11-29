@@ -22,11 +22,6 @@ void printQuery(spiDBquery* q){
   log_info("=============================================");
 }
 
-typedef struct Pair{
-    uchar k[256];
-    uchar expected_v[256];
-} Pair;
-
 static uint32_t       puts_i = 0;
 static spiDBquery*    puts_sent[100];
 
