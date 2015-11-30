@@ -270,7 +270,7 @@ def add_partitioned_edge(cellclass, cellparams, label=None, constraints=None,
 
 def get_txrx():
     global _spinnaker
-    return _spinnaker.get_txrx()
+    return _spinnaker.transceiver
 
 
 def get_machine_dimensions():
