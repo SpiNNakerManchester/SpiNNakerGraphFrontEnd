@@ -76,15 +76,6 @@ void send_spiDBquery(spiDBquery* q){
 
     sdp_msg_t* msg = init_boss_sdp(q);
 
-    unreplied_query* uq = init_unreplied_query(msg);
-
-    if(q->cmd == PUT){
-        push(unreplied_puts,  uq);
-    }
-    else if(q->cmd == PULL) {
-        push(unreplied_pulls,  uq);
-    }
-
     #ifdef DB_HASH_TABLE
         switch(q->cmd){
             case PUT:;
@@ -95,6 +86,13 @@ void send_spiDBquery(spiDBquery* q){
                         uint8_t  chip_id_x = ((h & 0xF0000000) >> 28) % CHIP_X_SIZE;
                         uint8_t  chip_id_y = ((h & 0x0F000000) >> 24) % CHIP_Y_SIZE;
                         uint8_t  core_id   = (((h & 0x00F80000) >> 19) % CORE_SIZE) + FIRST_SLAVE;
+
+                        if(chip_id_x == 0 && chip_id_y == 0 && core_id == ROOT_CORE){
+                            core_id++; //todo temporary solution
+                        }
+
+                        log_info("Sending (%s) to (%d,%d,%d)", q->k_v, chip_id_x, chip_id_y, core_id);
+
 
                         msg->dest_addr = (chip_id_x << 8) | chip_id_y; //[1 byte x, 1 byte y]
                         msg->dest_port = (SDP_PORT << PORT_SHIFT) | core_id;
@@ -135,6 +133,15 @@ void send_spiDBquery(spiDBquery* q){
 
     #endif
 
+    unreplied_query* uq = init_unreplied_query(msg);
+
+    if(q->cmd == PUT){
+        push(unreplied_puts,  uq);
+    }
+    else if(q->cmd == PULL) {
+        push(unreplied_pulls,  uq);
+    }
+
     /*
         case CLEAR:;
                     for(int x=0; x < board_dimentions_x; x++){
@@ -171,62 +178,57 @@ void update (uint ticks, uint b){
 
     //if TEST MODE!!!! todo
     if(ticks == 10){
-        test_put(STRING, "Hello", STRING, "World");
-    }
-/*    else if(ticks == 20){
-
+        run_put_tests();
     }
 
-    if(ticks == 100){
-        test_pull(STRING, "Hello");
-        test_pull(STRING, "ABCDEF");
-    }*/
+    list_entry* entry = *unreplied_puts->head;
 
-    return; //for now.... TODO
+    while(entry != NULL){
+        unreplied_query* uq = (unreplied_query*)entry->data;
 
-    if(ticks % 1500 == 0){ //retry pull
-
-        list_entry* entry = *unreplied_pulls->head;
-
-        while(entry != NULL){
-            unreplied_query* uq = (unreplied_query*)entry->data;
-
-            if(uq->retries >= MAX_RETRIES){
-                log_info("PULL not found [time: %d, rtt: %d, retries: %d]",
-                          time, time - uq->time_sent, uq->retries);
-                remove_from_unreplied_queue(unreplied_pulls,uq->msg->seq);
-                send_failed_spiDBquery(uq);
-            }
-            else{
-                uq->retries++;
-                broadcast_pull(uq);
-            }
-
-            entry = entry->next;
-        }
-    }
-    else if(ticks % 1500 == 800){ //retry put
-
-        list_entry* entry = *unreplied_puts->head;
-
-        while(entry != NULL){
-            unreplied_query* uq = (unreplied_query*)entry->data;
+        uq->ticks++;
+        if(uq->ticks % 100 == 0){
             uq->retries++;
 
-            if(uq->retries >= MAX_RETRIES){
+            if(uq->retries > MAX_RETRIES+10){
                 log_info("Tried sending PUT id %d too many times. Removing from queue", uq->msg->seq);
                 remove_from_unreplied_queue(unreplied_puts,uq->msg->seq); //todo ineffient removing here like this
                 send_failed_spiDBquery(uq);
             }
             else{
-                uq->retries++;
+                log_info("Retrying cmd %d, data %s", uq->msg->cmd_rc, uq->msg->data);
+                //print_msg(uq->msg);
                 spin1_send_sdp_msg(uq->msg, SDP_TIMEOUT); //message, timeout
             }
-
-            entry = entry->next;
         }
 
+        entry = entry->next;
     }
+
+    entry = *unreplied_pulls->head;
+
+    while(entry != NULL){
+        unreplied_query* uq = (unreplied_query*)entry->data;
+
+        uq->ticks++;
+        if(uq->ticks % 100 == 0){
+            uq->retries++;
+
+            if(uq->retries > MAX_RETRIES+10){
+                log_info("Tried sending PULL id %d too many times. Removing from queue", uq->msg->seq);
+                remove_from_unreplied_queue(unreplied_pulls,uq->msg->seq); //todo ineffient removing here like this
+                send_failed_spiDBquery(uq);
+            }
+            else{
+                log_info("Retrying cmd %d, data %s", uq->msg->cmd_rc, uq->msg->data);
+                //print_msg(uq->msg);
+                spin1_send_sdp_msg(uq->msg, SDP_TIMEOUT); //message, timeout
+            }
+        }
+
+        entry = entry->next;
+    }
+
 }
 
 void send_successful_spiDBqueryReply(sdp_msg_t* reply_msg, unreplied_query* uq){
@@ -251,12 +253,11 @@ void send_successful_spiDBqueryReply(sdp_msg_t* reply_msg, unreplied_query* uq){
 
                             message_to_host->length = sizeof(sdp_hdr_t) + 16;
                             break;
-
         case PULL_REPLY:;
                             message_to_host->cmd_rc = PULL;
 
-                            uint32_t data_size = reply_msg->arg2;
                             var_type data_type = reply_msg->arg1;
+                            uint32_t data_size = reply_msg->arg2;
 
                             message_to_host->arg2 = to_info1(data_type, data_size); //value type & size
 
@@ -305,8 +306,8 @@ void process_requests(uint arg0, uint arg1){
                     check(uq, "Received a PUT_REPLY with unexpected id %d", msg->seq);
                     if(!uq){print_unreplied_queue(unreplied_puts);break;}
 
-                    log_info("Received a PUT_REPLY [id: %d, time: %d, rtt: %d, retries: %d]",
-                              uq->msg->seq, time, time - uq->time_sent, uq->retries);
+                    //log_info("Received a PUT_REPLY [id: %d, time: %d, rtt: %d, retries: %d]",
+                    //          uq->msg->seq, time, time - uq->time_sent, uq->retries);
 
                     send_successful_spiDBqueryReply(msg, uq);
                     break;
@@ -317,15 +318,15 @@ void process_requests(uint arg0, uint arg1){
                     check(uq, "Received a PULL_REPLY with unexpected id %d", msg->seq);
                     if(!uq){print_unreplied_queue(unreplied_pulls);break;}
 
-                    log_info("Received a PULL_REPLY [id: %d, time: %d, rtt: %d, retries: %d]",
-                              uq->msg->seq, time, time - uq->time_sent, uq->retries);
+                    //log_info("Received a PULL_REPLY [id: %d, time: %d, rtt: %d, retries: %d]",
+                    //          uq->msg->seq, time, time - uq->time_sent, uq->retries);
 
                     send_successful_spiDBqueryReply(msg, uq);
 
                     break;
                 default:;
-                    sentinel("Received invalid reply with id: %d, cmd_rc: %02x", msg->seq, msg->cmd_rc);
-                    print_msg(msg);
+                    //sentinel("Received invalid reply with id: %d, cmd_rc: %02x", msg->seq, msg->cmd_rc);
+                    //print_msg(msg);
                     break;
             }
 

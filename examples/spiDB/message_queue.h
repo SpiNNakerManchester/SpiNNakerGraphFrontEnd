@@ -8,6 +8,7 @@
 typedef struct unreplied_query{
     uint8_t     retries;
     uint32_t    time_sent;
+    uint32_t    ticks;
 
     sdp_msg_t*  msg;
 } unreplied_query;
@@ -53,6 +54,7 @@ sdp_msg_t* init_boss_sdp(spiDBquery* q){
 unreplied_query* init_unreplied_query(sdp_msg_t* msg){
     unreplied_query* uq = (unreplied_query*) sark_alloc(1, sizeof(unreplied_query));
     uq->retries      = 0;
+    uq->ticks        = 0;
     uq->time_sent    = time;
     uq->msg          = msg;
 

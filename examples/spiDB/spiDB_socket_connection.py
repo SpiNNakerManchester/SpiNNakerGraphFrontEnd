@@ -11,6 +11,9 @@ import struct
 import sys
 
 from enum import Enum
+from spinnman.transceiver import create_transceiver_from_hostname
+from spinnman.model.core_subsets import CoreSubsets
+from spinnman.model.core_subset import CoreSubset
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +127,22 @@ class SpiDBSocketConnection(Thread):
         self.current_message_id = -1
         self.command_buffer = []
 
+        #self.remotehost = self._config.get("Machine", "machineName")
+        #self.board_version = self._config.getint("Machine", "version")
+        """
+        self.bmp_names = self._config.get("Machine", "bmp_names")
+        if self.bmp_names == "None":
+            self.bmp_names = None
+        self.auto_detect_bmp = \
+            self._config.getboolean("Machine", "auto_detect_bmp")
+        self.localport = 54321
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect((self.remotehost, 0))
+        self.localhost = s.getsockname()[0]
+        """
+
+        self.transceiver = create_transceiver_from_hostname(self.ip_address, 3)
+
     def clear(self):
         self.current_message_id += 1
 
@@ -191,8 +210,15 @@ class SpiDBSocketConnection(Thread):
 
         return ret
 
+    def print_log(self, x, y, p):
+        iobufs = self.transceiver.get_iobuf(core_subsets = [CoreSubset(x, y, [p])])
+        for iobuf in iobufs:
+            print iobuf
+
     def run(self):
         time.sleep(9) #todo change!!!!
+
+        self.print_log(0, 0, 1)
 
         while True:
             try:
@@ -206,6 +232,9 @@ class SpiDBSocketConnection(Thread):
                     self.command_buffer = []
                 elif cmd.startswith("put") or cmd.startswith("pull"):
                     self.command_buffer.append(eval("self.{}".format(cmd)))
+                elif cmd.startswith("log"):
+                    arr = cmd.split(" ")
+                    self.print_log(int(arr[1]), int(arr[2]), int(arr[3]))
                 elif cmd == "exit":
                     sys.exit(0)
                 else:
