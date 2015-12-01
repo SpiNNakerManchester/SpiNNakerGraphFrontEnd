@@ -11,9 +11,9 @@ from spinn_front_end_common.utility_models.live_packet_gather import \
 from spinnman.messages.eieio.eieio_type import EIEIOType
 
 # graph front end imports
-import spynnaker_graph_front_end as front_end
-from spynnaker_graph_front_end import ReverseIpTagMultiCastSource
-from spynnaker_graph_front_end import MultiCastPartitionedEdge
+import spinnaker_graph_front_end as front_end
+from spinnaker_graph_front_end import ReverseIpTagMultiCastSource
+from spinnaker_graph_front_end import MultiCastPartitionedEdge
 
 # example imports
 from examples.heat_demo.heat_demo_command_edge import HeatDemoCommandEdge
