@@ -42,7 +42,7 @@ void update(uint ticks, uint b){
 }
 
 void sdp_packet_callback(uint mailbox, uint port) {
-    log_info("======================================= Received request... mailbox: %08x", mailbox);
+    //log_info("======================================= Received request... mailbox: %08x", mailbox);
 
     // If there was space, add packet to the ring buffer
     if (circular_buffer_add(sdp_buffer, mailbox)) {
@@ -80,7 +80,7 @@ void process_requests(uint arg0, uint arg1){
             case PUT:;
                         log_info("PUT on address: %04x", *addr);
 
-                        put(addr, info, k_v, &k_v[k_size_from_info2(info)]);
+                        put(addr, info, k_v, &k_v[k_size_from_info(info)]);
 
                         revert_src_dest(msg);
                         msg->cmd_rc = PUT_REPLY;
@@ -94,19 +94,19 @@ void process_requests(uint arg0, uint arg1){
                         value_entry_ptr = pull(*addr,info, k_v);
 
                         if(value_entry_ptr){
-                            log_info("Replying PULL request id %d at time * %d * with data (s: %s) of size %d",
-                                     msg->seq, time, value_entry_ptr->data, value_entry_ptr->size);
+                            log_info("Replying PULL request id %d at time * %d * with data (s: %s) of type %d, size %d",
+                                     msg->seq, time, value_entry_ptr->data, value_entry_ptr->type, value_entry_ptr->size);
 
                             revert_src_dest(msg);
                             msg->cmd_rc = PULL_REPLY;
                             //to_info1(value_entry_ptr->type, value_entry_ptr->size); //or simply use arg2 arg3
-                            msg->arg1 = value_entry_ptr->type;
-                            msg->arg2 = value_entry_ptr->size;
+
+                            msg->arg1 = to_info(0, 0, value_entry_ptr->type, value_entry_ptr->size);
 
                             memcpy(msg->data, value_entry_ptr->data, value_entry_ptr->size);
                             msg->length = sizeof(sdp_hdr_t) + 16 + value_entry_ptr->size;
 
-                            //print_msg(msg);
+                            print_msg(msg);
 
                             spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
                         }

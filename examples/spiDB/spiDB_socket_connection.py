@@ -59,8 +59,8 @@ class sdp_packet():
         self.chip_y = (self.arg1 & 0x0000FF00) >> 8
         self.core   = (self.arg1 & 0x000000FF)
 
-        self.data_type = (self.arg2 & 0xF000) >> 12
-        self.data_size = (self.arg2 & 0x0FFF)
+        self.data_type = (self.arg2 & 0xF0000000) >> 28
+        self.data_size = (self.arg2 & 0x0FFF0000) >> 16
 
         #arg2 represents info. least significant 12 bits are the size
         self.data = struct.unpack_from("{}s".format(self.data_size), bytestring, struct.calcsize("HHIII"))[0]

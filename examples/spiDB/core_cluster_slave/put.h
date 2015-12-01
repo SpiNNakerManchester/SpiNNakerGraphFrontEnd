@@ -4,8 +4,8 @@
 
 bool put(address_t* addr, uint32_t info, void* k, void* v){
 
-    size_t k_size = k_size_from_info2(info);
-    size_t v_size = v_size_from_info2(info);
+    size_t k_size = k_size_from_info(info);
+    size_t v_size = v_size_from_info(info);
 
     append(addr, &info, sizeof(uint32_t));
     append(addr, k,     k_size);

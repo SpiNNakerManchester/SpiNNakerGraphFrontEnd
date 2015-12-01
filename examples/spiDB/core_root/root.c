@@ -19,6 +19,7 @@
 #include "../sdram_writer.h"
 #include "../sdp_utils.h"
 #include <data_specification.h>
+#include <simulation.h>
 #include <sark.h>
 #include <circular_buffer.h>
 #include "../double_linked_list.h"
@@ -62,7 +63,7 @@ uint32_t hash(uchar* bytes, size_t size){
     uint32_t h = 5381;
 
     for(uint16_t i = 0; i < size; i++){
-        h = ((h << 5) + h) + bytes[i] ^ (bytes[i] << 28);
+        h = ((h << 5) + h) + (bytes[i] ^ (bytes[i] << 28));
     }
 
     return h;
@@ -92,7 +93,6 @@ void send_spiDBquery(spiDBquery* q){
                         }
 
                         log_info("Sending (%s) to (%d,%d,%d)", q->k_v, chip_id_x, chip_id_y, core_id);
-
 
                         msg->dest_addr = (chip_id_x << 8) | chip_id_y; //[1 byte x, 1 byte y]
                         msg->dest_port = (SDP_PORT << PORT_SHIFT) | core_id;
@@ -142,6 +142,8 @@ void send_spiDBquery(spiDBquery* q){
         push(unreplied_pulls,  uq);
     }
 
+    // free the message to stop overload
+    //spin1_msg_free(msg);
     /*
         case CLEAR:;
                     for(int x=0; x < board_dimentions_x; x++){
@@ -174,11 +176,16 @@ void send_failed_spiDBquery(unreplied_query* uq){ //source is -1
 }
 
 void update (uint ticks, uint b){
+    use(b);
+
     time += TIMER_PERIOD;
 
     //if TEST MODE!!!! todo
     if(ticks == 10){
         run_put_tests();
+    }
+    else if(ticks == 1000){
+        tests_summary();
     }
 
     list_entry* entry = *unreplied_puts->head;
@@ -191,12 +198,12 @@ void update (uint ticks, uint b){
             uq->retries++;
 
             if(uq->retries > MAX_RETRIES+10){
-                log_info("Tried sending PUT id %d too many times. Removing from queue", uq->msg->seq);
+                //log_info("Tried sending PUT id %d too many times. Removing from queue", uq->msg->seq);
                 remove_from_unreplied_queue(unreplied_puts,uq->msg->seq); //todo ineffient removing here like this
                 send_failed_spiDBquery(uq);
             }
             else{
-                log_info("Retrying cmd %d, data %s", uq->msg->cmd_rc, uq->msg->data);
+                //log_info("Retrying cmd %d, data %s", uq->msg->cmd_rc, uq->msg->data);
                 //print_msg(uq->msg);
                 spin1_send_sdp_msg(uq->msg, SDP_TIMEOUT); //message, timeout
             }
@@ -215,12 +222,12 @@ void update (uint ticks, uint b){
             uq->retries++;
 
             if(uq->retries > MAX_RETRIES+10){
-                log_info("Tried sending PULL id %d too many times. Removing from queue", uq->msg->seq);
+                //log_info("Tried sending PULL id %d too many times. Removing from queue", uq->msg->seq);
                 remove_from_unreplied_queue(unreplied_pulls,uq->msg->seq); //todo ineffient removing here like this
                 send_failed_spiDBquery(uq);
             }
             else{
-                log_info("Retrying cmd %d, data %s", uq->msg->cmd_rc, uq->msg->data);
+                //log_info("Retrying cmd %d, data %s", uq->msg->cmd_rc, uq->msg->data);
                 //print_msg(uq->msg);
                 spin1_send_sdp_msg(uq->msg, SDP_TIMEOUT); //message, timeout
             }
@@ -233,7 +240,7 @@ void update (uint ticks, uint b){
 
 void send_successful_spiDBqueryReply(sdp_msg_t* reply_msg, unreplied_query* uq){
 
-    uint8_t srce_core_id = reply_msg->srce_port & 0x1F;
+    uint8_t srce_core_id = get_srce_core(reply_msg);
 
     //[1 byte chip x, 1 byte chip y, 1 byte - core id]
     uint32_t srce = (reply_msg->srce_addr << 8) | srce_core_id; //chip and core where reply came from
@@ -256,10 +263,10 @@ void send_successful_spiDBqueryReply(sdp_msg_t* reply_msg, unreplied_query* uq){
         case PULL_REPLY:;
                             message_to_host->cmd_rc = PULL;
 
-                            var_type data_type = reply_msg->arg1;
-                            uint32_t data_size = reply_msg->arg2;
+                            var_type data_type = v_type_from_info(reply_msg->arg1);
+                            uint32_t data_size = v_size_from_info(reply_msg->arg1);
 
-                            message_to_host->arg2 = to_info1(data_type, data_size); //value type & size
+                            message_to_host->arg2 = to_info(data_type, data_size, 0, 0); //value type & size
 
                             memcpy(message_to_host->data, reply_msg->data, data_size);
 
@@ -276,6 +283,8 @@ void send_successful_spiDBqueryReply(sdp_msg_t* reply_msg, unreplied_query* uq){
 }
 
 void sdp_packet_callback(uint mailbox, uint port) {
+    use(port);
+
     // If there was space, add packet to the ring buffer
     if (circular_buffer_add(sdp_buffer, mailbox)) {
         spin1_trigger_user_event(0, 0);
@@ -283,8 +292,10 @@ void sdp_packet_callback(uint mailbox, uint port) {
 }
 
 void process_requests(uint arg0, uint arg1){
+    use(arg0);
+    use(arg1);
 
-    uint32_t* mailbox_ptr;
+    uint32_t* mailbox_ptr = NULL;
     while(circular_buffer_get_next(sdp_buffer, mailbox_ptr)){
 
         sdp_msg_t* msg = (sdp_msg_t*) (*mailbox_ptr);
@@ -304,7 +315,7 @@ void process_requests(uint arg0, uint arg1){
                     uq = remove_from_unreplied_queue(unreplied_puts, msg->seq);
 
                     check(uq, "Received a PUT_REPLY with unexpected id %d", msg->seq);
-                    if(!uq){print_unreplied_queue(unreplied_puts);break;}
+                    //if(!uq){print_unreplied_queue(unreplied_puts);break;}
 
                     //log_info("Received a PUT_REPLY [id: %d, time: %d, rtt: %d, retries: %d]",
                     //          uq->msg->seq, time, time - uq->time_sent, uq->retries);
@@ -316,7 +327,7 @@ void process_requests(uint arg0, uint arg1){
                     uq = remove_from_unreplied_queue(unreplied_pulls, msg->seq);
 
                     check(uq, "Received a PULL_REPLY with unexpected id %d", msg->seq);
-                    if(!uq){print_unreplied_queue(unreplied_pulls);break;}
+                    //if(!uq){print_unreplied_queue(unreplied_pulls);break;}
 
                     //log_info("Received a PULL_REPLY [id: %d, time: %d, rtt: %d, retries: %d]",
                     //          uq->msg->seq, time, time - uq->time_sent, uq->retries);
@@ -339,8 +350,7 @@ void process_requests(uint arg0, uint arg1){
     }
 }
 
-void c_main()
-{
+void c_main(){
     log_info("Initializing Root...");
 
     if (!initialize()) {

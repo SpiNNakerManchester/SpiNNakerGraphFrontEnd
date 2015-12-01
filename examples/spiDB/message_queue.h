@@ -27,7 +27,7 @@ sdp_msg_t* init_boss_sdp(spiDBquery* q){
 
     switch(q->cmd){
         case PUT:;
-                    msg->arg1 = to_info2(q->k_type, q->k_size, q->v_type, q->v_size);
+                    msg->arg1 = to_info(q->k_type, q->k_size, q->v_type, q->v_size);
 
                     memcpy(msg->data, q->k_v, q->k_size + q->v_size);
 
@@ -35,7 +35,7 @@ sdp_msg_t* init_boss_sdp(spiDBquery* q){
 
                     break;
         case PULL:;
-                    msg->arg1 = to_info1(q->k_type, q->k_size);
+                    msg->arg1 = to_info(q->k_type, q->k_size, 0, 0);
 
                     memcpy(msg->data, q->k_v, q->k_size);
 
