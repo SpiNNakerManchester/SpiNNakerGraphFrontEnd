@@ -852,7 +852,9 @@ class SpiNNakerGraphFrontEnd(object):
                                                           router_table.y)
 
             # execute app stop
-            # self._txrx.stop_application(self._app_id)
+            self._txrx.stop_application(self._app_id)
+
+            # close database
             if self._create_database:
                 self._database_interface.stop()
 
