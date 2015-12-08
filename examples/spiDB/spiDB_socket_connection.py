@@ -12,7 +12,6 @@ import sys
 
 from enum import Enum
 from spinnman.transceiver import create_transceiver_from_hostname
-from spinnman.model.core_subsets import CoreSubsets
 from spinnman.model.core_subset import CoreSubset
 
 logger = logging.getLogger(__name__)
@@ -59,34 +58,39 @@ class sdp_packet():
         self.chip_y = (self.arg1 & 0x0000FF00) >> 8
         self.core   = (self.arg1 & 0x000000FF)
 
-        self.data_type = (self.arg2 & 0xF0000000) >> 28
-        self.data_size = (self.arg2 & 0x0FFF0000) >> 16
+        self.success = self.arg2 != 0
 
-        #arg2 represents info. least significant 12 bits are the size
-        self.data = struct.unpack_from("{}s".format(self.data_size), bytestring, struct.calcsize("HHIII"))[0]
+        if(self.success):
+            self.data_type = (self.arg2 & 0xF0000000) >> 28
+            self.data_size = (self.arg2 & 0x0FFF0000) >> 16
+            self.data = struct.unpack_from("{}s".format(self.data_size), bytestring, struct.calcsize("HHIII"))[0]
 
     def __str__(self):
         return "cmd_rc: {}, seq: {}, arg1: {}, arg2: {}, arg3: {}, data: {}"\
                 .format(self.cmd_rc, self.seq, self.arg1, self.arg2, self.arg3, self.data)
 
     def reply_data(self):
-        if self.core is 255:
-            return "FAIL - id: {}, rtt: {}"\
-                .format(self.seq, self.arg3)
-
         if self.cmd_rc is dbCommands.PUT.value:
-            return "{}: OK - id: {}, rtt: {}ms, chip: {}-{}, core: {}"\
-                .format(dbCommandStr(self.cmd_rc), self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core)
-        elif self.cmd_rc is dbCommands.PULL.value:
-            if self.data_type is dbDataType.INT.value:
-                d = "(int) {}".format(struct.unpack('I', self.data)[0])
-            elif self.data_type is dbDataType.STRING.value:
-                d = "(string) {}".format(self.data)
+            if(self.success):
+                return "{}  OK - id: {}, rtt: {}ms, chip: {}-{}, core: {}"\
+                    .format(dbCommandStr(self.cmd_rc), self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core)
             else:
-                d = "(byte[]) {}".format(":".join("{:02x}".format(ord(c)) for c in self.data))
+                return "{}  FAIL - id: {}, rtt: {}ms, chip: {}-{}, core: {}"\
+                    .format(dbCommandStr(self.cmd_rc), self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core)
+        elif self.cmd_rc is dbCommands.PULL.value:
+            if(self.success):
+                if self.data_type is dbDataType.INT.value:
+                    d = "(int) {}".format(struct.unpack('I', self.data)[0])
+                elif self.data_type is dbDataType.STRING.value:
+                    d = "(string) {}".format(self.data)
+                else:
+                    d = "(byte[]) {}".format(":".join("{:02x}".format(ord(c)) for c in self.data))
 
-            return "{} OK - id: {}, rtt: {}ms, chip: {}-{}, core: {}, data: {}"\
-                .format(dbCommandStr(self.cmd_rc), self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core, d)
+                return "{} OK - id: {}, rtt: {}ms, chip: {}-{}, core: {}, data: {}"\
+                    .format(dbCommandStr(self.cmd_rc), self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core, d)
+            else:
+                return "{} FAIL - id: {}, rtt: {}ms, chip: {}-{}, core: {}"\
+                    .format(dbCommandStr(self.cmd_rc), self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core)
         else:
             return "FAIL - invalid return cmd_rc: {} - id: {}, rtt: {}ms, chip: {}-{}, core: {}"\
                 .format(self.cmd_rc, self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core)
@@ -195,7 +199,7 @@ class SpiDBSocketConnection(Thread):
 
         for i, id_bytestring in enumerate(id_bytestrings):
             id_to_index[id_bytestring[0]] = i
-            time.sleep(0.001)
+            #time.sleep(0.001)
             self.conn.send_to(id_bytestring[1], (self.ip_address, self.port))
 
         for i, id_bytestring in enumerate(id_bytestrings):
@@ -224,14 +228,19 @@ class SpiDBSocketConnection(Thread):
             try:
                 cmd = raw_input("> ")
 
-                if cmd == "flush":
-                    print self.flush(self.command_buffer)
+                if cmd == "":
+                    pass
+                elif cmd == "flush":
+                    for response in self.flush(self.command_buffer):
+                        print response
                     self.command_buffer = []
                 elif cmd == "clear":
                     self.conn.send_to(self.clear()[1], (self.ip_address, self.port))
                     self.command_buffer = []
                 elif cmd.startswith("put") or cmd.startswith("pull"):
                     self.command_buffer.append(eval("self.{}".format(cmd)))
+                elif cmd == "log":
+                    self.print_log(0, 0, 1)
                 elif cmd.startswith("log"):
                     arr = cmd.split(" ")
                     self.print_log(int(arr[1]), int(arr[2]), int(arr[3]))
@@ -242,4 +251,3 @@ class SpiDBSocketConnection(Thread):
 
             except Exception:
                 traceback.print_exc()
-                time.sleep(1)

@@ -15,42 +15,6 @@ typedef struct unreplied_query{
 
 extern uint32_t time;
 
-sdp_msg_t* init_boss_sdp(spiDBquery* q){
-
-    sdp_msg_t* msg   = create_sdp_header(0, 1); // chip 0, core 1 (master) //todo change
-
-    msg->cmd_rc = q->cmd;
-    msg->seq    = q->id;
-
-    msg->arg2   = 0;
-    msg->arg3   = 0;
-
-    switch(q->cmd){
-        case PUT:;
-                    msg->arg1 = to_info(q->k_type, q->k_size, q->v_type, q->v_size);
-
-                    memcpy(msg->data, q->k_v, q->k_size + q->v_size);
-
-                    msg->length = sizeof(sdp_hdr_t) + 16 + q->k_size + q->v_size;
-
-                    break;
-        case PULL:;
-                    msg->arg1 = to_info(q->k_type, q->k_size, 0, 0);
-
-                    memcpy(msg->data, q->k_v, q->k_size);
-
-                    msg->length = sizeof(sdp_hdr_t) + 16 + q->k_size;
-
-                    break;
-        case CLEAR:;msg->arg1 = 0;
-                    break;
-        default:    return NULL;
-                    break;
-    }
-
-    return msg;
-}
-
 unreplied_query* init_unreplied_query(sdp_msg_t* msg){
     unreplied_query* uq = (unreplied_query*) sark_alloc(1, sizeof(unreplied_query));
     uq->retries      = 0;
@@ -60,28 +24,6 @@ unreplied_query* init_unreplied_query(sdp_msg_t* msg){
 
     return uq;
 }
-/*
-unreplied_query* init_unreplied_query_from_msg(sdp_msg_t msg){
-    unreplied_query* q = (unreplied_query*) sark_alloc(1, sizeof(unreplied_query));
-    q->retries      = 0;
-    q->cmd          = msg.cmd_rc;
-    q->message_id   = msg.seq;
-    q->info         = msg.arg1;
-    q->data         = msg.arg2;
-    q->time_sent    = time;
-    return q;
-}
-
-unreplied_query* init_unreplied_query(interChipCommand cmd, uint32_t message_id, uint32_t info, void* data){
-    unreplied_query* q = (unreplied_query*) sark_alloc(1, sizeof(unreplied_query));
-    q->retries      = 0;
-    q->cmd          = cmd;
-    q->message_id   = message_id;
-    q->info         = info;
-    q->data         = data;
-    q->time_sent    = time;
-    return q;
-}*/
 
 unreplied_query* get_unreplied_query(double_linked_list* queue, uint32_t message_id){
     list_entry* entry = *queue->head;

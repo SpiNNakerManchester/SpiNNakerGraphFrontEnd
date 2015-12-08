@@ -2,7 +2,7 @@
 
 static uint32_t q_generated_id = 0;
 
-extern void send_spiDBquery(spiDBquery* q);
+extern bool send_spiDBquery(spiDBquery* q);
 extern double_linked_list* unreplied_puts;
 extern double_linked_list* unreplied_pulls;
 
@@ -66,7 +66,12 @@ void print_results(){
     }
 }
 
-spiDBquery* createAndSendQuery(spiDBcommand cmd,
+typedef struct spiDBquerySent {
+    spiDBquery* q;
+    bool        sent;
+} spiDBquerySent;
+
+spiDBquerySent createAndSendQuery(spiDBcommand cmd,
                         var_type k_type, size_t k_size, char* k,
                         var_type v_type, size_t v_size, char* v){
 
@@ -82,9 +87,11 @@ spiDBquery* createAndSendQuery(spiDBcommand cmd,
     memcpy(q->k_v,          k, k_size);
     memcpy(&q->k_v[k_size], v, v_size);
 
-    send_spiDBquery(q);
+    spiDBquerySent qs;
+    qs.q = q;
+    qs.sent = send_spiDBquery(q);
 
-    return q;
+    return qs;
 }
 
 size_t size(var_type t, char* c){
@@ -95,16 +102,66 @@ size_t size(var_type t, char* c){
     }
 }
 
-void test_put(var_type k_type, char* k, var_type v_type, char* v){
-    spiDBquery* q = createAndSendQuery(PUT, k_type, size(k_type,k), k, v_type, size(v_type,v), v);
+
+void record_result(spiDBcommand cmd, uint32_t test_id, bool passed){
+    if(test_id >= 0){
+
+        TestResult result = passed ? PASSED : FAILED;
+
+        switch(cmd){
+            case PUT_REPLY:
+                if(puts_results[test_id] == NOT_RUN){
+                    puts_results[test_id] = result;
+                    total_puts_received++;
+                    if(result == PASSED){
+                       total_puts_passed++;
+                    }
+                }
+                else{
+                    log_debug("Warning.... received multiple test results...");
+                }
+                break;
+            case PULL_REPLY:
+                if(pulls_results[test_id] == NOT_RUN){
+                    pulls_results[test_id] = result;
+                    total_pulls_received++;
+                    if(result == PASSED){
+                       total_pulls_passed++;
+                    }
+                }
+                else{
+                    log_debug("Warning.... received multiple test results...");
+                }
+                break;
+            default:
+                log_debug("Invalid cmd %d", cmd);
+                break;
+        }
+    }
+}
+
+void test_put(bool expected_sent, var_type k_type, char* k, var_type v_type, char* v){
+    spiDBquerySent qs = createAndSendQuery(PUT, k_type, size(k_type,k), k, v_type, size(v_type,v), v);
+    spiDBquery* q = qs.q;
     //TODO PROBLEM IF THE PULL ARRIVES BEFORE AND INCREASES THE ID
     puts_sent[q->id] = q;
     total_puts_sent++;
+
+    if(!qs.sent){
+        record_result(PUT_REPLY, q->id, expected_sent ? FAILED : PASSED);
+    }
 }
 
 void test_pull_with_size(var_type k_type, size_t k_size, char* k, uint32_t put_id){
-    pulls_sent[put_id] = createAndSendQuery(PULL, k_type, k_size, k, 0, 0, NULL);
+    spiDBquerySent qs = createAndSendQuery(PULL, k_type, k_size, k, 0, 0, NULL);
+    spiDBquery* q = qs.q;
+
+    pulls_sent[put_id] = q;
     total_pulls_sent++;
+
+     if(!qs.sent){
+        record_result(PULL_REPLY, q->id, FAILED);
+    }
 }
 
 bool isReplyType(sdp_msg_t* msg){
@@ -133,12 +190,18 @@ bool isReplyOf(sdp_msg_t* reply, sdp_msg_t* msg){
         *passed_ptr &= condition;                                      \
     } while (0)
 
+
 bool test_receive_sdp_msg(sdp_msg_t* reply_msg){
+
+    if(!reply_msg){
+        log_debug("sdp_msg_t* reply_msg is NULL");
+        return false;
+    }
+
+    //todo if some values are null. COMPLAIN and QUIT
 
     bool passed = true;
     uint32_t test_id = -1;
-
-    assert_t(reply_msg != NULL, &passed, "sdp_msg_t* reply_msg is NULL");
 
     unreplied_query* q = NULL;
 
@@ -147,7 +210,6 @@ bool test_receive_sdp_msg(sdp_msg_t* reply_msg){
             log_debug("===== Testing PUT %s =====", reply_msg->data);
 
             q = get_unreplied_query(unreplied_puts, reply_msg->seq);
-
 
             assert_t(q != NULL, &passed, "PUT_REPLY of id: %d was not found on unreplied_puts", reply_msg->seq);
 
@@ -177,10 +239,7 @@ bool test_receive_sdp_msg(sdp_msg_t* reply_msg){
                 //find from the pull that we sent, what the key was
                 if(k_size == put_query->k_size && arr_equals(put_query->k_v, q->msg->data, k_size)){
                     log_debug("===== Testing PULL %s =====", put_query->k_v);
-                    log_debug("because put_query->k_v (%s) == (%s) q->msg->data, k_size_from_info(q->msg->arg1) = %d",
-                                put_query->k_v, q->msg->data, k_size);
-                    printQuery(put_query);
-                    print_msg(reply_msg);
+
                     test_id = put_query->id;
 
                     expected_v = &put_query->k_v[put_query->k_size];
@@ -190,6 +249,10 @@ bool test_receive_sdp_msg(sdp_msg_t* reply_msg){
 
                     break;
                 }
+            }
+
+            if(expected_v == NULL){
+                log_debug("[WARNING] Cound not find put_query for this PULL");
             }
 
             var_type reply_v_type = v_type_from_info(reply_msg->arg1);
@@ -230,40 +293,9 @@ bool test_receive_sdp_msg(sdp_msg_t* reply_msg){
     assert_t(reply_msg->srce_port == q->msg->dest_port, &passed,
                            "reply_msg->srce_port (%02x) != q->msg->dest_port (%02x)", reply_msg->srce_port, q->msg->dest_port);
 
-    assert_t(reply_msg->arg1, &passed, "reply_msg->arg1 is not set");
+    assert_t(reply_msg->arg1 != 0, &passed, "reply_msg->arg1 is not set");
 
-    if(test_id >= 0){
-        TestResult result = passed ? PASSED : FAILED;
-
-        switch(reply_msg->cmd_rc){
-            case PUT_REPLY:
-                if(puts_results[test_id] == NOT_RUN){
-                    puts_results[test_id] = result;
-                    total_puts_received++;
-                    if(result == PASSED){
-                       total_puts_passed++;
-                    }
-                }
-                else{
-                    log_debug("Warning.... received multiple test results...");
-                }
-                break;
-            case PULL_REPLY:
-                if(pulls_results[test_id] == NOT_RUN){
-                    pulls_results[test_id] = result;
-                    total_pulls_received++;
-                    if(result == PASSED){
-                       total_pulls_passed++;
-                    }
-                }
-                else{
-                    log_debug("Warning.... received multiple test results...");
-                }
-                break;
-            default:
-                break;
-        }
-    }
+    record_result(reply_msg->cmd_rc, test_id, passed);
 
     return passed;
 }
@@ -294,38 +326,66 @@ void tests_summary(){
     log_debug("==============================================================");
 }
 
+char* p(char* c, size_t n){
+    for(uint i = 0; i < n; i++){
+        log_debug("c[%d] = %c", i, c[i]);
+    }
+}
+
+char* c(uint32_t i){
+    return (char*)&i;
+}
+
 void run_put_tests(){
     //non printable chars
 
-    test_put(STRING, "Hello", STRING, "World");
+    //Test String success
+    test_put(true, STRING, "Hello",     STRING, "World");
+    test_put(true, STRING, "Helloo",    STRING, "foo");
+    test_put(true, STRING, "Hell",      STRING, "bar");
+    test_put(true, STRING, "Hello1",    STRING, "GG");
+    test_put(true, STRING, "HELLO",     STRING, "World");
+    test_put(true, STRING, "hello",     STRING, "World");
+    test_put(true, STRING, "H",         STRING, "World");
 
-    test_put(STRING, "Helloo", STRING, "foo");
+    test_put(true, STRING, ".",         STRING, "!");
 
-    test_put(STRING, "Hell", STRING, "bar");
+    test_put(true, STRING, "1234",      STRING, "5678");
+    test_put(true, STRING, "A1B2C3",    STRING, "ABCD");
+    test_put(true, STRING, "A1",        STRING, "Test");
+    test_put(true, STRING, "1A",        STRING, "Test");
+    test_put(true, STRING, "456",       STRING, "Test");
+    test_put(true, STRING, "IntValue",  STRING, "159");
 
-    test_put(STRING, "A", STRING, "World");
+    test_put(true, STRING, "A relatively long string... with spaces and other characters in it!", STRING, "uhul");
+    test_put(true, STRING, "uhul",      STRING, "A relatively long string... with spaces and other characters in it!");
 
-    test_put(STRING, "1234", STRING, "5678");
+    //Test String failures
+    test_put(false, STRING, "",         STRING, "value");
+    test_put(false, STRING, "key",      STRING, "");
+    test_put(false, STRING, "",         STRING, "");
 
-    test_put(STRING, ".", STRING, "!");
+    #define INVALID_TYPE -1
 
-    test_put(STRING, "A1B2C3", STRING, "ABCD");
+    test_put(false, INVALID_TYPE, 234,  UINT32,         456);
+    test_put(false, UINT32,       345,  INVALID_TYPE,   567);
+    test_put(false, INVALID_TYPE, 234,  UINT32,         456);
 
-    test_put(STRING, "A1", STRING, "Test");
+    //Test int success
+    //todo test very long
 
-    test_put(STRING, "1A", STRING, "Test");
+    test_put(true, UINT32, c(123),     UINT32, c(456));
+    test_put(true, UINT32, c(12),      UINT32, c(456));
+    test_put(true, UINT32, c(1234),    UINT32, c(456));
 
-    test_put(STRING, "456", STRING, "Test");
+    //Test mixed
+    test_put(true, UINT32, c(741),          STRING, "string value");
+    test_put(true, STRING, "string key",    UINT32, c(741));
 
-    test_put(STRING, "TestNumberValue", STRING, "159");
+    for(int i = -2; i <= 2; i++)
+        test_put(true, UINT32, c(i), UINT32, c(i));
 
-    test_put(STRING, "A relatively long string... with spaces and other characters in it!", STRING, "uhul");
-
-    test_put(STRING, "uhul", STRING, "A relatively long string... with spaces and other characters in it!");
 /*
-    test_put(STRING, "", STRING, "value");
-    test_put(STRING, "key", STRING, "");
-
     test_put(0xFF,   "Invalid type", STRING,    "value");
     test_put(STRING, "Valid type",   0xFF,      "value");
     test_put(0xFF,   "Both invalid", 0xFF,      "value");
@@ -334,16 +394,12 @@ void run_put_tests(){
 
     //test putting the same value again...
 /*
-    test_put(UINT32, 123, UINT32, 345);
-    test_put(0xFF,   234, UINT32, 456);
-    test_put(UINT32, 345, 0xFF,   567);
 
     for(int i = -2; i <= 2; i++)
         for(int j = -2; j <= 2; j++)
             test_put(UINT32, i, UINT32, j);
 
-    test_put(UINT32, 741,          STRING, "string value");
-    test_put(STRING, "string key", UINT32, 741);
+
 */
 
 /*

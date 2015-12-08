@@ -24,7 +24,7 @@
 #include <circular_buffer.h>
 #include "../double_linked_list.h"
 #include "../message_queue.h"
-#include "unit_tests/root_put_tests.c"
+//#include "unit_tests/root_put_tests.c"
 
 #include <debug.h>
 
@@ -38,6 +38,7 @@ double_linked_list* unreplied_pulls;
 
 static circular_buffer sdp_buffer;
 
+#ifndef DB_HASH_TABLE
 void broadcast(sdp_msg_t* msg){
     for(uint8_t chipx = 0; chipx < CHIP_X_SIZE; chipx++){
         for(uint8_t chipy = 0; chipy < CHIP_Y_SIZE; chipy++){
@@ -53,12 +54,11 @@ void broadcast(sdp_msg_t* msg){
         }
     }
 }
+#endif
 
 uint32_t*** core_db_current_sizes;
 
-uint8_t x_chip_with_less_data = 0;
-uint8_t y_chip_with_less_data = 1;
-
+#ifdef DB_HASH_TABLE
 uint32_t hash(uchar* bytes, size_t size){
     uint32_t h = 5381;
 
@@ -68,14 +68,37 @@ uint32_t hash(uchar* bytes, size_t size){
 
     return h;
 }
-
+#else
 uint8_t rrb_chipx = 0;
 uint8_t rrb_chipy = 0;
 uint8_t rrb_core  = 2;
+#endif
 
-void send_spiDBquery(spiDBquery* q){
+bool send_spiDBquery(spiDBquery* q){
 
-    sdp_msg_t* msg = init_boss_sdp(q);
+    if(q->k_size == 0 || (q->cmd == PUT && q->v_size == 0)){
+        //todo send failure back to host
+        return false;
+    }
+
+    sdp_msg_t* msg   = create_sdp_header(0, 1); // this is a stub...
+
+    msg->cmd_rc = q->cmd;
+    msg->seq    = q->id;
+
+    msg->arg2   = 0;
+    msg->arg3   = 0;
+
+    if(q->cmd == PULL){
+        q->v_type = 0;
+        q->v_size = 0;
+    }
+
+    msg->arg1 = to_info(q->k_type, q->k_size, q->v_type, q->v_size);
+
+    memcpy(msg->data, q->k_v, q->k_size + q->v_size);
+
+    msg->length = sizeof(sdp_hdr_t) + 16 + q->k_size + q->v_size;
 
     #ifdef DB_HASH_TABLE
         switch(q->cmd){
@@ -105,17 +128,17 @@ void send_spiDBquery(spiDBquery* q){
     #else
         switch(q->cmd){
             case PUT:
-                        /*
-                        rrb_core = (rrb_core+1 % LAST_SLAVE) + FIRST_SLAVE;
-
-                        if(rrb_core == FIRST_SLAVE){
+                        if(rrb_core == LAST_SLAVE){
                             rrb_chipx = (rrb_chipx+1) % CHIP_X_SIZE;
 
                             if(rrb_chipx == 0){
                                 rrb_chipy = (rrb_chipy+1) % CHIP_Y_SIZE;
                             }
                         }
-                        */
+
+                        rrb_core = (rrb_core+1 % LAST_SLAVE) + FIRST_SLAVE;
+
+                        //todo if it's the root?
 
                         msg->dest_addr = (rrb_chipx << 8) | rrb_chipy; //[1 byte x, 1 byte y]
                         msg->dest_port = (SDP_PORT << PORT_SHIFT) | rrb_core;
@@ -130,7 +153,6 @@ void send_spiDBquery(spiDBquery* q){
                         break;
             default:    break;
         }
-
     #endif
 
     unreplied_query* uq = init_unreplied_query(msg);
@@ -140,24 +162,11 @@ void send_spiDBquery(spiDBquery* q){
     }
     else if(q->cmd == PULL) {
         push(unreplied_pulls,  uq);
+        //print_unreplied_queue(unreplied_pulls);
     }
 
-    // free the message to stop overload
-    //spin1_msg_free(msg);
-    /*
-        case CLEAR:;
-                    for(int x=0; x < board_dimentions_x; x++){
-                        for(int y=0; y < board_dimentions_y; y++){
-                            chip_current_sizes[x][y] = 0;
-                        }
-                    }
-                    broadcast(msg);
 
-                    break;
-        default:    log_error("Invalid spiDBquery.cmd %d", q->cmd);
-                    break;
-    */
-
+    return true;
 }
 
 void send_failed_spiDBquery(unreplied_query* uq){ //source is -1
@@ -181,12 +190,16 @@ void update (uint ticks, uint b){
     time += TIMER_PERIOD;
 
     //if TEST MODE!!!! todo
+    /*
     if(ticks == 10){
         run_put_tests();
     }
     else if(ticks == 1000){
         tests_summary();
     }
+    */
+
+    return; //TODO
 
     list_entry* entry = *unreplied_puts->head;
 
@@ -235,47 +248,51 @@ void update (uint ticks, uint b){
 
         entry = entry->next;
     }
-
 }
 
-void send_successful_spiDBqueryReply(sdp_msg_t* reply_msg, unreplied_query* uq){
+void send_spiDBqueryReply(sdp_msg_t* reply_msg, unreplied_query* uq){
 
     uint8_t srce_core_id = get_srce_core(reply_msg);
 
     //[1 byte chip x, 1 byte chip y, 1 byte - core id]
     uint32_t srce = (reply_msg->srce_addr << 8) | srce_core_id; //chip and core where reply came from
 
-    sdp_msg_t* message_to_host = create_sdp_header_to_host();
-
-    message_to_host->seq    = reply_msg->seq;
-
-    message_to_host->arg1   = srce; //where it came from!
-    message_to_host->arg3   = time - uq->time_sent; //round trip time. todo what unit of measurement is this?
+    sdp_msg_t* message_to_host  = create_sdp_header_to_host();
+    message_to_host->seq        = reply_msg->seq;
+    message_to_host->arg1       = srce; //where it came from!
+    message_to_host->arg3       = time - uq->time_sent; //round trip time
 
     switch(reply_msg->cmd_rc){
         case PUT_REPLY:;
                             message_to_host->cmd_rc = PUT;
 
-                            message_to_host->arg2 = 0; //info
+                            message_to_host->arg2 = 1; //info != 0 means success
 
                             message_to_host->length = sizeof(sdp_hdr_t) + 16;
                             break;
         case PULL_REPLY:;
                             message_to_host->cmd_rc = PULL;
 
-                            var_type data_type = v_type_from_info(reply_msg->arg1);
-                            uint32_t data_size = v_size_from_info(reply_msg->arg1);
+                            if(reply_msg->arg1 == 0){ //reply info equals zero means failure
+                                message_to_host->arg2 = 0;
+                                message_to_host->length = sizeof(sdp_hdr_t) + 16;
+                            }
+                            else{
+                                var_type data_type = v_type_from_info(reply_msg->arg1);
+                                size_t   data_size = v_size_from_info(reply_msg->arg1);
 
-                            message_to_host->arg2 = to_info(data_type, data_size, 0, 0); //value type & size
+                                message_to_host->arg2 = to_info(data_type, data_size, 0, 0); //value type & size
 
-                            memcpy(message_to_host->data, reply_msg->data, data_size);
+                                memcpy(message_to_host->data, reply_msg->data, data_size);
 
-                            message_to_host->length = sizeof(sdp_hdr_t) + 16 + data_size;
+                                message_to_host->length = sizeof(sdp_hdr_t) + 16 + data_size;
+                            }
                             break;
         default:            return;
     }
 
-    //print_msg(message_to_host);
+    log_info("Sending back to host:");
+    print_msg(message_to_host);
 
     //uint status = spin1_int_disable();
     spin1_send_sdp_msg(message_to_host, SDP_TIMEOUT); //message, timeout
@@ -302,37 +319,39 @@ void process_requests(uint arg0, uint arg1){
 
         if(msg->srce_port == PORT_ETH){ //coming from host
             spiDBquery* query = (spiDBquery*) &(msg->cmd_rc);
-            printQuery(query);
+            //printQuery(query);
             send_spiDBquery(query);
         }
         else{
-            test_message(msg);
+            //test_message(msg);
 
             unreplied_query* uq = NULL;
 
             switch(msg->cmd_rc){
                 case PUT_REPLY:;
+                    log_info("PUT_REPLY");
                     uq = remove_from_unreplied_queue(unreplied_puts, msg->seq);
 
                     check(uq, "Received a PUT_REPLY with unexpected id %d", msg->seq);
-                    //if(!uq){print_unreplied_queue(unreplied_puts);break;}
+                    if(!uq){break;}
 
                     //log_info("Received a PUT_REPLY [id: %d, time: %d, rtt: %d, retries: %d]",
                     //          uq->msg->seq, time, time - uq->time_sent, uq->retries);
 
-                    send_successful_spiDBqueryReply(msg, uq);
+                    send_spiDBqueryReply(msg, uq);
                     break;
 
                 case PULL_REPLY:;
+                    log_info("PULL_REPLY");
                     uq = remove_from_unreplied_queue(unreplied_pulls, msg->seq);
 
                     check(uq, "Received a PULL_REPLY with unexpected id %d", msg->seq);
-                    //if(!uq){print_unreplied_queue(unreplied_pulls);break;}
+                    if(!uq){break;}
 
                     //log_info("Received a PULL_REPLY [id: %d, time: %d, rtt: %d, retries: %d]",
                     //          uq->msg->seq, time, time - uq->time_sent, uq->retries);
 
-                    send_successful_spiDBqueryReply(msg, uq);
+                    send_spiDBqueryReply(msg, uq);
 
                     break;
                 default:;
