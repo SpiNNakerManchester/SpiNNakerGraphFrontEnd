@@ -3,7 +3,7 @@ AbstractPartitionedDataSpecableVertex
 """
 
 # data spec imports
-from data_specification.file_data_writer import FileDataWriter
+from spinn_storage_handlers.file_data_writer import FileDataWriter
 
 # front end common imports
 from spinn_front_end_common.utilities import exceptions
