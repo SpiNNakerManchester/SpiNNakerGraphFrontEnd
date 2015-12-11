@@ -91,6 +91,7 @@ class SpiNNakerGraphFrontEnd(object):
         # state thats needed the first time around
         if self._app_id is None:
             self._app_id = config.getint("Machine", "appID")
+            self._dse_app_id = config.getint("Machine", "DSEappID")
 
             if config.getboolean("Reports", "reportsEnabled"):
                 self._reports_states = ReportState(
@@ -463,6 +464,7 @@ class SpiNNakerGraphFrontEnd(object):
                        'value': scamp_socket_addresses})
         inputs.append({'type': "BootPortNum", 'value': boot_port_num})
         inputs.append({'type': "APPID", 'value': self._app_id})
+        inputs.append({'type': "DSEAPPID", 'value': self._dse_app_id})
         inputs.append({'type': "RunTime", 'value': self._runtime})
         inputs.append({'type': "TimeScaleFactor",
                        'value': self._time_scale_factor})
