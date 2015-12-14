@@ -6,8 +6,6 @@ Spinnaker
 from pacman.model.partitionable_graph.partitionable_graph import \
     PartitionableGraph
 from pacman.model.partitioned_graph.partitioned_graph import PartitionedGraph
-from pacman.model.partitionable_graph.multi_cast_partitionable_edge\
-    import MultiCastPartitionableEdge
 from pacman.operations import algorithm_reports as pacman_algorithm_reports
 
 # common front end imports
@@ -19,7 +17,7 @@ from spinn_front_end_common.abstract_models.abstract_data_specable_vertex \
 
 # graph front end imports
 from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
-import AbstractPartitionedDataSpecableVertex
+    import AbstractPartitionedDataSpecableVertex
 from spynnaker_graph_front_end.utilities.xml_interface import XMLInterface
 from spynnaker_graph_front_end.utilities.conf import config
 from spynnaker_graph_front_end import extra_pacman_algorithms
