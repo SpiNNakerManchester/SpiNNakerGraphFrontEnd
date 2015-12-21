@@ -4,18 +4,6 @@ from spynnaker_graph_front_end.utilities import conf
 from ._version import __version__, __version_name__, __version_month__,\
     __version_year__
 
-
-# utility models for graph front ends
-from spinn_front_end_common.utility_models.\
-    reverse_ip_tag_multi_cast_source import ReverseIpTagMultiCastSource
-from spinn_front_end_common.utility_models.command_sender import CommandSender
-from spinn_front_end_common.utility_models.live_packet_gather \
-    import LivePacketGather
-from pacman.model.partitioned_graph.multi_cast_partitioned_edge \
-    import MultiCastPartitionedEdge
-from pacman.model.partitionable_graph.multi_cast_partitionable_edge \
-    import MultiCastPartitionableEdge
-
 import logging
 
 logger = logging.getLogger(__name__)
@@ -26,8 +14,8 @@ _none_labelled_vertex_count = None
 _none_labelled_edge_count = None
 
 
-def setup(hostname=None, graph_label=None, model_binary_module=None,
-          model_binary_folder=None, database_socket_addresses=None,
+def setup(hostname=None, graph_label=None, model_binary_modules=None,
+          model_binary_folders=None, database_socket_addresses=None,
           partitioner_algorithm=None, algorithms=None):
     """ for builders with pynn attitude, allows end users to define wherever
     their binaries are
@@ -62,11 +50,14 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
 
     executable_finder = ExecutableFinder()
     # add the directorities for where to locate the binaries
-    if model_binary_module is not None:
-        executable_finder.add_path(
-            os.path.dirname(model_binary_module.__file__))
-    elif model_binary_folder is not None:
-        executable_finder.add_path(model_binary_folder)
+
+    if model_binary_modules is not None:
+        for model_binary_module in model_binary_modules:
+            executable_finder.add_path(
+                os.path.dirname(model_binary_module.name))
+    elif model_binary_folders is not None:
+        for model_binary_folder in model_binary_folders:
+            executable_finder.add_path(model_binary_folder)
 
     # set up the spinnaker object
     _spinnaker = SpiNNakerGraphFrontEnd(
@@ -271,7 +262,6 @@ def add_partitioned_edge(cellclass, cellparams, label=None, constraints=None,
 def get_txrx():
     global _spinnaker
     return _spinnaker.get_txrx()
-
 
 def get_machine_dimensions():
     """
