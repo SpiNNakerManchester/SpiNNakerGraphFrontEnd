@@ -1,19 +1,20 @@
+#ifndef __PULL_H__
+#define __PULL_H__
+
 #include "../db-typedefs.h"
-#include "../sdram_writer.h"
+#include "../memory_utils.h"
 
 value_entry* pull(address_t addr, uint32_t info, uchar* k){
 
     var_type k_type = k_type_from_info(info);
     size_t k_size   = k_size_from_info(info);
 
-/*  address_t current_addr      = reader.start_addr;
-    size_t    total_size_words  = *reader.size_words_addr;
-    address_t end_addr          = current_addr + total_size_words;*/
-
     uint32_t curr_info = 0;
 
-    //Get 32 bit information for the database entry
-    // [4 bits key type, 12 bits key size, 4 bits value type, 12 bits value size]
+    /* Get 32 bit information for the database entry
+         4 bits key type,
+         12 bits key size,
+         4 bits value type, 12 bits value size */
     while((curr_info = *addr) != 0){
 
         addr++;
@@ -53,3 +54,4 @@ value_entry* pull(address_t addr, uint32_t info, uchar* k){
 
     return NULL;
 }
+#endif

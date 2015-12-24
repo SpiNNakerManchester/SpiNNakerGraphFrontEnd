@@ -1,6 +1,8 @@
-#include "../sdram_writer.h"
+#ifndef __PUT_H__
+#define __PUT_H__
+
+#include "../memory_utils.h"
 #include "../db-typedefs.h"
-#include <debug.h>
 
 bool put(address_t* addr, uint32_t info, void* k, void* v){
 
@@ -13,3 +15,5 @@ bool put(address_t* addr, uint32_t info, void* k, void* v){
 
     return true;
 }
+
+#endif

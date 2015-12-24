@@ -1,4 +1,3 @@
-
 #ifndef __MESSAGE_QUEUE_H__
 #define __MESSAGE_QUEUE_H__
 
@@ -16,7 +15,8 @@ typedef struct unreplied_query{
 extern uint32_t time;
 
 unreplied_query* init_unreplied_query(sdp_msg_t* msg){
-    unreplied_query* uq = (unreplied_query*) sark_alloc(1, sizeof(unreplied_query));
+    unreplied_query* uq = (unreplied_query*)
+                          sark_alloc(1, sizeof(unreplied_query));
     uq->retries      = 0;
     uq->ticks        = 0;
     uq->time_sent    = time;
@@ -25,7 +25,8 @@ unreplied_query* init_unreplied_query(sdp_msg_t* msg){
     return uq;
 }
 
-unreplied_query* get_unreplied_query(double_linked_list* queue, uint32_t message_id){
+unreplied_query* get_unreplied_query(double_linked_list* queue,
+                                     uint32_t message_id){
     list_entry* entry = *queue->head;
 
     while(entry != NULL){
@@ -41,7 +42,8 @@ unreplied_query* get_unreplied_query(double_linked_list* queue, uint32_t message
     return NULL;
 }
 
-unreplied_query* remove_from_unreplied_queue(double_linked_list* queue, uint32_t message_id){
+unreplied_query* remove_from_unreplied_queue(double_linked_list* queue,
+                                             uint32_t message_id){
 
     list_entry* entry = *queue->head;
 
@@ -82,8 +84,7 @@ void print_unreplied_queue(double_linked_list* queue){
     }
 }
 
-// ############################################################################################################
-
+/*
 #define RECENT_MESSAGE_CACHE_TTL 10
 
 typedef struct recently_received_query{
@@ -94,7 +95,9 @@ typedef struct recently_received_query{
 } recently_received_query;
 
 recently_received_query* init_recently_received_query(uint32_t message_id){
-    recently_received_query* q = (recently_received_query*) sark_alloc(1, sizeof(recently_received_query));
+
+    recently_received_query* q = (recently_received_query*)
+                                 sark_alloc(1,sizeof(recently_received_query));
     q->ttl          = RECENT_MESSAGE_CACHE_TTL;
     q->message_id   = message_id;
     return q;
@@ -137,7 +140,6 @@ void age_recently_received_queries(double_linked_list* queue){
 }
 
 void print_recent_queries_queue(double_linked_list* queue){
-
     list_entry* entry = *queue->head;
 
     while(entry != NULL){
@@ -146,6 +148,7 @@ void print_recent_queries_queue(double_linked_list* queue){
         entry = entry->next;
     }
 }
+*/
 
 #endif
 

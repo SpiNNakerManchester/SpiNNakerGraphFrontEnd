@@ -37,7 +37,8 @@ void push(double_linked_list* dll, void* data){
 }
 
 double_linked_list* init_double_linked_list(){
-    double_linked_list* dll = (double_linked_list*) sark_alloc(1, sizeof(double_linked_list));
+    double_linked_list* dll = (double_linked_list*)
+                              sark_alloc(1, sizeof(double_linked_list));
 
     dll->size  = 0;
     dll->head  = (list_entry**)sark_alloc(1, sizeof(list_entry*));

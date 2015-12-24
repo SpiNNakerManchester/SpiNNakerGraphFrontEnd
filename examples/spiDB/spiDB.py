@@ -25,8 +25,6 @@ front_end.setup(graph_label="spiDB",
                 model_binary_modules=[file(os.getcwd() + "/../model_binaries/root.aplx"),
                                       file(os.getcwd() + "/../model_binaries/cluster_slave.aplx")])
 
-#dimenions = front_end.get_machine_dimensions() #todo with the new changes this gets broken
-
 machine_time_step = 100
 time_scale_factor = 1
 
@@ -34,17 +32,15 @@ machine_port = 11111
 machine_recieve_port = 22222
 machine_host = "0.0.0.0"
 
-#x_dimension = dimenions['x']+1
-#y_dimension = dimenions['y']+1
 
+#todo should not be hardcoded
 x_dimension = 1
 y_dimension = 1
 p_dimension = 18
 
 # calculate total number of 'free' cores for the given board
 # (ie. does not include those busy with sark or reinjection)
-
-#total_number_of_slaves = (p_dimension-2) * x_dimension * y_dimension
+# total_number_of_slaves = (p_dimension-2) * x_dimension * y_dimension
 
 total_number_of_slaves = 16
 
@@ -66,7 +62,6 @@ for x_position in range(0, total_number_of_slaves-1):
              label="slave{}".format(x_position))
         vertices.append(v)
 
-#TODO not from 0 to 3 hardcoded
 for c in range(0, 3):
     for x_position in range(0, total_number_of_slaves):
             v = front_end.add_partitioned_vertex(
@@ -76,7 +71,8 @@ for c in range(0, 3):
                  label="slave{}".format(x_position))
             vertices.append(v)
 
-sst = SpiDBSocketConnection() #starts thread
+ssc = SpiDBSocketConnection()
+ssc.start()
 
 front_end.run(10)
 front_end.stop()

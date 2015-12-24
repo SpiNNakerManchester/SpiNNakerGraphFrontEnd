@@ -1,6 +1,5 @@
 #include "spin1_api.h"
 #include <debug.h>
-//#include <eieio_interface.h>
 
 #define SDP_PORT        3
 #define SDP_TIMEOUT     10
@@ -86,10 +85,14 @@ void print_msg(sdp_msg_t* msg){
   log_info("================ SDP HEADER =================");
   log_info("  flags:     %02x", msg->flags);
   log_info("  tag:       %02x", msg->tag);
-  log_info("  dest_addr: %04x - chip (%d,%d)", msg->dest_addr, get_dest_chip_x(msg), get_dest_chip_y(msg));
-  log_info("  dest_port: %02x   - core (%d)", msg->dest_port, get_dest_core(msg));
-  log_info("  srce_addr: %04x - chip (%d,%d)", msg->srce_addr, get_srce_chip_x(msg), get_srce_chip_y(msg));
-  log_info("  srce_port: %02x   - core (%d)", msg->srce_port, get_srce_core(msg));
+  log_info("  dest_addr: %04x - chip (%d,%d)",
+           msg->dest_addr, get_dest_chip_x(msg), get_dest_chip_y(msg));
+  log_info("  dest_port: %02x   - core (%d)",
+           msg->dest_port, get_dest_core(msg));
+  log_info("  srce_addr: %04x - chip (%d,%d)",
+           msg->srce_addr, get_srce_chip_x(msg), get_srce_chip_y(msg));
+  log_info("  srce_port: %02x   - core (%d)",
+           msg->srce_port, get_srce_core(msg));
   log_info("=============================================");
   log_info("============== SDP DATASPACE ================");
   log_info("  cmd_rc:    %04x", msg->cmd_rc);
@@ -97,6 +100,7 @@ void print_msg(sdp_msg_t* msg){
   log_info("  arg1:      %08x", msg->arg1);
   log_info("  arg2:      %08x", msg->arg2);
   log_info("  arg3:      %08x", msg->arg3);
-  log_info("  data:      %08x (str:%s) (int:%d)", msg->data, msg->data, *((uint32_t*)msg->data));
+  log_info("  data:      %08x (str:%s) (int:%d)",
+           msg->data, msg->data, *((uint32_t*)msg->data));
   log_info("=============================================");
 }

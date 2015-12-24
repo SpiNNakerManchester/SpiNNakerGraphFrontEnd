@@ -1,8 +1,11 @@
 #ifndef __DB_TYPEDEFS_H__
 #define __DB_TYPEDEFS_H__
 
+//if DB_HASH_TABLE is defined, the hash version is used.
+//Naive version otherwise
 #define DB_HASH_TABLE
 
+//TODO these should not be hardcoded
 #define CHIP_X_SIZE 2
 #define CHIP_Y_SIZE 2
 #define CORE_SIZE   16
@@ -47,11 +50,6 @@ typedef struct spiDBquery {
 
     uchar k_v[256];
 } spiDBquery;
-
-/*typedef struct spiDBreply {
-
-
-} spiDBreply;*/
 
 typedef struct value_entry {
     var_type type;

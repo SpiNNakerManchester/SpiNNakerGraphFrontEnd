@@ -63,20 +63,28 @@ class sdp_packet():
         if(self.success):
             self.data_type = (self.arg2 & 0xF0000000) >> 28
             self.data_size = (self.arg2 & 0x0FFF0000) >> 16
-            self.data = struct.unpack_from("{}s".format(self.data_size), bytestring, struct.calcsize("HHIII"))[0]
+            self.data = struct.unpack_from("{}s".format(self.data_size),
+                                           bytestring,
+                                           struct.calcsize("HHIII"))[0]
 
     def __str__(self):
         return "cmd_rc: {}, seq: {}, arg1: {}, arg2: {}, arg3: {}, data: {}"\
-                .format(self.cmd_rc, self.seq, self.arg1, self.arg2, self.arg3, self.data)
+                .format(self.cmd_rc, self.seq, self.arg1,
+                        self.arg2, self.arg3, self.data)
 
     def reply_data(self):
         if self.cmd_rc is dbCommands.PUT.value:
             if(self.success):
                 return "{}  OK - id: {}, rtt: {}ms, chip: {}-{}, core: {}"\
-                    .format(dbCommandStr(self.cmd_rc), self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core)
+                    .format(dbCommandStr(self.cmd_rc), self.seq,
+                            self.arg3/1000.0, self.chip_x,
+                            self.chip_y, self.core)
             else:
                 return "{}  FAIL - id: {}, rtt: {}ms, chip: {}-{}, core: {}"\
-                    .format(dbCommandStr(self.cmd_rc), self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core)
+                    .format(dbCommandStr(self.cmd_rc), self.seq,
+                            self.arg3/1000.0, self.chip_x,
+                            self.chip_y, self.core)
+
         elif self.cmd_rc is dbCommands.PULL.value:
             if(self.success):
                 if self.data_type is dbDataType.INT.value:
@@ -84,39 +92,30 @@ class sdp_packet():
                 elif self.data_type is dbDataType.STRING.value:
                     d = "(string) {}".format(self.data)
                 else:
-                    d = "(byte[]) {}".format(":".join("{:02x}".format(ord(c)) for c in self.data))
+                    d = "(byte[]) {}"\
+                        .format(":".join("{:02x}".format(ord(c))
+                                         for c in self.data))
 
-                return "{} OK - id: {}, rtt: {}ms, chip: {}-{}, core: {}, data: {}"\
-                    .format(dbCommandStr(self.cmd_rc), self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core, d)
+                return "{} OK - id: {}, rtt: {}ms, " \
+                       "chip: {}-{}, core: {}, data: {}"\
+                    .format(dbCommandStr(self.cmd_rc), self.seq,
+                            self.arg3/1000.0, self.chip_x,
+                            self.chip_y, self.core, d)
             else:
                 return "{} FAIL - id: {}, rtt: {}ms, chip: {}-{}, core: {}"\
-                    .format(dbCommandStr(self.cmd_rc), self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core)
+                    .format(dbCommandStr(self.cmd_rc), self.seq,
+                            self.arg3/1000.0, self.chip_x,
+                            self.chip_y, self.core)
         else:
-            return "FAIL - invalid return cmd_rc: {} - id: {}, rtt: {}ms, chip: {}-{}, core: {}"\
-                .format(self.cmd_rc, self.seq, self.arg3/1000.0, self.chip_x, self.chip_y, self.core)
+            return "FAIL - invalid return cmd_rc: {} - id: {}, " \
+                   "rtt: {}ms, chip: {}-{}, core: {}"\
+                .format(self.cmd_rc, self.seq,
+                        self.arg3/1000.0, self.chip_x,
+                        self.chip_y, self.core)
 
 class SpiDBSocketConnection(Thread):
-    """ A connection from the toolchain which will be notified\
-        when the database has been written, and can then respond when the\
-        database has been read, and further wait for notification that the\
-        simulation has started.
-    """
 
     def __init__(self, local_port=19999):
-        """
-
-        :param start_callback_function: A function to be called when the start\
-                    message has been received.  This function should not take\
-                    any parameters or return anything.
-        :type start_callback_function: function() -> None
-        :param local_host: Optional specification of the local hostname or\
-                    ip address of the interface to listen on
-        :type local_host: str
-        :param local_port: Optional specification of the local port to listen\
-                    on.  Must match the port that the toolchain will send the\
-                    notification on (19999 by default)
-        :type local_port: int
-        """
 
         self.conn = UDPConnection()
 
@@ -125,15 +124,16 @@ class SpiDBSocketConnection(Thread):
                         .format(local_port))
 
         self.ip_address = "192.168.240.253" #todo should not be hardcoded
-        self.port = 11111
-        self.start()
+        self.port = 11111 #todo should not be hardcoded
+
 
         self.current_message_id = -1
         self.command_buffer = []
 
-        #self.remotehost = self._config.get("Machine", "machineName")
-        #self.board_version = self._config.getint("Machine", "version")
         """
+        self.remotehost = self._config.get("Machine", "machineName")
+        self.board_version = self._config.getint("Machine", "version")
+
         self.bmp_names = self._config.get("Machine", "bmp_names")
         if self.bmp_names == "None":
             self.bmp_names = None
@@ -164,16 +164,10 @@ class SpiDBSocketConnection(Thread):
         v_size   = len(v_str)
         k_v_size = k_size+v_size
 
-        #root
-        #cluster head
-        #cluster slaves
-
         s = struct.pack("IBBIBI{}s".format(k_v_size),
                         self.current_message_id, dbCommands.PUT.value,
                         var_type(k), k_size,
                         var_type(v), v_size, "{}{}".format(k_str, v_str))
-
-        #print ":".join("{:02x}".format(ord(c)) for c in s)
 
         return self.current_message_id, s
 
@@ -205,9 +199,7 @@ class SpiDBSocketConnection(Thread):
         for i, id_bytestring in enumerate(id_bytestrings):
             try:
                 bytestring = self.conn.receive(1)
-                #print ":".join("{:02x}".format(ord(c)) for c in bytestring)
                 sdp_h = sdp_packet(bytestring)
-                #print "sdp_packet : {}".format(sdp_h)
                 ret[id_to_index[sdp_h.seq]] = sdp_h.reply_data()
             except:
                 pass
@@ -215,12 +207,13 @@ class SpiDBSocketConnection(Thread):
         return ret
 
     def print_log(self, x, y, p):
-        iobufs = self.transceiver.get_iobuf(core_subsets = [CoreSubset(x, y, [p])])
+        iobufs = self.transceiver.get_iobuf(
+                        core_subsets = [CoreSubset(x, y, [p])])
         for iobuf in iobufs:
             print iobuf
 
     def run(self):
-        time.sleep(9) #todo change!!!!
+        time.sleep(8) #todo should not be hardcoded
 
         self.print_log(0, 0, 1)
 
