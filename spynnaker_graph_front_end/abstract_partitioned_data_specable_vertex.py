@@ -6,8 +6,6 @@ AbstractPartitionedDataSpecableVertex
 from data_specification.file_data_writer import FileDataWriter
 
 # front end common imports
-from spinn_front_end_common.abstract_models.abstract_data_specable_vertex import \
-    AbstractDataSpecableVertex
 from spinn_front_end_common.utilities import exceptions
 
 # general imports
@@ -15,6 +13,7 @@ from abc import ABCMeta
 from six import add_metaclass
 from abc import abstractmethod
 import tempfile
+import hashlib
 import os
 
 
@@ -167,6 +166,25 @@ class AbstractPartitionedDataSpecableVertex(object):
             "{}_appData_{}_{}_{}.dat".format(hostname, processor_chip_x,
                                              processor_chip_y, processor_id)
         return application_data_file_name
+
+    def _write_basic_setup_info(self, spec, region_id):
+        # Hash application title
+        application_name = os.path.splitext(self.get_binary_file_name())[0]
+
+        # Get first 32-bits of the md5 hash of the application name
+        application_name_hash = hashlib.md5(application_name).hexdigest()[:8]
+
+        # Write this to the system region (to be picked up by the simulation):
+        spec.switch_write_focus(region=region_id)
+        spec.write_value(data=int(application_name_hash, 16))
+        spec.write_value(data=self._machine_time_step)
+        # check for infinite runs and add data as required
+        if self._no_machine_time_steps is None:
+            spec.write_value(data=1)
+            spec.write_value(data=0)
+        else:
+            spec.write_value(data=0)
+            spec.write_value(data=self._no_machine_time_steps)
 
     @staticmethod
     def get_mem_write_base_address(processor_id):
