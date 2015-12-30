@@ -12,10 +12,10 @@ void append(address_t* address, void* data, uint32_t size_bytes){
     *address += (size_bytes+3) >> 2;
 }
 
-bool write(address_t address, void* data, uint32_t size_words){ //TODO should it be bytes??
-    if(!data || size_words <= 0){ return false; }
+bool write(address_t address, void* data, size_t size_bytes){
+    if(!data || size_bytes <= 0){ return false; }
 
-    memcpy(address, data, size_words << 2);
+    memcpy(address, data, size_bytes);
 
     return true;
 }

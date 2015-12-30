@@ -3,7 +3,7 @@
 
 //if DB_HASH_TABLE is defined, the hash version is used.
 //Naive version otherwise
-#define DB_HASH_TABLE
+//#define DB_HASH_TABLE
 
 //TODO these should not be hardcoded
 #define CHIP_X_SIZE 2
@@ -24,6 +24,8 @@ typedef enum regions_e {
 
 #define try(cond) do { if (!cond) return false; } while (0)
 
+typedef uint32_t id_t;
+
 typedef enum spiDBcommand {
     PUT = 0,
     PULL,
@@ -33,13 +35,17 @@ typedef enum spiDBcommand {
     PUT_REPLY,
     PULL_REPLY,
 
+    CREATE_TABLE,
+    INSERT_INTO,
+    SELECT,
+
     PUT_REPLY_ACK, //still needs implementing...
     PULL_REPLY_ACK
 } spiDBcommand;
 
 typedef struct spiDBquery {
-    uint32_t     id;
     spiDBcommand cmd;
+    uint32_t     id;
 
     var_type k_type;
     size_t   k_size;
@@ -91,5 +97,89 @@ bool arr_equals(uchar* a, uchar* b, uint32_t n){
     }
     return true;
 }
+
+//////////////////////////////////////////////////////////////////////////
+
+typedef struct spiDBQueryHeader {
+    spiDBcommand cmd;
+    uint32_t     id;
+} spiDBQueryHeader;
+
+typedef struct Column {
+    size_t   size;
+    var_type type;
+} Column;
+
+typedef struct Table {
+    size_t      n_cols;
+    size_t      row_size;
+    Column      cols[4];
+} Table;
+
+typedef struct createTableQuery {
+    spiDBcommand cmd;
+    uint32_t     id;
+
+    Table table;
+} createTableQuery;
+
+
+typedef struct insertQuery { //insert into
+    spiDBcommand cmd;
+    uint32_t     id;
+
+    uchar        values[256];
+} insertQuery;
+
+/*
+=	Equal
+<>	Not equal. Note: In some versions of SQL this operator may be written as !=
+>	Greater than
+>=	Greater than or equal
+<	Less than
+<=	Less than or equal
+BETWEEN	Between an inclusive range
+LIKE	Search for a pattern
+IN	To specify multiple possible values for a column
+*/
+typedef enum {
+    EQ = 0,
+    NE,
+    GT,
+    GE,
+    LT,
+    LE,
+    BETWEEN,
+    LIKE,
+    IN
+} Operator;
+
+typedef enum {
+    COLUMN,
+    LITERAL
+} OperandType;
+
+typedef struct Operand {
+    OperandType type;
+    uchar       value[64];
+} Operand;
+
+typedef struct Condition {
+    Operand     left;
+    Operator    op;
+    Operand     right;
+} Condition;
+
+typedef struct Where {
+    Condition  condition;
+} Where;
+
+typedef struct selectQuery {
+    spiDBcommand cmd;
+    uint32_t     id;
+
+    Where        where;
+    //simply do for SELECT * for now
+} selectQuery;
 
 #endif

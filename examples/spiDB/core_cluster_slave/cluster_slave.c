@@ -12,6 +12,7 @@
 #include <debug.h>
 #include <simulation.h>
 #include <circular_buffer.h>
+#include <data_specification.h>
 
 #include "common-typedefs.h"
 #include "../db-typedefs.h"
@@ -19,6 +20,8 @@
 #include "../sdp_utils.h"
 #include "pull.h"
 #include "put.h"
+
+#include "scan.h"
 
 #include "../double_linked_list.h"
 #include "../message_queue.h"
@@ -32,6 +35,9 @@ double_linked_list* unacknowledged_replies;
 //double_linked_list* recent_messages_queue;
 
 static circular_buffer sdp_buffer;
+
+
+Table* table;
 
 void update(uint ticks, uint b){
     use(ticks);
@@ -57,6 +63,28 @@ void process_requests(uint arg0, uint arg1){
 
         sdp_msg_t* msg = (sdp_msg_t*) (*mailbox_ptr);
 
+        spiDBQueryHeader* header = (spiDBQueryHeader*) &msg->cmd_rc;
+
+        switch(header->cmd){
+            case INSERT_INTO:;
+                log_info("INSERT_INTO");
+                insertQuery* insertQ = (insertQuery*) header;
+                append(addr, insertQ->values, table->row_size);
+                break;
+            case SELECT:;
+                log_info("SELECT");
+                selectQuery* selectQ = (selectQuery*) header;
+                scan_ids(data_region,selectQ);
+                break;
+            default:;
+                log_info("[Warning] cmd not recognized: %d with id %d",
+                         header->cmd, header->id);
+                break;
+        }
+
+        /*
+        sdp_msg_t* msg = (sdp_msg_t*) (*mailbox_ptr);
+
         uint32_t info = msg->arg1;
         uchar* k_v    = msg->data;
 
@@ -70,11 +98,13 @@ void process_requests(uint arg0, uint arg1){
             *addr = (address_t)&data_region[words_offset];
         #endif
 
+
+
         value_entry* value_entry_ptr;
 
         switch(msg->cmd_rc){
             case PUT:;
-                log_info("PUT on address: %04x", *addr);
+                log_info("PUT on address: %04x k_v: %s", *addr, k_v);
 
                 put(addr, info, k_v, &k_v[k_size_from_info(info)]);
 
@@ -85,7 +115,7 @@ void process_requests(uint arg0, uint arg1){
 
                 break;
             case PULL:;
-                log_info("PULL on address: %04x", *addr);
+                log_info("PULL on address: %04x k: %s", *addr, k_v);
 
                 #ifdef DB_HASH_TABLE
                     value_entry_ptr = pull(*addr,       info, k_v);
@@ -93,10 +123,12 @@ void process_requests(uint arg0, uint arg1){
                     value_entry_ptr = pull(data_region, info, k_v);
                 #endif
 
-                msg->cmd_rc = PULL_REPLY;
-                revert_src_dest(msg);
-
                 if(value_entry_ptr){
+
+                    revert_src_dest(msg);
+
+                    msg->cmd_rc = PULL_REPLY;
+
                     log_info("Replying PULL request id %d", msg->seq);
                     log_info("with data (s: %s) of type %d, size %d",
                              value_entry_ptr->data, value_entry_ptr->type,
@@ -126,10 +158,16 @@ void process_requests(uint arg0, uint arg1){
                     #endif
                 }
                 break;
+            case SELECT_IDS:
+                log_info("RECEIVED A SELECT_IDs");
+                scan_ids(data_region);
+                break;
             default:
                 log_info("[Warning] cmd_rc not recognized: %d with id %d", msg->cmd_rc, msg->seq);
                 break;
         }
+
+        */
 
         // free the message to stop overload
         spin1_msg_free(msg);
@@ -139,6 +177,8 @@ void process_requests(uint arg0, uint arg1){
 void c_main()
 {
     log_info("Initializing Slave...");
+
+    table = (Table*)0x63e551a8; //todo hardcoded...
 
     if (!initialize()) {
         rt_error(RTE_SWERR);

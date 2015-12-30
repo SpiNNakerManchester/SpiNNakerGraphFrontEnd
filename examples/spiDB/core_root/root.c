@@ -31,6 +31,8 @@
 #define TIMER_PERIOD 100
 #define RETRY_RATE   TIMER_PERIOD << 4
 
+#define ID_SIZE 4
+
 // Globals
 uint32_t time = 0; //represents the microseconds since start
 
@@ -141,7 +143,8 @@ bool send_spiDBquery(spiDBquery* q){
 
                 spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
                 break;
-            default:    break;
+            default:
+                break;
         }
     #else
         switch(q->cmd){
@@ -241,6 +244,85 @@ void retry_unreplied_entries(double_linked_list* unreplied_queries){
     }
 }
 
+/*
+void SELECT_entry(uint32_t id){
+
+    uint core = FIRST_SLAVE+1;
+
+    for(uint i = 0; i < 2; i++){
+       if(arr_equals(table.fields[i].name, field_name, table.fields[i].name_size)){
+         core = FIRST_SLAVE+i; //todo hmmmm
+         break;
+       }
+    }
+
+    sdp_msg_t* msg = create_sdp_header(0,core);//todo
+    msg->cmd_rc = PULL;
+
+    msg->seq    = 0; //todo
+    msg->arg2   = 0;
+    msg->arg3   = 0;
+
+    msg->arg1 = to_info(UINT32, ID_SIZE, 0, 0);
+
+    memcpy(msg->data, id, ID_SIZE);
+
+    msg->length = sizeof(sdp_hdr_t) + 16 + ID_SIZE;
+    spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
+}
+*/
+
+Table* table;
+
+void send_INSERT(insertQuery* q){
+
+    sdp_msg_t* msg = create_sdp_header(0,2);//todo
+    memcpy(&msg->cmd_rc, q, sizeof(insertQuery));
+
+    msg->length = sizeof(sdp_hdr_t) + sizeof(insertQuery); //todo reduce to table size
+
+    spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
+}
+
+void send_SELECT(selectQuery* q){
+    sdp_msg_t* msg = create_sdp_header(0,2);//todo
+    memcpy(&msg->cmd_rc, q, sizeof(selectQuery));
+
+    msg->length = sizeof(sdp_hdr_t) + sizeof(selectQuery); //todo reduce to table size
+
+    spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
+}
+
+/*
+void INSERT_pair(insertQuery* q){
+    uint core = FIRST_SLAVE+1;
+
+    for(uint i = 0; i < 2; i++){
+       if(arr_equals(table.fields[i].name, q->f_v, table.fields[i].name_size)){
+         core = FIRST_SLAVE+1+i; //todo hmmmm
+         break;
+       }
+    }
+
+    log_info("Sending INSERT to CORE >> %d", core);
+
+    sdp_msg_t* msg = create_sdp_header(0,core);//todo
+    msg->cmd_rc = PUT;
+    msg->seq = 0;//todo
+
+    msg->arg1 = to_info(UINT32, ID_SIZE, STRING, q->value_size);
+
+    memcpy(msg->data,           &q->row_id, ID_SIZE);
+    memcpy(&msg->data[ID_SIZE], &q->f_v[q->field_name_size], q->value_size);
+
+    msg->length = sizeof(sdp_hdr_t) + 16 + ID_SIZE + q->value_size;
+
+    //msg->arg2 = 0;
+
+    spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
+}
+*/
+
 void update (uint ticks, uint b){
     use(ticks);
     use(b);
@@ -259,6 +341,14 @@ void update (uint ticks, uint b){
 
     retry_unreplied_entries(unreplied_puts);
     retry_unreplied_entries(unreplied_pulls);
+
+    //COLUMN BASED
+/*    if(time == TIMER_PERIOD * 10 * 10){
+        //try to insert ["Tuca", 21]
+        log_info("SENDING GET IDS WITH CONDITION");
+        get_IDs_with_condition();
+    }*/
+
 }
 
 void send_reply_to_host(sdp_msg_t* reply_msg, unreplied_query* uq){
@@ -318,6 +408,17 @@ void sdp_packet_callback(uint mailbox, uint port) {
     }
 }
 
+void print_table(Table* t){
+    log_info("####### TABLE #######");
+    log_info("t->n_cols %d", t->n_cols);
+    log_info("t->row_size %d", t->row_size);
+
+    for(uint i = 0; i < 4; i++){
+        log_info("t->cols[%d] size: %d, type: %d",
+                    i, t->cols[i].size, t->cols[i].type);
+    }
+}
+
 void process_requests(uint arg0, uint arg1){
     use(arg0);
     use(arg1);
@@ -327,10 +428,57 @@ void process_requests(uint arg0, uint arg1){
 
         sdp_msg_t* msg = (sdp_msg_t*)*mailbox_ptr;
 
+        //TODO MUDOOOOOOOOOOOU
         if(msg->srce_port == PORT_ETH){ //coming from host
-            spiDBquery* query = (spiDBquery*) &(msg->cmd_rc);
+            //spiDBquery* query = (spiDBquery*) &(msg->cmd_rc);
             //printQuery(query);
-            send_spiDBquery(query);
+
+            spiDBQueryHeader* header = (spiDBQueryHeader*) &msg->cmd_rc;
+
+            switch(header->cmd){
+                case CREATE_TABLE:;
+                    log_info("CREATE");
+                    createTableQuery* q = (createTableQuery*) header;
+                    print_table(&q->table);
+                    memcpy(table, &q->table, sizeof(Table));
+                    write(data_region, table, sizeof(Table));
+                    break;
+                case INSERT_INTO:;
+                    log_info("INSERT_INTO");
+                    insertQuery* insertQ = (insertQuery*) header;
+                    send_INSERT(insertQ);
+                    break;
+                case SELECT:;
+                    log_info("SELECT");
+                    selectQuery* selectQ = (selectQuery*) header;
+                    send_SELECT(selectQ);
+                    break;
+                default:;
+                    log_info("[Warning] cmd not recognized: %d with id %d",
+                             header->cmd, header->id);
+                    break;
+            }
+
+            /*
+            switch(query->cmd){
+                case PUT:
+                case PULL:
+                    send_spiDBquery(query);
+                    break;
+                case CREATE_TABLE:;
+                    createTableQuery* q = (createTableQuery*) &(msg->cmd_rc);
+                    write(data_region, &q->table, sizeof(Table));
+                    memcpy(table, &q->table, sizeof(Table));
+                    break;
+                case INSERT_INTO:;
+                    insertQuery* query = (insertQuery*) &(msg->cmd_rc);
+                    //INSERT_pair(query);
+                    break;
+                default:
+                    log_info("Invalid query from host with cmd = %d", query->cmd);
+                    break;
+            }
+            */
         }
         else{
             //test_message(msg);
@@ -363,6 +511,9 @@ void process_requests(uint arg0, uint arg1){
 }
 
 void c_main(){
+
+    table = (Table*)sark_alloc(1, sizeof(Table));
+
     log_info("Initializing Root...");
 
     if (!initialize()) {

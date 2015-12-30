@@ -71,8 +71,8 @@ for c in range(0, 3):
                  label="slave{}".format(x_position))
             vertices.append(v)
 
-ssc = SpiDBSocketConnection()
+ssc = SpiDBSocketConnection(vertices)
 ssc.start()
 
-front_end.run(10)
+front_end.run(5)
 front_end.stop()
