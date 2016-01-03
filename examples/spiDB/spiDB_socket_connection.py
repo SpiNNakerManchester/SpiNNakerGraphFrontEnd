@@ -18,6 +18,10 @@ from statement_parser import StatementParser
 from statement_parser import Operand
 from statement_parser import Table
 
+import socket_translator
+
+from result import Result
+
 logger = logging.getLogger(__name__)
 
 def dbCommandStr(value):
@@ -259,15 +263,24 @@ class SpiDBSocketConnection(Thread):
     def create_table(self, table):
         self.current_message_id += 1
 
-        total_size = 0
+        """
+        typedef struct Table {
+            size_t      n_cols;
+            size_t      row_size;
+            size_t      current_n_rows;
+            Column      cols[4];
+        } Table;
+        """
+
+        total_row_size = 0
         col_size_type = []
         for c in table.cols:
             col_size_type.append((c.size, c.type))
-            total_size += c.size
+            total_row_size += c.size
 
-        s = struct.pack("BIII",
+        s = struct.pack("BIIII",
                         dbCommands.CREATE_TABLE.value, self.current_message_id,
-                        len(col_size_type), total_size)
+                        len(col_size_type), total_row_size, 0)
 
         for col_size, col_type in col_size_type:
             s += struct.pack("<IBBBB",
@@ -279,33 +292,61 @@ class SpiDBSocketConnection(Thread):
         return self.current_message_id, s
 
     def insert(self, table, field_name_to_value):
-        value_colsize_ordered = [(b'\0', 0)] * len(table.cols)
+        table.current_row_id += 1
+
+        """
+        typedef struct Entry{
+            uint32_t row_id;
+            uint32_t col_index;
+            size_t   size;
+            uchar    value[256];
+        } Entry;
+
+        typedef struct insertEntryQuery { //insert into
+            spiDBcommand cmd;
+            uint32_t     id;
+
+            Entry        e;
+        } insertEntryQuery;
+        """
+
+        #value_colsize_ordered = [(b'\0', 0)] * len(table.cols)
 
         for field_name, value in field_name_to_value.iteritems():
             i, col = table.get_index_and_col(field_name)
             if i is not -1:
-                value_colsize_ordered[i] = value, col.size
+                #value_colsize_ordered[i] = value, col.size
 
-        self.current_message_id += 1
+                self.current_message_id += 1
 
-        cmd_id = struct.pack("BI",
-                             dbCommands.INSERT_INTO.value,
-                             self.current_message_id)
+                cmd_id = struct.pack("BI",
+                                     dbCommands.INSERT_INTO.value,
+                                     self.current_message_id)
 
-        values = ""
-        for value, colsize in value_colsize_ordered:
-            value_bytearr = [b'\0'] * colsize
+                entry = struct.pack("III{}c".format(len(value)),
+                                    table.current_row_id,
+                                    i,
+                                    len(value),
+                                    *value)
 
-            for i in range(0, len(value)):
-                value_bytearr[i] = value[i]
+                s = cmd_id + entry
+                print "sending insert {}".format(s)
 
-            values += struct.pack("{}c".format(colsize),
-                                  *value_bytearr)
+                self.conn.send_to(s, (self.ip_address, self.port))
 
-        s = cmd_id + values
+                """
+                values = ""
+                for value, colsize in value_colsize_ordered:
+                    value_bytearr = [b'\0'] * colsize
 
-        self.conn.send_to(s, (self.ip_address, self.port))
-        return self.current_message_id, s
+                    for i in range(0, len(value)):
+                        value_bytearr[i] = value[i]
+
+                    values += struct.pack("{}c".format(colsize),
+                                          *value_bytearr)
+
+                s = cmd_id + values
+                """
 
     def put(self, k, v):
         k_str = byte_array(k)
@@ -385,15 +426,22 @@ class SpiDBSocketConnection(Thread):
         self.create_table(self.table)
         print self.table
 
+        inse = """INSERT INTO People(
+        name,middlename,lastname)
+        VALUES (Tuca,Bicalho,Ceccotti);
+        """
+        p = StatementParser(inse)
+        map = p.generate_INSERT_INTO_map()
+        self.insert(self.table, map)
+
         for i in range(10):
             inse = """INSERT INTO People(
             name,middlename,lastname)
-            VALUES (Tuca{},Bicalho{},Ceccotti{});
-            """.format(i,i,i)
+            VALUES (Tuca{},Bicalho,Ceccotti{});
+            """.format(i,i)
             p = StatementParser(inse)
             map = p.generate_INSERT_INTO_map()
             self.insert(self.table, map)
-            time.sleep(0.2)
 
         inse = """INSERT INTO People(
             name,middlename,lastname)
@@ -401,21 +449,34 @@ class SpiDBSocketConnection(Thread):
         p = StatementParser(inse)
         map = p.generate_INSERT_INTO_map()
         self.insert(self.table, map)
-        time.sleep(0.2)
 
         se = """SELECT *
         FROM People
-        WHERE middlename = lastname;
+        WHERE middlename = 'Bicalho';
         """
 
         p = StatementParser(se)
         sel = p.SELECT()
         self.select(self.table, sel)
 
+        time_sent = time.time() * 1000
+
+        result = Result()
+
         print "Let's receive!"
         while True:
-            bytestring = self.conn.receive()
-            print bytestring
+            try:
+                entry = socket_translator.translate(self.table, self.conn.receive(1))
+                entry.response_time = time.time() * 1000 - time_sent
+
+                print entry
+
+                result.addEntry(entry)
+            except Exception as e: #timeout TODO check for other exceptions
+                print e
+                break
+
+        print result
 
         while True:
             try:

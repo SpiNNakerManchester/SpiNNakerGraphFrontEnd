@@ -56,6 +56,7 @@ void sdp_packet_callback(uint mailbox, uint port) {
 
 address_t* addr;
 
+
 void process_requests(uint arg0, uint arg1){
 
     uint32_t* mailbox_ptr;
@@ -68,8 +69,25 @@ void process_requests(uint arg0, uint arg1){
         switch(header->cmd){
             case INSERT_INTO:;
                 log_info("INSERT_INTO");
-                insertQuery* insertQ = (insertQuery*) header;
-                append(addr, insertQ->values, table->row_size);
+                insertEntryQuery* insertE = (insertEntryQuery*) header;
+                Entry e = insertE->e;
+
+                log_info("e.row_id: %d", e.row_id);
+                log_info("e.col_index: %d", e.col_index);
+                log_info("e.size: %d", e.size);
+                log_info("e.value: %s", e.value);
+                //TODO INSERT ID NOW!!!!
+                log_info("row size : %d", table->row_size);
+                log_info("get_byte_pos(insertE->e.col_index) : %d", get_byte_pos(e.col_index));
+                log_info("n_cols : %d", table->n_cols);
+                log_info("all %08x", data_region + (table->row_size * (e.row_id-1) + get_byte_pos(e.col_index) + 3) / 4);
+
+                                                                //-1 because the row_id starts from 1
+                write(data_region + (table->row_size * (insertE->e.row_id-1) + get_byte_pos(insertE->e.col_index) + 3) / 4,
+                      insertE->e.value,
+                      insertE->e.size); //assumes row_ids are 1,2,3,4,... single core TODO
+
+                //append(addr, insertQ->values, table->row_size);
                 break;
             case SELECT:;
                 log_info("SELECT");

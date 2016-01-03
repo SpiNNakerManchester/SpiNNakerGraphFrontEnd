@@ -113,6 +113,7 @@ typedef struct Column {
 typedef struct Table {
     size_t      n_cols;
     size_t      row_size;
+    size_t      current_n_rows;
     Column      cols[4];
 } Table;
 
@@ -123,13 +124,19 @@ typedef struct createTableQuery {
     Table table;
 } createTableQuery;
 
+typedef struct Entry{
+    uint32_t row_id;
+    uint32_t col_index;
+    size_t   size;
+    uchar    value[256];
+} Entry;
 
-typedef struct insertQuery { //insert into
+typedef struct insertEntryQuery { //insert into
     spiDBcommand cmd;
     uint32_t     id;
 
-    uchar        values[256];
-} insertQuery;
+    Entry        e;
+} insertEntryQuery;
 
 /*
 =	Equal
@@ -181,5 +188,22 @@ typedef struct selectQuery {
     Where        where;
     //simply do for SELECT * for now
 } selectQuery;
+
+extern Table* table;
+
+//todo should be put in the table
+uint32_t get_byte_pos(uint32_t col_index){
+    uint32_t pos = 0;
+
+    if(col_index >= table->n_cols){
+        return -1;
+    }
+
+    for(uint32_t i = 0; i < col_index; i++){
+        pos += table->cols[i].size;
+    }
+
+    return pos;
+}
 
 #endif

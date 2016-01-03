@@ -53,6 +53,14 @@ sdp_msg_t* create_sdp_header_to_host(){
     return msg;
 }
 
+void set_dest_chip(sdp_msg_t* msg, uint32_t dest_chip){
+    msg->dest_addr   = dest_chip;
+}
+
+void set_dest_core(sdp_msg_t* msg, uint8_t dest_core){
+    msg->dest_port   = (SDP_PORT << PORT_SHIFT) | dest_core;
+}
+
 uint32_t get_srce_chip_x(sdp_msg_t* msg){
     return msg->srce_addr & 0xF0 >> 8;
 }

@@ -274,25 +274,6 @@ void SELECT_entry(uint32_t id){
 
 Table* table;
 
-void send_INSERT(insertQuery* q){
-
-    sdp_msg_t* msg = create_sdp_header(0,2);//todo
-    memcpy(&msg->cmd_rc, q, sizeof(insertQuery));
-
-    msg->length = sizeof(sdp_hdr_t) + sizeof(insertQuery); //todo reduce to table size
-
-    spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
-}
-
-void send_SELECT(selectQuery* q){
-    sdp_msg_t* msg = create_sdp_header(0,2);//todo
-    memcpy(&msg->cmd_rc, q, sizeof(selectQuery));
-
-    msg->length = sizeof(sdp_hdr_t) + sizeof(selectQuery); //todo reduce to table size
-
-    spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
-}
-
 /*
 void INSERT_pair(insertQuery* q){
     uint core = FIRST_SLAVE+1;
@@ -412,6 +393,7 @@ void print_table(Table* t){
     log_info("####### TABLE #######");
     log_info("t->n_cols %d", t->n_cols);
     log_info("t->row_size %d", t->row_size);
+    log_info("t->current_n_rows %d", t->current_n_rows);
 
     for(uint i = 0; i < 4; i++){
         log_info("t->cols[%d] size: %d, type: %d",
@@ -440,18 +422,31 @@ void process_requests(uint arg0, uint arg1){
                     log_info("CREATE");
                     createTableQuery* q = (createTableQuery*) header;
                     print_table(&q->table);
-                    memcpy(table, &q->table, sizeof(Table));
-                    write(data_region, table, sizeof(Table));
+                    //memcpy(table, &q->table, sizeof(Table));
+                    write(data_region, &q->table, sizeof(Table));
+                    table = (Table*)data_region;
+
                     break;
                 case INSERT_INTO:;
                     log_info("INSERT_INTO");
-                    insertQuery* insertQ = (insertQuery*) header;
-                    send_INSERT(insertQ);
+                    insertEntryQuery* insertE = (insertEntryQuery*) header;
+
+                    if(insertE->e.row_id >= table->current_n_rows){
+                        table->current_n_rows = insertE->e.row_id + 1;
+                    }
+
+                    set_dest_chip(msg,0);
+                    set_dest_core(msg,2);
+                    spin1_send_sdp_msg(msg, SDP_TIMEOUT);
+
                     break;
                 case SELECT:;
                     log_info("SELECT");
-                    selectQuery* selectQ = (selectQuery*) header;
-                    send_SELECT(selectQ);
+                    set_dest_chip(msg,0);
+                    set_dest_core(msg,2);
+                    spin1_send_sdp_msg(msg, SDP_TIMEOUT);
+
+                    //selectQuery* selectQ = (selectQuery*) header;
                     break;
                 default:;
                     log_info("[Warning] cmd not recognized: %d with id %d",
