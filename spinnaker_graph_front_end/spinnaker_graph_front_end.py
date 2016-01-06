@@ -430,7 +430,7 @@ class SpiNNakerGraphFrontEnd(object):
             {'type': "NoSyncChanges", 'value': self._no_sync_changes})
 
         # support resetting the machine during start up
-        if (config.getboolean("Machine", "ResetMachineOnStartupFlag") and
+        if (config.getboolean("Machine", "reset_machine_on_startup") and
                 not self._has_ran):
             inputs.append(
                 {"type": "ResetMachineOnStartupFlag", 'value': True})
