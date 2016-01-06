@@ -1,6 +1,3 @@
-"""
-SpinnakerGraphFrontEndEdgeToKeyMapper
-"""
 
 from pacman.model.routing_info.dict_based_partitioned_edge_n_keys_map import \
     DictBasedPartitionedEdgeNKeysMap
@@ -15,9 +12,6 @@ from spinn_front_end_common.abstract_models.\
 
 
 class SpinnakerGraphFrontEndEdgeToKeyMapper(object):
-    """
-    SpinnakerGraphFrontEndEdgeToKeyMapper
-    """
 
     def __call__(self, partitioned_graph, partitionable_graph=None,
                  graph_mapper=None):

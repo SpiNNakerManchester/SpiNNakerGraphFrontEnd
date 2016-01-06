@@ -29,8 +29,8 @@ _none_labelled_edge_count = None
 def setup(hostname=None, graph_label=None, model_binary_module=None,
           model_binary_folder=None, database_socket_addresses=None,
           partitioner_algorithm=None, algorithms=None):
-    """ for builders with pynn attitude, allows end users to define wherever
-    their binaries are
+    """ for builders with pynn attitude, allows end users to define wherever\
+        their binaries are
 
     :param hostname:
     :param graph_label:
@@ -81,8 +81,8 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
 
 
 def run(duration=None):
-    """
-    method to support running an application for a number of microseconds
+    """ Method to support running an application for a number of microseconds
+
     :param duration: the number of microseconds the application should run for
     :type duration: int
     """
@@ -95,10 +95,7 @@ def run(duration=None):
 
 
 def stop():
-    """
-    Do any necessary cleaning up before exiting.
-
-    Unregisters the controller
+    """ Do any necessary cleaning up before exiting. Unregisters the controller
     """
     global _spinnaker
     global _executable_finder
@@ -109,11 +106,10 @@ def stop():
 
 
 def read_xml_file(file_path):
-    """
-    helper method for people who use this as an import.
-    reads a xml file and translates it into a graph and partitioned graph
-    (if required)
-    :param file_path: the file path in absulete form
+    """ Reads a xml file and translates it into a graph and partitioned graph\
+        (if required)
+
+    :param file_path: the file path in absolute form
     :return: None
     """
     global _spinnaker
@@ -132,7 +128,7 @@ def add_vertex(cellclass, cellparams, label=None, constraints=None):
     global _spinnaker
     global _none_labelled_vertex_count
 
-    # corect label if needed
+    # correct label if needed
     if label is None and 'label' not in cellparams:
         label = "Vertex {}".format(_none_labelled_vertex_count)
         _none_labelled_vertex_count += 1
@@ -165,7 +161,7 @@ def add_edge(cell_type, cellparams, label=None, constraints=None,
     global _spinnaker
     global _none_labelled_edge_count
 
-    # corect label if needed
+    # correct label if needed
     if label is None and 'label' not in cellparams:
         label = "Vertex {}".format(_none_labelled_edge_count)
         _none_labelled_edge_count += 1
@@ -216,7 +212,8 @@ def add_partitioned_vertex(
     """
     global _spinnaker
     global _none_labelled_vertex_count
-    # corect label if needed
+
+    # correct label if needed
     if label is None and 'label' not in cellparams:
         label = "Vertex {}".format(_none_labelled_vertex_count)
         _none_labelled_vertex_count += 1
@@ -249,7 +246,7 @@ def add_partitioned_edge(cellclass, cellparams, label=None, constraints=None,
     global _spinnaker
     global _none_labelled_edge_count
 
-    # corect label if needed
+    # correct label if needed
     if label is None and 'label' not in cellparams:
         label = "Vertex {}".format(_none_labelled_edge_count)
         _none_labelled_edge_count += 1

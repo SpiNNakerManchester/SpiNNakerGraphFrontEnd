@@ -10,9 +10,6 @@ from spinnaker_graph_front_end.\
 
 
 class SpinnakerGraphFrontEndPartitionedGraphDataSpecificationWriter(object):
-    """
-    SpinnakerGraphFrontEndPartitionedGraphDataSpecificationWriter
-    """
 
     def __call__(
             self, placements, tags, partitioned_graph, routing_infos, hostname,
@@ -24,7 +21,7 @@ class SpinnakerGraphFrontEndPartitionedGraphDataSpecificationWriter(object):
         :return:
         """
 
-        # iterate though subvertexes and call generate_data_spec for each
+        # iterate though subvertices and call generate_data_spec for each
         # vertex
         executable_targets = ExecutableTargets()
         dsg_targets = dict()

@@ -23,9 +23,6 @@ logger = logging.getLogger(__name__)
 
 class SpinnakerGraphFrontEndPartitionedGraphHostBasedDataSpecificationExeuctor(
         object):
-    """
-    SpinnakerGraphFrontEndHostBasedDataSpecificationExeuctor
-    """
 
     def __call__(self, placements, report_default_directory,
                  hostname, application_data_runtime_folder, machine,
@@ -51,9 +48,10 @@ class SpinnakerGraphFrontEndPartitionedGraphHostBasedDataSpecificationExeuctor(
             associated_vertex = placement.subvertex
 
             # if the vertex can generate a DSG, call it
-            if (isinstance(associated_vertex, AbstractDataSpecableVertex)
-                    or isinstance(associated_vertex,
-                                  AbstractPartitionedDataSpecableVertex)):
+            if (isinstance(associated_vertex, AbstractDataSpecableVertex) or
+                    isinstance(
+                        associated_vertex,
+                        AbstractPartitionedDataSpecableVertex)):
 
                 placement_to_application_data_files[
                     (placement.x, placement.y, placement.p,
@@ -85,7 +83,7 @@ class SpinnakerGraphFrontEndPartitionedGraphHostBasedDataSpecificationExeuctor(
                         space_available = \
                             space_available_tracker[placement_key]
 
-                    # generate a file writer for dse report (app pointer table)
+                    # generate a file writer for DSE report (app pointer table)
                     report_writer = None
                     if write_text_specs:
                         new_report_directory = os.path.join(
@@ -105,7 +103,7 @@ class SpinnakerGraphFrontEndPartitionedGraphHostBasedDataSpecificationExeuctor(
                         data_spec_reader, data_writer, space_available,
                         report_writer)
 
-                    # update memory calc and run data spec executor
+                    # update memory calculation and run data spec executor
                     bytes_used_by_spec = 0
                     bytes_written_by_spec = 0
                     try:

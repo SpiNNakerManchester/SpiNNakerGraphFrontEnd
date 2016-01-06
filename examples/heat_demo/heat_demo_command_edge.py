@@ -1,6 +1,3 @@
-"""
-HeatDemoCommandEdge
-"""
 from spinn_front_end_common.abstract_models.\
     abstract_provides_n_keys_for_edge import AbstractProvidesNKeysForEdge
 from spinnaker_graph_front_end.models.\
@@ -10,8 +7,7 @@ from spinnaker_graph_front_end.models.\
 
 class HeatDemoCommandEdge(MultiCastPartitionedEdgeWithNKeys,
                           AbstractProvidesNKeysForEdge):
-    """
-    HeatDemoCommandEdge: an edge which is to send
+    """ An edge which is to send
     """
 
     def __init__(self, pre_subvertex, post_subvertex, n_keys,

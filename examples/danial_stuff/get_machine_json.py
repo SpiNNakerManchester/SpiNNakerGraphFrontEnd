@@ -28,8 +28,8 @@ algorithms = list()
 algorithms.append("ConvertToFileMachine")
 xml_paths = list()
 xml_paths.append(os.path.join(
-            os.path.dirname(file_format_converters.__file__),
-            "converter_algorithms_metadata.xml"))
+    os.path.dirname(file_format_converters.__file__),
+    "converter_algorithms_metadata.xml"))
 
 # create and run the exeuctor
 executor = PACMANAlgorithmExecutor(algorithms, inputs, xml_paths, outputs)

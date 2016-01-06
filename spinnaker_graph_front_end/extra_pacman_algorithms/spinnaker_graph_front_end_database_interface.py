@@ -1,6 +1,3 @@
-"""
-SpinnakerGraphFrontEndDatabaseInterface
-"""
 
 # pacman imports
 from pacman.utilities.utility_objs.progress_bar import ProgressBar
@@ -14,15 +11,12 @@ from spinnaker_graph_front_end.utilities.database.\
 
 
 class SpinnakerGraphFrontEndDatabaseInterface(object):
-    """
-    SpinnakerGraphFrontEndDatabaseInterface
-    """
-    
+
     def __init__(self):
         self._writer = None
         self._user_create_database = None
         self._needs_database = None
-    
+
     def __call__(
             self, partitioned_graph, user_create_database, tags,
             runtime, machine, time_scale_factor, machine_time_step,

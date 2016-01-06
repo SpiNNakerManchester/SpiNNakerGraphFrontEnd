@@ -1,13 +1,8 @@
-"""
-Spinnaker
-"""
 
 # pacman imports
 from pacman.model.partitionable_graph.partitionable_graph import \
     PartitionableGraph
 from pacman.model.partitioned_graph.partitioned_graph import PartitionedGraph
-from pacman.model.partitionable_graph.multi_cast_partitionable_edge\
-    import MultiCastPartitionableEdge
 from pacman.operations import algorithm_reports as pacman_algorithm_reports
 
 # common front end imports
@@ -19,7 +14,7 @@ from spinn_front_end_common.abstract_models.abstract_data_specable_vertex \
 
 # graph front end imports
 from abstract_partitioned_data_specable_vertex \
-import AbstractPartitionedDataSpecableVertex
+    import AbstractPartitionedDataSpecableVertex
 from utilities.xml_interface import XMLInterface
 from utilities.conf import config
 import extra_pacman_algorithms
@@ -259,7 +254,8 @@ class SpiNNakerGraphFrontEnd(object):
         self._partitioned_graph = \
             pacman_exeuctor.get_item("MemoryPartitionedGraph")
         self._machine = pacman_exeuctor.get_item("MemoryMachine")
-        self._database_interface = pacman_exeuctor.get_item("DatabaseInterface")
+        self._database_interface = pacman_exeuctor.get_item(
+            "DatabaseInterface")
         self._has_ran = pacman_exeuctor.get_item("RanToken")
 
         # reset the reset flag to say the last thing was not a reset call
@@ -349,8 +345,8 @@ class SpiNNakerGraphFrontEnd(object):
                 algorithms.append("PartitionerReport")
             if (self._reports_states is not None and
                     self._reports_states.
-                    placer_report_with_partitionable_graph
-                    and contains_a_partitionable_graph):
+                    placer_report_with_partitionable_graph and
+                    contains_a_partitionable_graph):
                 algorithms.append("PlacerReportWithPartitionableGraph")
             if (self._reports_states is not None and
                     self._reports_states.
@@ -360,8 +356,8 @@ class SpiNNakerGraphFrontEnd(object):
             if in_debug_mode:
                 algorithms.append("ValidRoutesChecker")
 
-            # add partitioner algorithm if the partitionable graph has more than
-            #  0 entries
+            # add partitioner algorithm if the partitionable graph has more
+            # than 0 entries
             if contains_a_partitionable_graph:
                 algorithms.append("{}".format(
                     config.get("Mapping", "partitionerAlgorithm")))
@@ -389,7 +385,7 @@ class SpiNNakerGraphFrontEnd(object):
                 algorithms.append("SpiNNakerGraphFrontEndDatabaseWriter")
             # application data loader is agnostic to graph
             algorithms.append(
-                    "FrontEndCommonPartitionableGraphApplicationDataLoader")
+                "FrontEndCommonPartitionableGraphApplicationDataLoader")
 
             return algorithms
         else:
@@ -407,8 +403,9 @@ class SpiNNakerGraphFrontEnd(object):
         required_outputs = list()
         if config.getboolean("Machine", "virtual_board"):
             required_outputs.extend([
-                "MemoryPlacements", "MemoryRoutingTables", "MemoryRoutingInfos",
-                "MemoryTags", "MemoryPartitionedGraph", "MemoryGraphMapper"])
+                "MemoryPlacements", "MemoryRoutingTables",
+                "MemoryRoutingInfos", "MemoryTags", "MemoryPartitionedGraph",
+                "MemoryGraphMapper"])
         else:
             required_outputs.append("RanToken")
         # if front end wants reload script, add requires reload token
@@ -429,14 +426,17 @@ class SpiNNakerGraphFrontEnd(object):
         # all modes need the NoSyncChanges
         if application_graph_changed:
             self._no_sync_changes = 0
-        inputs.append({'type': "NoSyncChanges", 'value': self._no_sync_changes})
+        inputs.append(
+            {'type': "NoSyncChanges", 'value': self._no_sync_changes})
 
         # support resetting the machine during start up
         if (config.getboolean("Machine", "ResetMachineOnStartupFlag") and
                 not self._has_ran):
-            inputs.append({"type": "ResetMachineOnStartupFlag", 'value': True})
+            inputs.append(
+                {"type": "ResetMachineOnStartupFlag", 'value': True})
         else:
-            inputs.append({"type": "ResetMachineOnStartupFlag", 'value': False})
+            inputs.append(
+                {"type": "ResetMachineOnStartupFlag", 'value': False})
 
         if self._txrx is not None:
             inputs.append({"type": "MemoryTransciever", 'value': self._txrx})
@@ -444,11 +444,11 @@ class SpiNNakerGraphFrontEnd(object):
         if self._machine is not None:
             inputs.append({"type": "MemoryMachine", 'value': self._machine})
 
-        # support runtime updator
+        # support runtime updater
         if self._has_ran:
             no_machine_time_steps =\
-                int(((total_runtime - self._current_run_ms) * 1000.0)
-                    / self._machine_time_step)
+                int(((total_runtime - self._current_run_ms) * 1000.0) /
+                    self._machine_time_step)
             inputs.append({'type': "RunTimeMachineTimeSteps",
                            'value': no_machine_time_steps})
 
@@ -562,10 +562,10 @@ class SpiNNakerGraphFrontEnd(object):
                        'value': self._reports_states})
         inputs.append({'type': "UserCreateDatabaseFlag",
                        'value': config.get("Database", "create_database")})
-        inputs.append({'type': "ExecuteMapping",
-                       'value':  config.getboolean(
-                           "Database",
-                           "create_routing_info_to_atom_id_mapping")})
+        inputs.append(
+            {'type': "ExecuteMapping",
+             'value': config.getboolean(
+                 "Database", "create_routing_info_to_atom_id_mapping")})
         inputs.append({'type': "DatabaseSocketAddresses",
                        'value': self._database_socket_addresses})
         inputs.append({'type': "SendStartNotifications",
@@ -585,7 +585,7 @@ class SpiNNakerGraphFrontEnd(object):
                        'value': os.path.join(
                            json_folder, "machine.json")})
         inputs.append({'type': "FilePartitionedGraphFilePath",
-                       'value':os.path.join(
+                       'value': os.path.join(
                            json_folder, "partitioned_graph.json")})
         inputs.append({'type': "FilePlacementFilePath",
                        'value': os.path.join(
@@ -604,7 +604,7 @@ class SpiNNakerGraphFrontEnd(object):
                 "process will be incorrect now, and therefore mapping "
                 "needs to be redone. Sorry. Please note that any "
                 "recorded data will also have been lost. If you were "
-                "wanting this daya, please rerun your script and extract"
+                "wanting this data, please rerun your script and extract"
                 "the data before recalling run. Thank you")
 
         return inputs
@@ -617,8 +617,9 @@ class SpiNNakerGraphFrontEnd(object):
                 if isinstance(vertex, AbstractDataSpecableVertex):
                     self._set_runtime_in_time_steps_for_model(vertex, run_time)
             for vertex in self._partitioned_graph.subvertices:
-                if (isinstance(vertex, AbstractPartitionedDataSpecableVertex)
-                        or isinstance(vertex, AbstractDataSpecableVertex)):
+                if (isinstance(
+                        vertex, AbstractPartitionedDataSpecableVertex) or
+                        isinstance(vertex, AbstractDataSpecableVertex)):
                     self._set_runtime_in_time_steps_for_model(vertex, run_time)
         else:
             self._no_machine_time_steps = None
@@ -626,7 +627,6 @@ class SpiNNakerGraphFrontEnd(object):
                         "cause the neural models to fail to partition "
                         "correctly")
         return run_time
-
 
     def _set_runtime_in_time_steps_for_model(self, vertex, run_time):
         """
@@ -642,7 +642,7 @@ class SpiNNakerGraphFrontEnd(object):
         if self._no_machine_time_steps != ceiled_machine_time_steps:
             raise exceptions.ConfigurationException(
                 "The runtime and machine time step combination "
-                "result in a factional number of machine runable "
+                "result in a fractional number of machine runnable "
                 "time steps and therefore spinnaker cannot "
                 "determine how many to run for")
         vertex.set_no_machine_time_steps(self._no_machine_time_steps)
@@ -666,8 +666,7 @@ class SpiNNakerGraphFrontEnd(object):
         self._partitioned_graph = xml_interface.read_in_file()
 
     def get_machine_dimensions(self):
-        """
-        method for end users to get the machine dimensions
+        """ Get the machine dimensions
         :return:
         """
         if self._machine is None:
@@ -807,8 +806,8 @@ class SpiNNakerGraphFrontEnd(object):
              clear_tags=None):
         """
         :param turn_off_machine: decides if the machine should be powered down\
-            after running the exeuction. Note that this powers down all boards\
-            connected to the BMP connections given to the transciever
+            after running the execution. Note that this powers down all boards\
+            connected to the BMP connections given to the transceiver
         :type turn_off_machine: bool
         :param clear_routing_tables: informs the tool chain if it\
             should turn off the clearing of the routing tables
@@ -858,7 +857,7 @@ class SpiNNakerGraphFrontEnd(object):
             if self._create_database:
                 self._database_interface.stop()
 
-            # stop the transciever
+            # stop the transceiver
             if turn_off_machine:
                 logger.info("Turning off machine")
             self._txrx.close(power_off_machine=turn_off_machine)

@@ -1,7 +1,3 @@
-"""
-HeatDemoEdge: used in conjunction with a heat demo vertex to execute the
-heat demo
-"""
 from enum import Enum
 
 # front end common imports
@@ -14,9 +10,7 @@ from spinnaker_graph_front_end.models.\
 
 class HeatDemoEdge(MultiCastPartitionedEdgeWithNKeys,
                    AbstractProvidesNKeysForEdge):
-    """
-    HeatDemoEdge: used in conjunction with a heat demo vertex to execute the
-    heat demo
+    """ Used in conjunction with a heat demo vertex to execute the heat demo
     """
 
     DIRECTIONS = Enum(value="EDGES",
@@ -51,10 +45,6 @@ class HeatDemoEdge(MultiCastPartitionedEdgeWithNKeys,
         return 1
 
     def is_partitioned_edge(self):
-        """
-        helper emthod for isinstance
-        :return:
-        """
         return True
 
     def __str__(self):

@@ -1,6 +1,4 @@
-"""
-GraphFrontEndDataBaseWriter
-"""
+
 # front end common imports
 from spinn_front_end_common.utilities.database.\
     database_writer import DatabaseWriter
@@ -14,9 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class GraphFrontEndDataBaseWriter(DatabaseWriter):
-    """
-    GraphFrontEndDataBaseWriter: the interface for the database system for the
-    spynnaker front end
+    """ The interface for the database system
     """
 
     def __init__(self, database_directory):

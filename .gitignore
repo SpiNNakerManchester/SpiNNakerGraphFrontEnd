@@ -1,2 +1,8 @@
-/.project
-/.pydevproject
+.pydevproject
+.project
+.idea/
+.settings/
+*.pyc
+doc/build
+build/
+dist/
