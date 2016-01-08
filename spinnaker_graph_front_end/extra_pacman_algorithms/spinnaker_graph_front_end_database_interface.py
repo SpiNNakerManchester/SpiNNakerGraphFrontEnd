@@ -1,6 +1,3 @@
-"""
-SpinnakerGraphFrontEndDatabaseInterface
-"""
 
 # pacman imports
 from pacman.utilities.utility_objs.progress_bar import ProgressBar
@@ -9,34 +6,33 @@ from pacman.utilities.utility_objs.progress_bar import ProgressBar
 from spinn_front_end_common.utilities import helpful_functions
 
 # graph front end imports
-from spynnaker_graph_front_end.utilities.database.\
+from spinnaker_graph_front_end.utilities.database.\
     graph_front_end_database_writer import GraphFrontEndDataBaseWriter
 
 
 class SpinnakerGraphFrontEndDatabaseInterface(object):
-    """
-    SpinnakerGraphFrontEndDatabaseInterface
-    """
-    
+
     def __init__(self):
         self._writer = None
-    
+        self._user_create_database = None
+        self._needs_database = None
+
     def __call__(
             self, partitioned_graph, user_create_database, tags,
             runtime, machine, time_scale_factor, machine_time_step,
             placements, routing_infos, router_tables, execute_mapping,
-            database_directory, wait_for_read_confirmation, socket_addresses):
-        
-        self._writer = GraphFrontEndDataBaseWriter(
-            database_directory, wait_for_read_confirmation, socket_addresses)
-        
-        # add database generation if requested
-        needs_database = \
+            database_directory):
+
+        self._needs_database = \
             helpful_functions.auto_detect_database(partitioned_graph)
-        if ((user_create_database == "None" and needs_database) or
-                user_create_database == "True"):
+        self._user_create_database = user_create_database
+
+        if ((self._user_create_database == "None" and self._needs_database) or
+                self._user_create_database == "True"):
 
             database_progress = ProgressBar(8, "Creating database")
+
+            self._writer = GraphFrontEndDataBaseWriter(database_directory)
 
             self._writer.add_system_params(
                 time_scale_factor, machine_time_step, runtime)
@@ -59,29 +55,16 @@ class SpinnakerGraphFrontEndDatabaseInterface(object):
             database_progress.update()
             database_progress.update()
             database_progress.end()
-            self._writer.send_read_notification()
 
-        return {"database_interface": self}
-    
-    def wait_for_confirmation(self):
+        return {"database_interface": self,
+                "database_file_path": self.database_file_path}
+
+    @property
+    def database_file_path(self):
         """
 
         :return:
         """
-        self._writer.wait_for_confirmation()
-
-    def send_read_notification(self):
-        """
-        helper method for sending the read notifcations from the notification
-        protocol
-        :return:
-        """
-        self._writer.send_read_notification()
-
-    def send_start_notification(self):
-        """
-        helper method for sending the start notifcations from the notification
-        protocol
-        :return:
-        """
-        self._writer.send_start_notification()
+        if ((self._user_create_database == "None" and self._needs_database) or
+                self._user_create_database == "True"):
+            return self._writer.database_path
