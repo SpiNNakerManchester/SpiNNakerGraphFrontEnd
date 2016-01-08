@@ -6,6 +6,9 @@
 #include <debug.h>
 
 extern Table* table;
+extern uchar chipx;
+extern uchar chipy;
+extern uchar core;
 
 void scan_ids(address_t addr, selectQuery* sel){
 
@@ -14,10 +17,12 @@ void scan_ids(address_t addr, selectQuery* sel){
     }
 
     size_t row_size_words = (table->row_size + 3) >> 2;
-    size_t current_n_rows = table->current_n_rows;
+    size_t current_n_rows = table->current_n_rows; //todo only like this when table is on a single core
     size_t n_cols         = table->n_cols;
 
-    log_info("current_n_rows = %d", current_n_rows);
+    print_table(table);
+
+    /*
 
     Condition condition = sel->where.condition;
 
@@ -50,11 +55,15 @@ void scan_ids(address_t addr, selectQuery* sel){
 
     log_info("size_cmp is %d", size_cmp);
 
-    //todo that will not allow for comparison of 2 literals!
+    */
+
+    //todo allow for comparison of 2 literals!
 
     for(uint32_t row_id = 0; row_id < current_n_rows; row_id++, addr += row_size_words){
 
         uchar* values = addr;
+
+        /*
 
         uchar* l = (left.type == COLUMN)  ? &values[left_col_pos]  : left.value;
         uchar* r = (right.type == COLUMN) ? &values[right_col_pos] : right.value;
@@ -80,28 +89,52 @@ void scan_ids(address_t addr, selectQuery* sel){
         log_info("b is %s", b ? "true" : "false");
 
         if(b){
+        */
+
+        if(sel->col_names[0][0] == 0){ //wildcard
+
             uint p = 0;
 
             for(uint8_t i = 0; i < n_cols; i++){
-                //recycle msg?
+                /*
+                typedef struct Entry{
+                    uint32_t row_id;
+                    uchar    col_name[16];
+                    size_t   size;
+                    uchar    value[256];
+                } Entry;
+                */
+
+                //todo recycle msg?
                 sdp_msg_t* msg = create_sdp_header_to_host();
 
-                Entry* e = (Entry*)sark_alloc(1, sizeof(Entry));
-                //e->message_id = 0; //todo
-                e->row_id     = row_id;
-                e->col_index  = i;
-                e->size       = strlen(&values[p]); //todo how about non-Strings??
+                Response* response = (Response*)&msg->cmd_rc;
+                response->id  = sel->id;
+                response->cmd = sel->cmd;
+                response->success = true;
+                response->x = chipx;
+                response->y = chipy;
+                response->p = core;
+
+                Entry* e = &response->entry;
+                //sizeof(Response); //BUT SIZE OF RESPONSE IS 12 BECAUSE OF ALIGNING
+
+                e->row_id = row_id;
+                memcpy(e->col_name, table->cols[i].name, 16);
+                e->size   = strlen(&values[p]); //todo how about non-Strings??
                 memcpy(e->value, &values[p], e->size);
 
-                memcpy(&msg->cmd_rc, e, 12 + e->size);//todo if you change message_id, change here too
+                log_info("(%d) %s -> %s", e->row_id, e->col_name, e->value);
 
-                msg->length = sizeof(sdp_hdr_t) + 12 + e->size;
+                                                                //4 + 16 + 4
+                msg->length = sizeof(sdp_hdr_t) + 12 + 24 + e->size;
 
                 spin1_send_sdp_msg(msg, SDP_TIMEOUT);
 
                 p += table->cols[i].size;
             }
-        }
+         }
+        /* } */
 
 
 /*

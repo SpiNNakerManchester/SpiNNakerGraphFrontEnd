@@ -106,8 +106,9 @@ typedef struct spiDBQueryHeader {
 } spiDBQueryHeader;
 
 typedef struct Column {
-    size_t   size;
+    uchar    name[16];
     var_type type;
+    size_t   size;
 } Column;
 
 typedef struct Table {
@@ -126,15 +127,16 @@ typedef struct createTableQuery {
 
 typedef struct Entry{
     uint32_t row_id;
-    uint32_t col_index;
+    uchar    col_name[16];
     size_t   size;
     uchar    value[256];
 } Entry;
 
-typedef struct insertEntryQuery { //insert into
+typedef struct insertEntryQuery { //INSERT INTO
     spiDBcommand cmd;
     uint32_t     id;
 
+    //todo tablename?
     Entry        e;
 } insertEntryQuery;
 
@@ -185,11 +187,26 @@ typedef struct selectQuery {
     spiDBcommand cmd;
     uint32_t     id;
 
-    Where        where;
+    //uchar      table_name;
+    uchar        col_names[4][16]; //If col names == 0, it means SELECT *
+
+    //Where        where;??
     //simply do for SELECT * for now
 } selectQuery;
 
 extern Table* table;
+
+typedef struct Response{
+    uint32_t      id;
+    spiDBcommand  cmd;
+
+    bool          success;
+    uchar         x;
+    uchar         y;
+    uchar         p;
+
+    Entry         entry;
+} Response;
 
 //todo should be put in the table
 uint32_t get_byte_pos(uint32_t col_index){
@@ -204,6 +221,17 @@ uint32_t get_byte_pos(uint32_t col_index){
     }
 
     return pos;
+}
+
+uint32_t get_col_index(uchar col_name[16]){
+
+    for(uint32_t i = 0; i < table->n_cols; i++){
+        if(arr_equals(table->cols[i].name, col_name, 16)){ //todo not up to 16
+            return i;
+        }
+    }
+
+    return -1;
 }
 
 #endif

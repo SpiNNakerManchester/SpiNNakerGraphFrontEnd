@@ -41,6 +41,10 @@ double_linked_list* unreplied_pulls;
 
 static circular_buffer sdp_buffer;
 
+uchar chipx;
+uchar chipy;
+uchar core;
+
 ///////////////////////////////////////////////////////////////////////////////
 
 void send_failed_invalid_spiDBquery(spiDBquery* q){
@@ -389,18 +393,6 @@ void sdp_packet_callback(uint mailbox, uint port) {
     }
 }
 
-void print_table(Table* t){
-    log_info("####### TABLE #######");
-    log_info("t->n_cols %d", t->n_cols);
-    log_info("t->row_size %d", t->row_size);
-    log_info("t->current_n_rows %d", t->current_n_rows);
-
-    for(uint i = 0; i < 4; i++){
-        log_info("t->cols[%d] size: %d, type: %d",
-                    i, t->cols[i].size, t->cols[i].type);
-    }
-}
-
 void process_requests(uint arg0, uint arg1){
     use(arg0);
     use(arg1);
@@ -421,20 +413,39 @@ void process_requests(uint arg0, uint arg1){
                 case CREATE_TABLE:;
                     log_info("CREATE");
                     createTableQuery* q = (createTableQuery*) header;
-                    print_table(&q->table);
-                    //memcpy(table, &q->table, sizeof(Table));
-                    write(data_region, &q->table, sizeof(Table));
+                    Table* t = &q->table;
+
+                    uint32_t row_size = 0;
+                    for(uint32_t i = 0; i < t->n_cols; i++){
+                        //round up to the closest power of 4
+                        //as Spinnaker is word aligned
+                        t->cols[i].size = ((t->cols[i].size + 3) / 4) * 4; //& 0xFFFFFFFD; //unset the first 2 bits
+                        row_size += t->cols[i].size;
+                    }
+                    t->row_size = row_size;
+
+
+                    write(data_region, t, sizeof(Table));
                     table = (Table*)data_region;
+                    print_table(table);
+
+                    revert_src_dest(msg);
+                    msg->length = sizeof(sdp_hdr_t) + 9;
+
+                    Response* response = (Response*)&msg->cmd_rc;
+                    response->id  = q->id;
+                    response->cmd = q->cmd;
+                    response->success = table ? true : false;
+                    response->x = chipx;
+                    response->y = chipy;
+                    response->p = core;
+
+                    spin1_send_sdp_msg(msg, SDP_TIMEOUT);
 
                     break;
                 case INSERT_INTO:;
                     log_info("INSERT_INTO");
                     insertEntryQuery* insertE = (insertEntryQuery*) header;
-
-                    if(insertE->e.row_id >= table->current_n_rows){
-                        table->current_n_rows = insertE->e.row_id + 1;
-                    }
-
                     set_dest_chip(msg,0);
                     set_dest_core(msg,2);
                     spin1_send_sdp_msg(msg, SDP_TIMEOUT);
@@ -506,6 +517,9 @@ void process_requests(uint arg0, uint arg1){
 }
 
 void c_main(){
+    chipx = spin1_get_chip_id() & 0xF0 >> 8;
+    chipy = spin1_get_chip_id() & 0x0F;
+    core  = spin1_get_core_id();
 
     table = (Table*)sark_alloc(1, sizeof(Table));
 

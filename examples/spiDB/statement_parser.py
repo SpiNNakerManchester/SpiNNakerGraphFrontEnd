@@ -27,18 +27,35 @@ class Condition:
         return "{} {} {}".format(self.left, self.operator, self.right)
 
 class Select:
-    def __init__(self, cols=None, where=None):
+    def __init__(self, tableName, cols=None, where=None):
+        self.tableName = tableName
         if cols is None:
             self.wildcard = True
         else:
             self.wildcard = False
 
-        self.cols = cols
+        self.cols = cols # None means '*'
         self.where = where
+
+    def __str__(self):
+        return "SELECT {} FROM {} WHERE {}"\
+            .format('*' if self.cols is None else self.cols,
+                    self.tableName, self.where)
+
+    def __repr__(self):
+        return self.__str__()
+
+class InsertInto:
+    def __init__(self, tableName, columnValueMap):
+        self.tableName = tableName
+        self.columnValueMap = columnValueMap
 
 class Where:
     def __init__(self, condition):
         self.condition = condition
+
+    def __str__(self):
+        return "1=1" #todo
 
 class Column:
     def __init__(self, name, type, size):
@@ -52,6 +69,10 @@ class Column:
 
     def __repr__(self):
        return self.__str__()
+
+class CreateTable():
+    def __init__(self,table):
+        self.table = table
 
 class Table:
     def __init__(self, name, cols):
@@ -86,6 +107,16 @@ class StatementParser:
         self.idx = 0
         self.type = str(self.next_by_type(T.Keyword))
 
+    def parse(self):
+        if self.type == "CREATE":
+            return self.CREATE_TABLE()
+        elif self.type == "INSERT":
+            return self.INSERT_INTO()
+        elif self.type == "SELECT":
+            return self.SELECT()
+        else:
+            return None #throw exception?
+
     def next_by_type(self, ttypes):
         if not isinstance(ttypes, (list, tuple)):
             ttypes = [ttypes]
@@ -106,18 +137,27 @@ class StatementParser:
                 self.idx = i+1
                 return self.statement.tokens[i]
 
-    def generate_INSERT_INTO_map(self):
+    def INSERT_INTO(self):
         func = self.next_by_instance(sql.Function)
+
+        tableName = str(func.token_first(ignore_comments=True))
+
         params = list(func.get_parameters())
 
         values_parenthesis = self.next_by_instance(sql.Parenthesis)
-        values = list(list(values_parenthesis.get_sublists())[0].get_identifiers())
+
+        identifier = list(values_parenthesis.get_sublists())[0]
+
+        if isinstance(identifier,sql.IdentifierList):
+            values = list(identifier.get_identifiers())
+        else:
+            values = [identifier]
 
         map = {}
         for i in range(len(params)):
             map[str(params[i])] = str(values[i])
 
-        return map
+        return InsertInto(tableName, map)
 
     @staticmethod
     def remove_quotes(str):
@@ -136,78 +176,54 @@ class StatementParser:
                            StatementParser.remove_quotes(token.value))
 
     def SELECT(self):
+        wildcard = self.statement.token_next_by_type(0, T.Wildcard)
+        if wildcard is None:
+            cols = []
+            col_tokens = self.next_by_instance(sql.IdentifierList)
+
+            for t in col_tokens.get_identifiers():
+                cols.append(str(t))
+        else:
+            cols = None #means wildcard
+
+        tableName = str(self.next_by_instance(sql.Identifier))
+
         where = self.next_by_instance(sql.Where)
 
-        cmp = where.token_next_by_instance(0, sql.Comparison)
+        if where is not None:
+            cmp = where.token_next_by_instance(0, sql.Comparison)
 
-        left  = StatementParser.get_operand(cmp.left)
-        operator = cmp.token_next_by_type(0, T.Comparison).value
-        right = StatementParser.get_operand(cmp.right)
+            left  = StatementParser.get_operand(cmp.left)
+            operator = cmp.token_next_by_type(0, T.Comparison).value
+            right = StatementParser.get_operand(cmp.right)
 
-        condition = Condition(left=left, operator=operator, right=right)
+            condition = Condition(left=left, operator=operator, right=right)
 
-        sel = Select(cols=None, where=Where(condition))
+            where = Where(condition)
 
-        return sel
+        return Select(tableName=tableName, cols=cols, where=where)
 
     def CREATE_TABLE(self):
         func = self.next_by_instance(sql.Function)
 
-        table_name = str(func.token_first(ignore_comments=True))
+        table_name = str(func.token_first())
 
-        func = str(func)
+        params = func.token_next_by_instance(0,sql.Parenthesis)
 
-        i_parenthesis_open  = func.find('(')
-        i_parenthesis_close = func.rfind(')')
-
-        params = func[i_parenthesis_open+1:i_parenthesis_close-1].split(',')
+        params = str(params)[1:-1]
+        params = params.split(',')
 
         cols = []
         for i in range(len(params)):
             params[i] = params[i].strip()
-            parts = params[i].split(' ')
-            name = parts[0]
+            (name, type) = params[i].split(' ')
 
-            i_parenthesis_open = parts[1].find('(')
-            i_parenthesis_close = parts[1].find(')')
-            type = parts[1][:i_parenthesis_open]
-
-            if type == "varchar":
-                size = int(parts[1][i_parenthesis_open+1:i_parenthesis_close])
+            if type[-1] is ')':
+                (type, size) = type[:-1].split('(')
+                size = int(size)
             else:
-                size = 4 #int for now todo other datatypes/sizes
+                size = 4 #todo int for now
 
             cols.append(Column(name,type,size))
 
-        return Table(table_name, cols)
-
-
-"""SELECT *
-        FROM People
-        WHERE name = 123;
-
-        p = StatementParser(sel)
-p.SELECT()
-      """
-
-
-
-"""
-typedef struct Condition {
-    uint8_t     col_index;
-    Comparison  comparison;
-    uchar*      value;
-} Condition;
-
-typedef struct Where {
-    Condition  condition;
-} Where;
-
-typedef struct selectQuery {
-    spiDBcommand cmd;
-    uint32_t     id;
-
-    Where        where;
-    //simply do for SELECT * for now
-} selectQuery;
-"""
+        return CreateTable(Table(table_name, cols))

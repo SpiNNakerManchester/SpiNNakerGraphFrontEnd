@@ -36,6 +36,9 @@ double_linked_list* unacknowledged_replies;
 
 static circular_buffer sdp_buffer;
 
+uchar chipx;
+uchar chipy;
+uchar core;
 
 Table* table;
 
@@ -56,6 +59,8 @@ void sdp_packet_callback(uint mailbox, uint port) {
 
 address_t* addr;
 
+uint32_t entriesInQueue = 0;
+uchar entryQueue[60];//TODO 2-D array. Todo HARDCODED
 
 void process_requests(uint arg0, uint arg1){
 
@@ -72,20 +77,38 @@ void process_requests(uint arg0, uint arg1){
                 insertEntryQuery* insertE = (insertEntryQuery*) header;
                 Entry e = insertE->e;
 
-                log_info("e.row_id: %d", e.row_id);
-                log_info("e.col_index: %d", e.col_index);
-                log_info("e.size: %d", e.size);
-                log_info("e.value: %s", e.value);
-                //TODO INSERT ID NOW!!!!
-                log_info("row size : %d", table->row_size);
-                log_info("get_byte_pos(insertE->e.col_index) : %d", get_byte_pos(e.col_index));
-                log_info("n_cols : %d", table->n_cols);
-                log_info("all %08x", data_region + (table->row_size * (e.row_id-1) + get_byte_pos(e.col_index) + 3) / 4);
+                printEntry(&e);
+
+                uint32_t i = get_col_index(e.col_name);
+                uint32_t p = get_byte_pos(i); //todo very inefficient
+
+                //todo double check that it is in fact empty (NULL)
+                memcpy(&entryQueue[p], e.value, e.size);
+                entriesInQueue++;
+
+                if(entriesInQueue == table->n_cols){
+                    uint32_t n = table->current_n_rows;
+
+                    address_t address_to_write = data_region + ((table->row_size * n) + 3) / 4;
+
+                    log_info("Flushed to %08x", address_to_write);
+
+                    table->current_n_rows++; //todo concurrency!!!!!
+                    entriesInQueue = 0; //reset and null all of them
+
+                    write(address_to_write, entryQueue, table->row_size);
+
+                    for(uint32_t i = 0; i < table->row_size; i++){
+                        entryQueue[i] = 0;
+                    }
+                }
+
+                //log_info("all %08x", data_region + (table->row_size * (e.row_id-1) + get_byte_pos(e.col_index) + 3) / 4);
 
                                                                 //-1 because the row_id starts from 1
-                write(data_region + (table->row_size * (insertE->e.row_id-1) + get_byte_pos(insertE->e.col_index) + 3) / 4,
-                      insertE->e.value,
-                      insertE->e.size); //assumes row_ids are 1,2,3,4,... single core TODO
+                //write(address_to_write,
+                //      insertE->e.value,
+                //      insertE->e.size); //assumes row_ids are 1,2,3,4,... single core TODO
 
                 //append(addr, insertQ->values, table->row_size);
                 break;
@@ -194,7 +217,11 @@ void process_requests(uint arg0, uint arg1){
 
 void c_main()
 {
-    log_info("Initializing Slave...");
+    chipx = spin1_get_chip_id() & 0xF0 >> 8;
+    chipy = spin1_get_chip_id() & 0x0F;
+    core  = spin1_get_core_id();
+
+    log_info("Initializing Slave (%d,%d,%d)", chipx, chipy, core);
 
     table = (Table*)0x63e551a8; //todo hardcoded...
 
@@ -206,6 +233,9 @@ void c_main()
 
     addr = (address_t*)malloc(sizeof(address_t));
     *addr = data_region;
+
+                                  //todo not hardcoded
+    //entryQueue = (Entry*)sark_alloc(4, sizeof(Entry));
 
     // set timer tick value to 100ms
     spin1_set_timer_tick(TIMER_PERIOD);

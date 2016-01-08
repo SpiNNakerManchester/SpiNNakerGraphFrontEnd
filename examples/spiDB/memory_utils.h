@@ -6,6 +6,27 @@
 #include "db-typedefs.h"
 #include <debug.h>
 
+//todo take it out of here!!
+void printEntry(Entry* e){
+    log_info("####### Entry #######");
+    log_info("row_id: %d", e->row_id);
+    log_info("col_name: %s", e->col_name);
+    log_info("size: %d", e->size);
+    log_info("value: %s", e->value);
+}
+
+void print_table(Table* t){
+    log_info("####### TABLE #######");
+    log_info("t->n_cols %d", t->n_cols);
+    log_info("t->row_size %d", t->row_size);
+    log_info("t->current_n_rows %d", t->current_n_rows);
+
+    for(uint i = 0; i < t->n_cols; i++){
+        log_info("t->cols[%d] = name: %s, type: %d, size: %d",
+                    i, t->cols[i].name, t->cols[i].type, t->cols[i].size);
+    }
+}
+
 // returns address of where data was written. NULL if not written
 void append(address_t* address, void* data, uint32_t size_bytes){
     memcpy(*address, data, size_bytes);

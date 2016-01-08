@@ -45,6 +45,7 @@ class ClusterSlaveVertex(PartitionedVertex, AbstractPartitionedDataSpecableVerte
         self._database_size = 7000000
 
         self.placement = None
+        self.spec = None
 
     def get_binary_file_name(self):
         return "cluster_slave.aplx"
@@ -80,6 +81,8 @@ class ClusterSlaveVertex(PartitionedVertex, AbstractPartitionedDataSpecableVerte
                 write_text_specs, application_run_time_folder)
 
         spec = DataSpecificationGenerator(data_writer, report_writer)
+        self.spec = spec
+
         # Setup words + 1 for flags + 1 for recording size
         setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 3) * 4
 
@@ -128,6 +131,10 @@ class ClusterSlaveVertex(PartitionedVertex, AbstractPartitionedDataSpecableVerte
         spec.write_value(data=core_app_identifier)
         spec.write_value(data=self._machine_time_step * self._time_scale_factor)
         spec.write_value(data=self._no_machine_time_steps)
+
+    def append(self,data):
+        self.spec.switch_write_focus(region=self.DATA_REGIONS.DATABASE.value)
+        self.spec.write_value(data=data)
 
     def is_partitioned_data_specable(self):
         """
