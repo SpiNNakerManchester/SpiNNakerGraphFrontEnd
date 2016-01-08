@@ -104,7 +104,8 @@ class SpiNNakerGraphFrontEnd(object):
                     config.getboolean("Reports", "writeReloadSteps"),
                     config.getboolean("Reports", "writeTransceiverReport"),
                     config.getboolean("Reports", "outputTimesForSections"),
-                    config.getboolean("Reports", "writeTagAllocationReports"))
+                    config.getboolean("Reports", "writeTagAllocationReports"),
+                    config.getboolean("Reports", "writeMemoryMapReport"))
 
             # set up reports default folder
             self._report_default_directory, this_run_time_string = \
@@ -133,6 +134,9 @@ class SpiNNakerGraphFrontEnd(object):
                     .format(self._time_scale_factor))
 
         logger.info("Setting appID to %d." % self._app_id)
+
+        self._exec_dse_on_host = config.getboolean(
+                "SpecExecution", "specExecOnHost")
 
         # get the machine time step
         logger.info("Setting machine time step to {} micro-seconds."
@@ -272,6 +276,24 @@ class SpiNNakerGraphFrontEnd(object):
                 config.get("Mapping", "algorithms") + "," + \
                 config.get("Mapping", "interface_algorithms")
 
+            if self._exec_dse_on_host:
+                # The following line is not split to avoid
+                # error in future search
+                algorithms += \
+                    ",FrontEndCommonPartitionableGraphApplicationDataLoader" \
+                    ",FrontEndCommonPartitionableGraphHostExecuteDataSpecification"
+            else:
+                # The following line is not split to avoid
+                # error in future search
+                algorithms += \
+                    ",FrontEndCommonPartitionableGraphMachineExecuteDataSpecification"
+
+            if self._reports_states.write_memory_map_report:
+                if self._exec_dse_on_host:
+                    algorithms += ",FrontEndCommonMemoryMapOnHostReport"
+                else:
+                    algorithms += ",FrontEndCommonMemoryMapOnChipReport"
+
             contains_a_partitionable_graph = \
                 len(self._partitionable_graph.vertices) > 0
 
@@ -293,9 +315,6 @@ class SpiNNakerGraphFrontEnd(object):
                 # creator to the list
                 if config.getboolean("Reports", "writeReloadSteps"):
                     algorithms += ",FrontEndCommonReloadScriptCreator"
-
-            if config.getboolean("Reports", "writeMemoryMapReport"):
-                algorithms += ",FrontEndCommonMemoryMapReport"
 
             if config.getboolean("Reports", "writeNetworkSpecificationReport")\
                     and contains_a_partitionable_graph:

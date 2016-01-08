@@ -11,8 +11,8 @@ from spynnaker_graph_front_end.\
 
 from data_specification.data_specification_executor import \
     DataSpecificationExecutor
-from data_specification.file_data_reader import FileDataReader
-from data_specification.file_data_writer import FileDataWriter
+from spinn_storage_handlers.file_data_reader import FileDataReader
+from spinn_storage_handlers.file_data_writer import FileDataWriter
 from data_specification import exceptions
 
 import os

@@ -148,7 +148,7 @@ class HeatDemoVertexPartitioned(
         spec.end_specification()
         data_writer.close()
 
-        return [data_writer.filename]
+        return data_writer.filename
 
     def _write_temp_data(self, spec):
         spec.switch_write_focus(region=self.DATA_REGIONS.TEMP_VALUE.value)
