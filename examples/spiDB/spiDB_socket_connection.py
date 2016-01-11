@@ -33,7 +33,7 @@ class SpiDBSocketConnection(UDPConnection):
             self.sendQuery(i,q)
             queryIds.append(i)
             i += 1
-            time.sleep(0.1) #todo hmmm....
+            #time.sleep(0.1) #todo hmmm....
 
         return self.receive_all(queryIds)
 
@@ -55,23 +55,32 @@ class SpiDBSocketConnection(UDPConnection):
 
         time_sent = time.time() * 1000
 
+        responseBuffer = []
+
         while True:
             try:
-                s = self.receive(0.1)
+                s = self.receive(0.5) #todo lower that...
+                print s
 
-                response = socket_translator.translateResponse(s)
-                response.response_time = time.time() * 1000 - time_sent
+                responseBuffer.append((time.time() * 1000 - time_sent,
+                                  s))
 
-                i = id_to_index[response.id]
-                if results[i] is None:
-                    if response.cmd == "SELECT":
-                        results[i] = SelectResult()
-                    else:
-                        results[i] = Result()
-
-                results[i].addResponse(response)
-            except SpinnmanTimeoutException:
+            except SpinnmanTimeoutException as e:
+                print e
                 break
+
+        for t, s in responseBuffer:
+            response = socket_translator.translateResponse(s)
+            response.response_time = t
+
+            i = id_to_index[response.id]
+            if results[i] is None:
+                if response.cmd == "SELECT":
+                    results[i] = SelectResult()
+                else:
+                    results[i] = Result()
+
+            results[i].addResponse(response)
 
         return results
 

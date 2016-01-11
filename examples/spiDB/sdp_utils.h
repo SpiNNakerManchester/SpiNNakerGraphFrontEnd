@@ -85,7 +85,7 @@ uint32_t get_dest_core(sdp_msg_t* msg){
     return msg->dest_port & 0x1F;
 }
 
-void print_msg(sdp_msg_t* msg){
+void print_msg_header(sdp_msg_t* msg){
   log_info("=============================================");
   log_info("================= SDP INFO ==================");
   log_info("  length:    %04x", msg->length);
@@ -101,6 +101,10 @@ void print_msg(sdp_msg_t* msg){
            msg->srce_addr, get_srce_chip_x(msg), get_srce_chip_y(msg));
   log_info("  srce_port: %02x   - core (%d)",
            msg->srce_port, get_srce_core(msg));
+}
+
+void print_msg(sdp_msg_t* msg){
+  print_msg_header(msg);
   log_info("=============================================");
   log_info("============== SDP DATASPACE ================");
   log_info("  cmd_rc:    %04x", msg->cmd_rc);

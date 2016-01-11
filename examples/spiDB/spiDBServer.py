@@ -15,8 +15,6 @@ import spynnaker_graph_front_end as front_end
 from core_cluster_slave.cluster_slave_vertex import ClusterSlaveVertex
 from core_root.root_vertex import RootVertex
 
-from spiDB_socket_connection import SpiDBSocketConnection
-
 import os
 
 logger = logging.getLogger(__name__)
@@ -70,9 +68,6 @@ for c in range(0, 3):
                  'time_scale_factor': time_scale_factor},
                  label="slave{}".format(x_position))
             vertices.append(v)
-
-#ssc = SpiDBSocketConnection()
-#ssc.start()
 
 front_end.run(5)
 front_end.stop()

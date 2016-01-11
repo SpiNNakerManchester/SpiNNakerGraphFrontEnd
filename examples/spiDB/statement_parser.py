@@ -4,6 +4,7 @@ import sqlparse
 from sqlparse import sql
 from sqlparse import tokens as T
 from enum import Enum
+import re
 
 class Operand:
     def __init__(self, type, value):
@@ -179,12 +180,19 @@ class StatementParser:
         wildcard = self.statement.token_next_by_type(0, T.Wildcard)
         if wildcard is None:
             cols = []
-            col_tokens = self.next_by_instance(sql.IdentifierList)
+            col_tokens = self.statement.token_next_by_instance(0, sql.IdentifierList)
 
-            for t in col_tokens.get_identifiers():
-                cols.append(str(t))
+            if col_tokens is None:
+                col_token = self.next_by_instance(sql.Identifier)
+                cols = [str(col_token)]
+            else:
+                for t in col_tokens.get_identifiers():
+                    cols.append(str(t))
+
+            print cols
+
         else:
-            cols = None #means wildcard
+            cols = None # wildcard
 
         tableName = str(self.next_by_instance(sql.Identifier))
 
@@ -215,7 +223,8 @@ class StatementParser:
 
         cols = []
         for i in range(len(params)):
-            params[i] = params[i].strip()
+            params[i] = re.sub('\s+',' ',params[i].strip())
+
             (name, type) = params[i].split(' ')
 
             if type[-1] is ')':

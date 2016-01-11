@@ -39,6 +39,7 @@ static circular_buffer sdp_buffer;
 uchar chipx;
 uchar chipy;
 uchar core;
+uint32_t myId;
 
 Table* table;
 
@@ -51,6 +52,10 @@ void update(uint ticks, uint b){
     //age_recently_received_queries(recent_messages_queue);
 }
 
+
+uint32_t entriesInQueue = 0;
+uchar* entryQueue;//TODO 2-D array. Todo HARDCODED
+
 void sdp_packet_callback(uint mailbox, uint port) {
     if (circular_buffer_add(sdp_buffer, mailbox)) {
         spin1_trigger_user_event(0, 0);
@@ -59,8 +64,7 @@ void sdp_packet_callback(uint mailbox, uint port) {
 
 address_t* addr;
 
-uint32_t entriesInQueue = 0;
-uchar entryQueue[60];//TODO 2-D array. Todo HARDCODED
+uint32_t rows_in_this_core = 0;
 
 void process_requests(uint arg0, uint arg1){
 
@@ -73,32 +77,41 @@ void process_requests(uint arg0, uint arg1){
 
         switch(header->cmd){
             case INSERT_INTO:;
-                log_info("INSERT_INTO");
+                //log_info("INSERT_INTO");
                 insertEntryQuery* insertE = (insertEntryQuery*) header;
                 Entry e = insertE->e;
 
-                printEntry(&e);
+                //printEntry(&e);
 
                 uint32_t i = get_col_index(e.col_name);
+
                 uint32_t p = get_byte_pos(i); //todo very inefficient
+
+                //log_info("Col index is %d with pos %d. e.value is %s or e.size %d", i, p, e.value, e.size);
 
                 //todo double check that it is in fact empty (NULL)
                 memcpy(&entryQueue[p], e.value, e.size);
+                if(&entryQueue[p] == 0){ //todo
+                    log_info("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Problem writing");
+                }
+
                 entriesInQueue++;
 
-                if(entriesInQueue == table->n_cols){
-                    uint32_t n = table->current_n_rows;
+                if(entriesInQueue == table->n_cols){//todo
 
-                    address_t address_to_write = data_region + ((table->row_size * n) + 3) / 4;
+                    address_t address_to_write = data_region + ((table->row_size * rows_in_this_core) + 3) / 4;
 
-                    log_info("Flushed to %08x", address_to_write);
+                    log_info("INSERT_INTO %08x", address_to_write);
 
-                    table->current_n_rows++; //todo concurrency!!!!!
+                    rows_in_this_core++;
+
+                    table->current_n_rows++; //todo concurrency!!!!! do I even need this?
                     entriesInQueue = 0; //reset and null all of them
 
-                    write(address_to_write, entryQueue, table->row_size);
+                    memcpy(address_to_write,entryQueue,table->row_size);
 
                     for(uint32_t i = 0; i < table->row_size; i++){
+                        //log_info("entryQueue[%d] = %c (%02x)", i, entryQueue[i], entryQueue[i]);
                         entryQueue[i] = 0;
                     }
                 }
@@ -114,6 +127,7 @@ void process_requests(uint arg0, uint arg1){
                 break;
             case SELECT:;
                 log_info("SELECT");
+                print_msg_header(msg);
                 selectQuery* selectQ = (selectQuery*) header;
                 scan_ids(data_region,selectQ);
                 break;
@@ -122,6 +136,9 @@ void process_requests(uint arg0, uint arg1){
                          header->cmd, header->id);
                 break;
         }
+
+        // free the message to stop overload
+        spin1_msg_free(msg);
 
         /*
         sdp_msg_t* msg = (sdp_msg_t*) (*mailbox_ptr);
@@ -210,8 +227,6 @@ void process_requests(uint arg0, uint arg1){
 
         */
 
-        // free the message to stop overload
-        spin1_msg_free(msg);
     }
 }
 
@@ -220,10 +235,14 @@ void c_main()
     chipx = spin1_get_chip_id() & 0xF0 >> 8;
     chipy = spin1_get_chip_id() & 0x0F;
     core  = spin1_get_core_id();
+    myId  = chipx << 16 | chipy << 8 | core;
 
     log_info("Initializing Slave (%d,%d,%d)", chipx, chipy, core);
 
     table = (Table*)0x63e551a8; //todo hardcoded...
+
+    //entryQueue = (uchar*)sark_alloc(table->row_size,sizeof(uchar)); //TODO should prob. be somewhere else
+    entryQueue = (uchar*)sark_alloc(1024,sizeof(uchar)); //TODO should prob. be somewhere else
 
     if (!initialize()) {
         rt_error(RTE_SWERR);

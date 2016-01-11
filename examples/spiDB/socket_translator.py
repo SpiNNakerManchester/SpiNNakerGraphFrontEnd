@@ -135,6 +135,7 @@ def INSERT_INTO(id, insertInto):
         s += struct.pack("BI",
                              dbCommands.INSERT_INTO.value,
                              id) #todo...
+
         s += struct.pack("<I", id) #todo... CANNOT BE THE SAME
         s += struct.pack("16c", *normalize(col_name, 16))
         s += struct.pack("I{}c".format(len(value)), len(value), *value)
@@ -154,6 +155,7 @@ def SELECT(id, sel):
     else:
         for c in sel.cols:
             s += struct.pack("16c", *normalize(c,16))
+        s += struct.pack("B", 0) #so that we set the next col to null for scan.h
 
     """
     typedef struct selectQuery {

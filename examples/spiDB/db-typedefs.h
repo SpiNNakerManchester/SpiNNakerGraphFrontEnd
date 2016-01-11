@@ -11,8 +11,8 @@
 #define CORE_SIZE   16
 
 #define ROOT_CORE       1
-#define FIRST_SLAVE     1
-#define LAST_SLAVE      CORE_SIZE
+#define FIRST_SLAVE     2
+#define LAST_SLAVE      15
                                           //words
 #define CORE_DATABASE_SIZE_WORDS (120000000 >> 2) / CORE_SIZE
 
@@ -183,12 +183,14 @@ typedef struct Where {
     Condition  condition;
 } Where;
 
+#define MAX_NUMBER_OF_COLS 16
+
 typedef struct selectQuery {
     spiDBcommand cmd;
     uint32_t     id;
 
     //uchar      table_name;
-    uchar        col_names[4][16]; //If col names == 0, it means SELECT *
+    uchar        col_names[MAX_NUMBER_OF_COLS][16]; //If col names == 0, it means SELECT *
 
     //Where        where;??
     //simply do for SELECT * for now
@@ -223,10 +225,15 @@ uint32_t get_byte_pos(uint32_t col_index){
     return pos;
 }
 
+#include <debug.h>
+
 uint32_t get_col_index(uchar col_name[16]){
 
     for(uint32_t i = 0; i < table->n_cols; i++){
-        if(arr_equals(table->cols[i].name, col_name, 16)){ //todo not up to 16
+        log_info("cmp %s with %s", table->cols[i].name, col_name);
+
+        if(strcmp(table->cols[i].name, col_name) == 0){
+            log_info("YES");
             return i;
         }
     }

@@ -11,6 +11,9 @@ class Response:
         self.response_time = -1
         self.data = None
 
+    def __xyp__(self):
+        return self.x, self.y, self.p
+
     def __str__(self):
         return "{} ({},{},{})"\
             .format("OK" if self.success else "FAIL", self.x, self.y, self.p)
@@ -31,13 +34,14 @@ class Entry():
 class Row(dict):
     def __init__(self, *args, **kwargs):
         self.update(*args, **kwargs)
+        self.origin = None
         """
         self.firstResponseTime = 9999
         self.lastResponseTime = -1
         """
 
-    def __setitem__(self, colname, entry):
-        dict.__setitem__(self, colname, entry)
+    def __setitem__(self, colname, value):
+        dict.__setitem__(self, colname, value)
         """
         if entry.response_time > self.lastResponseTime:
             self.lastResponseTime = entry.response_time
@@ -60,14 +64,14 @@ class Result:
     def __init__(self):
         self.firstResponseTime = 9999
         self.lastResponseTime = -1
-        self.responses = list()
+        #self.responses = list()
 
     def addResponse(self, r):
         if r.response_time < self.firstResponseTime:
             self.firstResponseTime = r.response_time
         if r.response_time > self.lastResponseTime:
             self.lastResponseTime = r.response_time
-        self.responses.append(r)
+        #self.responses.append(r)
 
     def __repr__(self):
         return "responses: {}"\
@@ -76,53 +80,60 @@ class Result:
 class SelectResult(Result):
     def __init__(self):
         Result.__init__(self)
-        self.rows = {}
+        self.rowidToRow = {}
+        self.responses = {}
+        self.cols = set()
 
     def addResponse(self, r):
         Result.addResponse(self, r)
 
         e = r.data
 
-        row = self.rows.get(e.row_id)
+        row = self.rowidToRow.get(e.row_id)
 
         if row is None:
             row = Row()
-            self.rows[e.row_id] = row
+            row.origin = r.__xyp__()
+            self.rowidToRow[e.row_id] = row
 
-        if row.get(e.col) is not None:
-            raise Exception("Column {} already exists with value {}."
-                            "Unable to insert value {}",
-                            e.col, row[e.col], e.value)
+        if row.get(e.col) is None:
+            if cmp(row.origin, r.__xyp__()) is not 0:
+                raise Exception("row.origin: {} != r.__xyp__()".format(row.origin, r.__xyp__()))
+            row[e.col] = e.value
 
-        row[e.col] = e.value
+        else: #raise Exception()
+            print "Row with id '{}' on '{}' already exists " \
+                  "with value '{}' from {}."\
+                .format(e.row_id, e.col, row[e.col], r.__xyp__())
+
+    def getRows(self):
+        return self.rowidToRow.values()
 
     def __repr__(self):
-        return "{}, rows: {}".format(Result.__repr__(self), len(self.rows))
+        return "{}, rows: {}".format(Result.__repr__(self), len(self.rowidToRow))
 
     def __str__(self):
-        #str =  "Response time:{0:.3f}ms\n".format(self.lastResponseTime)
-        #str += "Number of rows: {}\n\n".format(len(self.rows))
+        str =  "\nResponse time:{0:.3f}ms\n".format(self.lastResponseTime)
+        str += "Number of rows: {}\n".format(len(self.rowidToRow))
 
-        if len(self.rows) == 0:
-            return "*empty*"
-
-        str = ""
+        if len(self.rowidToRow) == 0:
+            return str
 
         longest_str_for_col = {}
 
-        for row_id, row in self.rows.iteritems():
+        for row_id, row in self.rowidToRow.iteritems():
             for c, v in row.iteritems():
                 if longest_str_for_col.get(c) is None or len(v) > longest_str_for_col[c]:
                     longest_str_for_col[c] = len(v)
 
         header = ""
-        for row_id, row in self.rows.iteritems():
+        for row_id, row in self.rowidToRow.iteritems():
             header += "|"
             for c in row.keys():
                 if len(c) > longest_str_for_col[c]:
                     longest_str_for_col[c] = len(c)
                 header += "  {}  ".format(c.ljust(longest_str_for_col[c]))
-            header += "|"
+            header += "|  (x, y, p)"
             break
 
         n_spaces = 0
@@ -136,8 +147,10 @@ class SelectResult(Result):
         str += "|" + "-" * n_spaces + "|"
         str += "\n"
 
-        for row_id, row in self.rows.iteritems():
-            str += "|{}|\n".format(row.ljust_str(longest_str_for_col))
+        for row_id, row in self.rowidToRow.iteritems():
+            str += "|{}|  {} - id: {}\n"\
+                .format(row.ljust_str(longest_str_for_col),
+                        row.origin, row_id)
 
         str += " " + "-" * n_spaces + " "
 
