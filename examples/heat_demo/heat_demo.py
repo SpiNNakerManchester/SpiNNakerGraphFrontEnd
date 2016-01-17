@@ -11,9 +11,9 @@ from spinn_front_end_common.utility_models.live_packet_gather import \
 from spinnman.messages.eieio.eieio_type import EIEIOType
 
 # graph front end imports
-import spynnaker_graph_front_end as front_end
-from spynnaker_graph_front_end import ReverseIpTagMultiCastSource
-from spynnaker_graph_front_end import MultiCastPartitionedEdge
+import spinnaker_graph_front_end as front_end
+from spinnaker_graph_front_end import ReverseIpTagMultiCastSource
+from spinnaker_graph_front_end import MultiCastPartitionedEdge
 
 # example imports
 from examples.heat_demo.heat_demo_command_edge import HeatDemoCommandEdge
@@ -45,7 +45,7 @@ y_dimension = dimenions['y']
 max_x_element_id = x_dimension * 4
 max_y_element_id = y_dimension * 4
 
-# overrwide dimensions
+# override dimensions
 max_x_element_id = 2
 max_y_element_id = 2
 
@@ -87,7 +87,8 @@ for x_position in range(0, max_x_element_id):
 # build edges
 for x_position in range(0, max_x_element_id):
     for y_position in range(0, max_y_element_id):
-        # add a link from the injecotr to the heat element
+
+        # add a link from the injector to the heat element
         front_end.add_partitioned_edge(
             HeatDemoCommandEdge,
             {'pre_subvertex': command_injector,
@@ -96,6 +97,7 @@ for x_position in range(0, max_x_element_id):
             label="injector edge for vertex {}"
                   .format(vertices[x_position][y_position].label),
             partition_id="COMMANDS")
+
         # add a link from the heat element to the live packet gatherer
         front_end.add_partitioned_edge(
             MultiCastPartitionedEdge,
@@ -146,6 +148,7 @@ for x_position in range(0, max_x_element_id):
                 label="Injected temp for East edge of fabric for heat element"
                       " {}".format(vertices[x_position][y_position]),
                 partition_id="INJECTED_TEMP")
+
         # check for the likely hood for a S link
         if (y_position - 1) >= 0:
             front_end.add_partitioned_edge(
@@ -166,6 +169,7 @@ for x_position in range(0, max_x_element_id):
                 label="Injected temp for South edge of fabric for heat element"
                       " {}".format(vertices[x_position][y_position]),
                 partition_id="INJECTED_TEMP")
+
         # check for the likely hood for a W link
         if (x_position - 1) >= 0:
             front_end.add_partitioned_edge(
