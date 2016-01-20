@@ -537,7 +537,9 @@ void c_main() {
 
     // initialise the model
     if (!initialize(&timer_period)) {
+        log_error("Error in initialisation - exiting!");
         rt_error(RTE_API);
+        return;
     }
 
     // set timer tick value to 1ms (in microseconds)

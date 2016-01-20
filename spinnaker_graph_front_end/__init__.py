@@ -4,18 +4,6 @@ from utilities import conf
 from ._version import __version__, __version_name__, __version_month__,\
     __version_year__
 
-
-# utility models for graph front ends
-from spinn_front_end_common.utility_models.\
-    reverse_ip_tag_multi_cast_source import ReverseIpTagMultiCastSource
-from spinn_front_end_common.utility_models.command_sender import CommandSender
-from spinn_front_end_common.utility_models.live_packet_gather \
-    import LivePacketGather
-from pacman.model.partitioned_graph.multi_cast_partitioned_edge \
-    import MultiCastPartitionedEdge
-from pacman.model.partitionable_graph.multi_cast_partitionable_edge \
-    import MultiCastPartitionableEdge
-
 import logging
 
 logger = logging.getLogger(__name__)
@@ -61,7 +49,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
             parent_dir))
 
     executable_finder = ExecutableFinder()
-    # add the directorities for where to locate the binaries
+    # add the directories for where to locate the binaries
     if model_binary_module is not None:
         executable_finder.add_path(
             os.path.dirname(model_binary_module.__file__))

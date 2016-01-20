@@ -95,9 +95,9 @@
             </parameter>
         </produces_outputs>
     </algorithm>
-    <algorithm name="SpinnakerGraphFrontEndPartitionedGraphHostBasedDataSpecificationExeuctor">
+    <algorithm name="SpinnakerGraphFrontEndPartitionedGraphHostBasedDataSpecificationExecutor">
         <python_module>spinnaker_graph_front_end.extra_pacman_algorithms.spinnaker_graph_front_end_partitioned_graph_host_based_data_specification_executor</python_module>
-        <python_class>SpinnakerGraphFrontEndPartitionedGraphHostBasedDataSpecificationExeuctor</python_class>
+        <python_class>SpinnakerGraphFrontEndPartitionedGraphHostBasedDataSpecificationExecutor</python_class>
         <required_inputs>
             <parameter>
                 <param_name>hostname</param_name>
@@ -127,6 +127,14 @@
                 <param_name>dsg_targets</param_name>
                 <param_type>DataSpecificationTargets</param_type>
             </parameter>
+            <parameter>
+                <param_name>app_id</param_name>
+                <param_type>APPID</param_type>
+            </parameter>
+            <parameter>
+                <param_name>write_text_specs</param_name>
+                <param_type>WriteTextSpecsFlag</param_type>
+            </parameter>
         </required_inputs>
         <produces_outputs>
             <parameter>
@@ -136,6 +144,18 @@
             <parameter>
                 <param_name>placement_to_app_data_files</param_name>
                 <param_type>PlacementToAppDataFilePaths</param_type>
+            </parameter>
+            <parameter>
+                <param_name>LoadedApplicationDataToken</param_name>
+                <param_type>LoadedApplicationDataToken</param_type>
+            </parameter>
+            <parameter>
+                <param_name>DSEOnHost</param_name>
+                <param_type>DSEOnHost</param_type>
+            </parameter>
+            <parameter>
+                <param_name>DSEOnChip</param_name>
+                <param_type>DSEOnChip</param_type>
             </parameter>
         </produces_outputs>
     </algorithm>

@@ -13,14 +13,6 @@ from spinn_front_end_common.abstract_models.abstract_data_specable_vertex \
     import AbstractDataSpecableVertex
 
 # graph front end imports
-#from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
-#    import AbstractPartitionedDataSpecableVertex
-#from spynnaker_graph_front_end.utilities.xml_interface import XMLInterface
-#from spynnaker_graph_front_end.utilities.conf import config
-#from spynnaker_graph_front_end import extra_pacman_algorithms
-
-# if the following import don't work, the previous imports have been replaced
-# to resolve a conflict
 from abstract_partitioned_data_specable_vertex \
     import AbstractPartitionedDataSpecableVertex
 from utilities.xml_interface import XMLInterface
@@ -72,6 +64,7 @@ class SpiNNakerGraphFrontEnd(object):
         self._runtime = None
         self._current_run_ms = None
         self._buffer_manager = None
+        self._dsg_targets = None
 
         # holders for data needed for reset when nothing changes in the
         # application graph
@@ -254,10 +247,10 @@ class SpiNNakerGraphFrontEnd(object):
                 "PACMAN_provancence_data.xml")
             pacman_exeuctor.write_provenance_data_in_xml(
                 pacman_executor_file_path,
-                pacman_exeuctor.get_item("MemoryTransciever"))
+                pacman_exeuctor.get_item("MemoryTransceiver"))
 
         # sort out outputs datas
-        self._txrx = pacman_exeuctor.get_item("MemoryTransciever")
+        self._txrx = pacman_exeuctor.get_item("MemoryTransceiver")
         self._placements = pacman_exeuctor.get_item("MemoryPlacements")
         self._router_tables = pacman_exeuctor.get_item("MemoryRoutingTables")
         self._routing_infos = pacman_exeuctor.get_item("MemoryRoutingInfos")
@@ -270,6 +263,8 @@ class SpiNNakerGraphFrontEnd(object):
         self._database_interface = pacman_exeuctor.get_item(
             "DatabaseInterface")
         self._has_ran = pacman_exeuctor.get_item("RanToken")
+        self._dsg_targets = pacman_exeuctor.get_item(
+                "DataSpecificationTargets")
 
         # reset the reset flag to say the last thing was not a reset call
         self._current_run_ms = total_run_time
@@ -316,14 +311,12 @@ class SpiNNakerGraphFrontEnd(object):
                 # The following line is not split to avoid
                 # error in future search
                 algorithms.append(
-                        "FrontEndCommonPartitionableGraphApplicationDataLoader")
-                algorithms.append(
-                        "FrontEndCommonPartitionableGraphHostExecuteDataSpecification")
+                    "FrontEndCommonPartitionableGraphHostExecuteDataSpecification")
             else:
                 # The following line is not split to avoid
                 # error in future search
                 algorithms.append(
-                        "FrontEndCommonPartitionableGraphMachineExecuteDataSpecification")
+                    "FrontEndCommonPartitionableGraphMachineExecuteDataSpecification")
 
             if self._reports_states.write_memory_map_report:
                 if self._exec_dse_on_host:
@@ -395,8 +388,7 @@ class SpiNNakerGraphFrontEnd(object):
                 algorithms.append(
                     "SpinnakerGraphFrontEndPartitionableGraphEdgeToKeyMapper")
                 algorithms.append(
-                    "FrontEndCommonPartitionableGraphHost"
-                    "ExecuteDataSpecification")
+                    "FrontEndCommonPartitionableGraphHostExecuteDataSpecification")
                 algorithms.append(
                     "FrontEndCommomPartitionableGraphDataSpecificationWriter")
                 algorithms.append("FrontEndCommonDatabaseWriter")
@@ -405,16 +397,11 @@ class SpiNNakerGraphFrontEnd(object):
                 algorithms.append(
                     "SpinnakerGraphFrontEndPartitionedGraphEdgeToKeyMapper")
                 algorithms.append(
-                    "SpinnakerGraphFrontEndPartitionedGraphData"
-                    "SpecificationWriter")
+                    "SpinnakerGraphFrontEndPartitionedGraphDataSpecificationWriter")
                 algorithms.append("FrontEndCommonNotificationProtocol")
                 algorithms.append(
-                    "SpinnakerGraphFrontEndPartitionedGraphHost"
-                    "BasedDataSpecificationExeuctor")
+                    "SpinnakerGraphFrontEndPartitionedGraphHostBasedDataSpecificationExecutor")
                 algorithms.append("SpiNNakerGraphFrontEndDatabaseWriter")
-            # application data loader is agnostic to graph
-            algorithms.append(
-                "FrontEndCommonPartitionableGraphApplicationDataLoader")
 
             return algorithms
         else:
@@ -468,7 +455,7 @@ class SpiNNakerGraphFrontEnd(object):
                 {"type": "ResetMachineOnStartupFlag", 'value': False})
 
         if self._txrx is not None:
-            inputs.append({"type": "MemoryTransciever", 'value': self._txrx})
+            inputs.append({"type": "MemoryTransceiver", 'value': self._txrx})
 
         if self._machine is not None:
             inputs.append({"type": "MemoryMachine", 'value': self._machine})
@@ -481,17 +468,11 @@ class SpiNNakerGraphFrontEnd(object):
             inputs.append({'type': "RunTimeMachineTimeSteps",
                            'value': no_machine_time_steps})
 
-        # FrontEndCommonPartitionableGraphApplicationDataLoader after a
-        # reset and no changes
+        # After a reset and no changes
         if not self._has_ran and not application_graph_changed:
-            inputs.append(({
-                'type': "ProcessorToAppDataBaseAddress",
-                "value": self._processor_to_app_data_base_address_mapper}))
-            inputs.append({"type": "VertexToAppDataFilePaths",
-                           'value': self._vertex_to_app_data_file_paths})
-            inputs.append({'type': "WriteCheckerFlag",
-                           'value': config.getboolean(
-                               "Mode", "verify_writes")})
+            inputs.append({
+                'type': "DataSpecificationTargets",
+                "value": self._dsg_targets})
 
         # the application graph has changed, so new binaries are being
         # loaded and therefore sync mode starts at zero again.
@@ -715,13 +696,13 @@ class SpiNNakerGraphFrontEnd(object):
         required_outputs.append("MemoryMachine")
         xml_paths = list()
 
-        pacman_exeuctor = helpful_functions.do_mapping(
+        pacman_executor = helpful_functions.do_mapping(
             inputs, algorthims, required_outputs, xml_paths,
             config.getboolean("Reports", "outputTimesForSections"))
 
-        self._machine = pacman_exeuctor.get_item("MemoryMachine")
+        self._machine = pacman_executor.get_item("MemoryMachine")
         if not config.getboolean("Machine", "virtual_board"):
-            self._txrx = pacman_exeuctor.get_item("MemoryTransciever")
+            self._txrx = pacman_executor.get_item("MemoryTransceiver")
 
     @property
     def app_id(self):
