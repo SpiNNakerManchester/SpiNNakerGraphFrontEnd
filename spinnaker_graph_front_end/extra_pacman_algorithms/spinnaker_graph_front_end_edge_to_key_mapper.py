@@ -19,6 +19,7 @@ class SpinnakerGraphFrontEndEdgeToKeyMapper(object):
         # Generate an n_keys map for the graph and add constraints
         n_keys_map = DictBasedPartitionedEdgeNKeysMap()
         if partitionable_graph is not None and graph_mapper is not None:
+
             for edge in partitioned_graph.subedges:
                 vertex_slice = graph_mapper.get_subvertex_slice(
                     edge.pre_subvertex)
@@ -33,7 +34,7 @@ class SpinnakerGraphFrontEndEdgeToKeyMapper(object):
                 else:
                     n_keys_map.set_n_keys_for_patitioned_edge(
                         edge,
-                        super_edge.pre_vertex.get_n_keys_for_partitioned_edge(
+                        super_edge.pre_vertex.get_n_keys_for_partition(
                             edge, graph_mapper))
 
                 if isinstance(super_edge.pre_vertex,
@@ -54,14 +55,13 @@ class SpinnakerGraphFrontEndEdgeToKeyMapper(object):
                 else:
                     n_keys_map.set_n_keys_for_patitioned_edge(
                         edge,
-                        edge.pre_subvertex.get_n_keys_for_partitioned_edge(
+                        edge.pre_subvertex.get_n_keys_for_partition(
                             edge, graph_mapper))
 
                 if isinstance(edge, AbstractProvidesNKeysForEdge):
-                        n_keys = edge.\
-                            get_n_keys_for_partitioned_edge(edge,
-                                                            graph_mapper)
-                        n_keys_map.set_n_keys_for_patitioned_edge(edge, n_keys)
+                        n_keys = edge.get_n_keys_for_partition(edge,
+                                                               graph_mapper)
+                        n_keys_map.set_n_keys_for_patition(partition, n_keys)
 
                 if isinstance(edge.pre_subvertex,
                               AbstractProvidesOutgoingEdgeConstraints):

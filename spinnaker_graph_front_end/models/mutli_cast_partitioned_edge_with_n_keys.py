@@ -18,10 +18,10 @@ class MultiCastPartitionedEdgeWithNKeys(MultiCastPartitionedEdge,
         AbstractProvidesNKeysForEdge.__init__(self)
         self._n_keys = n_keys
 
-    def get_n_keys_for_partitioned_edge(self, partitioned_edge, graph_mapper):
+    def get_n_keys_for_partition(self, partition, graph_mapper):
         """ Get the number of keys per partitioned_edge
 
-        :param partitioned_edge: the edge to consider
+        :param partition: the outgoing partition to consider
         :param graph_mapper: the graph mapper (could be none)
         :return: the number of keys this edge has
         """

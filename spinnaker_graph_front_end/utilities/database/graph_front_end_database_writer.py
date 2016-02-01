@@ -44,15 +44,12 @@ class GraphFrontEndDataBaseWriter(DatabaseWriter):
             # insert into table
             vertices = list(partitioned_graph.subvertices)
             for partitioned_vertex in partitioned_graph.subvertices:
-                out_going_edges = (partitioned_graph
-                                   .outgoing_subedges_from_subvertex(
-                                       partitioned_vertex))
-                if len(out_going_edges) > 0:
-                    routing_info = (routing_infos
-                                    .get_subedge_information_from_subedge(
-                                        out_going_edges[0]))
+                partitions = partitioned_graph.\
+                    outgoing_edges_partitions_from_vertex(partitioned_vertex)
+                for partition in partitions:
+                    event_ids = routing_infos.\
+                        get_keys_and_masks_from_partition(partition)[0].keys
                     vertex_id = vertices.index(partitioned_vertex) + 1
-                    event_ids = routing_info.get_keys()
                     for key in event_ids:
                         cur.execute(
                             "INSERT INTO event_to_atom_mapping("

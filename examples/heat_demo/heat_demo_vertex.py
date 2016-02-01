@@ -17,9 +17,6 @@ from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.sdram_resource import SDRAMResource
 
 # graph front end imports
-from spinn_front_end_common.abstract_models.\
-    abstract_provides_outgoing_edge_constraints import \
-    AbstractProvidesOutgoingEdgeConstraints
 from spinn_front_end_common.utility_models.live_packet_gather import \
     LivePacketGather
 from spinn_front_end_common.utility_models.\
@@ -47,37 +44,36 @@ class HeatDemoVertexPartitioned(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
                ('TRANSMISSIONS', 1),
-               ('NEIGBOUR_KEYS', 2),
+               ('NEIGHBOUR_KEYS', 2),
                ('COMMAND_KEYS', 3),
-               ('OUPUT_KEY', 4),
+               ('OUTPUT_KEY', 4),
                ('TEMP_VALUE', 5)])
 
     # one key for each incoming edge.
-    NEIGBOUR_DATA_SIZE = 10 * 4
+    NEIGHBOUR_DATA_SIZE = 10 * 4
     TRANSMISSION_DATA_SIZE = 2 * 4
     COMMAND_KEYS_SIZE = 3 * 4
-    OUPUT_KEY_SIZE = 1 * 4
+    OUTPUT_KEY_SIZE = 1 * 4
     TEMP_VALUE_SIZE = 1 * 4
 
     _model_based_max_atoms_per_core = 1
     _model_n_atoms = 1
 
     def __init__(self, label, machine_time_step, time_scale_factor,
-                 heat_tempature=0, constraints=None):
+                 heat_temperature=0, constraints=None):
 
         # resources used by a heat element vertex
-        resoruces = ResourceContainer(cpu=CPUCyclesPerTickResource(45),
+        resources = ResourceContainer(cpu=CPUCyclesPerTickResource(45),
                                       dtcm=DTCMResource(34),
                                       sdram=SDRAMResource(23))
 
         PartitionedVertex.__init__(
-            self, label=label, resources_required=resoruces,
+            self, label=label, resources_required=resources,
             constraints=constraints)
         AbstractPartitionedDataSpecableVertex.__init__(self)
-        AbstractProvidesOutgoingEdgeConstraints.__init__(self)
         self._machine_time_step = machine_time_step
         self._time_scale_factor = time_scale_factor
-        self._heat_temperature = heat_tempature
+        self._heat_temperature = heat_temperature
 
         # used to support
         self._first_partitioned_edge = None
@@ -134,7 +130,7 @@ class HeatDemoVertexPartitioned(
         # Create the data regions for the spike source array:
         self._reserve_memory_regions(spec, setup_size)
         self._write_basic_setup_info(spec, self.DATA_REGIONS.SYSTEM.value)
-        self._write_tranmssion_keys(spec, routing_info, sub_graph)
+        self._write_transmission_keys(spec, routing_info, sub_graph)
         self._write_key_data(spec, routing_info, sub_graph)
         self._write_temp_data(spec)
 
@@ -164,18 +160,18 @@ class HeatDemoVertexPartitioned(
             size=self.TRANSMISSION_DATA_SIZE, label="inputs")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.NEIGBOUR_KEYS.value,
-            size=self.NEIGBOUR_DATA_SIZE, label="inputs")
+            size=self.NEIGHBOUR_DATA_SIZE, label="inputs")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.COMMAND_KEYS.value,
             size=self.COMMAND_KEYS_SIZE, label="commands")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.OUPUT_KEY.value,
-            size=self.OUPUT_KEY_SIZE, label="outputs")
+            size=self.OUTPUT_KEY_SIZE, label="outputs")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.TEMP_VALUE.value,
             size=self.TEMP_VALUE_SIZE, label="temp")
 
-    def _write_tranmssion_keys(self, spec, routing_info, subgraph):
+    def _write_transmission_keys(self, spec, routing_info, subgraph):
         """
 
         :param spec:
@@ -185,24 +181,26 @@ class HeatDemoVertexPartitioned(
         """
 
         # Every subedge should have the same key
-        outgoing_edges = subgraph.outgoing_subedges_from_subvertex(self)
-        keys_and_masks = routing_info.get_keys_and_masks_from_subedge(
-            outgoing_edges[0])
-        key = keys_and_masks[0].key
-        spec.switch_write_focus(region=self.DATA_REGIONS.TRANSMISSIONS.value)
+        partitions = subgraph.outgoing_edges_partitions_from_vertex(self)
+        for partition in partitions.values():
+            keys_and_masks = routing_info.\
+                get_keys_and_masks_from_partition(partition)
+            key = keys_and_masks[0].key
+            spec.switch_write_focus(
+                region=self.DATA_REGIONS.TRANSMISSIONS.value)
 
-        # Write Key info for this core:
-        if key is None:
+            # Write Key info for this core:
+            if key is None:
 
-            # if there's no key, then two falses will cover it.
-            spec.write_value(data=0)
-            spec.write_value(data=0)
+                # if there's no key, then two false's will cover it.
+                spec.write_value(data=0)
+                spec.write_value(data=0)
 
-        else:
+            else:
 
-            # has a key, thus set has key to 1 and then add key
-            spec.write_value(data=1)
-            spec.write_value(data=key)
+                # has a key, thus set has key to 1 and then add key
+                spec.write_value(data=1)
+                spec.write_value(data=key)
 
     def _write_key_data(self, spec, routing_info, sub_graph):
         """
@@ -257,8 +255,9 @@ class HeatDemoVertexPartitioned(
             written = False
             for edge in direction_edges:
                 if edge.direction.value == current_direction:
-                    keys_and_masks = \
-                        routing_info.get_keys_and_masks_from_subedge(edge)
+                    partition = sub_graph.get_partition_of_subedge(edge)
+                    keys_and_masks = routing_info.\
+                        get_keys_and_masks_from_partition(partition)
                     key = keys_and_masks[0].key
                     spec.write_value(data=key)
                     loaded_keys += 1
@@ -285,8 +284,9 @@ class HeatDemoVertexPartitioned(
             written = False
             for edge in fake_temp_edges:
                 if edge.direction.value == current_direction:
-                    keys_and_masks = \
-                        routing_info.get_keys_and_masks_from_subedge(edge)
+                    partition = sub_graph.get_partition_of_subedge(edge)
+                    keys_and_masks = routing_info.\
+                        get_keys_and_masks_from_partition(partition)
                     key = keys_and_masks[0].key
                     spec.write_value(data=key)
                     written = True
@@ -297,8 +297,9 @@ class HeatDemoVertexPartitioned(
         spec.switch_write_focus(region=self.DATA_REGIONS.OUPUT_KEY.value)
         spec.comment("\n the key for transmitting temp to host gatherer:\n\n")
         if output_edge is not None:
+            partition = sub_graph.get_partition_of_subedge(output_edge)
             output_edge_key_and_mask = \
-                routing_info.get_keys_and_masks_from_subedge(output_edge)
+                routing_info.get_keys_and_masks_from_partition(partition)
             key = output_edge_key_and_mask[0].key
             spec.write_value(data=key)
         else:
@@ -308,8 +309,9 @@ class HeatDemoVertexPartitioned(
         spec.switch_write_focus(region=self.DATA_REGIONS.COMMAND_KEYS.value)
         spec.comment(
             "\n the command keys in order of STOP, PAUSE, RESUME:\n\n")
+        partition = sub_graph.get_partition_of_subedge(command_edge)
         commands_keys_and_masks = \
-            routing_info.get_keys_and_masks_from_subedge(command_edge)
+            routing_info.get_keys_and_masks_from_partition(partition)
 
         # get just the keys
         keys = list()

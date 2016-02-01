@@ -35,10 +35,10 @@ class HeatDemoEdge(MultiCastPartitionedEdgeWithNKeys,
         """
         return self._direction
 
-    def get_n_keys_for_partitioned_edge(self, partitioned_edge, graph_mapper):
+    def get_n_keys_for_partition(self, partition, graph_mapper):
         """
 
-        :param partitioned_edge:
+        :param partition:
         :param graph_mapper:
         :return:
         """
