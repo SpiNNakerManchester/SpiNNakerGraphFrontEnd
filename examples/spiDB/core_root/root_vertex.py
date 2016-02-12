@@ -71,7 +71,6 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         """
         method to determine how to generate their data spec for a non neural
         application
-
         :param placement: the placement object for the dsg
         :param sub_graph: the partitioned graph object for this dsg
         :param routing_info: the routing info object for this dsg

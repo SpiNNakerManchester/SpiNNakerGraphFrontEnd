@@ -36,8 +36,19 @@
 // Globals
 uint32_t time = 0; //represents the microseconds since start
 
-double_linked_list* unreplied_puts;
-double_linked_list* unreplied_pulls;
+
+#ifdef DB_TYPE_KEY_VALUE_STORE
+    #ifdef DB_SUBTYPE_HASH_TABLE
+
+        uint32_t hash(uchar* bytes, size_t size){
+            uint32_t h = 5381;
+            for(uint16_t i = 0; i < size; i++){
+                h = ((h << 5) + h) + (bytes[i] ^ (bytes[i] << 28));
+            }
+            return h;
+        }
+    #endif
+#endif
 
 static circular_buffer sdp_buffer;
 
@@ -52,6 +63,13 @@ void update (uint ticks, uint b){
     use(b);
 
     time += TIMER_PERIOD;
+
+/*
+    if(time % 50000000 == 0){
+        log_info("HELLLLLLLLLLLLLLLLO");
+        spin1_exit(0);
+    }
+    */
 }
 
 void sdp_packet_callback(uint mailbox, uint port) {
@@ -77,6 +95,35 @@ void process_requests(uint arg0, uint arg1){
             //printQuery(query);
 
             spiDBQueryHeader* header = (spiDBQueryHeader*) &msg->cmd_rc;
+
+            #ifdef DB_TYPE_KEY_VALUE_STORE
+            switch(header->cmd){
+                case PUT:;
+                    putQuery* putQ = (putQuery*) header;
+
+                    #ifdef DB_SUBTYPE_HASH_TABLE
+                        uint32_t h = hash(putQ->k_v,
+                                          k_size_from_info(putQ->info));
+
+                        uchar h_chipx =  (h & 0x00FF0000 >> 16) % CHIP_X_SIZE;
+                        uchar h_chipy =  (h & 0x0000FF00 >> 8)  % CHIP_Y_SIZE;
+                        uchar h_core  = ((h & 0x000000FF)       % CORE_SIZE)
+                                            + FIRST_SLAVE;
+                    #else
+
+                    set_dest_xyp(msg, h_chipx, h_chipy, h_core);
+
+                    #endif
+
+
+                    break;
+                case PULL:;
+
+                    break;
+
+            }
+            #endif
+            #ifdef DB_TYPE_RELATIONAL
 
             switch(header->cmd){
                 case CREATE_TABLE:;
@@ -117,8 +164,7 @@ void process_requests(uint arg0, uint arg1){
                     insertEntryQuery* insertE = (insertEntryQuery*) header;
                     Entry e = insertE->e;
 
-                    //15 is the total number of slave cores
-                    uint32_t dest_core = (e.row_id % 15) + FIRST_SLAVE;
+                    uint32_t dest_core = (e.row_id % 11) + FIRST_LEAF;
                     log_info("INSERT_INTO (id:%d) -> core %d", e.row_id, dest_core);
 
                     set_dest_chip(msg,spin1_get_chip_id());//same chip
@@ -130,7 +176,7 @@ void process_requests(uint arg0, uint arg1){
                     log_info("SELECT");
 
                     //broadcast
-                    for(uint32_t i = FIRST_SLAVE; i <= LAST_SLAVE; i++){
+                    for(uint32_t i = FIRST_LEAF; i <= LAST_LEAF; i++){
                         sdp_msg_t* forward_msg = (sdp_msg_t*)sark_alloc(1,sizeof(sdp_msg_t));
 
                         sark_msg_cpy (forward_msg, msg);
@@ -154,6 +200,7 @@ void process_requests(uint arg0, uint arg1){
                              header->cmd, header->id);
                     break;
             }
+            #endif
         }
         else{
             log_info("Unwanted message.....");
@@ -180,8 +227,8 @@ void c_main(){
     spin1_set_timer_tick(TIMER_PERIOD);
 
     //Global assignments
-    unreplied_puts  = init_double_linked_list();
-    unreplied_pulls = init_double_linked_list();
+    //unreplied_puts  = init_double_linked_list();
+    //unreplied_pulls = init_double_linked_list();
 
     sdp_buffer = circular_buffer_initialize(100);
 
@@ -206,9 +253,9 @@ void c_main(){
     */
 
     // register callbacks
-    spin1_callback_on(SDP_PACKET_RX,    sdp_packet_callback, -1);
-    spin1_callback_on(TIMER_TICK,       update,              0);
-    spin1_callback_on(USER_EVENT,       process_requests,    1);
+    spin1_callback_on(SDP_PACKET_RX,    sdp_packet_callback, 0);
+    spin1_callback_on(TIMER_TICK,       update,              1);
+    spin1_callback_on(USER_EVENT,       process_requests,    2);
 
     simulation_run();
 }

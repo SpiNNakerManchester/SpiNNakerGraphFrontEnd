@@ -59,11 +59,9 @@ class SpiDBSocketConnection(UDPConnection):
 
         while True:
             try:
-                s = self.receive(0.5) #todo lower that...
-                print s
+                s = self.receive(0.3) #todo lower that...
 
-                responseBuffer.append((time.time() * 1000 - time_sent,
-                                  s))
+                responseBuffer.append((time.time() * 1000 - time_sent,s))
 
             except SpinnmanTimeoutException as e:
                 print e

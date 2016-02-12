@@ -9,10 +9,34 @@ extern Table* table;
 extern uchar chipx;
 extern uchar chipy;
 extern uchar core;
+extern uchar branch;
 extern uint32_t myId;
 extern uint32_t rows_in_this_core;
 
-sdp_msg_t* send_response_msg(selectQuery* sel, uint32_t row, uint32_t col_index, uint32_t p, uchar* values){
+sdp_msg_t* direct_to_branch(selectQuery* sel, address_t addr){
+    sdp_msg_t* msg = create_internal_sdp_header(branch);
+
+    selectResponse* r = (selectResponse*)&msg->cmd_rc;
+    r->cmd = SELECT_RESPONSE;
+    r->id  = sel->id;
+    r->addr = addr;
+
+    msg->length = sizeof(sdp_hdr_t) + sizeof(selectResponse);
+
+    if(!spin1_send_sdp_msg(msg, SDP_TIMEOUT)){
+        log_error("Error sending address packet.");
+    }
+    else{
+        log_info("Sending %08x to branch %d", addr, branch);
+    }
+
+    return msg;
+}
+
+sdp_msg_t* send_response_msg(uint32_t sel_id,
+                             uint32_t col_index,
+                             uint32_t p,
+                             uchar* values){
     /*
     typedef struct Entry{
         uint32_t row_id;
@@ -25,8 +49,8 @@ sdp_msg_t* send_response_msg(selectQuery* sel, uint32_t row, uint32_t col_index,
     sdp_msg_t* msg = create_sdp_header_to_host();
 
     Response* r = (Response*)&msg->cmd_rc;
-    r->id  = sel->id;
-    r->cmd = sel->cmd;
+    r->id  = sel_id;
+    r->cmd = SELECT;
     r->success = true;
     r->x = chipx;
     r->y = chipy;
@@ -34,7 +58,7 @@ sdp_msg_t* send_response_msg(selectQuery* sel, uint32_t row, uint32_t col_index,
 
     Entry* e = &(r->entry);
 
-    e->row_id = myId << 24 | row;
+    e->row_id = myId << 24 | (uint32_t)values;
     sark_word_cpy(e->col_name, table->cols[col_index].name, 16);
     e->size   = strlen(&values[p]); //todo how about non-Strings??
     sark_word_cpy(e->value, &values[p], e->size);
@@ -43,9 +67,46 @@ sdp_msg_t* send_response_msg(selectQuery* sel, uint32_t row, uint32_t col_index,
                                   //4 + 16 + 4
     msg->length = sizeof(sdp_hdr_t) + 12 + 24 + e->size;
 
-    spin1_send_sdp_msg(msg, SDP_TIMEOUT);
+    if(!spin1_send_sdp_msg(msg, SDP_TIMEOUT)){
+        log_error("Failed to send Response to host");
+    }
 
     return msg;
+}
+
+
+void breakInBlocks(uint32_t sel_id, address_t addr){
+    //if(sel->col_names[0][0] == 0){ //wildcard
+    uint p = 0;
+
+    size_t row_size_words = (table->row_size + 3) >> 2;
+    size_t n_cols         = table->n_cols;
+
+    for(uint8_t col_index = 0; col_index < n_cols; col_index++){
+        sdp_msg_t* msg = send_response_msg(sel_id, col_index, p, (uchar*)addr);
+        p += table->cols[col_index].size;
+        //sark_msg_free(msg);
+    }
+     //}
+     /*
+     else{
+        for(uint8_t i = 0; i < MAX_NUMBER_OF_COLS; i++){
+            if(sel->col_names[i][0] == 0){
+                break;
+            }
+
+            uint32_t col_index = get_col_index(sel->col_names[i]);
+
+            if(col_index == -1){
+                continue;
+            }
+
+            uint32_t p = get_byte_pos(col_index);
+
+            sdp_msg_t* msg = send_response_msg(sel, row, col_index, p, values);
+        }
+     }
+     */
 }
 
 
@@ -95,11 +156,11 @@ void scan_ids(address_t addr, selectQuery* sel){
 
     */
 
-    //todo allow for comparison of 2 literals!
-
     for(uint32_t row = 0; row < rows_in_this_core; row++, addr += row_size_words){
 
-        uchar* values = addr;
+        //uchar* values = addr;
+
+        direct_to_branch(sel, addr);
 
         /*
 
@@ -129,33 +190,7 @@ void scan_ids(address_t addr, selectQuery* sel){
         if(b){
         */
 
-        if(sel->col_names[0][0] == 0){ //wildcard
 
-            uint p = 0;
-
-            for(uint8_t col_index = 0; col_index < n_cols; col_index++){
-                sdp_msg_t* msg = send_response_msg(sel, row, col_index, p, values);
-                p += table->cols[col_index].size;
-                //sark_msg_free(msg);
-            }
-         }
-         else{
-            for(uint8_t i = 0; i < MAX_NUMBER_OF_COLS; i++){
-                if(sel->col_names[i][0] == 0){
-                    break;
-                }
-
-                uint32_t col_index = get_col_index(sel->col_names[i]);
-
-                if(col_index == -1){
-                    continue;
-                }
-
-                uint32_t p = get_byte_pos(col_index);
-
-                sdp_msg_t* msg = send_response_msg(sel, row, col_index, p, values);
-            }
-         }
     }
 }
 #endif

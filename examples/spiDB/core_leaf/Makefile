@@ -1,5 +1,5 @@
-APP = cluster_slave
+APP = leaf
 BUILD_DIR = build/
-OBJECTS = cluster_slave.o
+OBJECTS = leaf.o
 
 include ../Makefile.common

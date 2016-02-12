@@ -3,16 +3,22 @@
 
 //if DB_HASH_TABLE is defined, the hash version is used.
 //Naive version otherwise
-//#define DB_HASH_TABLE
+
+//#define DB_TYPE_KEY_VALUE_STORE
+//#define DB_SUBTYPE_HASH_TABLE
+
+#define DB_TYPE_RELATIONAL
 
 //TODO these should not be hardcoded
 #define CHIP_X_SIZE 2
 #define CHIP_Y_SIZE 2
 #define CORE_SIZE   16
 
-#define ROOT_CORE       1
-#define FIRST_SLAVE     2
-#define LAST_SLAVE      15
+#define ROOT_CORE           1
+#define FIRST_LEAF          5
+#define LAST_LEAF           16
+#define NUMBER_OF_LEAVES    LAST_LEAF - FIRST_LEAF
+
                                           //words
 #define CORE_DATABASE_SIZE_WORDS (120000000 >> 2) / CORE_SIZE
 
@@ -38,6 +44,7 @@ typedef enum spiDBcommand {
     CREATE_TABLE,
     INSERT_INTO,
     SELECT,
+    SELECT_RESPONSE,
 
     PUT_REPLY_ACK, //still needs implementing...
     PULL_REPLY_ACK
@@ -185,6 +192,13 @@ typedef struct Where {
 
 #define MAX_NUMBER_OF_COLS 16
 
+typedef struct selectResponse {
+    spiDBcommand cmd;
+    uint32_t     id;
+
+    address_t addr;
+} selectResponse;
+
 typedef struct selectQuery {
     spiDBcommand cmd;
     uint32_t     id;
@@ -195,6 +209,36 @@ typedef struct selectQuery {
     //Where        where;??
     //simply do for SELECT * for now
 } selectQuery;
+
+
+#ifdef DB_TYPE_KEY_VALUE_STORE
+
+typedef struct putQuery{
+    spiDBcommand    cmd;
+    uint32_t        id;
+
+    uint32_t        info;
+    uchar           k_v[256];
+} putQuery;
+
+typedef struct pullQuery{
+    spiDBcommand    cmd;
+    uint32_t        id;
+
+    uint32_t        info;
+    uchar           k[256];
+} pullQuery;
+
+typedef struct pullReply{
+    spiDBcommand    cmd;
+    uint32_t        id;
+
+    var_type        v_type;
+    size_t          v_size;
+    uchar           v[256];
+} pullReply;
+
+#endif
 
 extern Table* table;
 
@@ -240,5 +284,9 @@ uint32_t get_col_index(uchar col_name[16]){
 
     return -1;
 }
+
+////////////////////////////////////////////////////////////////////////
+
+
 
 #endif

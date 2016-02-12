@@ -20,7 +20,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class ClusterSlaveVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
+class LeafVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
@@ -48,10 +48,10 @@ class ClusterSlaveVertex(PartitionedVertex, AbstractPartitionedDataSpecableVerte
         self.spec = None
 
     def get_binary_file_name(self):
-        return "cluster_slave.aplx"
+        return "leaf.aplx"
 
     def model_name(self):
-        return "ClusterSlaveVertex"
+        return "LeafVertex"
 
     def generate_data_spec(
             self, placement, sub_graph, routing_info, hostname, report_folder,

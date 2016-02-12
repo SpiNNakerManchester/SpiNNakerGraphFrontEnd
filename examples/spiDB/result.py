@@ -15,8 +15,8 @@ class Response:
         return self.x, self.y, self.p
 
     def __str__(self):
-        return "{} ({},{},{})"\
-            .format("OK" if self.success else "FAIL", self.x, self.y, self.p)
+        return "({}){}: {} ({},{},{})"\
+            .format(self.id, self.cmd, "OK" if self.success else "FAIL", self.x, self.y, self.p)
 
 class Entry():
     def __init__(self, row_id, col, value):
@@ -53,35 +53,26 @@ class Row(dict):
         for k, v in dict(*args, **kwargs).iteritems():
             self[k] = v
 
-    def ljust_str(self,longest_str_for_col):
-        str = ""
-        for c, v in self.iteritems():
-            str += "  {}  ".format(v.ljust(longest_str_for_col[c]))
-        return str
-
-
 class Result:
     def __init__(self):
         self.firstResponseTime = 9999
         self.lastResponseTime = -1
-        #self.responses = list()
+        self.responses = list()
 
     def addResponse(self, r):
         if r.response_time < self.firstResponseTime:
             self.firstResponseTime = r.response_time
         if r.response_time > self.lastResponseTime:
             self.lastResponseTime = r.response_time
-        #self.responses.append(r)
+        self.responses.append(r)
 
-    def __repr__(self):
-        return "responses: {}"\
-            .format(len(self.responses))
+    def __str__(self):
+        return str(self.responses[0]) if len(self.responses) > 0 else "No response"
 
 class SelectResult(Result):
     def __init__(self):
         Result.__init__(self)
         self.rowidToRow = {}
-        self.responses = {}
         self.cols = set()
 
     def addResponse(self, r):
@@ -96,11 +87,13 @@ class SelectResult(Result):
             row.origin = r.__xyp__()
             self.rowidToRow[e.row_id] = row
 
-        if row.get(e.col) is None:
-            if cmp(row.origin, r.__xyp__()) is not 0:
+        if e.col not in self.cols: #we have not seen that column before
+            self.cols.add(e.col)
+
+        if row.get(e.col) is None: #first time we see that database entry (row-col)
+            if cmp(row.origin, r.__xyp__()) is not 0: #row based, so all entries for that row should come from the same xyp
                 raise Exception("row.origin: {} != r.__xyp__()".format(row.origin, r.__xyp__()))
             row[e.col] = e.value
-
         else: #raise Exception()
             print "Row with id '{}' on '{}' already exists " \
                   "with value '{}' from {}."\
@@ -113,11 +106,13 @@ class SelectResult(Result):
         return "{}, rows: {}".format(Result.__repr__(self), len(self.rowidToRow))
 
     def __str__(self):
-        str =  "\nResponse time:{0:.3f}ms\n".format(self.lastResponseTime)
-        str += "Number of rows: {}\n".format(len(self.rowidToRow))
+        metadata = "\nResponse time:{0:.3f}ms\n".format(self.lastResponseTime)
 
-        if len(self.rowidToRow) == 0:
-            return str
+        n_rows = len(self.rowidToRow)
+        metadata += "Number of rows: {}\n".format(n_rows)
+
+        if n_rows == 0:
+            return metadata
 
         longest_str_for_col = {}
 
@@ -126,32 +121,50 @@ class SelectResult(Result):
                 if longest_str_for_col.get(c) is None or len(v) > longest_str_for_col[c]:
                     longest_str_for_col[c] = len(v)
 
-        header = ""
-        for row_id, row in self.rowidToRow.iteritems():
-            header += "|"
-            for c in row.keys():
-                if len(c) > longest_str_for_col[c]:
-                    longest_str_for_col[c] = len(c)
-                header += "  {}  ".format(c.ljust(longest_str_for_col[c]))
-            header += "|  (x, y, p)"
-            break
+        header = "|"
+        for c in self.cols:
+            if len(c) > longest_str_for_col[c]:
+                longest_str_for_col[c] = len(c)
+            header += "  {}  ".format(c.ljust(longest_str_for_col[c]))
+        header += "|  (x, y, p)"
 
         n_spaces = 0
         for l in longest_str_for_col.values():
             n_spaces += l + 4
 
-        str += " " + "-" * n_spaces + " "
-        str += '\n'
-        str += header
-        str += "\n"
-        str += "|" + "-" * n_spaces + "|"
-        str += "\n"
+        table = " " + "-" * n_spaces + " " \
+                "\n" + header + "\n" \
+                "|" + "-" * n_spaces + "|" \
+                "\n"
+
+        found_entries = 0
+        expected_entries = n_rows * len(self.cols)
 
         for row_id, row in self.rowidToRow.iteritems():
-            str += "|{}|  {} - id: {}\n"\
-                .format(row.ljust_str(longest_str_for_col),
-                        row.origin, row_id)
+            table += "|"
+            for c in self.cols:
+                v = row.get(c)
+                if v is None:
+                    table += "  {}  ".format("".ljust(longest_str_for_col[c]))
+                else:
+                    found_entries += 1
+                    table += "  {}  ".format(v.ljust(longest_str_for_col[c]))
 
-        str += " " + "-" * n_spaces + " "
+            table += "|  {}\n".format(row.origin) #- id: {} , row_id
 
-        return str
+        table += " " + "-" * n_spaces + " "
+
+        metadata += "Number entries found: {}/{} ({}%) \n"\
+            .format(found_entries, expected_entries,
+                    (100.0*found_entries)/expected_entries)
+
+        return metadata + table
+
+    @property
+    def entriesFound(self):
+        e = 0
+        for row_id, row in self.rowidToRow.iteritems():
+            for c in self.cols:
+                if row.get(c) is not None:
+                    e += 1
+        return e
