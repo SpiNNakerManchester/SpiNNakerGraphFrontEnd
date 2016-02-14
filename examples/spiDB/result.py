@@ -15,8 +15,10 @@ class Response:
         return self.x, self.y, self.p
 
     def __str__(self):
-        return "({}){}: {} ({},{},{})"\
-            .format(self.id, self.cmd, "OK" if self.success else "FAIL", self.x, self.y, self.p)
+        return "{:.3f}ms\t{} - {}: {}\t({},{},{})"\
+            .format(self.response_time, self.id, self.cmd,
+                    "OK" if self.success else "FAIL",
+                    self.x, self.y, self.p)
 
 class Entry():
     def __init__(self, row_id, col, value):
@@ -67,7 +69,9 @@ class Result:
         self.responses.append(r)
 
     def __str__(self):
-        return str(self.responses[0]) if len(self.responses) > 0 else "No response"
+        return "{}"\
+            .format(str(self.responses[0]))\
+            if len(self.responses) > 0 else "No response"
 
 class SelectResult(Result):
     def __init__(self):
@@ -106,7 +110,7 @@ class SelectResult(Result):
         return "{}, rows: {}".format(Result.__repr__(self), len(self.rowidToRow))
 
     def __str__(self):
-        metadata = "\nResponse time:{0:.3f}ms\n".format(self.lastResponseTime)
+        metadata = "\nResponse time:{:.3f}ms\n".format(self.lastResponseTime)
 
         n_rows = len(self.rowidToRow)
         metadata += "Number of rows: {}\n".format(n_rows)

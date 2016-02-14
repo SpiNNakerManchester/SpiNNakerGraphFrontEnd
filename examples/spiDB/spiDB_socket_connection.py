@@ -25,17 +25,20 @@ class SpiDBSocketConnection(UDPConnection):
 
         self.transceiver = create_transceiver_from_hostname(self.ip_address, 3)
 
+        self.i=0
+
     def run(self, sqlQueries):
-        queryIds = list() # useful if instead of using incrementing ids
-                          # we use hash values for each query or such
-        i = 0
+        j=self.i
+
         for q in sqlQueries:
-            self.sendQuery(i,q)
-            queryIds.append(i)
-            i += 1
+            if len(q) is 0 or q.isspace():
+                continue
+
+            self.sendQuery(self.i,q)
+            self.i+=1
             #time.sleep(0.1) #todo hmmm....
 
-        return self.receive_all(queryIds)
+        return self.receive_all(j,self.i)
 
     def sendQuery(self, i, q):
         queryStructs = socket_translator.generateQueryStructs(i,q)
@@ -45,13 +48,8 @@ class SpiDBSocketConnection(UDPConnection):
     def recv(self):
         return self.receive()
 
-    def receive_all(self, queryIds):
-        id_to_index = {}
-
-        for i in range(len(queryIds)):
-            id_to_index[queryIds[i]] = i
-
-        results = [None] * len(queryIds)
+    def receive_all(self, n,m):
+        results = [None] * (m-n)
 
         time_sent = time.time() * 1000
 
@@ -59,26 +57,27 @@ class SpiDBSocketConnection(UDPConnection):
 
         while True:
             try:
-                s = self.receive(0.3) #todo lower that...
+                s = self.receive(0.5)
+                time_now = time.time() * 1000
 
-                responseBuffer.append((time.time() * 1000 - time_sent,s))
+                responseBuffer.append((time_now - time_sent,s))
+                #print s
 
             except SpinnmanTimeoutException as e:
-                print e
                 break
 
         for t, s in responseBuffer:
             response = socket_translator.translateResponse(s)
             response.response_time = t
+            print ">>> {}".format(response)
 
-            i = id_to_index[response.id]
-            if results[i] is None:
+            if results[response.id-n] is None:
                 if response.cmd == "SELECT":
-                    results[i] = SelectResult()
+                    results[response.id-n] = SelectResult()
                 else:
-                    results[i] = Result()
+                    results[response.id-n] = Result()
 
-            results[i].addResponse(response)
+            results[response.id-n].addResponse(response)
 
         return results
 

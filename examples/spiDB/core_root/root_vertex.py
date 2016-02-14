@@ -33,7 +33,8 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
-               ('STRING_DATA', 1)])
+               ('TRANSMISSIONS', 1),
+               ('STRING_DATA', 3)])
 
     CORE_APP_IDENTIFIER = 0xBEEF
 
@@ -48,6 +49,7 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
             self, label=label, resources_required=resoruces,
             constraints=constraints)
         AbstractPartitionedDataSpecableVertex.__init__(self)
+        AbstractProvidesOutgoingEdgeConstraints.__init__(self)
 
         self.add_constraint(TagAllocatorRequireReverseIptagConstraint(port, sdp_port, board_address, tag))
 
@@ -101,6 +103,9 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         self._write_setup_info(spec, self.CORE_APP_IDENTIFIER,
                                      self.DATA_REGIONS.SYSTEM.value)
 
+        self._write_MC_key(spec, routing_info, sub_graph,
+                           self.DATA_REGIONS.SYSTEM.value)
+
         # End-of-Spec:
         spec.end_specification()
 
@@ -134,11 +139,28 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         :return:
         """
         self._write_basic_setup_info(spec, region_id)
+        """
         spec.switch_write_focus(region=region_id)
 
         spec.write_value(data=core_app_identifier)
         spec.write_value(data=self._machine_time_step * self._time_scale_factor)
         spec.write_value(data=self._no_machine_time_steps)
+        """
+
+    def _write_MC_key(self, spec, routing_info, subgraph, region_id):
+        # Every subedge should have the same key
+
+        keys_and_masks = routing_info.get_keys_and_masks_from_subedge(
+            subgraph.outgoing_subedges_from_subvertex(self)[0])
+        key = keys_and_masks[0].key
+        spec.switch_write_focus(region=region_id)
+        # Write Key info for this core:
+        if key is None:
+            print "key is NONE"
+            spec.write_value(data=0)
+        else:
+            print "key is {}".format(key)
+            spec.write_value(data=key)
 
     def is_partitioned_data_specable(self):
         """

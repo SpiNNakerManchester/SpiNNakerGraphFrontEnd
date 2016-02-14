@@ -21,6 +21,8 @@ sdp_msg_t* direct_to_branch(selectQuery* sel, address_t addr){
     r->id  = sel->id;
     r->addr = addr;
 
+    log_info("Directing to branch %d value %s", branch, addr);
+
     msg->length = sizeof(sdp_hdr_t) + sizeof(selectResponse);
 
     if(!spin1_send_sdp_msg(msg, SDP_TIMEOUT)){
@@ -74,7 +76,6 @@ sdp_msg_t* send_response_msg(uint32_t sel_id,
     return msg;
 }
 
-
 void breakInBlocks(uint32_t sel_id, address_t addr){
     //if(sel->col_names[0][0] == 0){ //wildcard
     uint p = 0;
@@ -85,6 +86,8 @@ void breakInBlocks(uint32_t sel_id, address_t addr){
     for(uint8_t col_index = 0; col_index < n_cols; col_index++){
         sdp_msg_t* msg = send_response_msg(sel_id, col_index, p, (uchar*)addr);
         p += table->cols[col_index].size;
+
+        sark_delay_us(20);
         //sark_msg_free(msg);
     }
      //}
@@ -161,6 +164,7 @@ void scan_ids(address_t addr, selectQuery* sel){
         //uchar* values = addr;
 
         direct_to_branch(sel, addr);
+        sark_delay_us(20);
 
         /*
 

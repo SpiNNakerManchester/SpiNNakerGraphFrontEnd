@@ -58,16 +58,18 @@ uchar core;
 
 Table* table;
 
+address_t currentQueryAddr;
+
 void update (uint ticks, uint b){
     use(ticks);
     use(b);
 
     time += TIMER_PERIOD;
 
-/*
-    if(time % 50000000 == 0){
-        log_info("HELLLLLLLLLLLLLLLLO");
-        spin1_exit(0);
+    /*
+    if(time % 10000000 == 0){
+        send_first_value(1,2);
+        //spin1_exit(0);
     }
     */
 }
@@ -142,6 +144,8 @@ void process_requests(uint arg0, uint arg1){
 
                     write(data_region, t, sizeof(Table));
                     table = (Table*)data_region;
+
+                    log_info("Table created in address %08x", table);
                     print_table(table);
 
                     revert_src_dest(msg);
@@ -160,7 +164,6 @@ void process_requests(uint arg0, uint arg1){
 
                     break;
                 case INSERT_INTO:;
-
                     insertEntryQuery* insertE = (insertEntryQuery*) header;
                     Entry e = insertE->e;
 
@@ -175,7 +178,27 @@ void process_requests(uint arg0, uint arg1){
                 case SELECT:;
                     log_info("SELECT");
 
-                    //broadcast
+                    //store SELECT query message to SDRAM
+                    //so it can be read by other cores
+
+                    address_t a = append(&currentQueryAddr,
+                                         (selectQuery*)header,
+                                         sizeof(selectQuery));
+
+                    if(!a){
+                        log_error("Error storing selectQuery to SDRAM.");
+                        return;
+                    }
+
+                    //broadcast pointer to message over Multicast
+                    while(!spin1_send_mc_packet(myKey, a, WITH_PAYLOAD)){
+                        log_info("Attempting to send MC packet again.");
+                        spin1_delay_us(1);
+                    }
+
+                    log_info("Sent MC packet.");
+
+                    /*
                     for(uint32_t i = FIRST_LEAF; i <= LAST_LEAF; i++){
                         sdp_msg_t* forward_msg = (sdp_msg_t*)sark_alloc(1,sizeof(sdp_msg_t));
 
@@ -192,6 +215,7 @@ void process_requests(uint arg0, uint arg1){
                         }
                         spin1_msg_free(forward_msg);
                     }
+                    */
 
                     //selectQuery* selectQ = (selectQuery*) header;
                     break;
@@ -216,13 +240,15 @@ void c_main(){
     chipy = spin1_get_chip_id() & 0x0F;
     core  = spin1_get_core_id();
 
-    table = (Table*)sark_alloc(1, sizeof(Table));
-
     log_info("Initializing Root...");
 
-    if (!initialize()) {
+    if (!initialize_with_MC_key()) {
         rt_error(RTE_SWERR);
     }
+
+    table = (Table*)sark_alloc(1, sizeof(Table));
+
+    currentQueryAddr = data_region + sizeof(Table);
 
     spin1_set_timer_tick(TIMER_PERIOD);
 
@@ -256,6 +282,9 @@ void c_main(){
     spin1_callback_on(SDP_PACKET_RX,    sdp_packet_callback, 0);
     spin1_callback_on(TIMER_TICK,       update,              1);
     spin1_callback_on(USER_EVENT,       process_requests,    2);
+
+    // kick-start the update process
+    //spin1_schedule_callback(send_first_value, 0, 0, 3);
 
     simulation_run();
 }

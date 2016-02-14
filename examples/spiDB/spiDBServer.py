@@ -6,6 +6,8 @@ from core_leaf.leaf_vertex import LeafVertex
 from core_branch.branch_vertex import BranchVertex
 from core_root.root_vertex import RootVertex
 
+from tree_edge import TreeEdge
+
 import os
 
 logger = logging.getLogger(__name__)
@@ -21,11 +23,10 @@ machine_port = 11111
 machine_recieve_port = 22222
 machine_host = "0.0.0.0"
 
-total_number_of_slaves = 16
+number_of_leaves    = 12
+number_of_branches  = 3
 
-vertices = list()
-
-master_vertex = front_end.add_partitioned_vertex(
+root_vertex = front_end.add_partitioned_vertex(
     RootVertex,
     {'label': 'Root',
      'machine_time_step': machine_time_step,
@@ -39,13 +40,32 @@ front_end.add_partitioned_vertex(
              'machine_time_step': machine_time_step,
              'time_scale_factor': time_scale_factor})
 """
-for x_position in range(total_number_of_slaves):
+for x_position in range(number_of_branches):
         v = front_end.add_partitioned_vertex(
             LeafVertex,
             {'machine_time_step': machine_time_step,
              'time_scale_factor': time_scale_factor},
-             label="slave{}".format(x_position))
-        vertices.append(v)
+             label="branch{}".format(x_position))
+
+leaves = list()
+
+for x_position in range(number_of_leaves):
+        l = front_end.add_partitioned_vertex(
+            LeafVertex,
+            {'machine_time_step': machine_time_step,
+             'time_scale_factor': time_scale_factor},
+             label="leaf{}".format(x_position))
+        leaves.append(l)
+
+for l in leaves:
+    front_end.add_partitioned_edge(
+        TreeEdge,
+        {'pre_subvertex': root_vertex,
+         'post_subvertex': l},
+        label="Edge from {} to {}"
+              .format(root_vertex.label, l.label),
+        partition_id="TREE_EDGE")
+
 
 front_end.run(5)
 front_end.stop()

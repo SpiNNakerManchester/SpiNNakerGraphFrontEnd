@@ -58,7 +58,7 @@ void update(uint ticks, uint b){
         address_t root_data_address = data_specification_get_region(DB_DATA_REGION, address);
         table = (Table*)root_data_address;
         */
-        table = (Table*) 0x637a8184;
+
         print_table(table);
     }
 
@@ -105,6 +105,36 @@ uchar getBranch(){
     default:
       return -1;
   }
+}
+
+
+sdp_msg_t* send_insert_into_response(uint32_t ins_id){
+    /*
+    typedef struct Entry{
+        uint32_t row_id;
+        uchar    col_name[16];
+        size_t   size;
+        uchar    value[256];
+    } Entry;
+    */
+
+    sdp_msg_t* msg = create_sdp_header_to_host();
+
+    Response* r = (Response*)&msg->cmd_rc;
+    r->id  = ins_id;
+    r->cmd = INSERT_INTO;
+    r->success = true;
+    r->x = chipx;
+    r->y = chipy;
+    r->p = core;
+
+    msg->length = sizeof(sdp_hdr_t) + sizeof(Response);//todo response hrd
+
+    if(!spin1_send_sdp_msg(msg, SDP_TIMEOUT)){
+        log_error("Failed to send INSERT_INTO Response to host");
+    }
+
+    return msg;
 }
 
 void process_requests(uint arg0, uint arg1){
@@ -169,13 +199,12 @@ void process_requests(uint arg0, uint arg1){
         #ifdef DB_TYPE_RELATIONAL
             switch(header->cmd){
                 case INSERT_INTO:;
-                    log_info("INSERT_INTO");
-                    log_info("  table with address %08x", table);
-                    print_table(table);
-
                     insertEntryQuery* insertE = (insertEntryQuery*) header;
                     Entry e = insertE->e;
                     //printEntry(&e);
+
+                    log_info("INSERT_INTO (%s,%s) of size %d",
+                             e.col_name, e.value, e.size);
 
                     uint32_t i = get_col_index(e.col_name);
                     uint32_t p = get_byte_pos(i); //todo very inefficient
@@ -184,9 +213,6 @@ void process_requests(uint arg0, uint arg1){
 
                     //todo double check that it is in fact empty (NULL)
                     memcpy(&entryQueue[p], e.value, e.size);
-                    if(&entryQueue[p] == 0){ //todo
-                        log_info("%%%%%%%%%%%%%%%%%%%%%%%%%%% Problem writing");
-                    }
 
                     entriesInQueue++;
 
@@ -194,7 +220,7 @@ void process_requests(uint arg0, uint arg1){
 
                         address_t address_to_write = data_region + ((table->row_size * rows_in_this_core) + 3) / 4;
 
-                        log_info("INSERT_INTO %08x", address_to_write);
+                        log_info("Flushing to address %08x", address_to_write);
 
                         rows_in_this_core++;
 
@@ -207,6 +233,9 @@ void process_requests(uint arg0, uint arg1){
                             //log_info("entryQueue[%d] = %c (%02x)", i, entryQueue[i], entryQueue[i]);
                             entryQueue[i] = 0;
                         }
+
+                        send_insert_into_response(insertE->id);
+
                     }
 
                     //log_info("all %08x", data_region + (table->row_size * (e.row_id-1) + get_byte_pos(e.col_index) + 3) / 4);
@@ -217,12 +246,6 @@ void process_requests(uint arg0, uint arg1){
                     //      insertE->e.size); //assumes row_ids are 1,2,3,4,... single core TODO
 
                     //append(addr, insertQ->values, table->row_size);
-                    break;
-                case SELECT:;
-                    log_info("SELECT");
-                    print_msg_header(msg);
-                    selectQuery* selectQ = (selectQuery*) header;
-                    scan_ids(data_region,selectQ);
                     break;
                 default:;
                     log_info("[Warning] cmd not recognized: %d with id %d",
@@ -315,6 +338,27 @@ void process_requests(uint arg0, uint arg1){
     }
 }
 
+void receive_data (uint key, uint payload)
+{
+    log_info("Received MC packet with key=%d, payload=%d", key, payload);
+
+    selectQuery* selQ = (selectQuery*) payload;
+
+    if(selQ->cmd != SELECT){
+        log_error("Unexpected MC packet with selQ->cmd == %d", selQ->cmd);
+        return;
+    }
+
+    log_info("SELECT");
+    scan_ids(data_region,selQ);
+}
+
+void receive_data_void (uint key, uint unknown){
+    use(key);
+    use(unknown);
+    log_error("Received unexpected MC packet with no payload.");
+}
+
 void c_main()
 {
     chipx = spin1_get_chip_id() & 0xF0 >> 8;
@@ -330,6 +374,9 @@ void c_main()
 
     //entryQueue = (uchar*)sark_alloc(table->row_size,sizeof(uchar)); //TODO should prob. be somewhere else
     entryQueue = (uchar*)sark_alloc(1024,sizeof(uchar)); //TODO should prob. be somewhere else
+    for(uint32_t i = 0; i < 1024; i++){
+        entryQueue[i] = 0;
+    }
 
     if (!initialize()) {
         rt_error(RTE_SWERR);
@@ -339,6 +386,8 @@ void c_main()
 
     addr = (address_t*)malloc(sizeof(address_t));
     *addr = data_region;
+
+    table = (Table*) 0x637a8120;
 
                                   //todo not hardcoded
     //entryQueue = (Entry*)sark_alloc(4, sizeof(Entry));
@@ -351,9 +400,12 @@ void c_main()
     sdp_buffer = circular_buffer_initialize(100);
 
     // register callbacks
-    spin1_callback_on(SDP_PACKET_RX,    sdp_packet_callback, 0);
-    spin1_callback_on(USER_EVENT,       process_requests,    1);
-    spin1_callback_on(TIMER_TICK,       update,              2);
+    spin1_callback_on(SDP_PACKET_RX,        sdp_packet_callback, 0);
+    spin1_callback_on(USER_EVENT,           process_requests,    1);
+    spin1_callback_on(TIMER_TICK,           update,              2);
+
+    spin1_callback_on(MCPL_PACKET_RECEIVED, receive_data,        0);
+    spin1_callback_on(MC_PACKET_RECEIVED,   receive_data_void,   0);
 
     simulation_run();
     //spin1_start (SYNC_NOWAIT);
