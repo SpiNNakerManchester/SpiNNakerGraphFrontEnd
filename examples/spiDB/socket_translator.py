@@ -42,6 +42,8 @@ class dbCommands(Enum):
     INSERT_INTO = 6
     SELECT      = 7
 
+    PING = 9
+
 dbCommandIntToName = {
     dbCommands.PUT.value :          "PUT",
     dbCommands.PULL.value :         "PULL",
@@ -144,11 +146,13 @@ def INSERT_INTO(id, insertInto):
 
     return entries
 
+def PING(id):
+    return struct.pack("BI",dbCommands.PING.value, id)
+
 def SELECT(id, sel):
     #condition = sel.where.condition
 
-    s = struct.pack("BI",
-                    dbCommands.SELECT.value, id)
+    s = struct.pack("BI", dbCommands.SELECT.value, id)
 
     if sel.cols is None:
         s += struct.pack("B", 0) # means wildcard *
@@ -190,6 +194,9 @@ def SELECT(id, sel):
     return [s]
 
 def generateQueryStructs(id, queryString):
+    if queryString.startswith("PUT") or queryString.startswith("PULL"):
+        return
+
     p = StatementParser(queryString)
     inst = p.parse()
 

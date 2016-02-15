@@ -11,6 +11,8 @@ from result import SelectResult
 from result import Result
 from result import Entry
 
+import random
+
 import socket_translator
 
 logger = logging.getLogger(__name__)
@@ -23,7 +25,7 @@ class SpiDBSocketConnection(UDPConnection):
         self.ip_address = "192.168.240.253" #todo should not be hardcoded
         self.port = 11111                   #todo should not be hardcoded
 
-        self.transceiver = create_transceiver_from_hostname(self.ip_address, 3)
+        #self.transceiver = create_transceiver_from_hostname(self.ip_address, 3)
 
         self.i=0
 
@@ -39,6 +41,22 @@ class SpiDBSocketConnection(UDPConnection):
             #time.sleep(0.1) #todo hmmm....
 
         return self.receive_all(j,self.i)
+
+    def sendPing(self):
+        i = random.randint(0,100000)
+        try:
+            self.send_to(socket_translator.PING(i), (self.ip_address, self.port))
+        except:
+            return -1
+
+        time_sent = time.time() * 1000
+        try:
+            s = self.receive(0.1)
+        except SpinnmanTimeoutException:
+            return -1
+
+        return time.time() * 1000 - time_sent
+
 
     def sendQuery(self, i, q):
         queryStructs = socket_translator.generateQueryStructs(i,q)
@@ -57,7 +75,7 @@ class SpiDBSocketConnection(UDPConnection):
 
         while True:
             try:
-                s = self.receive(0.5)
+                s = self.receive(0.3)
                 time_now = time.time() * 1000
 
                 responseBuffer.append((time_now - time_sent,s))

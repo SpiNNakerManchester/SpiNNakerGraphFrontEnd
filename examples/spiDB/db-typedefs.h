@@ -46,8 +46,7 @@ typedef enum spiDBcommand {
     SELECT,
     SELECT_RESPONSE,
 
-    PUT_REPLY_ACK, //still needs implementing...
-    PULL_REPLY_ACK
+    PING
 } spiDBcommand;
 
 typedef struct spiDBquery {
@@ -229,6 +228,11 @@ typedef struct pullQuery{
     uchar           k[256];
 } pullQuery;
 
+typedef struct pingQuery{
+    spiDBcommand    cmd;
+    uint32_t        id;
+} pingQuery;
+
 typedef struct pullReply{
     spiDBcommand    cmd;
     uint32_t        id;
@@ -274,10 +278,10 @@ uint32_t get_byte_pos(uint32_t col_index){
 uint32_t get_col_index(uchar col_name[16]){
 
     for(uint32_t i = 0; i < table->n_cols; i++){
-        log_info("cmp %s with %s", table->cols[i].name, col_name);
+        //log_info("cmp %s with %s", table->cols[i].name, col_name);
 
         if(strcmp(table->cols[i].name, col_name) == 0){
-            log_info("YES");
+            //log_info("YES");
             return i;
         }
     }

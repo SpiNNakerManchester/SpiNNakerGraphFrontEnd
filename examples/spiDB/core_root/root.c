@@ -29,13 +29,11 @@
 #include <debug.h>
 
 #define TIMER_PERIOD 100
-#define RETRY_RATE   TIMER_PERIOD << 4
-
 #define ID_SIZE 4
 
 // Globals
 uint32_t time = 0; //represents the microseconds since start
-
+//note: SDP timeouts are in milliseconds
 
 #ifdef DB_TYPE_KEY_VALUE_STORE
     #ifdef DB_SUBTYPE_HASH_TABLE
@@ -51,27 +49,56 @@ uint32_t time = 0; //represents the microseconds since start
 #endif
 
 static circular_buffer sdp_buffer;
+static circular_buffer capacitor_buffer;
 
-uchar chipx;
-uchar chipy;
-uchar core;
+uchar chipx, chipy, core;
 
 Table* table;
 
 address_t currentQueryAddr;
 
+//100 microseconds
 void update (uint ticks, uint b){
     use(ticks);
     use(b);
 
     time += TIMER_PERIOD;
 
-    /*
-    if(time % 10000000 == 0){
-        send_first_value(1,2);
-        //spin1_exit(0);
+    //every x ms
+    if(ticks % 2 == 0){
+        uint i = 0;
+        #define CUTOFF 1
+
+        uint32_t mailbox;
+        while(++i <= CUTOFF && circular_buffer_get_next(capacitor_buffer, &mailbox)){
+            sdp_msg_t* msg = (sdp_msg_t*)mailbox;
+
+            spiDBQueryHeader* header = (spiDBQueryHeader*) &msg->cmd_rc;
+
+            if(header->cmd != INSERT_INTO){
+                log_error("Capacitor buffer contains entry with cmd = %d",
+                          header->cmd);
+                continue;
+            }
+
+            insertEntryQuery* insertE = (insertEntryQuery*) header;
+            Entry e = insertE->e;
+
+            uint32_t dest_core = (e.row_id % 11) + FIRST_LEAF;
+            log_info("INSERT_INTO (id:%d) -> core %d with value %s",
+                     e.row_id, dest_core, e.value);
+
+            //log_info("  >> msg %08x", msg);
+            set_dest_chip(msg,spin1_get_chip_id());//same chip
+            set_dest_core(msg,dest_core);
+
+            while(!spin1_send_sdp_msg(msg, SDP_TIMEOUT)){
+                spin1_delay_us(2);
+                log_info("Attempting to send INSERT_INTO to %d again",
+                         dest_core);
+            }
+        }
     }
-    */
 }
 
 void sdp_packet_callback(uint mailbox, uint port) {
@@ -79,7 +106,12 @@ void sdp_packet_callback(uint mailbox, uint port) {
 
     // If there was space, add packet to the ring buffer
     if (circular_buffer_add(sdp_buffer, mailbox)) {
-        spin1_trigger_user_event(0, 0);
+        if(!spin1_trigger_user_event(0, 0)){
+            log_error("Unable to trigger user event.");
+        }
+    }
+    else{
+        log_error("Unable to add SDP packet to circular buffer.");
     }
 }
 
@@ -87,16 +119,23 @@ void process_requests(uint arg0, uint arg1){
     use(arg0);
     use(arg1);
 
-    uint32_t* mailbox_ptr = NULL;
-    while(circular_buffer_get_next(sdp_buffer, mailbox_ptr)){
+    uint32_t mailbox;
+    while(circular_buffer_get_next(sdp_buffer, &mailbox)){
 
-        sdp_msg_t* msg = (sdp_msg_t*)*mailbox_ptr;
+        sdp_msg_t* msg = (sdp_msg_t*)mailbox;
 
         if(msg->srce_port == PORT_ETH){ //coming from host
             //spiDBquery* query = (spiDBquery*) &(msg->cmd_rc);
             //printQuery(query);
 
             spiDBQueryHeader* header = (spiDBQueryHeader*) &msg->cmd_rc;
+
+            if(header->cmd == PING){
+                revert_src_dest(msg);
+                spin1_send_sdp_msg(msg, SDP_TIMEOUT);
+                spin1_msg_free(msg);
+                return;
+            }
 
             #ifdef DB_TYPE_KEY_VALUE_STORE
             switch(header->cmd){
@@ -137,7 +176,7 @@ void process_requests(uint arg0, uint arg1){
                     for(uint32_t i = 0; i < t->n_cols; i++){
                         //round up to the closest power of 4
                         //as Spinnaker is word aligned
-                        t->cols[i].size = ((t->cols[i].size + 3) / 4) * 4; //& 0xFFFFFFFD; //unset the first 2 bits
+                        t->cols[i].size = ((t->cols[i].size + 3) / 4) * 4;
                         row_size += t->cols[i].size;
                     }
                     t->row_size = row_size;
@@ -154,7 +193,7 @@ void process_requests(uint arg0, uint arg1){
 
                     Response* response = (Response*)&msg->cmd_rc;
                     response->id  = q->id;
-                    response->cmd = q->cmd;
+                    response->cmd = CREATE_TABLE;
                     response->success = table ? true : false;
                     response->x = chipx;
                     response->y = chipy;
@@ -164,15 +203,22 @@ void process_requests(uint arg0, uint arg1){
 
                     break;
                 case INSERT_INTO:;
-                    insertEntryQuery* insertE = (insertEntryQuery*) header;
-                    Entry e = insertE->e;
 
-                    uint32_t dest_core = (e.row_id % 11) + FIRST_LEAF;
-                    log_info("INSERT_INTO (id:%d) -> core %d", e.row_id, dest_core);
+                    sdp_msg_t* msg_cpy = (sdp_msg_t*) sark_alloc(1,
+                                sizeof(sdp_hdr_t) + sizeof(insertEntryQuery));
 
-                    set_dest_chip(msg,spin1_get_chip_id());//same chip
-                    set_dest_core(msg,dest_core);
-                    spin1_send_sdp_msg(msg, SDP_TIMEOUT);
+                    //copy message out of the buffer, so it will not be
+                    //written to when a new message arrives
+                    sark_word_cpy(msg_cpy, msg,
+                        sizeof(sdp_hdr_t) + sizeof(insertEntryQuery));
+
+                    if (!circular_buffer_add(capacitor_buffer, msg_cpy)) {
+                        log_error("Unable to add INSERT_INTO to capacitor_buffer.");
+                        return;
+                    }
+
+                    log_info("Added INSERT_INTO to capacitor_buffer.");
+                    //log_info("  >> msg %08x", msg_cpy);
 
                     break;
                 case SELECT:;
@@ -250,13 +296,15 @@ void c_main(){
 
     currentQueryAddr = data_region + sizeof(Table);
 
+    //timer tick in microseconds
     spin1_set_timer_tick(TIMER_PERIOD);
 
     //Global assignments
     //unreplied_puts  = init_double_linked_list();
     //unreplied_pulls = init_double_linked_list();
 
-    sdp_buffer = circular_buffer_initialize(100);
+    sdp_buffer       = circular_buffer_initialize(200);
+    capacitor_buffer = circular_buffer_initialize(200);
 
     /*
     TODO keep track of how full each core is

@@ -74,11 +74,26 @@ uchar* entryQueue;//TODO 2-D array. Todo HARDCODED
 void sdp_packet_callback(uint mailbox, uint port) {
     use(port);
 
-    if (circular_buffer_add(sdp_buffer, mailbox)) {
+    sdp_msg_t* msg     = (sdp_msg_t*)mailbox;
+    sdp_msg_t* msg_cpy = (sdp_msg_t*)sark_alloc(1, sizeof(sdp_msg_t) + sizeof(insertEntryQuery)); //msg->length);
+
+    sark_word_cpy(msg_cpy, msg, sizeof(sdp_msg_t) + sizeof(insertEntryQuery));
+
+    print_msg(msg_cpy);
+
+    spin1_msg_free(msg);
+
+    if (circular_buffer_add(sdp_buffer, msg_cpy)){
         if(!spin1_trigger_user_event(0, 0)){
           log_error("Unable to trigger user event.");
+          //sark_delay_us(1);
         }
     }
+    else{
+        log_error("Unable to add msg_cpy to SDP circular buffer");
+    }
+
+
 }
 
 address_t* addr;
@@ -141,12 +156,7 @@ void process_requests(uint arg0, uint arg1){
 
     uint32_t mailbox;
     while(circular_buffer_get_next(sdp_buffer, &mailbox)){
-
         sdp_msg_t* msg = (sdp_msg_t*)mailbox;
-
-        //log_info("Received message");
-        //print_msg(msg);
-        //spin1_msg_free(msg);
 
         spiDBQueryHeader* header = (spiDBQueryHeader*) &msg->cmd_rc;
 
@@ -156,7 +166,8 @@ void process_requests(uint arg0, uint arg1){
             selectResponse* selResp = (selectResponse*)header;
             log_info("Received SELECT_RESPONSE with addr %08x", selResp->addr);
             breakInBlocks(selResp->id, selResp->addr);
-            return;
+
+            continue;
         }
 
         #ifdef DB_TYPE_KEY_VALUE_STORE
@@ -235,17 +246,8 @@ void process_requests(uint arg0, uint arg1){
                         }
 
                         send_insert_into_response(insertE->id);
-
                     }
 
-                    //log_info("all %08x", data_region + (table->row_size * (e.row_id-1) + get_byte_pos(e.col_index) + 3) / 4);
-
-                                                                    //-1 because the row_id starts from 1
-                    //write(address_to_write,
-                    //      insertE->e.value,
-                    //      insertE->e.size); //assumes row_ids are 1,2,3,4,... single core TODO
-
-                    //append(addr, insertQ->values, table->row_size);
                     break;
                 default:;
                     log_info("[Warning] cmd not recognized: %d with id %d",
@@ -256,91 +258,12 @@ void process_requests(uint arg0, uint arg1){
 
         // free the message to stop overload
         //spin1_msg_free(msg);
-
-        /*
-        sdp_msg_t* msg = (sdp_msg_t*) (*mailbox_ptr);
-
-        uint32_t info = msg->arg1;
-        uchar* k_v    = msg->data;
-
-        #ifdef DB_HASH_TABLE
-            uint32_t hash = msg->arg2;
-                                    //todo does not cover the whole range
-                                    //of addresses of this core
-            uint32_t words_offset = ((hash & 0x0007FFFF)
-                                    % CORE_DATABASE_SIZE_WORDS);
-
-            *addr = (address_t)&data_region[words_offset];
-        #endif
-
-        value_entry* value_entry_ptr;
-
-        switch(msg->cmd_rc){
-            case PUT:;
-                log_info("PUT on address: %04x k_v: %s", *addr, k_v);
-
-                put(addr, info, k_v, &k_v[k_size_from_info(info)]);
-
-                revert_src_dest(msg);
-                msg->cmd_rc = PUT_REPLY;
-
-                spin1_send_sdp_msg(msg, SDP_TIMEOUT); //message, timeout
-
-                break;
-            case PULL:;
-                log_info("PULL on address: %04x k: %s", *addr, k_v);
-
-                #ifdef DB_HASH_TABLE
-                    value_entry_ptr = pull(*addr,       info, k_v);
-                #else
-                    value_entry_ptr = pull(data_region, info, k_v);
-                #endif
-
-                if(value_entry_ptr){
-
-                    revert_src_dest(msg);
-
-                    msg->cmd_rc = PULL_REPLY;
-
-                    log_info("Replying PULL request id %d", msg->seq);
-                    log_info("with data (s: %s) of type %d, size %d",
-                             value_entry_ptr->data, value_entry_ptr->type,
-                             value_entry_ptr->size);
-
-                    msg->arg1 = to_info(0, 0,
-                                        value_entry_ptr->type,
-                                        value_entry_ptr->size);
-
-                    memcpy(msg->data,
-                           value_entry_ptr->data, value_entry_ptr->size);
-
-                    msg->length = sizeof(sdp_hdr_t) + 16
-                                  + value_entry_ptr->size;
-
-                    print_msg(msg);
-
-                    spin1_send_sdp_msg(msg, SDP_TIMEOUT);
-                }
-                else{
-                    log_info("Not found...");
-
-                    #ifdef DB_HASH_TABLE
-                        msg->arg1 = 0; //failure
-                        msg->length = sizeof(sdp_hdr_t) + 16;
-                        spin1_send_sdp_msg(msg, SDP_TIMEOUT);
-                    #endif
-                }
-                break;
-        }
-
-        */
-
     }
 }
 
 void receive_data (uint key, uint payload)
 {
-    log_info("Received MC packet with key=%d, payload=%d", key, payload);
+    log_info("Received MC packet with key=%d, payload=%08x", key, payload);
 
     selectQuery* selQ = (selectQuery*) payload;
 
@@ -397,11 +320,11 @@ void c_main()
 
     spin1_set_timer_tick(TIMER_PERIOD);
 
-    sdp_buffer = circular_buffer_initialize(100);
+    sdp_buffer = circular_buffer_initialize(150);
 
     // register callbacks
     spin1_callback_on(SDP_PACKET_RX,        sdp_packet_callback, 0);
-    spin1_callback_on(USER_EVENT,           process_requests,    1);
+    spin1_callback_on(USER_EVENT,           process_requests,    2);
     spin1_callback_on(TIMER_TICK,           update,              2);
 
     spin1_callback_on(MCPL_PACKET_RECEIVED, receive_data,        0);

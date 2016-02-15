@@ -156,10 +156,8 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         spec.switch_write_focus(region=region_id)
         # Write Key info for this core:
         if key is None:
-            print "key is NONE"
             spec.write_value(data=0)
         else:
-            print "key is {}".format(key)
             spec.write_value(data=key)
 
     def is_partitioned_data_specable(self):

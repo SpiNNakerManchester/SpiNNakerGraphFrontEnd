@@ -2,14 +2,17 @@ from Tkinter import *
 import ScrolledText
 import tkMessageBox
 import tkFileDialog
-from time import gmtime, strftime
+from time import *
 import sys
 import pylab
 import numpy as np
 
 from spiDB_socket_connection import SpiDBSocketConnection
 
-class FileOpener(Frame):
+pylab.rc('xtick', labelsize=7)
+pylab.rc('ytick', labelsize=7)
+
+class MainMenu(Frame):
     def __init__(self, parent, textListener):
         Frame.__init__(self, parent)
         self.parent = parent
@@ -17,11 +20,16 @@ class FileOpener(Frame):
 
         mbar = Menu(self.parent)
         self.parent.config(menu=mbar)
-        fMenu = Menu(mbar)
 
-        mbar.add_cascade(label="File", menu=fMenu)
-        fMenu.add_command(label="Open", command=self.onOpen)
-        fMenu.add_command(label="Exit", command=self.close)
+        self.fileMenu = Menu(mbar)
+
+        mbar.add_cascade(label="File", menu=self.fileMenu)
+        self.fileMenu.add_command(label="Open", command=self.onOpen)
+        self.fileMenu.add_command(label="Quit", command=self.close)
+
+        self.pingMenu = Menu(mbar)
+
+        mbar.add_cascade(label="Ping", menu=self.pingMenu)
 
         self.pack(fill=BOTH, expand=1)
 
@@ -51,7 +59,13 @@ history = dict()
 root = Tk()
 root.title("SpiDB")
 
-leftFrame = Frame(root)
+topFrame = Frame(root)
+topFrame.pack(side=TOP, padx=5, pady=5)
+
+bottomFrame = Frame(root)
+bottomFrame.pack(side=BOTTOM)
+
+leftFrame = Frame(bottomFrame)
 leftFrame.pack(side=LEFT, padx=20, pady=20)
 
 queryFrame = Frame(leftFrame)
@@ -60,12 +74,12 @@ queryFrame.pack(side=TOP, pady=(0,10))
 historyFrame = Frame(leftFrame)
 historyFrame.pack(side=BOTTOM)
 
-rightFrame = Frame(root)
+rightFrame = Frame(bottomFrame)
 rightFrame.pack(padx=20, pady=10)
 rightFrame.pack(side=RIGHT)
 
-label = Label(queryFrame, text="Query")
-label.pack(side=TOP)
+queryLabel = Label(queryFrame, text="Query")
+queryLabel.pack(side=TOP)
 
 queryScrolledText = ScrolledText.ScrolledText(
     master = queryFrame,
@@ -118,15 +132,6 @@ def runQuery():
     if qText.isspace():
         emptyQueryPopup()
         return
-
-    """
-    pylab.figure()
-    pylab.plot([1,2,3,4], [5,4,6,8])
-    pylab.xlabel('Time/ms')
-    pylab.ylabel('spikes')
-    pylab.title('spikes')
-    pylab.show()
-    """
 
     outputText.delete('1.0',END)
     outputText.insert(INSERT, "Running...")
@@ -194,9 +199,42 @@ def runQuery():
         pylab.xlabel('Response')
         pylab.ylabel('ResponseTime')
         pylab.title('Response Times')
+
+        tuples = xyp_occurences.keys()
+        y_pos = np.arange(len(tuples))
+        occurences = xyp_occurences.values() #todo make sure ordering is right
+
+        pylab.figure()
+        pylab.bar(y_pos, occurences, align='center', alpha=0.5)
+        pylab.xticks(y_pos, tuples)
+        pylab.xlabel('Core')
+        pylab.ylabel('Occurence')
+        pylab.title('Usage by core')
+
         pylab.show()
 
-ex = FileOpener(root,queryScrolledText)
+
+menu = MainMenu(root,queryScrolledText)
+
+pingsFailed = 0
+connected = True
+def ping():
+    global connected
+    global pingsFailed
+    #threading.Timer(1,ping).start()
+    p = conn.sendPing()
+    menu.pingMenu.delete(12)
+    if p is -1:
+        menu.pingMenu.insert_command(index=0, label="PING FAILED", command=None)
+        pingsFailed += 1
+        if connected and pingsFailed is 2:
+            connected = False
+            tkMessageBox.showinfo("Ping failed", "Cannot connect to board")
+    else:
+        connected = True
+        pingsFailed = 0
+        menu.pingMenu.insert_command(index=0, label="PING {:.3f}ms".format(p), command=None)
+    root.after(1000,ping)
 
 runButton = Button(queryFrame, text="Run", fg="black", command=runQuery)
 runButton.pack(side = RIGHT)
@@ -208,6 +246,7 @@ clearButton.pack(side = RIGHT)
 #outputText.config(state=DISABLED)
 outputText.pack()
 
+root.after(1000,ping)
 root.mainloop()
 
 

@@ -112,7 +112,6 @@ void breakInBlocks(uint32_t sel_id, address_t addr){
      */
 }
 
-
 void scan_ids(address_t addr, selectQuery* sel){
 
     if(!table){
