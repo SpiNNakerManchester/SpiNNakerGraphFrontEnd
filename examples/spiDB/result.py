@@ -15,10 +15,15 @@ class Response:
         return self.x, self.y, self.p
 
     def __str__(self):
-        return "{:.3f}ms\t{} - {}: {}\t({},{},{})"\
+        return "{:.3f}ms\t{} - {}: {}\t({},{},{}) {}"\
             .format(self.response_time, self.id, self.cmd,
                     "OK" if self.success else "FAIL",
-                    self.x, self.y, self.p)
+                    self.x, self.y, self.p,
+                    "" if self.data is None else " > {}".format(self.data)
+                    )
+
+    def __repr__(self):
+        return self.__str__()
 
 class Entry():
     def __init__(self, row_id, col, value):
@@ -37,19 +42,9 @@ class Row(dict):
     def __init__(self, *args, **kwargs):
         self.update(*args, **kwargs)
         self.origin = None
-        """
-        self.firstResponseTime = 9999
-        self.lastResponseTime = -1
-        """
 
     def __setitem__(self, colname, value):
         dict.__setitem__(self, colname, value)
-        """
-        if entry.response_time > self.lastResponseTime:
-            self.lastResponseTime = entry.response_time
-        if entry.response_time < self.firstResponseTime:
-            self.firstResponseTime = entry.response_time
-        """
 
     def update(self, *args, **kwargs):
         for k, v in dict(*args, **kwargs).iteritems():
@@ -57,21 +52,31 @@ class Row(dict):
 
 class Result:
     def __init__(self):
-        self.firstResponseTime = 9999
-        self.lastResponseTime = -1
         self.responses = list()
 
     def addResponse(self, r):
-        if r.response_time < self.firstResponseTime:
-            self.firstResponseTime = r.response_time
-        if r.response_time > self.lastResponseTime:
-            self.lastResponseTime = r.response_time
         self.responses.append(r)
 
     def __str__(self):
-        return "{}"\
-            .format(str(self.responses[0]))\
-            if len(self.responses) > 0 else "No response"
+        return self.responses.__str__() \
+            if self.responses is not None and len(self.responses) > 0\
+            else "No Response"
+
+class InsertIntoResult(Result):
+    def __init__(self):
+        Result.__init__(self)
+
+    def addResponse(self, r):
+        Result.addResponse(self, r)
+
+    def __str__(self):
+        s = "INSERT_INTO\n"
+        for r in self.responses:
+            s += "  {}\n".format(r)
+        return s
+
+    def __repr__(self):
+        return self.__str__()
 
 class SelectResult(Result):
     def __init__(self):
@@ -98,10 +103,9 @@ class SelectResult(Result):
             if cmp(row.origin, r.__xyp__()) is not 0: #row based, so all entries for that row should come from the same xyp
                 raise Exception("row.origin: {} != r.__xyp__()".format(row.origin, r.__xyp__()))
             row[e.col] = e.value
-        else: #raise Exception()
-            print "Row with id '{}' on '{}' already exists " \
+        raise Exception("Row with id '{}' on '{}' already exists " \
                   "with value '{}' from {}."\
-                .format(e.row_id, e.col, row[e.col], r.__xyp__())
+                .format(e.row_id, e.col, row[e.col], r.__xyp__()))
 
     def getRows(self):
         return self.rowidToRow.values()

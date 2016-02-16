@@ -86,21 +86,6 @@ def normalize(str, l):
     return v
 
 def CREATE_TABLE(id, createTable):
-    """
-    typedef struct Column {
-        uchar    name[16];
-        var_type type;
-        size_t   size;
-    } Column;
-
-    typedef struct Table {
-        size_t      n_cols;
-        size_t      row_size;
-        size_t      current_n_rows;
-        Column      cols[4];
-    } Table;
-    """
-
     table = createTable.table
 
     maxColNameLen = 16
@@ -244,36 +229,12 @@ def generateQueryStructs(id, queryString):
         return None
 
 def translateResponse(responseStr):
-
-    #keep track of table
-
-    """
-    typedef struct Response{
-        uint32_t      id;
-        spiDBcommand  cmd;
-
-        bool          success;
-        uchar         x;
-        uchar         y;
-        uchar         p;
-    } Response;
-    """
-
     (id, cmd, success, x, y, p) = struct.unpack_from("IB?BBB", responseStr)
     cmd = get_dbCommandName(cmd)
 
     response = Response(id=id, cmd=cmd, success=success, x=x, y=y, p=p)
 
     if cmd == "SELECT":
-        """
-        typedef struct Entry{
-            uint32_t row_id;
-            uchar    col_name[16];
-            size_t   size;
-            uchar    value[256];
-        } Entry;
-        """
-
         data = responseStr[12:]
 
         row_id   = struct.unpack("I", data[:4])[0]
@@ -285,5 +246,10 @@ def translateResponse(responseStr):
         value    = data[24:]
 
         response.data = Entry(row_id,col_name,value)
+    elif cmd == "INSERT_INTO":
+        response.data = responseStr[12:]
+        i = response.data.index('\0')
+        if i > 0:
+            response.data = response.data[:i]
 
     return response

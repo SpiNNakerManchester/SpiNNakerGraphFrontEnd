@@ -90,6 +90,8 @@ void update (uint ticks, uint b){
             log_info("INSERT_INTO '%s' - core %d  < (%s,%s)",
                      insertE->table_name, dest_core, e.col_name, e.value);
 
+            //printEntry(&e);
+
             set_dest_chip(msg,spin1_get_chip_id());//same chip
             set_dest_core(msg,dest_core);
 

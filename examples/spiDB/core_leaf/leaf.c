@@ -75,8 +75,6 @@ void sdp_packet_callback(uint mailbox, uint port) {
 
     sark_word_cpy(msg_cpy, msg, sizeof(sdp_msg_t) + sizeof(insertEntryQuery));
 
-    print_msg(msg_cpy);
-
     spin1_msg_free(msg);
 
     if (circular_buffer_add(sdp_buffer, msg_cpy)){
@@ -93,6 +91,8 @@ void sdp_packet_callback(uint mailbox, uint port) {
 address_t* addr;
 
 uint32_t*  table_rows_in_this_core;
+uint32_t*  table_max_row_id_in_this_core;
+
 address_t* table_base_addr;
 
 uchar getBranch(){
@@ -129,6 +129,29 @@ sdp_msg_t* send_empty_response_to_host(spiDBcommand cmd, id_t id){
     r->p = core;
 
     msg->length = sizeof(sdp_hdr_t) + sizeof(Response);
+
+    if(!spin1_send_sdp_msg(msg, SDP_TIMEOUT)){
+        log_error("Failed to send response to host");
+        return NULL;
+    }
+
+    return msg;
+}
+
+sdp_msg_t* send_string_response_to_host(spiDBcommand cmd, id_t id, uchar* string){
+    sdp_msg_t* msg = create_sdp_header_to_host();
+
+    Response* r = (Response*)&msg->cmd_rc;
+    r->id  = id;
+    r->cmd = cmd;
+    r->success = true;
+    r->x = chipx;
+    r->y = chipy;
+    r->p = core;
+
+    msg->length = sizeof(sdp_hdr_t) + 9 + 16;
+
+    sark_mem_cpy(&r->entry, string, 16);
 
     if(!spin1_send_sdp_msg(msg, SDP_TIMEOUT)){
         log_error("Failed to send response to host");
@@ -210,44 +233,36 @@ void process_requests(uint arg0, uint arg1){
                     }
 
                     Table* t = &tables[table_index];
-
                     Entry e = insertE->e;
                     //printEntry(&e);
 
-                    log_info(" %s < (%s,%s)",
+                    log_info("  %s < (%s,%s)",
                              insertE->table_name, e.col_name, e.value);
 
                     uint32_t i = get_col_index(tables, e.col_name);
                     uint32_t p = get_byte_pos(tables, i);
 
-                    //todo double check that it is in fact empty (NULL)
-                    memcpy(&entryQueue[p], e.value, e.size);
-
-                    if(++entriesInQueue == t->n_cols){ //TODO
-
-                        address_t address_to_write =
-                            data_region +
-                            (uint32_t)table_base_addr[table_index] +
-                            ((t->row_size
-                               * table_rows_in_this_core[table_index]) + 3) / 4;
-
-                        log_info("Flushing to address %08x (base is: %08x)",
-                                 address_to_write,table_base_addr[table_index]);
-
+                    //todo problem if packets interleave...
+                    if(e.row_id > table_max_row_id_in_this_core[table_index]){
                         table_rows_in_this_core[table_index]++;
-                        t->current_n_rows++;
-
-                        entriesInQueue = 0; //reset and null all of them
-
-                        memcpy(address_to_write,entryQueue,t->row_size);
-
-                        for(uint32_t i = 0; i < t->row_size; i++){
-                            //log_info("entryQueue[%d] = %c (%02x)", i, entryQueue[i], entryQueue[i]);
-                            entryQueue[i] = 0;
-                        }
-
-                        send_empty_response_to_host(INSERT_INTO, insertE->id);
+                        table_max_row_id_in_this_core[table_index] = e.row_id;
                     }
+
+                    address_t address_to_write =
+                        data_region +
+                        (uint32_t)table_base_addr[table_index] +
+                        (((t->row_size * table_rows_in_this_core[table_index]) + 3) / 4)
+                        + p/4;
+
+                    log_info("  |- %08x (base: %08x)",
+                             address_to_write,
+                             data_region+(uint32_t)table_base_addr[table_index]);
+
+                    sark_mem_cpy(address_to_write, e.value, e.size);
+
+                    send_string_response_to_host(INSERT_INTO,
+                                                 insertE->id,
+                                                 e.col_name);
                     break;
                 default:;
                     log_info("[Warning] cmd not recognized: %d with id %d",
@@ -305,12 +320,17 @@ void c_main()
 
     table_rows_in_this_core = (uint32_t*)sark_alloc(DEFAULT_NUMBER_OF_TABLES,
                                                     sizeof(uint32_t));
+    table_max_row_id_in_this_core =
+        (uint32_t*)sark_alloc(DEFAULT_NUMBER_OF_TABLES,
+                                                    sizeof(uint32_t));
+
     table_base_addr = (address_t*)sark_alloc(DEFAULT_NUMBER_OF_TABLES,
                                              sizeof(address_t));
 
     address_t b = 0;
     for(uint i=0; i<DEFAULT_NUMBER_OF_TABLES; i++){
         table_rows_in_this_core[i] = 0;
+        table_max_row_id_in_this_core[i] = -1;
         table_base_addr[i] = b;
         log_info("table_base_addr[%d] = %08x", i, table_base_addr[i]);
 

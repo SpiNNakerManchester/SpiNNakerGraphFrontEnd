@@ -8,6 +8,7 @@ from spinnman.model.core_subset import CoreSubset
 import time
 from spinnman.exceptions import SpinnmanTimeoutException
 from result import SelectResult
+from result import InsertIntoResult
 from result import Result
 from result import Entry
 
@@ -76,22 +77,21 @@ class SpiDBSocketConnection(UDPConnection):
         while True:
             try:
                 time_sent = time.time() * 1000
-                s = self.receive(0.2)
+                s = self.receive(0.4)
                 responseBuffer.append((time.time() * 1000 - time_sent,s))
-
                 print s
-
-            except SpinnmanTimeoutException as e:
+            except SpinnmanTimeoutException:
                 break
 
         for t, s in responseBuffer:
             response = socket_translator.translateResponse(s)
             response.response_time = t
-            print ">>> {}".format(response)
 
             if results[response.id-n] is None:
                 if response.cmd == "SELECT":
                     results[response.id-n] = SelectResult()
+                elif response.cmd == "INSERT_INTO":
+                    results[response.id-n] = InsertIntoResult()
                 else:
                     results[response.id-n] = Result()
 

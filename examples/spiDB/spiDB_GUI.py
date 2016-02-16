@@ -152,39 +152,15 @@ def runQuery():
         else:
             error = False
             s += "{}\n".format(str(r))
+
             for resp in r.responses:
                 if resp.__xyp__() in xyp_occurences:
                     xyp_occurences[resp.__xyp__()] += 1
                 else:
                     xyp_occurences[resp.__xyp__()] = 1
                 responseTimes.append(resp.response_time)
-    print s
 
     outputText.insert(INSERT, s)
-
-    """
-    objects = tuple() #((0,0,1), (0,0,2), (0,0,3), (0,0,4), (0,0,5), (0,0,6))
-    y_pos = np.arange(len(objects))
-    performance = [10,8,6,4,2,1]
-
-    pylab.bar(y_pos, performance, align='center', alpha=0.5)
-    pylab.xticks(y_pos, objects)
-    pylab.ylabel('Usage')
-    pylab.title('Programming language usage')
-
-    pylab.show()
-    """
-    #pylab.bar(range(len(xyp_occurences)), xyp_occurences.values(), align='center')
-    #pylab.xticks(range(len(xyp_occurences)), xyp_occurences.keys())
-
-    #pylab.show()
-
-    """except Exception as e:
-        s = "An error occured..."
-        outputText.delete('1.0',END)
-        outputText.insert(INSERT, s)
-        error = True
-    """
     queryResultTuple = (qText, s)
 
     t = strftime("%H:%M:%S", gmtime())

@@ -271,6 +271,15 @@ uint32_t getTableIndex(Table* tables, uchar* name){
     return -1;
 }
 
+bool in(uint* arr, size_t s, uint v){
+    for(uint i = 0; i < s; i++){
+        if(arr[i] == v){
+            return true;
+        }
+    }
+    return false;
+}
+
 Table* getTable(Table* tables, uchar* name){
     uint32_t i = getTableIndex(tables, name);
     return i == -1 ? NULL : &tables[i];
