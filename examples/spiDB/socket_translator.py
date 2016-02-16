@@ -8,6 +8,7 @@ from statement_parser import Select
 from statement_parser import InsertInto
 from statement_parser import CreateTable
 from result import Response
+import re
 
 class ConditionOp(Enum):
     EQ = 0
@@ -110,9 +111,9 @@ def CREATE_TABLE(id, createTable):
         col_name_type_size.append((normalize(c.name, maxColNameLen), c.type, c.size))
         total_row_size += c.size
 
-    s = struct.pack("BIIII",
-                    dbCommands.CREATE_TABLE.value, id,
-                    len(table.cols), total_row_size, 0)
+    s = struct.pack("BI", dbCommands.CREATE_TABLE.value, id) +\
+        struct.pack("16c", *normalize(table.name, 16)) +\
+        struct.pack("III", len(table.cols), total_row_size, 0)
 
     for col_name, col_type, col_size in col_name_type_size:
         s += struct.pack("{}c".format(maxColNameLen), *col_name)
@@ -124,25 +125,13 @@ def INSERT_INTO(id, insertInto):
     entries = list()
 
     for col_name, value in insertInto.columnValueMap.iteritems():
-        """
-        typedef struct Entry{
-            uint32_t row_id;
-            uchar    col_name[16];
-            size_t   size;
-            uchar    value[256];
-        } Entry;
-        """
-        s = ""
-
-        s += struct.pack("BI",
-                             dbCommands.INSERT_INTO.value,
-                             id) #todo...
-
-        s += struct.pack("<I", id) #todo... CANNOT BE THE SAME
-        s += struct.pack("16c", *normalize(col_name, 16))
-        s += struct.pack("I{}c".format(len(value)), len(value), *value)
-
-        entries.append(s)
+        entries.append(
+             struct.pack("BI", dbCommands.INSERT_INTO.value, id) +\
+             struct.pack("16c", *normalize(insertInto.tableName, 16)) +\
+             struct.pack("<I", id) +\
+             struct.pack("16c", *normalize(col_name, 16)) +\
+             struct.pack("I{}c".format(len(value)), len(value), *value)
+        )
 
     return entries
 
@@ -161,41 +150,86 @@ def SELECT(id, sel):
             s += struct.pack("16c", *normalize(c,16))
         s += struct.pack("B", 0) #so that we set the next col to null for scan.h
 
-    """
-    typedef struct selectQuery {
-        spiDBcommand cmd;
-        uint32_t     id;
-
-        //uchar      table_name;
-        uchar        col_names[4][16]; //If col names == 0, it means SELECT *
-
-        //Where        where;??
-        //simply do for SELECT * for now
-    } selectQuery;
-    """
-
-    """
-
-    left_value  = normalize(condition.left.value, 64)
-    right_value = normalize(condition.right.value, 64)
-
-    s += struct.pack("B64c",
-                     condition.left.type.value,
-                     *left_value)
-
-    s += struct.pack("B", get_operator_value(condition.operator))
-
-    s += struct.pack("B64c",
-                     condition.right.type.value,
-                     *right_value)
-
-    """
-
     return [s]
 
+def byte_array(a):
+    if type(a) is str:
+        return a
+    elif type(a) is int:
+        return struct.pack('I', a)
+    return 0
+
+def var_type(a):
+    if type(a) is int:
+        return 0
+    if type(a) is str:
+        return 1
+    return 0
+
+def PUT(id, k, v):
+    k_str = byte_array(k)
+    v_str = byte_array(v)
+
+    k_size = len(k_str)
+    v_size = len(v_str)
+
+    info = (var_type(k) << 28) | (k_size << 16) |\
+           (var_type(v) << 12) | (v_size)
+
+    s = struct.pack("BII{}s".format(k_size+v_size),
+                    dbCommands.PUT.value, id, info,
+                    "{}{}".format(k_str, v_str))
+    return [s]
+
+def PULL(id, k):
+    k_str = byte_array(k)
+    k_size = len(k_str)
+
+    info = (var_type(k) << 28) | (k_size << 16)
+
+    s = struct.pack("BII{}s".format(k_size),
+                    dbCommands.PULL.value, id, info, k_str)
+    return [s]
+
+put_pattern = re.compile(
+    r"\s*(?:PUT|put|PUSH|push)"
+        r"\s+((?:\"|\')?.+(?:\"|\'))?\s+((?:\"|\')?.+(?:\"|\')?)\s*")
+
+pull_pattern = re.compile(
+    r"\s*(?:PULL|pull|POP|pop)"
+        r"\s+((?:\"|\')?.+(?:\"|\'))?\s*")
+
+def convertFromUnicode(u):
+    s = u.encode('ascii','ignore')
+
+    if      s.isdigit(): return int(s)
+    elif    s.startswith("\"") or s.startswith("\'"): return s[1:-1]
+    else:   return s
+
 def generateQueryStructs(id, queryString):
-    if queryString.startswith("PUT") or queryString.startswith("PULL"):
-        return
+    if queryString is None:
+        return None
+
+    upper = queryString.upper()
+    if upper.startswith("PUT") or upper.startswith("PUSH"):
+        m = put_pattern.match(queryString)
+        if m is None:
+            raise Exception("Invalid PUT format")
+
+        print m.groups()
+        k = convertFromUnicode(m.group(1))
+        v = convertFromUnicode(m.group(2))
+        return PUT(id, k, v)
+
+    if upper.startswith("PULL") or upper.startswith("POP"):
+        m = pull_pattern.match(queryString)
+        if m is None:
+            raise Exception("Invalid PULL format")
+
+        print m.groups()
+        k = convertFromUnicode(m.group(1))
+        return PULL(id, k)
+
 
     p = StatementParser(queryString)
     inst = p.parse()

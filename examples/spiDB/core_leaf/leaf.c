@@ -40,7 +40,7 @@ uchar branch;
 
 uint32_t myId;
 
-Table* table;
+Table* tables;
 
 sdp_msg_t msg;
 
@@ -50,21 +50,17 @@ void update(uint ticks, uint b){
 
     time += TIMER_PERIOD;
 
+    /*
     if(ticks == 10){
          // Get pointer to 1st virtual processor info struct in SRAM
-        /*
         vcpu_t *sark_virtual_processor_info = (vcpu_t*) SV_VCPU;
         address_t address = (address_t) sark_virtual_processor_info[ROOT_CORE].user0;
         address_t root_data_address = data_specification_get_region(DB_DATA_REGION, address);
         table = (Table*)root_data_address;
-        */
 
         print_table(table);
     }
-
-/*    if(time == 5000000){
-
-    }*/
+    */
 }
 
 
@@ -92,13 +88,12 @@ void sdp_packet_callback(uint mailbox, uint port) {
     else{
         log_error("Unable to add msg_cpy to SDP circular buffer");
     }
-
-
 }
 
 address_t* addr;
 
-uint32_t rows_in_this_core = 0;
+uint32_t*  table_rows_in_this_core;
+address_t* table_base_addr;
 
 uchar getBranch(){
   switch(core){
@@ -122,31 +117,22 @@ uchar getBranch(){
   }
 }
 
-
-sdp_msg_t* send_insert_into_response(uint32_t ins_id){
-    /*
-    typedef struct Entry{
-        uint32_t row_id;
-        uchar    col_name[16];
-        size_t   size;
-        uchar    value[256];
-    } Entry;
-    */
-
+sdp_msg_t* send_empty_response_to_host(spiDBcommand cmd, id_t id){
     sdp_msg_t* msg = create_sdp_header_to_host();
 
     Response* r = (Response*)&msg->cmd_rc;
-    r->id  = ins_id;
-    r->cmd = INSERT_INTO;
+    r->id  = id;
+    r->cmd = cmd;
     r->success = true;
     r->x = chipx;
     r->y = chipy;
     r->p = core;
 
-    msg->length = sizeof(sdp_hdr_t) + sizeof(Response);//todo response hrd
+    msg->length = sizeof(sdp_hdr_t) + sizeof(Response);
 
     if(!spin1_send_sdp_msg(msg, SDP_TIMEOUT)){
-        log_error("Failed to send INSERT_INTO Response to host");
+        log_error("Failed to send response to host");
+        return NULL;
     }
 
     return msg;
@@ -164,8 +150,9 @@ void process_requests(uint arg0, uint arg1){
             //gather responses
 
             selectResponse* selResp = (selectResponse*)header;
-            log_info("Received SELECT_RESPONSE with addr %08x", selResp->addr);
-            breakInBlocks(selResp->id, selResp->addr);
+            log_info("Received selectResponse on table '%s' with addr %08x",
+                     selResp->table->name, selResp->addr);
+            breakInBlocks(selResp);
 
             continue;
         }
@@ -178,19 +165,21 @@ void process_requests(uint arg0, uint arg1){
                 case PUT:;
                     log_info("PUT");
                     putQuery* putQ = (putQuery*) header;
-                    //log_info("PUT on address: %04x k_v: %s", *addr, k_v);
+                    log_info("  on address: %04x, k_v: %s", *addr, putQ->k_v);
                     info    = putQ->info;
                     k       = putQ->k_v;
-                    v       = &k_v[k_size_from_info(info)]
+                    v       = &putQ->k_v[k_size_from_info(info)];
 
                     put(addr, info, k, v);
+
+                    send_empty_response_to_host(PUT, putQ->id);
                     break;
                 case PULL:;
                     log_info("PULL");
                     pullQuery* pullQ = (pullQuery*) header;
 
                     info    = pullQ->info;
-                    k       = pullQ->k_v;
+                    k       = pullQ->k;
 
                     value_entry* value_entry_ptr = pull(data_region, info, k);
 
@@ -202,52 +191,63 @@ void process_requests(uint arg0, uint arg1){
                     }
                     break;
                 default:;
-                    //log_info("[Warning] cmd not recognized: %d with id %d",
-                    //         header->cmd, header->id);
                     break;
             }
         #endif
         #ifdef DB_TYPE_RELATIONAL
             switch(header->cmd){
                 case INSERT_INTO:;
+                    log_info("INSERT_INTO");
+
                     insertEntryQuery* insertE = (insertEntryQuery*) header;
+
+                    uint32_t table_index = getTableIndex(tables,
+                                                         insertE->table_name);
+
+                    if(table_index == -1){
+                        log_error("Unable to find table of name '%s' in tables");
+                        return;
+                    }
+
+                    Table* t = &tables[table_index];
+
                     Entry e = insertE->e;
                     //printEntry(&e);
 
-                    log_info("INSERT_INTO (%s,%s) of size %d",
-                             e.col_name, e.value, e.size);
+                    log_info(" %s < (%s,%s)",
+                             insertE->table_name, e.col_name, e.value);
 
-                    uint32_t i = get_col_index(e.col_name);
-                    uint32_t p = get_byte_pos(i); //todo very inefficient
-
-                    //log_info("Col index is %d with pos %d. e.value is %s or e.size %d", i, p, e.value, e.size);
+                    uint32_t i = get_col_index(tables, e.col_name);
+                    uint32_t p = get_byte_pos(tables, i);
 
                     //todo double check that it is in fact empty (NULL)
                     memcpy(&entryQueue[p], e.value, e.size);
 
-                    entriesInQueue++;
+                    if(++entriesInQueue == t->n_cols){ //TODO
 
-                    if(entriesInQueue == table->n_cols){//todo
+                        address_t address_to_write =
+                            data_region +
+                            (uint32_t)table_base_addr[table_index] +
+                            ((t->row_size
+                               * table_rows_in_this_core[table_index]) + 3) / 4;
 
-                        address_t address_to_write = data_region + ((table->row_size * rows_in_this_core) + 3) / 4;
+                        log_info("Flushing to address %08x (base is: %08x)",
+                                 address_to_write,table_base_addr[table_index]);
 
-                        log_info("Flushing to address %08x", address_to_write);
+                        table_rows_in_this_core[table_index]++;
+                        t->current_n_rows++;
 
-                        rows_in_this_core++;
-
-                        table->current_n_rows++; //todo concurrency!!!!! do I even need this?
                         entriesInQueue = 0; //reset and null all of them
 
-                        memcpy(address_to_write,entryQueue,table->row_size);
+                        memcpy(address_to_write,entryQueue,t->row_size);
 
-                        for(uint32_t i = 0; i < table->row_size; i++){
+                        for(uint32_t i = 0; i < t->row_size; i++){
                             //log_info("entryQueue[%d] = %c (%02x)", i, entryQueue[i], entryQueue[i]);
                             entryQueue[i] = 0;
                         }
 
-                        send_insert_into_response(insertE->id);
+                        send_empty_response_to_host(INSERT_INTO, insertE->id);
                     }
-
                     break;
                 default:;
                     log_info("[Warning] cmd not recognized: %d with id %d",
@@ -273,7 +273,17 @@ void receive_data (uint key, uint payload)
     }
 
     log_info("SELECT");
-    scan_ids(data_region,selQ);
+
+    uint32_t table_index = getTableIndex(tables, selQ->table_name);
+    if(table_index == -1){
+        log_error("  Unable to find table '%d'", selQ->table_name);
+        return;
+    }
+
+    scan_ids(&tables[table_index],
+             data_region + (uint32_t)table_base_addr[table_index],
+             selQ,
+             table_rows_in_this_core[table_index]);
 }
 
 void receive_data_void (uint key, uint unknown){
@@ -291,9 +301,21 @@ void c_main()
 
     myId  = chipx << 16 | chipy << 8 | core;
 
-    log_info("Initializing Leaf (%d,%d,%d)", chipx, chipy, core);
+    log_info("Initializing Leaf (%d,%d,%d)\n", chipx, chipy, core);
 
-    //table = (Table*)0x63e551a8; //todo hardcoded...
+    table_rows_in_this_core = (uint32_t*)sark_alloc(DEFAULT_NUMBER_OF_TABLES,
+                                                    sizeof(uint32_t));
+    table_base_addr = (address_t*)sark_alloc(DEFAULT_NUMBER_OF_TABLES,
+                                             sizeof(address_t));
+
+    address_t b = 0;
+    for(uint i=0; i<DEFAULT_NUMBER_OF_TABLES; i++){
+        table_rows_in_this_core[i] = 0;
+        table_base_addr[i] = b;
+        log_info("table_base_addr[%d] = %08x", i, table_base_addr[i]);
+
+        b += DEFAULT_TABLE_SIZE_WORDS;
+    }
 
     //entryQueue = (uchar*)sark_alloc(table->row_size,sizeof(uchar)); //TODO should prob. be somewhere else
     entryQueue = (uchar*)sark_alloc(1024,sizeof(uchar)); //TODO should prob. be somewhere else
@@ -310,7 +332,7 @@ void c_main()
     addr = (address_t*)malloc(sizeof(address_t));
     *addr = data_region;
 
-    table = (Table*) 0x637a8120;
+    tables = (Table*) 0x64502168; //TODO
 
                                   //todo not hardcoded
     //entryQueue = (Entry*)sark_alloc(4, sizeof(Entry));

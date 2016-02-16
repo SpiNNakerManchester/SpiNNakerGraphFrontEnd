@@ -14,6 +14,7 @@
 #undef NDEBUG
 
 #include "spin1_api.h"
+#include <debug.h>
 #include "common-typedefs.h"
 #include "../db-typedefs.h"
 #include "../memory_utils.h"
@@ -25,8 +26,6 @@
 #include "../double_linked_list.h"
 #include "../message_queue.h"
 //#include "unit_tests/root_put_tests.c"
-
-#include <debug.h>
 
 #define TIMER_PERIOD 100
 #define ID_SIZE 4
@@ -53,7 +52,8 @@ static circular_buffer capacitor_buffer;
 
 uchar chipx, chipy, core;
 
-Table* table;
+Table* tables = NULL;
+uint n_tables = 0;
 
 address_t currentQueryAddr;
 
@@ -70,7 +70,9 @@ void update (uint ticks, uint b){
         #define CUTOFF 1
 
         uint32_t mailbox;
-        while(++i <= CUTOFF && circular_buffer_get_next(capacitor_buffer, &mailbox)){
+        while(++i <= CUTOFF &&
+              circular_buffer_get_next(capacitor_buffer, &mailbox)){
+
             sdp_msg_t* msg = (sdp_msg_t*)mailbox;
 
             spiDBQueryHeader* header = (spiDBQueryHeader*) &msg->cmd_rc;
@@ -85,10 +87,9 @@ void update (uint ticks, uint b){
             Entry e = insertE->e;
 
             uint32_t dest_core = (e.row_id % 11) + FIRST_LEAF;
-            log_info("INSERT_INTO (id:%d) -> core %d with value %s",
-                     e.row_id, dest_core, e.value);
+            log_info("INSERT_INTO '%s' - core %d  < (%s,%s)",
+                     insertE->table_name, dest_core, e.col_name, e.value);
 
-            //log_info("  >> msg %08x", msg);
             set_dest_chip(msg,spin1_get_chip_id());//same chip
             set_dest_core(msg,dest_core);
 
@@ -138,30 +139,86 @@ void process_requests(uint arg0, uint arg1){
             }
 
             #ifdef DB_TYPE_KEY_VALUE_STORE
+
+                #ifdef DB_SUBTYPE_HASH_TABLE
+                    uint32_t h;
+                #endif
+
+                uchar h_chipx, h_chipy, h_core;
+
             switch(header->cmd){
                 case PUT:;
+                    log_info("PUT");
                     putQuery* putQ = (putQuery*) header;
+                    log_info("  info: %08x, k_v: %s", putQ->info, putQ->k_v);
 
                     #ifdef DB_SUBTYPE_HASH_TABLE
-                        uint32_t h = hash(putQ->k_v,
-                                          k_size_from_info(putQ->info));
+                        h = hash(putQ->k_v, k_size_from_info(putQ->info));
 
-                        uchar h_chipx =  (h & 0x00FF0000 >> 16) % CHIP_X_SIZE;
-                        uchar h_chipy =  (h & 0x0000FF00 >> 8)  % CHIP_Y_SIZE;
-                        uchar h_core  = ((h & 0x000000FF)       % CORE_SIZE)
-                                            + FIRST_SLAVE;
+                        h_chipx =  (h & 0x00FF0000 >> 16) % CHIP_X_SIZE;
+                        h_chipy =  (h & 0x0000FF00 >> 8)  % CHIP_Y_SIZE;
+                        h_core  = ((h & 0x000000FF)       % CORE_SIZE)
+                                    + FIRST_LEAF;
                     #else
+                        h_chipx = 0;
+                        h_chipy = 0;
+                        h_core = (putQ->id % NUMBER_OF_LEAVES)
+                                  + FIRST_LEAF;
+                    #endif
 
                     set_dest_xyp(msg, h_chipx, h_chipy, h_core);
 
-                    #endif
-
+                    if(spin1_send_sdp_msg(msg, SDP_TIMEOUT)){
+                        log_info("  Sent to (%d,%d,%d)",
+                                 h_chipx, h_chipy, h_core);
+                    }
+                    else {
+                        log_error("Unable to send PUT (%s) to (%d,%d,%d)",
+                                  putQ->k_v, h_chipx, h_chipy, h_core);
+                    }
 
                     break;
                 case PULL:;
+                    log_info("PULL");
+                    pullQuery* pullQ = (pullQuery*) header;
+                    log_info("  info: %08x, k_v: %s", pullQ->info, pullQ->k);
 
+                    #ifdef DB_SUBTYPE_HASH_TABLE
+                        h = hash(putQ->k_v, k_size_from_info(putQ->info));
+
+                        h_chipx =  (h & 0x00FF0000 >> 16) % CHIP_X_SIZE;
+                        h_chipy =  (h & 0x0000FF00 >> 8)  % CHIP_Y_SIZE;
+                        h_core  = ((h & 0x000000FF)       % CORE_SIZE)
+                                    + FIRST_LEAF;
+
+                        set_dest_xyp(msg, h_chipx, h_chipy, h_core);
+
+                        if(spin1_send_sdp_msg(msg, SDP_TIMEOUT)){
+                            log_info("  Sent to (%d,%d,%d)",
+                                     h_chipx, h_chipy, h_core);
+                        }
+                        else {
+                            log_error("Unable to send PULL (%s) to (%d,%d,%d)",
+                                      pullQ->k, h_chipx, h_chipy, h_core);
+                        }
+                    #else
+                        address_t a = append(&currentQueryAddr,
+                                             pullQ, sizeof(pullQuery));
+
+                        if(!a){
+                            log_error("Error storing pullQuery to SDRAM.");
+                            return;
+                        }
+
+                        //broadcast pointer to message over Multicast
+                        while(!spin1_send_mc_packet(myKey, a, WITH_PAYLOAD)){
+                            log_info("Attempting to send PULL MC packet again.");
+                            spin1_delay_us(1);
+                        }
+                    #endif
                     break;
-
+                default:;
+                    break;
             }
             #endif
             #ifdef DB_TYPE_RELATIONAL
@@ -172,20 +229,28 @@ void process_requests(uint arg0, uint arg1){
                     createTableQuery* q = (createTableQuery*) header;
                     Table* t = &q->table;
 
-                    uint32_t row_size = 0;
-                    for(uint32_t i = 0; i < t->n_cols; i++){
-                        //round up to the closest power of 4
-                        //as Spinnaker is word aligned
-                        t->cols[i].size = ((t->cols[i].size + 3) / 4) * 4;
-                        row_size += t->cols[i].size;
+                    Table* newTable;
+
+                    if(getTable(tables, t->name)){
+                        log_error("Table with name '%s' already exists.");
+                        newTable = NULL;
                     }
-                    t->row_size = row_size;
+                    else{
+                        uint32_t row_size = 0;
+                        for(uint32_t i = 0; i < t->n_cols; i++){
+                            //round up to the closest power of 4
+                            //as Spinnaker is word aligned
+                            t->cols[i].size = ((t->cols[i].size + 3) / 4) * 4;
+                            row_size += t->cols[i].size;
+                        }
+                        t->row_size = row_size;
 
-                    write(data_region, t, sizeof(Table));
-                    table = (Table*)data_region;
+                        newTable = (Table*)(data_region + n_tables * sizeof(Table));
+                        write(newTable, t, sizeof(Table));
 
-                    log_info("Table created in address %08x", table);
-                    print_table(table);
+                        log_info("  Table '%s'-> %08x", newTable->name, newTable);
+                        print_table(newTable);
+                    }
 
                     revert_src_dest(msg);
 
@@ -194,16 +259,20 @@ void process_requests(uint arg0, uint arg1){
                     Response* response = (Response*)&msg->cmd_rc;
                     response->id  = q->id;
                     response->cmd = CREATE_TABLE;
-                    response->success = table ? true : false;
+                    response->success = newTable ? true : false;
                     response->x = chipx;
                     response->y = chipy;
                     response->p = core;
 
-                    spin1_send_sdp_msg(msg, SDP_TIMEOUT);
+                    n_tables++;
+
+                    if(!spin1_send_sdp_msg(msg, SDP_TIMEOUT)){
+                        log_error("Unable to send CREATE_TABLE ack");
+                    }
 
                     break;
                 case INSERT_INTO:;
-
+                    log_info("INSERT_INTO");
                     sdp_msg_t* msg_cpy = (sdp_msg_t*) sark_alloc(1,
                                 sizeof(sdp_hdr_t) + sizeof(insertEntryQuery));
 
@@ -213,13 +282,9 @@ void process_requests(uint arg0, uint arg1){
                         sizeof(sdp_hdr_t) + sizeof(insertEntryQuery));
 
                     if (!circular_buffer_add(capacitor_buffer, msg_cpy)) {
-                        log_error("Unable to add INSERT_INTO to capacitor_buffer.");
+                        log_error("  Unable to add to capacitor_buffer.");
                         return;
                     }
-
-                    log_info("Added INSERT_INTO to capacitor_buffer.");
-                    //log_info("  >> msg %08x", msg_cpy);
-
                     break;
                 case SELECT:;
                     log_info("SELECT");
@@ -242,28 +307,7 @@ void process_requests(uint arg0, uint arg1){
                         spin1_delay_us(1);
                     }
 
-                    log_info("Sent MC packet.");
-
-                    /*
-                    for(uint32_t i = FIRST_LEAF; i <= LAST_LEAF; i++){
-                        sdp_msg_t* forward_msg = (sdp_msg_t*)sark_alloc(1,sizeof(sdp_msg_t));
-
-                        sark_msg_cpy (forward_msg, msg);
-
-                        set_dest_core(forward_msg,i);
-
-                        uint sent = spin1_send_sdp_msg(forward_msg, SDP_TIMEOUT);
-                        if(!sent){
-                            log_info("%%%% FAILED TO SEND SDP QUERY TO >> %d", i);
-                        }
-                        else{
-                            log_info("Successfully sent to %d (d=%08x)", i, forward_msg->dest_port);
-                        }
-                        spin1_msg_free(forward_msg);
-                    }
-                    */
-
-                    //selectQuery* selectQ = (selectQuery*) header;
+                    log_info("Sent SELECT MC packet.");
                     break;
                 default:;
                     log_info("[Warning] cmd not recognized: %d with id %d",
@@ -292,9 +336,11 @@ void c_main(){
         rt_error(RTE_SWERR);
     }
 
-    table = (Table*)sark_alloc(1, sizeof(Table));
+    tables = (Table*) data_region;
 
-    currentQueryAddr = data_region + sizeof(Table);
+    //tables = (Table**)sark_alloc(DEFAULT_NUMBER_OF_TABLES, sizeof(Table*));
+
+    currentQueryAddr = data_region + sizeof(Table) * DEFAULT_NUMBER_OF_TABLES ;
 
     //timer tick in microseconds
     spin1_set_timer_tick(TIMER_PERIOD);

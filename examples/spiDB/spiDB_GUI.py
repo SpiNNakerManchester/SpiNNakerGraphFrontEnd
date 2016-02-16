@@ -136,7 +136,7 @@ def runQuery():
     outputText.delete('1.0',END)
     outputText.insert(INSERT, "Running...")
 
-    error = False
+    error = True
 
     #try:
     results = conn.run(qText.split(';'))
@@ -150,6 +150,7 @@ def runQuery():
         if r is None:
             s += "No response\n"
         else:
+            error = False
             s += "{}\n".format(str(r))
             for resp in r.responses:
                 if resp.__xyp__() in xyp_occurences:
@@ -193,7 +194,7 @@ def runQuery():
     historyListbox.insert(0,qText)
     history[qText] = queryResultTuple
 
-    if not error:
+    if not error and len(responseTimes) > 1:
         pylab.figure()
         pylab.plot(range(len(responseTimes)), responseTimes)
         pylab.xlabel('Response')

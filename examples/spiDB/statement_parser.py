@@ -223,7 +223,7 @@ class StatementParser:
 
         cols = []
         for i in range(len(params)):
-            params[i] = re.sub('\s+',' ',params[i].strip())
+            params[i] = re.sub('\s+', ' ', params[i].strip())
 
             (name, type) = params[i].split(' ')
 

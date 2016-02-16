@@ -66,6 +66,12 @@ for l in leaves:
               .format(root_vertex.label, l.label),
         partition_id="TREE_EDGE")
 
+for x_position in range(3 * 16):
+    l = front_end.add_partitioned_vertex(
+        LeafVertex,
+        {'machine_time_step': machine_time_step,
+         'time_scale_factor': time_scale_factor},
+         label="other_leaf{}".format(x_position))
 
 front_end.run(5)
 front_end.stop()

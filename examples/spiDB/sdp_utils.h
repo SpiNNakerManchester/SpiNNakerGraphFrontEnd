@@ -61,6 +61,11 @@ void set_dest_core(sdp_msg_t* msg, uint8_t dest_core){
     msg->dest_port   = (SDP_PORT << PORT_SHIFT) | dest_core;
 }
 
+void set_dest_xyp(sdp_msg_t* msg, uint8_t x, uint8_t y, uint8_t p){
+    set_dest_chip(msg, (x << 8) | y);
+    set_dest_core(msg, p);
+}
+
 uint32_t get_srce_chip_x(sdp_msg_t* msg){
     return msg->srce_addr & 0xF0 >> 8;
 }

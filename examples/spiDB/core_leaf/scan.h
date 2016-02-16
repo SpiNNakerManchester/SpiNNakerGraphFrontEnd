@@ -5,21 +5,19 @@
 #include "../memory_utils.h"
 #include <debug.h>
 
-extern Table* table;
-extern uchar chipx;
-extern uchar chipy;
-extern uchar core;
+extern uchar chipx, chipy, core;
 extern uchar branch;
 extern uint32_t myId;
 extern uint32_t rows_in_this_core;
 
-sdp_msg_t* direct_to_branch(selectQuery* sel, address_t addr){
+sdp_msg_t* direct_to_branch(Table* table, selectQuery* sel, address_t addr){
     sdp_msg_t* msg = create_internal_sdp_header(branch);
 
     selectResponse* r = (selectResponse*)&msg->cmd_rc;
-    r->cmd = SELECT_RESPONSE;
-    r->id  = sel->id;
-    r->addr = addr;
+    r->cmd   = SELECT_RESPONSE;
+    r->id    = sel->id;
+    r->table = table;
+    r->addr  = addr;
 
     log_info("Directing to branch %d value %s", branch, addr);
 
@@ -35,7 +33,8 @@ sdp_msg_t* direct_to_branch(selectQuery* sel, address_t addr){
     return msg;
 }
 
-sdp_msg_t* send_response_msg(uint32_t sel_id,
+sdp_msg_t* send_response_msg(Table* table,
+                             uint32_t sel_id,
                              uint32_t col_index,
                              uint32_t p,
                              uchar* values){
@@ -76,7 +75,11 @@ sdp_msg_t* send_response_msg(uint32_t sel_id,
     return msg;
 }
 
-void breakInBlocks(uint32_t sel_id, address_t addr){
+void breakInBlocks(selectResponse* selResp){
+    Table* table = selResp->table;
+    uint32_t sel_id = selResp->id;
+    address_t addr = selResp->addr;
+
     //if(sel->col_names[0][0] == 0){ //wildcard
     uint p = 0;
 
@@ -84,7 +87,11 @@ void breakInBlocks(uint32_t sel_id, address_t addr){
     size_t n_cols         = table->n_cols;
 
     for(uint8_t col_index = 0; col_index < n_cols; col_index++){
-        sdp_msg_t* msg = send_response_msg(sel_id, col_index, p, (uchar*)addr);
+        sdp_msg_t* msg = send_response_msg(table,
+                                           sel_id,
+                                           col_index,
+                                           p,
+                                           (uchar*)addr);
         p += table->cols[col_index].size;
 
         sark_delay_us(20);
@@ -112,7 +119,10 @@ void breakInBlocks(uint32_t sel_id, address_t addr){
      */
 }
 
-void scan_ids(address_t addr, selectQuery* sel){
+void scan_ids(Table* table,
+              address_t addr,
+              selectQuery* sel,
+              uint32_t rows_in_this_core){
 
     if(!table){
         return;
@@ -162,7 +172,7 @@ void scan_ids(address_t addr, selectQuery* sel){
 
         //uchar* values = addr;
 
-        direct_to_branch(sel, addr);
+        direct_to_branch(table, sel, addr);
         sark_delay_us(20);
 
         /*

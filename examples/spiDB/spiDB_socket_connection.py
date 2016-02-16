@@ -69,17 +69,17 @@ class SpiDBSocketConnection(UDPConnection):
     def receive_all(self, n,m):
         results = [None] * (m-n)
 
-        time_sent = time.time() * 1000
+        #time_sent = time.time() * 1000
 
         responseBuffer = []
 
         while True:
             try:
-                s = self.receive(0.3)
-                time_now = time.time() * 1000
+                time_sent = time.time() * 1000
+                s = self.receive(0.2)
+                responseBuffer.append((time.time() * 1000 - time_sent,s))
 
-                responseBuffer.append((time_now - time_sent,s))
-                #print s
+                print s
 
             except SpinnmanTimeoutException as e:
                 break
