@@ -11,6 +11,7 @@ from result import SelectResult
 from result import InsertIntoResult
 from result import Result
 from result import Entry
+import threading
 
 import random
 
@@ -23,81 +24,78 @@ class SpiDBSocketConnection(UDPConnection):
     def __init__(self):
         UDPConnection.__init__(self)
 
-        self.ip_address = "192.168.240.253" #todo should not be hardcoded
-        self.port = 11111                   #todo should not be hardcoded
+        self.ip_address = "192.168.240.253"
+        self.port = 11111
 
         #self.transceiver = create_transceiver_from_hostname(self.ip_address, 3)
 
-        self.i=0
-
-    def run(self, sqlQueries):
-        j=self.i
-
-        for q in sqlQueries:
-            if len(q) is 0 or q.isspace():
-                continue
-
-            self.sendQuery(self.i,q)
-            self.i+=1
-            #time.sleep(0.1) #todo hmmm....
-
-        return self.receive_all(j,self.i)
+        self.i = 0
 
     def sendPing(self):
-        i = random.randint(0,100000)
+        i = random.randint(0, 100000)
         try:
-            self.send_to(socket_translator.PING(i), (self.ip_address, self.port))
-        except:
-            return -1
-
-        time_sent = time.time() * 1000
-        try:
+            self.send_to(socket_translator.PING(i),
+                         (self.ip_address, self.port))
+            time_sent = time.time()
             s = self.receive(0.1)
         except SpinnmanTimeoutException:
             return -1
 
-        return time.time() * 1000 - time_sent
-
+        return (time.time()-time_sent)*1000
 
     def sendQuery(self, i, q):
         queryStructs = socket_translator.generateQueryStructs(i,q)
         for s in queryStructs:
             self.send_to(s, (self.ip_address, self.port))
 
-    def recv(self):
-        return self.receive()
-
-    def receive_all(self, n,m):
-        results = [None] * (m-n)
-
-        #time_sent = time.time() * 1000
-
+    def receive_all(self, sent_times, results):
         responseBuffer = []
 
         while True:
             try:
-                time_sent = time.time() * 1000
-                s = self.receive(0.4)
-                responseBuffer.append((time.time() * 1000 - time_sent,s))
+                s = self.receive(0.3)
+                responseBuffer.append((time.time(), s))
                 print s
             except SpinnmanTimeoutException:
                 break
 
         for t, s in responseBuffer:
             response = socket_translator.translateResponse(s)
-            response.response_time = t
+            response.response_time = (t-sent_times[response.id])*1000
 
-            if results[response.id-n] is None:
+            if results.get(response.id) is None:
                 if response.cmd == "SELECT":
-                    results[response.id-n] = SelectResult()
+                    results[response.id] = SelectResult()
                 elif response.cmd == "INSERT_INTO":
-                    results[response.id-n] = InsertIntoResult()
+                    results[response.id] = InsertIntoResult()
                 else:
-                    results[response.id-n] = Result()
+                    results[response.id] = Result()
 
-            results[response.id-n].addResponse(response)
+            results[response.id].addResponse(response)
 
         return results
+
+    def run(self, sqlQueries):
+        sentTimes = dict()
+        results = dict()
+
+        t = threading.Thread(target=self.receive_all,
+                             args=(sentTimes, results))
+        t.start()
+
+        for q in sqlQueries:
+            if len(q) is 0 or q.isspace():
+                continue
+
+            time.sleep(0.1)
+            self.sendQuery(self.i, q)
+            sentTimes[self.i] = time.time()
+
+            self.i += 1
+
+        t.join()
+
+        return list(results.values())
 
     def iobuf(self, x, y, p):
         iobufs = self.transceiver.get_iobuf(

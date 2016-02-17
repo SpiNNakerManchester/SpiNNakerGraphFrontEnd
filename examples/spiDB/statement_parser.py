@@ -104,6 +104,7 @@ class Table:
 
 class StatementParser:
     def __init__(self, sql_string):
+        self.sql_string = sql_string
         self.statement = sqlparse.parse(sql_string)[0]
         self.idx = 0
         self.type = str(self.next_by_type(T.Keyword))
@@ -146,6 +147,10 @@ class StatementParser:
         params = list(func.get_parameters())
 
         values_parenthesis = self.next_by_instance(sql.Parenthesis)
+
+        if values_parenthesis is None:
+            raise Exception("Invalid Parenthesis parameters of: {}"
+                            .format(self.sql_string))
 
         identifier = list(values_parenthesis.get_sublists())[0]
 

@@ -1,4 +1,4 @@
-/***** slave.c/slave_summary
+/***** leaf.c/leaf_summary
 *
 * COPYRIGHT
 *  Copyright (c) The University of Manchester, 2011. All rights reserved.
@@ -20,11 +20,7 @@
 #include "../sdp_utils.h"
 #include "pull.h"
 #include "put.h"
-
 #include "scan.h"
-
-#include "../double_linked_list.h"
-#include "../message_queue.h"
 
 #define TIMER_PERIOD 100
 
@@ -33,45 +29,26 @@ uint32_t time = 0;
 
 static circular_buffer sdp_buffer;
 
-uchar chipx;
-uchar chipy;
-uchar core;
+uchar chipx, chipy, core;
 uchar branch;
 
 uint32_t myId;
 
 Table* tables;
 
-sdp_msg_t msg;
-
 void update(uint ticks, uint b){
     use(ticks);
     use(b);
 
     time += TIMER_PERIOD;
-
-    /*
-    if(ticks == 10){
-         // Get pointer to 1st virtual processor info struct in SRAM
-        vcpu_t *sark_virtual_processor_info = (vcpu_t*) SV_VCPU;
-        address_t address = (address_t) sark_virtual_processor_info[ROOT_CORE].user0;
-        address_t root_data_address = data_specification_get_region(DB_DATA_REGION, address);
-        table = (Table*)root_data_address;
-
-        print_table(table);
-    }
-    */
 }
-
-
-uint32_t entriesInQueue = 0;
-uchar* entryQueue;//TODO 2-D array. Todo HARDCODED
 
 void sdp_packet_callback(uint mailbox, uint port) {
     use(port);
 
     sdp_msg_t* msg     = (sdp_msg_t*)mailbox;
-    sdp_msg_t* msg_cpy = (sdp_msg_t*)sark_alloc(1, sizeof(sdp_msg_t) + sizeof(insertEntryQuery)); //msg->length);
+    sdp_msg_t* msg_cpy = (sdp_msg_t*)sark_alloc(1,
+                                sizeof(sdp_msg_t) + sizeof(insertEntryQuery));
 
     sark_word_cpy(msg_cpy, msg, sizeof(sdp_msg_t) + sizeof(insertEntryQuery));
 
@@ -91,7 +68,7 @@ void sdp_packet_callback(uint mailbox, uint port) {
 address_t* addr;
 
 uint32_t*  table_rows_in_this_core;
-uint32_t*  table_max_row_id_in_this_core;
+int*  table_max_row_id_in_this_core; //needs to be signed
 
 address_t* table_base_addr;
 
@@ -138,7 +115,10 @@ sdp_msg_t* send_empty_response_to_host(spiDBcommand cmd, id_t id){
     return msg;
 }
 
-sdp_msg_t* send_string_response_to_host(spiDBcommand cmd, id_t id, uchar* string){
+sdp_msg_t* send_string_response_to_host(spiDBcommand cmd,
+                                        id_t id,
+                                        uchar* string){
+
     sdp_msg_t* msg = create_sdp_header_to_host();
 
     Response* r = (Response*)&msg->cmd_rc;
@@ -173,8 +153,8 @@ void process_requests(uint arg0, uint arg1){
             //gather responses
 
             selectResponse* selResp = (selectResponse*)header;
-            log_info("Received selectResponse on table '%s' with addr %08x",
-                     selResp->table->name, selResp->addr);
+            log_info("seResponse on '%s' with addr %08x from core %d",
+                     selResp->table->name, selResp->addr, get_srce_core(msg));
             breakInBlocks(selResp);
 
             continue;
@@ -243,16 +223,30 @@ void process_requests(uint arg0, uint arg1){
                     uint32_t p = get_byte_pos(tables, i);
 
                     //todo problem if packets interleave...
-                    if(e.row_id > table_max_row_id_in_this_core[table_index]){
+                    //needs to be signed, as table_max_row_id_in_this_core
+                    //initializes to -1 (otherwise calculated as 0xFFFFFFFF)
+
+                    log_info("e.row_id: %d > table_max_row_id_in_this_core[table_index] %d",
+                        (int)e.row_id, table_max_row_id_in_this_core[table_index]);
+
+
+                    if((int)e.row_id > table_max_row_id_in_this_core[table_index]){
                         table_rows_in_this_core[table_index]++;
                         table_max_row_id_in_this_core[table_index] = e.row_id;
+
+                        log_info("noww-- table_max_row_id_in_this_core[table_index] %d, table_rows_in_this_core %d",
+                          table_max_row_id_in_this_core[table_index], table_rows_in_this_core[table_index]);
                     }
 
-                    address_t address_to_write =
-                        data_region +
-                        (uint32_t)table_base_addr[table_index] +
-                        (((t->row_size * table_rows_in_this_core[table_index]) + 3) / 4)
-                        + p/4;
+                    uint32_t table_offset_words   = (uint32_t)table_base_addr[table_index];
+                    uint32_t new_row_offset_words = ((t->row_size * (table_rows_in_this_core[table_index]-1)) + 3) >> 2;
+                    uint32_t column_offset_words  = p >> 2;
+
+
+                    address_t address_to_write = data_region +
+                                                 table_offset_words +
+                                                 new_row_offset_words +
+                                                 column_offset_words;
 
                     log_info("  |- %08x (base: %08x)",
                              address_to_write,
@@ -294,6 +288,9 @@ void receive_data (uint key, uint payload)
         log_error("  Unable to find table '%d'", selQ->table_name);
         return;
     }
+
+    print_table(&tables[table_index]);
+    log_info("Rows in this core: %d", table_rows_in_this_core[table_index]);
 
     scan_ids(&tables[table_index],
              data_region + (uint32_t)table_base_addr[table_index],
@@ -337,12 +334,6 @@ void c_main()
         b += DEFAULT_TABLE_SIZE_WORDS;
     }
 
-    //entryQueue = (uchar*)sark_alloc(table->row_size,sizeof(uchar)); //TODO should prob. be somewhere else
-    entryQueue = (uchar*)sark_alloc(1024,sizeof(uchar)); //TODO should prob. be somewhere else
-    for(uint32_t i = 0; i < 1024; i++){
-        entryQueue[i] = 0;
-    }
-
     if (!initialize()) {
         rt_error(RTE_SWERR);
     }
@@ -352,13 +343,12 @@ void c_main()
     addr = (address_t*)malloc(sizeof(address_t));
     *addr = data_region;
 
-    tables = (Table*) 0x64502168; //TODO
+    vcpu_t *sark_virtual_processor_info = (vcpu_t*) SV_VCPU;
+    address_t root_data_address =
+        data_specification_get_region(DB_DATA_REGION,
+                    (address_t)sark_virtual_processor_info[ROOT_CORE].user0);
 
-                                  //todo not hardcoded
-    //entryQueue = (Entry*)sark_alloc(4, sizeof(Entry));
-
-    //recent_messages_queue   = init_double_linked_list();
-    //unacknowledged_replies  = init_double_linked_list();
+    tables = (Table*)root_data_address;
 
     spin1_set_timer_tick(TIMER_PERIOD);
 
@@ -373,5 +363,4 @@ void c_main()
     spin1_callback_on(MC_PACKET_RECEIVED,   receive_data_void,   0);
 
     simulation_run();
-    //spin1_start (SYNC_NOWAIT);
 }

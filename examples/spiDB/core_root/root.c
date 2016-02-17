@@ -1,4 +1,4 @@
-/***** master.c/master_summary
+/***** root.c/root_summary
 *
 * COPYRIGHT
 *  Copyright (c) The University of Manchester, 2011. All rights reserved.
@@ -23,12 +23,8 @@
 #include <simulation.h>
 #include <sark.h>
 #include <circular_buffer.h>
-#include "../double_linked_list.h"
-#include "../message_queue.h"
-//#include "unit_tests/root_put_tests.c"
 
 #define TIMER_PERIOD 100
-#define ID_SIZE 4
 
 // Globals
 uint32_t time = 0; //represents the microseconds since start
@@ -289,7 +285,7 @@ void process_requests(uint arg0, uint arg1){
                     }
                     break;
                 case SELECT:;
-                    log_info("SELECT");
+                    log_info("SELECT from '%s'", ((selectQuery*)header)->table_name);
 
                     //store SELECT query message to SDRAM
                     //so it can be read by other cores

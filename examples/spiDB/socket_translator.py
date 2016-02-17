@@ -126,7 +126,8 @@ def PING(id):
 def SELECT(id, sel):
     #condition = sel.where.condition
 
-    s = struct.pack("BI", dbCommands.SELECT.value, id)
+    s = struct.pack("BI", dbCommands.SELECT.value, id) +\
+        struct.pack("16c", *normalize(sel.tableName, 16))
 
     if sel.cols is None:
         s += struct.pack("B", 0) # means wildcard *

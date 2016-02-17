@@ -103,9 +103,10 @@ class SelectResult(Result):
             if cmp(row.origin, r.__xyp__()) is not 0: #row based, so all entries for that row should come from the same xyp
                 raise Exception("row.origin: {} != r.__xyp__()".format(row.origin, r.__xyp__()))
             row[e.col] = e.value
-        raise Exception("Row with id '{}' on '{}' already exists " \
+        else:
+            raise Exception("Row with id '{}' on '{}' already exists " \
                   "with value '{}' from {}."\
-                .format(e.row_id, e.col, row[e.col], r.__xyp__()))
+                 .format(e.row_id, e.col, row[e.col], r.__xyp__()))
 
     def getRows(self):
         return self.rowidToRow.values()
@@ -114,7 +115,8 @@ class SelectResult(Result):
         return "{}, rows: {}".format(Result.__repr__(self), len(self.rowidToRow))
 
     def __str__(self):
-        metadata = "\nResponse time:{:.3f}ms\n".format(self.lastResponseTime)
+        #metadata = "\nResponse time:{:.3f}ms\n".format(self.lastResponseTime)
+        metadata = ""
 
         n_rows = len(self.rowidToRow)
         metadata += "Number of rows: {}\n".format(n_rows)
