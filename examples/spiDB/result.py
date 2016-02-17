@@ -58,9 +58,11 @@ class Result:
         self.responses.append(r)
 
     def __str__(self):
-        return self.responses.__str__() \
-            if self.responses is not None and len(self.responses) > 0\
-            else "No Response"
+        if self.responses is None or len(self.responses) is 0:
+            return "No Response"
+        if len(self.responses) is 1:
+            return "{}\n".format(str(self.responses[0]))
+        return str(self.responses)
 
 class InsertIntoResult(Result):
     def __init__(self):
@@ -148,7 +150,7 @@ class SelectResult(Result):
                 "\n"
 
         found_entries = 0
-        expected_entries = n_rows * len(self.cols)
+        #expected_entries = n_rows * len(self.cols)
 
         for row_id, row in self.rowidToRow.iteritems():
             table += "|"
@@ -164,9 +166,8 @@ class SelectResult(Result):
 
         table += " " + "-" * n_spaces + " "
 
-        metadata += "Number entries found: {}/{} ({}%) \n"\
-            .format(found_entries, expected_entries,
-                    (100.0*found_entries)/expected_entries)
+        metadata += "Number of entries: {}\n"\
+            .format(found_entries)
 
         return metadata + table
 

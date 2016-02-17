@@ -56,7 +56,7 @@ class Where:
         self.condition = condition
 
     def __str__(self):
-        return "1=1" #todo
+        return self.condition
 
 class Column:
     def __init__(self, name, type, size):
@@ -176,7 +176,7 @@ class StatementParser:
     @staticmethod
     def get_operand(token):
         if isinstance(token, sql.Identifier):
-            return Operand(Operand.OperandType.COLUMN,token.value)
+            return Operand(Operand.OperandType.COLUMN, token.value)
         else:
             return Operand(Operand.OperandType.LITERAL,
                            StatementParser.remove_quotes(token.value))

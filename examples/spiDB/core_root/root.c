@@ -285,7 +285,8 @@ void process_requests(uint arg0, uint arg1){
                     }
                     break;
                 case SELECT:;
-                    log_info("SELECT from '%s'", ((selectQuery*)header)->table_name);
+                    print_SELECT((selectQuery*)header);
+                    //log_info("SELECT from '%s'", ((selectQuery*)header)->table_name);
 
                     //store SELECT query message to SDRAM
                     //so it can be read by other cores

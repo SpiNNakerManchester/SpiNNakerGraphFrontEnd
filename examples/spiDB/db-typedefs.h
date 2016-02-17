@@ -18,7 +18,7 @@
 #define NUMBER_OF_LEAVES            (LAST_LEAF - FIRST_LEAF)
 
 #define DEFAULT_NUMBER_OF_TABLES    16
-#define MAX_NUMBER_OF_COLS          16
+#define MAX_NUMBER_OF_COLS          6
 
 #define CORE_DATABASE_SIZE_WORDS    (120000000 >> 2) / CORE_SIZE
 
@@ -169,10 +169,6 @@ typedef struct pingQuery{
         Operand     right;
     } Condition;
 
-    typedef struct Where {
-        Condition  condition;
-    } Where;
-
     typedef struct selectResponse {
         spiDBcommand cmd;
         uint32_t     id;
@@ -188,7 +184,7 @@ typedef struct pingQuery{
         uchar        table_name[16];
         uchar        col_names[MAX_NUMBER_OF_COLS][16]; //names == 0 means *
 
-        //Where        where;
+        Condition    condition;
     } selectQuery;
 
 #endif
@@ -237,10 +233,10 @@ typedef struct Response{
     Entry         entry;
 } Response;
 
-uint32_t get_byte_pos(Table* table, uint32_t col_index){
+int get_byte_pos(Table* table, int col_index){
     uint32_t pos = 0;
 
-    if(col_index >= table->n_cols){
+    if(col_index == -1 || col_index >= table->n_cols){
         return -1;
     }
 
@@ -251,7 +247,7 @@ uint32_t get_byte_pos(Table* table, uint32_t col_index){
     return pos;
 }
 
-uint32_t get_col_index(Table* table, uchar col_name[16]){
+int get_col_index(Table* table, uchar col_name[16]){
 
     for(uint i = 0; i < table->n_cols; i++){
         if(strcmp(table->cols[i].name, col_name) == 0){
@@ -262,7 +258,7 @@ uint32_t get_col_index(Table* table, uchar col_name[16]){
     return -1;
 }
 
-uint32_t getTableIndex(Table* tables, uchar* name){
+int getTableIndex(Table* tables, uchar* name){
     for(uint i = 0; i < DEFAULT_NUMBER_OF_TABLES; i++){
         if(strcmp(tables[i].name, name) == 0){
             return i;
@@ -283,6 +279,21 @@ bool in(uint* arr, size_t s, uint v){
         }
     }
     return false;
+}
+
+uchar* getOperatorName(Operator o){
+    switch(o){
+      case EQ:      return "=";
+      case NE:      return "!=";
+      case GT:      return ">";
+      case GE:      return ">=";
+      case LT:      return "<";
+      case LE:      return "<=";
+      case BETWEEN: return "BETWEEN";
+      case LIKE:    return "LIKE";
+      case IN:      return "IN";
+      default:      return "?";
+    }
 }
 
 void printEntry(Entry* e){
@@ -311,5 +322,28 @@ void print_tables(Table* tables){
     for(uint i = 0; i < DEFAULT_NUMBER_OF_TABLES; i++){
         print_table(&tables[i]);
     }
+}
+
+void print_SELECT(selectQuery* selQ){
+    log_info("############################################");
+    io_printf(IO_BUF, "SELECT ");
+
+    for(uint i = 0; i < MAX_NUMBER_OF_COLS; i++){
+        if(selQ->col_names[i][0] == NULL){
+            break;
+        }
+        io_printf(IO_BUF, "%s, ", selQ->col_names[i]);
+    }
+
+    io_printf(IO_BUF, " FROM %s WHERE ", selQ->table_name);
+    io_printf(IO_BUF, "(%s) %s",
+              selQ->condition.left.type == COLUMN ? "COLUMN" : "LITERAL",
+              selQ->condition.left.value);
+
+    io_printf(IO_BUF, " %s ", getOperatorName(selQ->condition.op));
+
+    io_printf(IO_BUF, "(%s) %s;\n",
+              selQ->condition.right.type == COLUMN ? "COLUMN" : "LITERAL",
+              selQ->condition.right.value);
 }
 #endif

@@ -55,12 +55,15 @@ class SpiDBSocketConnection(UDPConnection):
             try:
                 s = self.receive(0.3)
                 responseBuffer.append((time.time(), s))
-                print s
+                #print s
             except SpinnmanTimeoutException:
                 break
 
         for t, s in responseBuffer:
             response = socket_translator.translateResponse(s)
+            if response is None:
+                continue
+
             response.response_time = (t-sent_times[response.id])*1000
 
             if results.get(response.id) is None:

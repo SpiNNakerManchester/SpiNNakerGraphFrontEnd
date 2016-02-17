@@ -93,14 +93,14 @@ label = Label(historyFrame, text="History")
 label.pack(side=TOP)
 
 historyListbox = Listbox(
-    master=historyFrame,
+    master = historyFrame,
     width  = 40)
 historyListbox.pack()
 
 label = Label(rightFrame, text="Output")
 label.pack(side=TOP)
 
-outputText = Text(
+outputText = ScrolledText.ScrolledText(
     master = rightFrame,
     wrap   = 'word',  # wrap text at full words only
     width  = 80,      # characters
@@ -138,9 +138,12 @@ def runQuery():
 
     error = True
 
-    #try:
-    results = conn.run(qText.split(';'))
-    outputText.delete('1.0',END)
+    results = []
+
+    for stage in qText.split('.'):
+        results.extend(conn.run(stage.split(';')))
+
+    outputText.delete('1.0', END)
 
     s = ""
     xyp_occurences = dict()
@@ -179,7 +182,7 @@ def runQuery():
 
         tuples = xyp_occurences.keys()
         y_pos = np.arange(len(tuples))
-        occurences = xyp_occurences.values() #todo make sure ordering is right
+        occurences = xyp_occurences.values()
 
         pylab.figure()
         pylab.bar(y_pos, occurences, align='center', alpha=0.5)

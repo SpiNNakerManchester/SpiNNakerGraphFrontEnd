@@ -124,18 +124,62 @@ def PING(id):
     return struct.pack("BI",dbCommands.PING.value, id)
 
 def SELECT(id, sel):
-    #condition = sel.where.condition
-
     s = struct.pack("BI", dbCommands.SELECT.value, id) +\
         struct.pack("16c", *normalize(sel.tableName, 16))
 
+    for i in range(6): #max number of cols
+        if sel.cols is not None and i < len(sel.cols):
+            s += struct.pack("16c", *normalize(sel.cols[i], 16))
+        else:
+            s += struct.pack("16c", *normalize('', 16))
+
+    """
     if sel.cols is None:
         s += struct.pack("B", 0) # means wildcard *
     else:
         for c in sel.cols:
-            s += struct.pack("16c", *normalize(c,16))
-        s += struct.pack("B", 0) #so that we set the next col to null for scan.h
+            s += struct.pack("16c", *normalize(c, 16))
+        #s += struct.pack("B", 0)
+    """
 
+    condition = sel.where.condition
+    l = condition.left
+    r = condition.right
+
+    s += struct.pack("B64c", l.type.value, *normalize(l.value, 64)) +\
+         struct.pack("B", get_operator_value(condition.operator)) +\
+         struct.pack("B64c", r.type.value, *normalize(r.value, 64))
+
+    """
+    typedef enum {
+        COLUMN,
+        LITERAL
+    } OperandType;
+
+    typedef struct Operand {
+        OperandType type;
+        uchar       value[64];
+    } Operand;
+
+    typedef struct Condition {
+        Operand     left;
+        Operator    op;
+        Operand     right;
+    } Condition;
+
+    typedef struct selectQuery {
+        spiDBcommand cmd;
+        uint32_t     id;
+
+        uchar        table_name[16];
+        uchar        col_names[MAX_NUMBER_OF_COLS][16]; //names == 0 means *
+
+        Condition    condition;
+    } selectQuery;
+
+    """
+    print_bytearr(s)
+    print len(s)
     return [s]
 
 def byte_array(a):
@@ -230,27 +274,31 @@ def generateQueryStructs(id, queryString):
         return None
 
 def translateResponse(responseStr):
-    (id, cmd, success, x, y, p) = struct.unpack_from("IB?BBB", responseStr)
-    cmd = get_dbCommandName(cmd)
+    try:
+        (id, cmd, success, x, y, p) = struct.unpack_from("IB?BBB", responseStr)
+        cmd = get_dbCommandName(cmd)
 
-    response = Response(id=id, cmd=cmd, success=success, x=x, y=y, p=p)
+        response = Response(id=id, cmd=cmd, success=success, x=x, y=y, p=p)
 
-    if cmd == "SELECT":
-        data = responseStr[12:]
+        if cmd == "SELECT":
+            data = responseStr[12:]
 
-        row_id   = struct.unpack("I", data[:4])[0]
+            row_id   = struct.unpack("I", data[:4])[0]
 
-        col_name_with_nulls = data[4:20]
-        col_name = col_name_with_nulls[:col_name_with_nulls.index('\0')]
+            col_name_with_nulls = data[4:20]
+            col_name = col_name_with_nulls[:col_name_with_nulls.index('\0')]
 
-        (size)   = struct.unpack("I", data[20:24])[0]
-        value    = data[24:]
+            (size)   = struct.unpack("I", data[20:24])[0]
+            value    = data[24:]
 
-        response.data = Entry(row_id,col_name,value)
-    elif cmd == "INSERT_INTO":
-        response.data = responseStr[12:]
-        i = response.data.index('\0')
-        if i > 0:
-            response.data = response.data[:i]
+            response.data = Entry(row_id,col_name,value)
+        elif cmd == "INSERT_INTO":
+            response.data = responseStr[12:]
+            i = response.data.index('\0')
+            if i > 0:
+                response.data = response.data[:i]
+    except Exception as e:
+        print "Exception retrieving data...", e
+        return None
 
     return response

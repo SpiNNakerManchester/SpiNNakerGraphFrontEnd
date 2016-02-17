@@ -225,23 +225,14 @@ void process_requests(uint arg0, uint arg1){
                     //todo problem if packets interleave...
                     //needs to be signed, as table_max_row_id_in_this_core
                     //initializes to -1 (otherwise calculated as 0xFFFFFFFF)
-
-                    log_info("e.row_id: %d > table_max_row_id_in_this_core[table_index] %d",
-                        (int)e.row_id, table_max_row_id_in_this_core[table_index]);
-
-
                     if((int)e.row_id > table_max_row_id_in_this_core[table_index]){
                         table_rows_in_this_core[table_index]++;
                         table_max_row_id_in_this_core[table_index] = e.row_id;
-
-                        log_info("noww-- table_max_row_id_in_this_core[table_index] %d, table_rows_in_this_core %d",
-                          table_max_row_id_in_this_core[table_index], table_rows_in_this_core[table_index]);
                     }
 
                     uint32_t table_offset_words   = (uint32_t)table_base_addr[table_index];
                     uint32_t new_row_offset_words = ((t->row_size * (table_rows_in_this_core[table_index]-1)) + 3) >> 2;
                     uint32_t column_offset_words  = p >> 2;
-
 
                     address_t address_to_write = data_region +
                                                  table_offset_words +
@@ -290,10 +281,12 @@ void receive_data (uint key, uint payload)
     }
 
     print_table(&tables[table_index]);
-    log_info("Rows in this core: %d", table_rows_in_this_core[table_index]);
+
+    log_info("with base address: %08x", (uint32_t)table_base_addr[table_index]);
+    log_info("final addr: %08x", data_region + (uint32_t)table_base_addr[table_index]);
 
     scan_ids(&tables[table_index],
-             data_region + (uint32_t)table_base_addr[table_index],
+             data_region+(uint32_t)table_base_addr[table_index],
              selQ,
              table_rows_in_this_core[table_index]);
 }
@@ -329,8 +322,6 @@ void c_main()
         table_rows_in_this_core[i] = 0;
         table_max_row_id_in_this_core[i] = -1;
         table_base_addr[i] = b;
-        log_info("table_base_addr[%d] = %08x", i, table_base_addr[i]);
-
         b += DEFAULT_TABLE_SIZE_WORDS;
     }
 
