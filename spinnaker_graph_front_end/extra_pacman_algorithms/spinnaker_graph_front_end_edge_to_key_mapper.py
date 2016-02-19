@@ -2,13 +2,14 @@
 from pacman.model.routing_info.dict_based_partitioned_edge_n_keys_map import \
     DictBasedPartitionedEdgeNKeysMap
 from spinn_front_end_common.abstract_models.\
-    abstract_provides_incoming_edge_constraints import \
-    AbstractProvidesIncomingEdgeConstraints
+    abstract_provides_incoming_partition_constraints import \
+    AbstractProvidesIncomingPartitionConstraints
 from spinn_front_end_common.abstract_models.\
-    abstract_provides_n_keys_for_edge import AbstractProvidesNKeysForEdge
+    abstract_provides_n_keys_for_partition import \
+    AbstractProvidesNKeysForPartition
 from spinn_front_end_common.abstract_models.\
-    abstract_provides_outgoing_edge_constraints import \
-    AbstractProvidesOutgoingEdgeConstraints
+    abstract_provides_outgoing_partition_constraints import \
+    AbstractProvidesOutgoingPartitionConstraints
 
 
 class SpinnakerGraphFrontEndEdgeToKeyMapper(object):
@@ -27,7 +28,7 @@ class SpinnakerGraphFrontEndEdgeToKeyMapper(object):
                     .get_partitionable_edge_from_partitioned_edge(edge)
 
                 if not isinstance(super_edge.pre_vertex,
-                                  AbstractProvidesNKeysForEdge):
+                                  AbstractProvidesNKeysForPartition):
                     n_keys_map.\
                         set_n_keys_for_patitioned_edge(edge,
                                                        vertex_slice.n_atoms)
@@ -38,12 +39,12 @@ class SpinnakerGraphFrontEndEdgeToKeyMapper(object):
                             edge, graph_mapper))
 
                 if isinstance(super_edge.pre_vertex,
-                              AbstractProvidesOutgoingEdgeConstraints):
+                              AbstractProvidesOutgoingPartitionConstraints):
                     edge.add_constraints(
                         super_edge.pre_vertex.get_outgoing_edge_constraints(
                             edge, graph_mapper))
                 if isinstance(super_edge.post_vertex,
-                              AbstractProvidesIncomingEdgeConstraints):
+                              AbstractProvidesIncomingPartitionConstraints):
                     edge.add_constraints(
                         super_edge.post_vertex.get_incoming_edge_constraints(
                             edge, graph_mapper))

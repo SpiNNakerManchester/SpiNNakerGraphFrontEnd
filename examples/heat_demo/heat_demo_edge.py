@@ -2,7 +2,8 @@ from enum import Enum
 
 # front end common imports
 from spinn_front_end_common.abstract_models.\
-    abstract_provides_n_keys_for_edge import AbstractProvidesNKeysForEdge
+    abstract_provides_n_keys_for_partition \
+    import AbstractProvidesNKeysForPartition
 from spinnaker_graph_front_end.models.\
     mutli_cast_partitioned_edge_with_n_keys import \
     MultiCastPartitionedEdgeWithNKeys
@@ -24,7 +25,7 @@ class HeatDemoEdge(MultiCastPartitionedEdgeWithNKeys,
         MultiCastPartitionedEdgeWithNKeys.__init__(
             self, pre_subvertex, post_subvertex, n_keys=n_keys, label=label,
             constraints=constraints)
-        AbstractProvidesNKeysForEdge.__init__(self)
+        AbstractProvidesNKeysForPartition.__init__(self)
         self._direction = direction
 
     @property
