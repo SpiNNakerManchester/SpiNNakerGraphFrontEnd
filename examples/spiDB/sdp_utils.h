@@ -37,8 +37,8 @@ sdp_msg_t* create_internal_sdp_header(uint8_t dest_core){
     return create_sdp_header(spin1_get_chip_id(), dest_core);
 }
 
-sdp_msg_t* create_sdp_header_to_host(){
-    sdp_msg_t* msg = (sdp_msg_t*) sark_alloc(1, sizeof(sdp_msg_t));
+sdp_msg_t* create_sdp_header_to_host_alloc_extra(size_t bytes){
+    sdp_msg_t* msg = (sdp_msg_t*) sark_alloc(1, sizeof(sdp_msg_t) + bytes);
 
     // ===================== SDP Header =====================
     msg->flags       = 0x07;
@@ -51,6 +51,10 @@ sdp_msg_t* create_sdp_header_to_host(){
     msg->dest_port   = PORT_ETH;
 
     return msg;
+}
+
+sdp_msg_t* create_sdp_header_to_host(){
+    return create_sdp_header_to_host_alloc_extra(0);
 }
 
 void set_dest_chip(sdp_msg_t* msg, uint32_t dest_chip){

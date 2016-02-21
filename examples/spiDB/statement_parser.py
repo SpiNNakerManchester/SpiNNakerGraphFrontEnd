@@ -1,22 +1,20 @@
 __author__ = 'gmtuca'
 
-import sqlparse
-from sqlparse import sql
-from sqlparse import tokens as T
 from enum import Enum
 import re
 
 class Operand:
     def __init__(self, type, value):
         self.type = type
-        self.value = str(value)
+        self.value = value
 
     def __str__(self):
-        return "{} ({})".format(self.value, self.type)
+        return "{} ({},{})".format(self.value, self.type, type(self.value))
 
     class OperandType(Enum):
-        COLUMN   = 0
-        LITERAL  = 1
+        LITERAL_UINT32  = 0
+        LITERAL_STRING  = 1
+        COLUMN          = 2
 
 class Condition:
     def __init__(self, left, operator, right):
@@ -30,18 +28,14 @@ class Condition:
 class Select:
     def __init__(self, tableName, cols=None, where=None):
         self.tableName = tableName
-        if cols is None:
-            self.wildcard = True
-        else:
-            self.wildcard = False
-
-        self.cols = cols # None means '*'
+        self.cols = cols    # None means '*'
         self.where = where
 
     def __str__(self):
-        return "SELECT {} FROM {} WHERE {}"\
+        return "SELECT {} FROM {}{};"\
             .format('*' if self.cols is None else self.cols,
-                    self.tableName, self.where)
+                    self.tableName,
+                    " WHERE {}".format(str(self.where)) if self.where else "")
 
     def __repr__(self):
         return self.__str__()
@@ -51,12 +45,17 @@ class InsertInto:
         self.tableName = tableName
         self.columnValueMap = columnValueMap
 
+    def __str__(self):
+        return "INSERT INTO {}({}) VALUES ({});"\
+                    .format(self.tableName, self.columnValueMap.keys(),
+                            self.columnValueMap.values())
+
 class Where:
     def __init__(self, condition):
         self.condition = condition
 
     def __str__(self):
-        return self.condition
+        return str(self.condition)
 
 class Column:
     def __init__(self, name, type, size):
@@ -65,7 +64,7 @@ class Column:
         self.size = size
 
     def __str__(self):
-        return "Column(name: {}, type: {}, size: {})"\
+        return "{} {}({})"\
                 .format(self.name, self.type, self.size)
 
     def __repr__(self):
@@ -75,14 +74,16 @@ class CreateTable():
     def __init__(self,table):
         self.table = table
 
+    def __str__(self):
+        return "CREATE TABLE {}".format(self.table)
+
 class Table:
     def __init__(self, name, cols):
         self.name = name
         self.cols = cols
-        self.current_row_id = 0
 
     def __str__(self):
-        return "Table(name: {}, cols: {})".format(self.name, self.cols)
+        return "{}({})".format(self.name, self.cols)
 
     def get_index(self, col_name):
         for i in range(len(self.cols)):
@@ -102,142 +103,125 @@ class Table:
                 return i, self.cols[i]
         return -1, None
 
+class InvalidQueryException(Exception):
+    pass
+
 class StatementParser:
-    def __init__(self, sql_string):
-        self.sql_string = sql_string
-        self.statement = sqlparse.parse(sql_string)[0]
-        self.idx = 0
-        self.type = str(self.next_by_type(T.Keyword))
 
-    def parse(self):
-        if self.type == "CREATE":
-            return self.CREATE_TABLE()
-        elif self.type == "INSERT":
-            return self.INSERT_INTO()
-        elif self.type == "SELECT":
-            return self.SELECT()
-        else:
-            return None #throw exception?
+    select_pattern = \
+        re.compile( r"^SELECT\s+(\*|(?:\w+\s*,?\s*)+)\s*"
+                    r"FROM\s+(\w+)(?:\s+"
+                    r"WHERE\s+((?:[\"\']?\w+[\"\']?)|\d+)\s*"
+                        r"(\=|\!\=|<>|>|>\=|<|\<=|BETWEEN|LIKE|IN)"
+                        r"\s*((?:[\"\']?\w+[\"\']?)|\d+))?\s*;?\s*$")
 
-    def next_by_type(self, ttypes):
-        if not isinstance(ttypes, (list, tuple)):
-            ttypes = [ttypes]
+    insert_pattern = \
+        re.compile( r"^INSERT\s+INTO\s+(\w+)\s*"
+                    r"\(\s*((?:\w+\s*,?\s*)+)\)\s+"
+                    r"VALUES\s*"
+                        r"\(\s*((?:(?:[\"\']\w+[\"\']|\d+)\s*,?\s*)+)\)\s*;?\s*$")
 
-        for i in range(len(self.statement.tokens[self.idx:])):
-            i += self.idx
-            if self.statement.tokens[i].ttype in ttypes:
-                self.idx = i+1
-                return self.statement.tokens[i]
+    create_pattern = \
+        re.compile(
+            r"^CREATE\s+TABLE\s+(\w+)\s*"
+            r"\(((?:\s*\w+\s+(?:varchar\s*\(\s*\d+\s*\)|integer)\s*,?)+)\s*\)\s*;?\s*$")
 
-    def next_by_instance(self, clss):
-        if not isinstance(clss, (list, tuple)):
-            clss = (clss,)
 
-        for i in range(len(self.statement.tokens[self.idx:])):
-            i += self.idx
-            if isinstance(self.statement.tokens[i], clss):
-                self.idx = i+1
-                return self.statement.tokens[i]
-
-    def INSERT_INTO(self):
-        func = self.next_by_instance(sql.Function)
-
-        tableName = str(func.token_first(ignore_comments=True))
-
-        params = list(func.get_parameters())
-
-        values_parenthesis = self.next_by_instance(sql.Parenthesis)
-
-        if values_parenthesis is None:
-            raise Exception("Invalid Parenthesis parameters of: {}"
-                            .format(self.sql_string))
-
-        identifier = list(values_parenthesis.get_sublists())[0]
-
-        if isinstance(identifier,sql.IdentifierList):
-            values = list(identifier.get_identifiers())
-        else:
-            values = [identifier]
-
-        map = {}
-        for i in range(len(params)):
-            map[str(params[i])] = str(values[i])
-
-        return InsertInto(tableName, map)
+    varchar_size_pattern = re.compile(r"^varchar\s*\(\s*(\d+)\s*\)$")
 
     @staticmethod
-    def remove_quotes(str):
-        if not str:
-            return str
-        if str[0] in ('"', '\'') and str[-1] == str[0]:
-            str = str[1:-1]
-        return str
+    def CREATE(sql_string):
+        m = StatementParser.create_pattern.match(sql_string)
+        if m is None:
+            raise InvalidQueryException("Invalid CREATE TABLE format")
 
-    @staticmethod
-    def get_operand(token):
-        if isinstance(token, sql.Identifier):
-            return Operand(Operand.OperandType.COLUMN, token.value)
-        else:
-            return Operand(Operand.OperandType.LITERAL,
-                           StatementParser.remove_quotes(token.value))
-
-    def SELECT(self):
-        wildcard = self.statement.token_next_by_type(0, T.Wildcard)
-        if wildcard is None:
-            cols = []
-            col_tokens = self.statement.token_next_by_instance(0, sql.IdentifierList)
-
-            if col_tokens is None:
-                col_token = self.next_by_instance(sql.Identifier)
-                cols = [str(col_token)]
-            else:
-                for t in col_tokens.get_identifiers():
-                    cols.append(str(t))
-
-            print cols
-
-        else:
-            cols = None # wildcard
-
-        tableName = str(self.next_by_instance(sql.Identifier))
-
-        where = self.next_by_instance(sql.Where)
-
-        if where is not None:
-            cmp = where.token_next_by_instance(0, sql.Comparison)
-
-            left  = StatementParser.get_operand(cmp.left)
-            operator = cmp.token_next_by_type(0, T.Comparison).value
-            right = StatementParser.get_operand(cmp.right)
-
-            condition = Condition(left=left, operator=operator, right=right)
-
-            where = Where(condition)
-
-        return Select(tableName=tableName, cols=cols, where=where)
-
-    def CREATE_TABLE(self):
-        func = self.next_by_instance(sql.Function)
-
-        table_name = str(func.token_first())
-
-        params = func.token_next_by_instance(0,sql.Parenthesis)
-
-        params = str(params)[1:-1]
-        params = params.split(',')
+        tableName = m.group(1)
 
         cols = []
-        for i in range(len(params)):
-            params[i] = re.sub('\s+', ' ', params[i].strip())
 
-            (name, type) = params[i].split(' ')
-
-            if type[-1] is ')':
-                (type, size) = type[:-1].split('(')
-                size = int(size)
+        params = m.group(2).split(',')
+        for p in params:
+            (name, type) = re.sub('\s+', ' ', p.strip()).split(' ')
+            if type == 'integer':
+                size = 4
             else:
-                size = 4 #todo int for now
+                s_m = StatementParser.varchar_size_pattern.match(type)
+                type = 'varchar'
+                size = int(s_m.group(1))
 
-            cols.append(Column(name,type,size))
+            cols.append(Column(name=str(name), type=str(type), size=size))
 
-        return CreateTable(Table(table_name, cols))
+        table = Table(name=str(tableName),cols=cols)
+
+        return CreateTable(table)
+
+    @staticmethod
+    def INSERT(sql_string):
+        m = StatementParser.insert_pattern.match(sql_string)
+        if m is None:
+            raise InvalidQueryException("Invalid INSERT INTO format")
+
+        tableName = m.group(1)
+
+        fields = m.group(2)
+
+        cols = [str(c.strip()) for c in fields.split(',')]
+
+        values = []
+
+        for v in m.group(3).split(','):
+            v = v.strip()
+            if v.isdigit():
+                values.append(int(v))
+            elif v[0] in ('"', '\'') and v[-1] == v[0]:
+                values.append(str(v[1:-1]))
+            else:
+                values.append(str(v))
+
+        map = {}
+        for i in range(len(cols)):
+            map[cols[i]] = values[i]
+
+        return InsertInto(tableName=str(tableName), columnValueMap=map)
+
+    @staticmethod
+    def SELECT(sql_string):
+        m = StatementParser.select_pattern.match(sql_string)
+        if m is None:
+            raise InvalidQueryException("Invalid SELECT format")
+
+        fields = m.group(1)
+
+        cols = None if fields == '*'\
+            else [str(c.strip()) for c in fields.split(',')]
+
+        tableName = m.group(2)
+
+        if m.lastindex == 2:
+            where = None
+        else:
+            left = StatementParser.get_operand(m.group(3))
+            operator = str(m.group(4))
+            right = StatementParser.get_operand(m.group(5))
+
+            where = Where(Condition(left=left, operator=operator, right=right))
+
+        return Select(tableName=str(tableName), cols=cols, where=where)
+
+    @staticmethod
+    def parse(sql_string):
+        if sql_string.startswith("INSERT"):
+            return StatementParser.INSERT(sql_string)
+        if sql_string.startswith("SELECT"):
+            return StatementParser.SELECT(sql_string)
+        if sql_string.startswith("CREATE"):
+            return StatementParser.CREATE(sql_string)
+        raise InvalidQueryException("Invalid/unsupported SQL format")
+
+    @staticmethod
+    def get_operand(s):
+        if s[0] in ('"', '\'') and s[-1] == s[0]:
+            return Operand(Operand.OperandType.LITERAL_STRING, str(s[1:-1]))
+        if s.isdigit():
+            return Operand(Operand.OperandType.LITERAL_UINT32, int(s))
+        return Operand(Operand.OperandType.COLUMN, str(s))

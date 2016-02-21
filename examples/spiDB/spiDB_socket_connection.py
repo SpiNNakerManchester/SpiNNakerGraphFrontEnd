@@ -10,7 +10,6 @@ from spinnman.exceptions import SpinnmanTimeoutException
 from result import SelectResult
 from result import InsertIntoResult
 from result import Result
-from result import Entry
 import threading
 
 import random
@@ -43,8 +42,9 @@ class SpiDBSocketConnection(UDPConnection):
 
         return (time.time()-time_sent)*1000
 
-    def sendQuery(self, i, q):
-        queryStructs = socket_translator.generateQueryStructs(i,q)
+    def sendQuery(self, i, q, type="SQL"):
+        queryStructs = socket_translator.generateQueryStructs(i,q,type)
+
         for s in queryStructs:
             self.send_to(s, (self.ip_address, self.port))
 
@@ -55,7 +55,7 @@ class SpiDBSocketConnection(UDPConnection):
             try:
                 s = self.receive(0.3)
                 responseBuffer.append((time.time(), s))
-                #print s
+                print s
             except SpinnmanTimeoutException:
                 break
 
@@ -78,7 +78,7 @@ class SpiDBSocketConnection(UDPConnection):
 
         return results
 
-    def run(self, sqlQueries):
+    def run(self, sqlQueries, type="SQL"):
         sentTimes = dict()
         results = dict()
 
@@ -91,7 +91,7 @@ class SpiDBSocketConnection(UDPConnection):
                 continue
 
             time.sleep(0.1)
-            self.sendQuery(self.i, q)
+            self.sendQuery(self.i, q, type)
             sentTimes[self.i] = time.time()
 
             self.i += 1

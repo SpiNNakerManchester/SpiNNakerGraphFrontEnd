@@ -57,6 +57,8 @@ static bool initialize() {
     log_info("System region: %08x", system_region);
     log_info("Data region: %08x", data_region);
 
+    clear(data_region, CORE_DATABASE_SIZE_WORDS);
+
     log_info("Initialization completed successfully!");
     return true;
 }

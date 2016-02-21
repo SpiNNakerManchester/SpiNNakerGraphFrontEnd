@@ -26,14 +26,16 @@ class Response:
         return self.__str__()
 
 class Entry():
-    def __init__(self, row_id, col, value):
+    def __init__(self, row_id, col, size, type, value):
         self.row_id = row_id
         self.col = col
+        self.size = size
+        self.type = type
         self.value = value
 
     def __str__(self):
-        return "Entry(row_id: {}, col: {}, value: {})"\
-            .format(self.row_id, self.col, self.value)
+        return "Entry(row_id: {}, size: {}, type: {}, col: {}, value: {})"\
+            .format(self.row_id, self.size, self.type, self.col, self.value)
 
     def __repr__(self):
         return self.__str__()
@@ -43,8 +45,8 @@ class Row(dict):
         self.update(*args, **kwargs)
         self.origin = None
 
-    def __setitem__(self, colname, value):
-        dict.__setitem__(self, colname, value)
+    def __setitem__(self, colname, type_value):
+        dict.__setitem__(self, colname, type_value)
 
     def update(self, *args, **kwargs):
         for k, v in dict(*args, **kwargs).iteritems():
@@ -63,6 +65,22 @@ class Result:
         if len(self.responses) is 1:
             return "{}\n".format(str(self.responses[0]))
         return str(self.responses)
+
+class PullResult(Result):
+    def __init__(self):
+        Result.__init__(self)
+
+    def addResponse(self, r):
+        Result.addResponse(self, r)
+
+    def __str__(self):
+        s = "PULL \n"
+        for r in self.responses:
+            s += "  {}\n".format(r)
+        return s
+
+    def __repr__(self):
+        return self.__str__()
 
 class InsertIntoResult(Result):
     def __init__(self):
@@ -101,20 +119,22 @@ class SelectResult(Result):
         if e.col not in self.cols: #we have not seen that column before
             self.cols.add(e.col)
 
-        if row.get(e.col) is None: #first time we see that database entry (row-col)
-            if cmp(row.origin, r.__xyp__()) is not 0: #row based, so all entries for that row should come from the same xyp
-                raise Exception("row.origin: {} != r.__xyp__()".format(row.origin, r.__xyp__()))
-            row[e.col] = e.value
+        if row.get(e.col) is None:
+            #first time we see that database entry (row-col)
+            if cmp(row.origin, r.__xyp__()) is not 0:
+                #row based, so all entries for that row
+                # should come from the same xyp
+                raise Exception("row.origin: {} != r.__xyp__()"
+                                .format(row.origin, r.__xyp__()))
+            row[e.col] = (e.type, e.value)
         else:
             raise Exception("Row with id '{}' on '{}' already exists " \
-                  "with value '{}' from {}."\
-                 .format(e.row_id, e.col, row[e.col], r.__xyp__()))
-
-    def getRows(self):
-        return self.rowidToRow.values()
+                            "with value '{}' from {}."\
+                            .format(e.row_id, e.col, row[e.col], r.__xyp__()))
 
     def __repr__(self):
-        return "{}, rows: {}".format(Result.__repr__(self), len(self.rowidToRow))
+        return "{}, rows: {}"\
+            .format(Result.__repr__(self), len(self.rowidToRow))
 
     def __str__(self):
         #metadata = "\nResponse time:{:.3f}ms\n".format(self.lastResponseTime)
@@ -123,15 +143,21 @@ class SelectResult(Result):
         n_rows = len(self.rowidToRow)
         metadata += "Number of rows: {}\n".format(n_rows)
 
+        metadata += self.responses.__repr__()
+
         if n_rows == 0:
             return metadata
 
         longest_str_for_col = {}
 
         for row_id, row in self.rowidToRow.iteritems():
-            for c, v in row.iteritems():
-                if longest_str_for_col.get(c) is None or len(v) > longest_str_for_col[c]:
-                    longest_str_for_col[c] = len(v)
+            for c, t_v in row.iteritems():
+                type, value = t_v
+                #default integer characters size is 3
+                m_size = 3 if type == 'integer' else len(value)
+                if longest_str_for_col.get(c) is None \
+                    or m_size > longest_str_for_col[c]:
+                    longest_str_for_col[c] = m_size
 
         header = "|"
         for c in self.cols:
@@ -155,14 +181,15 @@ class SelectResult(Result):
         for row_id, row in self.rowidToRow.iteritems():
             table += "|"
             for c in self.cols:
-                v = row.get(c)
-                if v is None:
+                type, value = row.get(c)
+                if value is None:
                     table += "  {}  ".format("".ljust(longest_str_for_col[c]))
                 else:
                     found_entries += 1
-                    table += "  {}  ".format(v.ljust(longest_str_for_col[c]))
+                    table += "  {}  "\
+                        .format(str(value).ljust(longest_str_for_col[c]))
 
-            table += "|  {}\n".format(row.origin) #- id: {} , row_id
+            table += "|  {}\n".format(row.origin)
 
         table += " " + "-" * n_spaces + " "
 

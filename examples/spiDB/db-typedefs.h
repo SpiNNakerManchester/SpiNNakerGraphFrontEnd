@@ -1,12 +1,16 @@
 #ifndef __DB_TYPEDEFS_H__
 #define __DB_TYPEDEFS_H__
 
-//if DB_HASH_TABLE is defined, the hash version is used.
-//Naive version otherwise
+/////////////////////////////////////////////////////////////////////////////
+///// These values can be set/unset according to the desired type of DB /////
+/////////////////////////////////////////////////////////////////////////////
 #define DB_TYPE_KEY_VALUE_STORE
-#define DB_SUBTYPE_HASH_TABLE
+#ifdef DB_TYPE_KEY_VALUE_STORE
+    //#define DB_SUBTYPE_HASH_TABLE
+#endif
 
 #define DB_TYPE_RELATIONAL
+/////////////////////////////////////////////////////////////////////////////
 
 #define CHIP_X_SIZE                 2
 #define CHIP_Y_SIZE                 2
@@ -26,8 +30,8 @@
 
 #define try(cond) do { if (!cond) return false; } while (0)
 
-typedef enum var_type  { UINT32, STRING } var_type;
-typedef enum regions_e { SYSTEM_REGION, DB_DATA_REGION} regions_e;
+typedef enum var_type  { UINT32=0, STRING } var_type;
+typedef enum regions_e { SYSTEM_REGION=0, DB_DATA_REGION} regions_e;
 typedef uint32_t id_t;
 
 typedef enum spiDBcommand {
@@ -119,6 +123,7 @@ typedef struct pingQuery{
         uint32_t row_id;
         uchar    col_name[16];
         size_t   size;
+        var_type type;
         uchar    value[256];
     } Entry;
 
@@ -154,8 +159,9 @@ typedef struct pingQuery{
     } Operator;
 
     typedef enum {
-        COLUMN,
-        LITERAL
+        LITERAL_UINT32 = 0,
+        LITERAL_STRING,
+        COLUMN
     } OperandType;
 
     typedef struct Operand {
@@ -175,6 +181,9 @@ typedef struct pingQuery{
 
         Table*       table;
         address_t    addr;
+
+        uchar        n_cols;
+        uchar        col_indices[MAX_NUMBER_OF_COLS];
     } selectResponse;
 
     typedef struct selectQuery {
@@ -189,6 +198,14 @@ typedef struct pingQuery{
 
 #endif
 #ifdef DB_TYPE_KEY_VALUE_STORE
+    typedef struct putPullQuery{
+        spiDBcommand    cmd;
+        uint32_t        id;
+
+        uint32_t        info;
+        uchar           data[256];
+    } putPullQuery;
+
     typedef struct putQuery{
         spiDBcommand    cmd;
         uint32_t        id;
@@ -205,21 +222,17 @@ typedef struct pingQuery{
         uchar           k[256];
     } pullQuery;
 
-    typedef struct pullReply{
-        spiDBcommand    cmd;
-        uint32_t        id;
-
-        var_type        v_type;
-        size_t          v_size;
-        uchar           v[256];
-    } pullReply;
-
-    typedef struct value_entry {
+    typedef struct pullValue {
         var_type type;
         size_t size;
         uchar* data;
-    } value_entry;
+    } pullValue;
 #endif
+
+typedef struct pullResponseData {
+    var_type        type;
+    uchar           value[256];
+} pullResponseData;
 
 typedef struct Response{
     uint32_t      id;
@@ -230,7 +243,7 @@ typedef struct Response{
     uchar         y;
     uchar         p;
 
-    Entry         entry;
+    uchar         data[256];
 } Response;
 
 int get_byte_pos(Table* table, int col_index){
@@ -272,15 +285,6 @@ Table* getTable(Table* tables, uchar* name){
     return i == -1 ? NULL : &tables[i];
 }
 
-bool in(uint* arr, size_t s, uint v){
-    for(uint i = 0; i < s; i++){
-        if(arr[i] == v){
-            return true;
-        }
-    }
-    return false;
-}
-
 uchar* getOperatorName(Operator o){
     switch(o){
       case EQ:      return "=";
@@ -298,10 +302,22 @@ uchar* getOperatorName(Operator o){
 
 void printEntry(Entry* e){
     log_info("####### Entry #######");
+    if(!e){
+        log_info(" |- NULL -|");
+        return;
+    }
     log_info("row_id: %d", e->row_id);
     log_info("col_name: %s", e->col_name);
     log_info("size: %d", e->size);
-    log_info("value: %s", e->value);
+    log_info("type: %s", e->type == UINT32 ? "UINT32" : "STRING");
+    if(e->type == UINT32){
+        log_info("value: %d", *e->value);
+    }
+    else{
+        log_info("value: %s", e->value);
+    }
+
+    log_info("########################");
 }
 
 void print_table(Table* t){
@@ -328,21 +344,30 @@ void print_SELECT(selectQuery* selQ){
     log_info("############################################");
     io_printf(IO_BUF, "SELECT ");
 
-    for(uint i = 0; i < MAX_NUMBER_OF_COLS; i++){
-        if(selQ->col_names[i][0] == NULL){
-            break;
+    if(selQ->col_names[0][0] == 0){
+        io_printf(IO_BUF, "*");
+    }
+    else{
+        for(uint i = 0; i < MAX_NUMBER_OF_COLS; i++){
+            if(selQ->col_names[i][0] == NULL){
+                break;
+            }
+            io_printf(IO_BUF, "%s, ", selQ->col_names[i]);
         }
-        io_printf(IO_BUF, "%s, ", selQ->col_names[i]);
     }
 
-    io_printf(IO_BUF, " FROM %s WHERE ", selQ->table_name);
-    io_printf(IO_BUF, "(%s) %s",
+    io_printf(IO_BUF, " FROM %s", selQ->table_name);
+
+    if(selQ->condition.left.type == COLUMN && *selQ->condition.left.value == 0){
+        //ie no WHERE clause
+        io_printf(IO_BUF, ";\n");
+        return;
+    }
+
+    io_printf(IO_BUF, " WHERE (%s) %s %s (%s) %s;\n",
               selQ->condition.left.type == COLUMN ? "COLUMN" : "LITERAL",
-              selQ->condition.left.value);
-
-    io_printf(IO_BUF, " %s ", getOperatorName(selQ->condition.op));
-
-    io_printf(IO_BUF, "(%s) %s;\n",
+              selQ->condition.left.value,
+              getOperatorName(selQ->condition.op),
               selQ->condition.right.type == COLUMN ? "COLUMN" : "LITERAL",
               selQ->condition.right.value);
 }

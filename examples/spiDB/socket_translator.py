@@ -56,14 +56,19 @@ dbCommandIntToName = {
 def get_dbCommandName(n):
     return dbCommandIntToName[n]
 
-
-sqlTypeToEnum = {
-    "int"     : 0,
-    "varchar" : 1
-}
-
 def get_datatype_enum(type):
-    return sqlTypeToEnum[type]
+    if type == 'integer':
+        return 0
+    if type == 'varchar':
+        return 1
+    return -1
+
+def get_datatype_name(type):
+    if type == 0:
+        return 'integer'
+    if type == 1:
+        return 'varchar'
+    return None
 
 def get_operator_value(operator):
     return opNameToEnum[operator]
@@ -71,17 +76,24 @@ def get_operator_value(operator):
 def print_bytearr(s):
     print "{}".format(":".join("{:02x}".format(ord(c)) for c in s))
 
-def normalize(str, l):
-    if type(str) is int:
-        str = struct.pack('<I', str)
+def normalize(s, l=0):
+    if type(s) is int:
+        s = struct.pack('<I', s)
+        if l is 0:
+            return s
+        else:
+            return normalize(s, l)
 
-    if len(str) > l:
-        return str[:l]
+    if l is 0:
+        raise Exception("Normalization with l=0")
+
+    if len(s) > l:
+        return s[:l]
 
     v = [b'\0'] * l
 
-    for i in range(len(str)):
-        v[i] = str[i]
+    for i in range(len(s)):
+        v[i] = s[i]
 
     return v
 
@@ -101,8 +113,8 @@ def CREATE_TABLE(id, createTable):
         struct.pack("III", len(table.cols), total_row_size, 0)
 
     for col_name, col_type, col_size in col_name_type_size:
-        s += struct.pack("{}c".format(maxColNameLen), *col_name)
-        s += struct.pack("BI", get_datatype_enum(col_type), col_size)
+        s += struct.pack("{}c".format(maxColNameLen), *col_name) +\
+             struct.pack("BI", get_datatype_enum(col_type), col_size)
 
     return [s]
 
@@ -110,12 +122,18 @@ def INSERT_INTO(id, insertInto):
     entries = list()
 
     for col_name, value in insertInto.columnValueMap.iteritems():
+        e_size = len(value) if type(value) is str else 4
+
         entries.append(
-             struct.pack("BI", dbCommands.INSERT_INTO.value, id) +\
-             struct.pack("16c", *normalize(insertInto.tableName, 16)) +\
-             struct.pack("<I", id) +\
-             struct.pack("16c", *normalize(col_name, 16)) +\
-             struct.pack("I{}c".format(len(value)), len(value), *value)
+             struct.pack("BI", dbCommands.INSERT_INTO.value, id) +
+             struct.pack("16c", *normalize(insertInto.tableName, 16)) +
+             struct.pack("<I", id) +
+             struct.pack("16c", *normalize(col_name, 16)) +
+             struct.pack("IB{}c".format(e_size),
+                         e_size,
+                         get_datatype_enum('integer') if type(value) is int
+                            else get_datatype_enum('varchar'),
+                         *normalize(value, e_size if type(value) is str else 0))
         )
 
     return entries
@@ -131,55 +149,21 @@ def SELECT(id, sel):
         if sel.cols is not None and i < len(sel.cols):
             s += struct.pack("16c", *normalize(sel.cols[i], 16))
         else:
+            #wildcard *
             s += struct.pack("16c", *normalize('', 16))
 
-    """
-    if sel.cols is None:
-        s += struct.pack("B", 0) # means wildcard *
+    if sel.where is None:
+        # no WHERE clause
+        s += struct.pack("BB", 0, 0)
     else:
-        for c in sel.cols:
-            s += struct.pack("16c", *normalize(c, 16))
-        #s += struct.pack("B", 0)
-    """
+        condition = sel.where.condition
+        l = condition.left
+        r = condition.right
 
-    condition = sel.where.condition
-    l = condition.left
-    r = condition.right
+        s += struct.pack("B64c", l.type.value, *normalize(l.value, 64)) +\
+             struct.pack("B", get_operator_value(condition.operator)) +\
+             struct.pack("B64c", r.type.value, *normalize(r.value, 64))
 
-    s += struct.pack("B64c", l.type.value, *normalize(l.value, 64)) +\
-         struct.pack("B", get_operator_value(condition.operator)) +\
-         struct.pack("B64c", r.type.value, *normalize(r.value, 64))
-
-    """
-    typedef enum {
-        COLUMN,
-        LITERAL
-    } OperandType;
-
-    typedef struct Operand {
-        OperandType type;
-        uchar       value[64];
-    } Operand;
-
-    typedef struct Condition {
-        Operand     left;
-        Operator    op;
-        Operand     right;
-    } Condition;
-
-    typedef struct selectQuery {
-        spiDBcommand cmd;
-        uint32_t     id;
-
-        uchar        table_name[16];
-        uchar        col_names[MAX_NUMBER_OF_COLS][16]; //names == 0 means *
-
-        Condition    condition;
-    } selectQuery;
-
-    """
-    print_bytearr(s)
-    print len(s)
     return [s]
 
 def byte_array(a):
@@ -223,82 +207,87 @@ def PULL(id, k):
 
 put_pattern = re.compile(
     r"\s*(?:PUT|put|PUSH|push)"
-        r"\s+((?:\"|\')?.+(?:\"|\'))?\s+((?:\"|\')?.+(?:\"|\')?)\s*")
+        r"\s+((?:\"|\')?.+(?:\"|\')?)\s+((?:\"|\')?.+(?:\"|\')?)\s*")
 
 pull_pattern = re.compile(
     r"\s*(?:PULL|pull|POP|pop)"
-        r"\s+((?:\"|\')?.+(?:\"|\'))?\s*")
+        r"\s+((?:\"|\')?.+(?:\"|\')?)\s*")
+
 
 def convertFromUnicode(u):
     s = u.encode('ascii','ignore')
+    if s.isdigit():
+        return int(s)
+    elif s[0] in ('"', '\'') and s[-1] == s[0]:
+        return s[1:-1]
+    else:
+        return s
 
-    if      s.isdigit(): return int(s)
-    elif    s.startswith("\"") or s.startswith("\'"): return s[1:-1]
-    else:   return s
-
-def generateQueryStructs(id, queryString):
+def generateQueryStructs(id, queryString, type="SQL"):
     if queryString is None:
         return None
 
-    upper = queryString.upper()
-    if upper.startswith("PUT") or upper.startswith("PUSH"):
-        m = put_pattern.match(queryString)
-        if m is None:
-            raise Exception("Invalid PUT format")
+    if type == "SQL":
+        inst = StatementParser.parse(queryString)
+        print inst
 
-        print m.groups()
-        k = convertFromUnicode(m.group(1))
-        v = convertFromUnicode(m.group(2))
-        return PUT(id, k, v)
-
-    if upper.startswith("PULL") or upper.startswith("POP"):
-        m = pull_pattern.match(queryString)
-        if m is None:
-            raise Exception("Invalid PULL format")
-
-        print m.groups()
-        k = convertFromUnicode(m.group(1))
-        return PULL(id, k)
-
-
-    p = StatementParser(queryString)
-    inst = p.parse()
-
-    if isinstance(inst, CreateTable):
-        return CREATE_TABLE(id, inst)
-    elif isinstance(inst, InsertInto):
-        return INSERT_INTO(id, inst)
-    elif isinstance(inst, Select):
-        return SELECT(id, inst)
+        if isinstance(inst, CreateTable):
+            return CREATE_TABLE(id, inst)
+        elif isinstance(inst, InsertInto):
+            return INSERT_INTO(id, inst)
+        elif isinstance(inst, Select):
+            return SELECT(id, inst)
+        else:
+            return None
     else:
-        return None
+        upper = queryString.upper()
+        if upper.startswith("PUT") or upper.startswith("PUSH"):
+            m = put_pattern.match(queryString)
+            if m is None:
+                raise Exception("Invalid PUT format")
+
+            k = convertFromUnicode(m.group(1))
+            v = convertFromUnicode(m.group(2))
+            return PUT(id, k, v)
+
+        if upper.startswith("PULL") or upper.startswith("POP"):
+            m = pull_pattern.match(queryString)
+            if m is None:
+                raise Exception("Invalid PULL format")
+
+            k = convertFromUnicode(m.group(1))
+            return PULL(id, k)
 
 def translateResponse(responseStr):
-    try:
-        (id, cmd, success, x, y, p) = struct.unpack_from("IB?BBB", responseStr)
-        cmd = get_dbCommandName(cmd)
 
-        response = Response(id=id, cmd=cmd, success=success, x=x, y=y, p=p)
+    (id, cmd, success, x, y, p) = struct.unpack_from("IB?BBB", responseStr)
+    cmd = get_dbCommandName(cmd)
 
-        if cmd == "SELECT":
-            data = responseStr[12:]
+    response = Response(id=id, cmd=cmd, success=success, x=x, y=y, p=p)
 
-            row_id   = struct.unpack("I", data[:4])[0]
+    if cmd == "SELECT":
+        data = responseStr[9:]
 
-            col_name_with_nulls = data[4:20]
-            col_name = col_name_with_nulls[:col_name_with_nulls.index('\0')]
+        row_id   = struct.unpack("I", data[:4])[0]
 
-            (size)   = struct.unpack("I", data[20:24])[0]
-            value    = data[24:]
+        col_name_with_nulls = data[4:20]
+        col_name = col_name_with_nulls[:col_name_with_nulls.index('\0')]
 
-            response.data = Entry(row_id,col_name,value)
-        elif cmd == "INSERT_INTO":
-            response.data = responseStr[12:]
-            i = response.data.index('\0')
-            if i > 0:
-                response.data = response.data[:i]
-    except Exception as e:
-        print "Exception retrieving data...", e
-        return None
+        (size)   = struct.unpack("I", data[20:24])[0]
+        type     = get_datatype_name(struct.unpack("B", data[24:25])[0])
+        value    = data[25:]
+
+        if(type == 'integer'):
+            value = struct.unpack("<I", value)[0]
+
+        response.data = Entry(row_id=row_id, type=type, size=size,
+                              col=col_name, value=value)
+    elif cmd == "INSERT_INTO":
+        response.data = responseStr[9:]
+        i = response.data.index('\0')
+        if i > 0:
+            response.data = response.data[:i]
+    elif cmd == "PULL":
+        response.data = responseStr[9:]
 
     return response

@@ -12,6 +12,31 @@ from spiDB_socket_connection import SpiDBSocketConnection
 pylab.rc('xtick', labelsize=7)
 pylab.rc('ytick', labelsize=7)
 
+def highlight(e, scrolledText='input'):
+
+    if scrolledText == 'input':
+        scrolledText = queryScrolledText
+        words = sql_keywords if currentDbTypeStringVar.get() == "SQL"\
+                else kv_keywords
+    elif scrolledText == 'output':
+        scrolledText = outputText
+        words = {'OK': ('', 'green'),
+                 'FAIL': ('', 'red')}
+    else:
+        return
+
+    for k, v in words.iteritems():
+        start = '1.0'
+        while start:
+            start = scrolledText.search(k, start, END)
+            if start:
+                end = scrolledText.index('%s+%dc' % (start, len(k)))
+                scrolledText.tag_add(k, start, end)
+                scrolledText.tag_config(k,
+                                         background=v[0],
+                                         foreground=v[1])
+                start = end
+
 class MainMenu(Frame):
     def __init__(self, parent, textListener):
         Frame.__init__(self, parent)
@@ -38,17 +63,29 @@ class MainMenu(Frame):
 
     def onOpen(self):
         filespes = [('SQL file', '*.sql'),
-                    ('Text file', '*.txt'),
+                    ('KV file', '*.kv'),
+                    ('CSV file', '*.csv'),
                     ('All files', '*')]
         dlg = tkFileDialog.Open(self, filetypes = filespes)
         fl = dlg.show()
 
+        rf = self.readFile(fl)
+
+        if not rf:
+            return
+
         self.textListener.delete('1.0', END)
-        self.textListener.insert(INSERT, self.readFile(fl))
+        self.textListener.insert(INSERT, rf)
+        highlight(None)
 
     def readFile(self, filename):
-        f = open(filename, "r")
-        return f.read()
+        if not filename:
+            return None
+        try:
+            f = open(filename, "r")
+            return f.read()
+        except Exception as e:
+            return None
 
 def emptyQueryPopup():
    tkMessageBox.showinfo("Query Error", "Cannot run empty query")
@@ -67,6 +104,16 @@ bottomFrame.pack(side=BOTTOM)
 
 leftFrame = Frame(bottomFrame)
 leftFrame.pack(side=LEFT, padx=20, pady=20)
+
+currentDbTypeStringVar = StringVar(topFrame)
+currentDbTypeStringVar.set('Key-Value')
+dbTypeMenu = OptionMenu(topFrame, currentDbTypeStringVar,
+                        'Key-Value', 'SQL')
+
+dbTypeMenu.config(font=('calibri',(12)),width=16)
+dbTypeMenu['menu'].config(font=('calibri',(12)))
+
+dbTypeMenu.pack(side=LEFT)
 
 queryFrame = Frame(leftFrame)
 queryFrame.pack(side=TOP, pady=(0,10))
@@ -107,6 +154,31 @@ outputText = ScrolledText.ScrolledText(
     height = 30,      # text lines
     bg='white')
 
+KEYWORD = ('', 'red')
+OTHER = ('purple', 'white')
+TYPE = ('', 'blue')
+
+kv_keywords = {'.': OTHER,
+               'CLEAR': OTHER, 'clear': OTHER,
+               'put': KEYWORD, 'pull': KEYWORD,
+               'PUT': KEYWORD, 'PULL': KEYWORD}
+
+sql_keywords = {'.': OTHER,
+                'CLEAR': OTHER, 'clear': OTHER,
+                'varchar': TYPE, 'VARCHAR': TYPE,
+                'integer': TYPE, 'INTEGER': TYPE,
+                'SELECT': KEYWORD, 'select': KEYWORD,
+                'FROM': KEYWORD, 'from': KEYWORD,
+                'WHERE': KEYWORD, 'where': KEYWORD,
+                'INSERT': KEYWORD, 'insert' : KEYWORD,
+                'INTO': KEYWORD, 'into': KEYWORD,
+                'VALUES': KEYWORD, 'values': KEYWORD,
+                'CREATE': KEYWORD, 'create': KEYWORD,
+                'TABLE': KEYWORD, 'table': KEYWORD}
+
+queryScrolledText.bind('<Key>', highlight)
+
+
 def onselect(evt):
     w = evt.widget
     if not w.curselection():
@@ -133,17 +205,26 @@ def runQuery():
         emptyQueryPopup()
         return
 
-    outputText.delete('1.0',END)
+    outputText.delete('1.0', END)
     outputText.insert(INSERT, "Running...")
 
     error = True
-
     results = []
 
-    for stage in qText.split('.'):
-        results.extend(conn.run(stage.split(';')))
+    #try:
+    if currentDbTypeStringVar.get() == 'SQL':
+        for stage in qText.split('.'):
+            statements = [s.strip() for s in stage.split(';')]
 
-    outputText.delete('1.0', END)
+            results.extend(conn.run(statements, 'SQL'))
+    else:
+        for stage in qText.split('.'):
+                results.extend(conn.run(stage.split('\n'), 'Key-Value'))
+    """except Exception as e:
+        outputText.delete('1.0', END)
+        outputText.insert(INSERT, e)
+        return
+    """
 
     s = ""
     xyp_occurences = dict()
@@ -163,7 +244,10 @@ def runQuery():
                     xyp_occurences[resp.__xyp__()] = 1
                 responseTimes.append(resp.response_time)
 
+    outputText.delete('1.0', END)
     outputText.insert(INSERT, s)
+    highlight(None, scrolledText='output')
+
     queryResultTuple = (qText, s)
 
     t = strftime("%H:%M:%S", gmtime())
@@ -192,7 +276,11 @@ def runQuery():
         pylab.title('Usage by core')
 
         pylab.show()
-
+    """
+    except Exception as e:
+        outputText.delete('1.0', END)
+        outputText.insert(INSERT, e)
+    """
 
 menu = MainMenu(root,queryScrolledText)
 
@@ -226,9 +314,5 @@ clearButton.pack(side = RIGHT)
 #outputText.config(state=DISABLED)
 outputText.pack()
 
-root.after(1000,ping)
+#root.after(1000,ping) todo deactivated for now
 root.mainloop()
-
-
-
-

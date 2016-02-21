@@ -5,7 +5,7 @@
         #include "../db-typedefs.h"
         #include "../memory_utils.h"
 
-        value_entry* pull(address_t addr, uint32_t info, uchar* k){
+        pullValue* pull(address_t addr, uint32_t info, uchar* k){
 
             var_type k_type = k_type_from_info(info);
             size_t k_size   = k_size_from_info(info);
@@ -41,7 +41,7 @@
                 addr += v_size_words;
 
                 if(arr_equals(k,k_found,k_size)){
-                    value_entry* v = (value_entry*)sark_alloc(1, sizeof(value_entry));
+                    pullValue* v = (pullValue*)sark_alloc(1, sizeof(pullValue));
                     v->data = v_found;
                     v->size = v_size;
                     v->type = v_type;
