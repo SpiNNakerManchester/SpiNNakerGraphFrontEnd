@@ -46,7 +46,7 @@ uint32_t time = 0; //represents the microseconds since start
 static circular_buffer sdp_buffer;
 static circular_buffer capacitor_buffer;
 
-uchar chipx, chipy, core;
+extern uchar chipx, chipy, core;
 
 Table* tables = NULL;
 uint n_tables = 0;
@@ -264,7 +264,7 @@ void process_requests(uint arg0, uint arg1){
 
                     revert_src_dest(msg);
 
-                    msg->length = sizeof(sdp_hdr_t) + 9;
+                    msg->length = sizeof(sdp_hdr_t) + sizeof(Response_hdr);
 
                     Response* response = (Response*)&msg->cmd_rc;
                     response->id  = q->id;

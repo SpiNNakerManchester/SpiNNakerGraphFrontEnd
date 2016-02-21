@@ -9,7 +9,7 @@ class Operand:
         self.value = value
 
     def __str__(self):
-        return "{} ({},{})".format(self.value, self.type, type(self.value))
+        return "{} ({})".format(self.value, self.type)
 
     class OperandType(Enum):
         LITERAL_UINT32  = 0
@@ -28,7 +28,7 @@ class Condition:
 class Select:
     def __init__(self, tableName, cols=None, where=None):
         self.tableName = tableName
-        self.cols = cols    # None means '*'
+        self.cols = cols # None means '*'
         self.where = where
 
     def __str__(self):

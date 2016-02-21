@@ -26,19 +26,27 @@ class Response:
         return self.__str__()
 
 class Entry():
-    def __init__(self, row_id, col, size, type, value):
-        self.row_id = row_id
-        self.col = col
-        self.size = size
+    def __init__(self, type, size, value):
         self.type = type
+        self.size = size
         self.value = value
 
     def __str__(self):
-        return "Entry(row_id: {}, size: {}, type: {}, col: {}, value: {})"\
-            .format(self.row_id, self.size, self.type, self.col, self.value)
+        return "{} ({})"\
+            .format(self.value, self.type)
 
     def __repr__(self):
         return self.__str__()
+
+class SelectEntry(Entry):
+    def __init__(self, row_id, col, size, type, value):
+        Entry.__init__(self, type=type, size=size, value=value)
+        self.row_id = row_id
+        self.col = col
+
+    def __str__(self):
+        return "{}: ({}, {})"\
+            .format(self.row_id, self.col, self.value)
 
 class Row(dict):
     def __init__(self, *args, **kwargs):
@@ -60,11 +68,11 @@ class Result:
         self.responses.append(r)
 
     def __str__(self):
-        if self.responses is None or len(self.responses) is 0:
-            return "No Response"
+        if not self.responses:
+            return "No Response\n"
         if len(self.responses) is 1:
             return "{}\n".format(str(self.responses[0]))
-        return str(self.responses)
+        return "{}\n".format(str(self.responses))
 
 class PullResult(Result):
     def __init__(self):

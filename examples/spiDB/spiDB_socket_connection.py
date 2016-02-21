@@ -59,6 +59,9 @@ class SpiDBSocketConnection(UDPConnection):
             except SpinnmanTimeoutException:
                 break
 
+        for id, t in sent_times.iteritems():
+            results[id] = Result() #empty result
+
         for t, s in responseBuffer:
             response = socket_translator.translateResponse(s)
             if response is None:
@@ -66,7 +69,8 @@ class SpiDBSocketConnection(UDPConnection):
 
             response.response_time = (t-sent_times[response.id])*1000
 
-            if results.get(response.id) is None:
+            r = results.get(response.id)
+            if r is None or not r.responses:
                 if response.cmd == "SELECT":
                     results[response.id] = SelectResult()
                 elif response.cmd == "INSERT_INTO":

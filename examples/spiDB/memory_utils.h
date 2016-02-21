@@ -33,6 +33,17 @@ void clear(address_t address, size_t words){
     }
 }
 
+bool arr_equals(uchar* a, uchar* b, uint32_t n){
+    try(n > 0);
+
+    for(uint32_t i = 0; i < n; i++){
+        if(a[i] != b[i]){
+            return false;
+        }
+    }
+    return true;
+}
+
 address_t system_region, data_region;
 uint32_t myKey;
 

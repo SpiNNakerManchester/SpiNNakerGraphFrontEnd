@@ -42,9 +42,9 @@
 
                 if(arr_equals(k,k_found,k_size)){
                     pullValue* v = (pullValue*)sark_alloc(1, sizeof(pullValue));
-                    v->data = v_found;
                     v->size = v_size;
                     v->type = v_type;
+                    sark_mem_cpy(v->data, v_found, v->size);
 
                     return v;
                 }

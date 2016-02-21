@@ -198,6 +198,8 @@ def clearQuery():
     queryScrolledText.delete('1.0',END)
 
 def runQuery():
+    global pausePing
+    pausePing = True
     truncateIndex = 30
     qText = queryScrolledText.get('1.0', 'end')
 
@@ -220,6 +222,8 @@ def runQuery():
     else:
         for stage in qText.split('.'):
                 results.extend(conn.run(stage.split('\n'), 'Key-Value'))
+
+    pausePing = False
     """except Exception as e:
         outputText.delete('1.0', END)
         outputText.insert(INSERT, e)
@@ -286,22 +290,25 @@ menu = MainMenu(root,queryScrolledText)
 
 pingsFailed = 0
 connected = True
+pausePing = False
+
 def ping():
-    global connected
-    global pingsFailed
-    #threading.Timer(1,ping).start()
-    p = conn.sendPing()
-    menu.pingMenu.delete(12)
-    if p is -1:
-        menu.pingMenu.insert_command(index=0, label="PING FAILED", command=None)
-        pingsFailed += 1
-        if connected and pingsFailed is 2:
-            connected = False
-            tkMessageBox.showinfo("Ping failed", "Cannot connect to board")
-    else:
-        connected = True
-        pingsFailed = 0
-        menu.pingMenu.insert_command(index=0, label="PING {:.3f}ms".format(p), command=None)
+    if not pausePing:
+        global connected
+        global pingsFailed
+        #threading.Timer(1,ping).start()
+        p = conn.sendPing()
+        menu.pingMenu.delete(12)
+        if p is -1:
+            menu.pingMenu.insert_command(index=0, label="PING FAILED", command=None)
+            pingsFailed += 1
+            if connected and pingsFailed is 2:
+                connected = False
+                tkMessageBox.showinfo("Ping failed", "Cannot connect to board")
+        else:
+            connected = True
+            pingsFailed = 0
+            menu.pingMenu.insert_command(index=0, label="PING {:.3f}ms".format(p), command=None)
     root.after(1000,ping)
 
 runButton = Button(queryFrame, text="Run", fg="black", command=runQuery)

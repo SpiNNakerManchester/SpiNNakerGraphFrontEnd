@@ -55,7 +55,23 @@ sdp_msg_t* send_response_msg(Table* table,
 
     uchar pos = get_byte_pos(table, col_index) >> 2;
 
-    sdp_msg_t* msg = create_sdp_header_to_host_alloc_extra(9 + 24 + data_size);
+    sdp_msg_t* msg = create_sdp_header_to_host_alloc_extra(
+                        sizeof(Response_hdr) + sizeof(Entry_hdr) + data_size);
+
+    //Entry* e = (Entry*)&(r->data);
+    Entry* e = (Entry*) sark_alloc(1,
+                         sizeof(Response_hdr) + sizeof(Entry_hdr) + data_size);
+
+    e->row_id = myId << 24 | (uint32_t)addr;
+    e->type   = table->cols[col_index].type;
+    e->size   = (e->type == UINT32) ?
+                    sizeof(uint32_t) : sark_str_len(&addr[pos]);
+
+    sark_word_cpy(e->col_name, col_name, MAX_COL_NAME_SIZE);
+
+    sark_mem_cpy(e->value, &addr[pos], e->size);
+
+    log_info("Sending to host (%s,%s)", e->col_name, e->value);
 
     Response* r = (Response*)&msg->cmd_rc;
     r->id  = sel_id;
@@ -64,23 +80,11 @@ sdp_msg_t* send_response_msg(Table* table,
     r->x = chipx;
     r->y = chipy;
     r->p = core;
+    sark_mem_cpy(r->data, e,
+                 sizeof(Response_hdr) + sizeof(Entry_hdr) + e->size);
 
-    //Entry* e = (Entry*)&(r->data);
-    Entry* e = (Entry*) sark_alloc(1, 9 + 24 + data_size);
-
-    e->row_id = myId << 24 | (uint32_t)addr;
-    e->type   = table->cols[col_index].type;
-    e->size   = (e->type == UINT32) ?
-                    sizeof(uint32_t) : sark_str_len(&addr[pos]);
-
-    sark_word_cpy(e->col_name, col_name, 16);
-
-    sark_mem_cpy(e->value, &addr[pos], e->size);
-    sark_mem_cpy(r->data, e, 10 + 24 + data_size);
-
-    log_info("Sending to host (%s,%s)", e->col_name, e->value);
-
-    msg->length = sizeof(sdp_hdr_t) + 10 + 24 + e->size;
+    msg->length = sizeof(sdp_hdr_t) + sizeof(Response_hdr) +
+                  sizeof(Entry_hdr) + e->size;
 
     if(!spin1_send_sdp_msg(msg, SDP_TIMEOUT)){
         log_error("Failed to send Response to host");

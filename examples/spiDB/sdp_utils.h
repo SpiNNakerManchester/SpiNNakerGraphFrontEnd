@@ -5,6 +5,8 @@
 #define SDP_TIMEOUT     10
 #define MAX_RETRIES     3
 
+extern
+
 void revert_src_dest(sdp_msg_t* msg){
     uint16_t dest_port = msg->dest_port;
     uint16_t dest_addr = msg->dest_addr;
@@ -55,6 +57,37 @@ sdp_msg_t* create_sdp_header_to_host_alloc_extra(size_t bytes){
 
 sdp_msg_t* create_sdp_header_to_host(){
     return create_sdp_header_to_host_alloc_extra(0);
+}
+
+sdp_msg_t* send_data_response_to_host(spiDBcommand cmd,
+                                      id_t id,
+                                      void* data,
+                                      size_t data_size_bytes){
+
+    sdp_msg_t* msg = create_sdp_header_to_host();
+
+    Response* r = (Response*)&msg->cmd_rc;
+    r->id  = id;
+    r->cmd = cmd;
+    r->success = true;
+    r->x = chipx;
+    r->y = chipy;
+    r->p = core;
+
+    sark_word_cpy(&r->data, data, data_size_bytes);
+
+    msg->length = sizeof(sdp_hdr_t) + sizeof(Response_hdr) + data_size_bytes;
+
+    if(!spin1_send_sdp_msg(msg, SDP_TIMEOUT)){
+        log_error("Failed to send data response to host");
+        return NULL;
+    }
+
+    return msg;
+}
+
+sdp_msg_t* send_empty_response_to_host(spiDBcommand cmd, id_t id){
+    return send_data_response_to_host(cmd, id, NULL, 0);
 }
 
 void set_dest_chip(sdp_msg_t* msg, uint32_t dest_chip){

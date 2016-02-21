@@ -1,6 +1,7 @@
 __author__ = 'gmtuca'
 
 import struct
+from result import SelectEntry
 from result import Entry
 from enum import Enum
 from statement_parser import StatementParser
@@ -118,7 +119,11 @@ def CREATE_TABLE(id, createTable):
 
     return [s]
 
+row_id = 1
+
 def INSERT_INTO(id, insertInto):
+    global row_id
+
     entries = list()
 
     for col_name, value in insertInto.columnValueMap.iteritems():
@@ -127,14 +132,17 @@ def INSERT_INTO(id, insertInto):
         entries.append(
              struct.pack("BI", dbCommands.INSERT_INTO.value, id) +
              struct.pack("16c", *normalize(insertInto.tableName, 16)) +
-             struct.pack("<I", id) +
+             struct.pack("<I", row_id) +
              struct.pack("16c", *normalize(col_name, 16)) +
-             struct.pack("IB{}c".format(e_size),
+             struct.pack("IBBBB{}c".format(e_size),
                          e_size,
                          get_datatype_enum('integer') if type(value) is int
                             else get_datatype_enum('varchar'),
+                         0, 0, 0,  # padding
                          *normalize(value, e_size if type(value) is str else 0))
         )
+
+    row_id += 1
 
     return entries
 
@@ -259,35 +267,54 @@ def generateQueryStructs(id, queryString, type="SQL"):
             return PULL(id, k)
 
 def translateResponse(responseStr):
+    fmt = "IB?BBBBBB"
 
-    (id, cmd, success, x, y, p) = struct.unpack_from("IB?BBB", responseStr)
+    (id, cmd, success, x, y, p, pad0, pad1, pad2) \
+        = struct.unpack_from(fmt, responseStr)
     cmd = get_dbCommandName(cmd)
 
     response = Response(id=id, cmd=cmd, success=success, x=x, y=y, p=p)
 
+    data_i = struct.calcsize(fmt)
+
     if cmd == "SELECT":
-        data = responseStr[9:]
+        data = responseStr[data_i:]
 
         row_id   = struct.unpack("I", data[:4])[0]
 
         col_name_with_nulls = data[4:20]
         col_name = col_name_with_nulls[:col_name_with_nulls.index('\0')]
 
-        (size)   = struct.unpack("I", data[20:24])[0]
-        type     = get_datatype_name(struct.unpack("B", data[24:25])[0])
-        value    = data[25:]
+        (size, type, pad0, pad1, pad2) = struct.unpack_from("IBBBB", data[20:])
+        type = get_datatype_name(type)
 
-        if(type == 'integer'):
+        #(size) = struct.unpack("I", data[20:24])[0]
+        #type = get_datatype_name(struct.unpack("B", data[24:25])[0])
+        value = data[28:]
+
+        if type == 'integer':
             value = struct.unpack("<I", value)[0]
 
-        response.data = Entry(row_id=row_id, type=type, size=size,
-                              col=col_name, value=value)
+        response.data = SelectEntry(row_id=row_id, type=type, size=size,
+                                    col=col_name, value=value)
     elif cmd == "INSERT_INTO":
-        response.data = responseStr[9:]
+        response.data = responseStr[data_i:]
         i = response.data.index('\0')
         if i > 0:
             response.data = response.data[:i]
     elif cmd == "PULL":
-        response.data = responseStr[9:]
+        data = responseStr[data_i:]
+        bibbb = "BIBBB"
+
+        (type, size, pad0, pad1, pad2) = struct.unpack_from(bibbb, data)
+        type = get_datatype_name(type)
+
+        value = data[struct.calcsize(bibbb):]
+        if type == 'integer':
+            print_bytearr(value)
+            print value
+            value = struct.unpack(">I", value)[0]
+
+        response.data = Entry(type=type, size=size, value=value)
 
     return response

@@ -29,10 +29,11 @@ uint32_t time = 0;
 
 static circular_buffer sdp_buffer;
 
-uchar chipx, chipy, core;
+extern uchar chipx, chipy, core;
+
 uchar branch;
 
-uint32_t myId;
+id_t  myId;
 
 Table* tables;
 
@@ -93,53 +94,23 @@ uchar getBranch(){
   }
 }
 
-sdp_msg_t* send_data_response_to_host(spiDBcommand cmd,
-                                      id_t id,
-                                      void* data,
-                                      size_t data_size_bytes){
-
-    sdp_msg_t* msg = create_sdp_header_to_host();
-
-    Response* r = (Response*)&msg->cmd_rc;
-    r->id  = id;
-    r->cmd = cmd;
-    r->success = true;
-    r->x = chipx;
-    r->y = chipy;
-    r->p = core;
-
-    sark_mem_cpy(&r->data, data, data_size_bytes);
-
-    msg->length = sizeof(sdp_hdr_t) + 9 + data_size_bytes;
-
-    if(!spin1_send_sdp_msg(msg, SDP_TIMEOUT)){
-        log_error("Failed to send data response to host");
-        return NULL;
-    }
-
-    return msg;
-}
-
-sdp_msg_t* send_empty_response_to_host(spiDBcommand cmd, id_t id){
-    return send_data_response_to_host(cmd, id, NULL, 0);
-}
-
-bool pull_respond(pullQuery* pullQ){
+pullValue* pull_respond(pullQuery* pullQ){
 
     pullValue* v = pull(data_region, pullQ->info, pullQ->k);
 
     if(v){
-        log_info("Found: %s", v->data);
+        printPullValue(v);
         send_data_response_to_host(PULL,
                                    pullQ->id,
-                                   v->data,
-                                   v->size);
+                                   v,
+                                   //8 = size of type_t+size_t+3 padding
+                                   8 + ((v->size+3)/4)*4);
     }
     else{
         log_info("Not found");
     }
 
-    return v ? true : false;
+    return v;
 }
 
 void process_requests(uint arg0, uint arg1){
@@ -176,7 +147,7 @@ void process_requests(uint arg0, uint arg1){
                 case PUT:;
                     log_info("PUT");
                     putQuery* putQ = (putQuery*) header;
-                    log_info("  |- %08x, k_v: %s", *addr, putQ->k_v);
+                    log_info("  |- %08x  k_v: %s", *addr, putQ->k_v);
 
                     info    = putQ->info;
                     k       = putQ->k_v;
