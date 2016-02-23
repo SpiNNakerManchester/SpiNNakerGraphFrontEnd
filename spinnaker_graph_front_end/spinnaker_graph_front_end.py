@@ -146,7 +146,7 @@ class SpiNNakerGraphFrontEnd(object):
         logger.info("Setting appID to %d." % self._app_id)
 
         self._exec_dse_on_host = config.getboolean(
-                "SpecExecution", "specExecOnHost")
+            "SpecExecution", "specExecOnHost")
 
         # get the machine time step
         logger.info("Setting machine time step to {} micro-seconds."
@@ -264,7 +264,7 @@ class SpiNNakerGraphFrontEnd(object):
             "DatabaseInterface")
         self._has_ran = pacman_exeuctor.get_item("RanToken")
         self._dsg_targets = pacman_exeuctor.get_item(
-                "DataSpecificationTargets")
+            "DataSpecificationTargets")
 
         # reset the reset flag to say the last thing was not a reset call
         self._current_run_ms = total_run_time
@@ -311,12 +311,12 @@ class SpiNNakerGraphFrontEnd(object):
                 # The following line is not split to avoid
                 # error in future search
                 algorithms.append(
-                    "FrontEndCommonPartitionableGraphHostExecuteDataSpecification")
+                    "FrontEndCommonPartitionableGraphHostExecuteDataSpecification")  # @IgnorePep8
             else:
                 # The following line is not split to avoid
                 # error in future search
                 algorithms.append(
-                    "FrontEndCommonPartitionableGraphMachineExecuteDataSpecification")
+                    "FrontEndCommonPartitionableGraphMachineExecuteDataSpecification")  # @IgnorePep8
 
             if self._reports_states.write_memory_map_report:
                 if self._exec_dse_on_host:
@@ -388,7 +388,7 @@ class SpiNNakerGraphFrontEnd(object):
                 algorithms.append(
                     "SpinnakerGraphFrontEndPartitionableGraphEdgeToKeyMapper")
                 algorithms.append(
-                    "FrontEndCommonPartitionableGraphHostExecuteDataSpecification")
+                    "FrontEndCommonPartitionableGraphHostExecuteDataSpecification")  # @IgnorePep8
                 algorithms.append(
                     "FrontEndCommomPartitionableGraphDataSpecificationWriter")
                 algorithms.append("FrontEndCommonDatabaseWriter")
@@ -397,10 +397,10 @@ class SpiNNakerGraphFrontEnd(object):
                 algorithms.append(
                     "SpinnakerGraphFrontEndPartitionedGraphEdgeToKeyMapper")
                 algorithms.append(
-                    "SpinnakerGraphFrontEndPartitionedGraphDataSpecificationWriter")
+                    "SpinnakerGraphFrontEndPartitionedGraphDataSpecificationWriter")  # @IgnorePep8
                 algorithms.append("FrontEndCommonNotificationProtocol")
                 algorithms.append(
-                    "SpinnakerGraphFrontEndPartitionedGraphHostBasedDataSpecificationExecutor")
+                    "SpinnakerGraphFrontEndPartitionedGraphHostBasedDataSpecificationExecutor")  # @IgnorePep8
                 algorithms.append("SpiNNakerGraphFrontEndDatabaseWriter")
 
             return algorithms
