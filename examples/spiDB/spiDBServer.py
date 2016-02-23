@@ -23,8 +23,8 @@ machine_port = 11111
 machine_recieve_port = 22222
 machine_host = "0.0.0.0"
 
-number_of_leaves    = 12
-number_of_branches  = 3
+number_of_leaves = 13
+number_of_branches = 3
 
 root_vertex = front_end.add_partitioned_vertex(
     RootVertex,
@@ -33,6 +33,7 @@ root_vertex = front_end.add_partitioned_vertex(
      'time_scale_factor': time_scale_factor,
      'port': machine_port},
     label="root")
+
 """
 front_end.add_partitioned_vertex(
             BranchVertex,
@@ -40,6 +41,7 @@ front_end.add_partitioned_vertex(
              'machine_time_step': machine_time_step,
              'time_scale_factor': time_scale_factor})
 """
+
 for x_position in range(number_of_branches):
         v = front_end.add_partitioned_vertex(
             LeafVertex,
@@ -57,6 +59,15 @@ for x_position in range(number_of_leaves):
              label="leaf{}".format(x_position))
         leaves.append(l)
 
+for x_position in range(3 * (number_of_leaves+number_of_branches+1)):
+    l = front_end.add_partitioned_vertex(
+        LeafVertex,
+        {'machine_time_step': machine_time_step,
+         'time_scale_factor': time_scale_factor},
+         label="other_leaf{}".format(x_position))
+    if x_position >= number_of_branches:
+        leaves.append(l)
+
 for l in leaves:
     front_end.add_partitioned_edge(
         TreeEdge,
@@ -65,13 +76,6 @@ for l in leaves:
         label="Edge from {} to {}"
               .format(root_vertex.label, l.label),
         partition_id="TREE_EDGE")
-
-for x_position in range(3 * 16):
-    l = front_end.add_partitioned_vertex(
-        LeafVertex,
-        {'machine_time_step': machine_time_step,
-         'time_scale_factor': time_scale_factor},
-         label="other_leaf{}".format(x_position))
 
 front_end.run(5)
 front_end.stop()

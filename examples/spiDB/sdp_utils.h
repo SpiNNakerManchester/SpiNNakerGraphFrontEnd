@@ -5,8 +5,6 @@
 #define SDP_TIMEOUT     10
 #define MAX_RETRIES     3
 
-extern
-
 void revert_src_dest(sdp_msg_t* msg){
     uint16_t dest_port = msg->dest_port;
     uint16_t dest_addr = msg->dest_addr;
@@ -59,6 +57,24 @@ sdp_msg_t* create_sdp_header_to_host(){
     return create_sdp_header_to_host_alloc_extra(0);
 }
 
+sdp_msg_t* send_internal_data_response(uchar x, uchar y, uchar p,
+                                       void* data,
+                                       size_t data_size_bytes){
+
+    sdp_msg_t* msg = create_sdp_header(0,0);
+    set_dest_xyp(msg, x, y, p);
+    sark_mem_cpy(&msg->cmd_rc, data, data_size_bytes);
+
+    msg->length = sizeof(sdp_hdr_t) + data_size_bytes;
+
+    if(!spin1_send_sdp_msg(msg, SDP_TIMEOUT)){
+        log_error("Failed to send data response (%d, %d, %d)", x, y, p);
+        return NULL;
+    }
+
+    return msg;
+}
+
 sdp_msg_t* send_data_response_to_host(spiDBcommand cmd,
                                       id_t id,
                                       void* data,
@@ -74,7 +90,7 @@ sdp_msg_t* send_data_response_to_host(spiDBcommand cmd,
     r->y = chipy;
     r->p = core;
 
-    sark_word_cpy(&r->data, data, data_size_bytes);
+    sark_mem_cpy(&r->data, data, data_size_bytes);
 
     msg->length = sizeof(sdp_hdr_t) + sizeof(Response_hdr) + data_size_bytes;
 
@@ -88,6 +104,11 @@ sdp_msg_t* send_data_response_to_host(spiDBcommand cmd,
 
 sdp_msg_t* send_empty_response_to_host(spiDBcommand cmd, id_t id){
     return send_data_response_to_host(cmd, id, NULL, 0);
+}
+
+void set_dest_host(sdp_msg_t* msg){
+    msg->dest_addr   = 0;
+    msg->dest_port   = PORT_ETH;
 }
 
 void set_dest_chip(sdp_msg_t* msg, uint32_t dest_chip){
@@ -104,11 +125,11 @@ void set_dest_xyp(sdp_msg_t* msg, uint8_t x, uint8_t y, uint8_t p){
 }
 
 uint32_t get_srce_chip_x(sdp_msg_t* msg){
-    return msg->srce_addr & 0xF0 >> 8;
+    return (msg->srce_addr & 0xFF00) >> 8;
 }
 
 uint32_t get_srce_chip_y(sdp_msg_t* msg){
-    return msg->srce_addr & 0x0F;
+    return msg->srce_addr & 0x00FF;
 }
 
 uint32_t get_srce_core(sdp_msg_t* msg){
@@ -116,11 +137,11 @@ uint32_t get_srce_core(sdp_msg_t* msg){
 }
 
 uint32_t get_dest_chip_x(sdp_msg_t* msg){
-    return msg->dest_addr & 0xF0 >> 8;
+    return (msg->dest_addr & 0xFF00) >> 8;
 }
 
 uint32_t get_dest_chip_y(sdp_msg_t* msg){
-    return msg->dest_addr & 0x0F;
+    return msg->dest_addr & 0x00FF;
 }
 
 uint32_t get_dest_core(sdp_msg_t* msg){

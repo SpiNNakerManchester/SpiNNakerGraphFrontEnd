@@ -313,7 +313,7 @@ def translateResponse(responseStr):
         if type == 'integer':
             print_bytearr(value)
             print value
-            value = struct.unpack(">I", value)[0]
+            value = struct.unpack("<I", value)[0]
 
         response.data = Entry(type=type, size=size, value=value)
 

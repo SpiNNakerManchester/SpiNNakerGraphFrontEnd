@@ -36,7 +36,7 @@ class SpiDBSocketConnection(UDPConnection):
             self.send_to(socket_translator.PING(i),
                          (self.ip_address, self.port))
             time_sent = time.time()
-            s = self.receive(0.1)
+            s = self.receive(0.01)
         except SpinnmanTimeoutException:
             return -1
 
@@ -45,10 +45,15 @@ class SpiDBSocketConnection(UDPConnection):
     def sendQuery(self, i, q, type="SQL"):
         queryStructs = socket_translator.generateQueryStructs(i,q,type)
 
+        bytes = 0
+
         for s in queryStructs:
+            bytes += len(s)
             self.send_to(s, (self.ip_address, self.port))
 
-    def receive_all(self, sent_times, results):
+        return bytes
+
+    def receive_all(self, sent_times, results, downloadBytes):
         responseBuffer = []
 
         while True:
@@ -71,6 +76,7 @@ class SpiDBSocketConnection(UDPConnection):
 
             r = results.get(response.id)
             if r is None or not r.responses:
+                downloadBytes[response.id] = 0
                 if response.cmd == "SELECT":
                     results[response.id] = SelectResult()
                 elif response.cmd == "INSERT_INTO":
@@ -79,15 +85,18 @@ class SpiDBSocketConnection(UDPConnection):
                     results[response.id] = Result()
 
             results[response.id].addResponse(response)
+            downloadBytes[response.id] += len(s)
 
         return results
 
     def run(self, sqlQueries, type="SQL"):
         sentTimes = dict()
         results = dict()
+        uploadBytes = dict()
+        downloadBytes = dict()
 
         t = threading.Thread(target=self.receive_all,
-                             args=(sentTimes, results))
+                             args=(sentTimes, results, downloadBytes))
         t.start()
 
         for q in sqlQueries:
@@ -95,14 +104,16 @@ class SpiDBSocketConnection(UDPConnection):
                 continue
 
             time.sleep(0.1)
-            self.sendQuery(self.i, q, type)
+            uploadBytes[self.i] = self.sendQuery(self.i, q, type)
             sentTimes[self.i] = time.time()
 
             self.i += 1
 
         t.join()
 
-        return list(results.values())
+        return {'results': list(results.values()),
+                'upload': uploadBytes,
+                'download': downloadBytes}
 
     def iobuf(self, x, y, p):
         iobufs = self.transceiver.get_iobuf(

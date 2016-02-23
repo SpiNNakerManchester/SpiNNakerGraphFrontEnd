@@ -15,6 +15,7 @@ sdp_msg_t* direct_to_branch(Table* table,
                             address_t addr,
                             uchar n_cols_to_select,
                             uchar* col_indices_to_select){
+
     sdp_msg_t* msg = create_internal_sdp_header(branch);
 
     selectResponse* r = (selectResponse*)&msg->cmd_rc;
@@ -25,8 +26,6 @@ sdp_msg_t* direct_to_branch(Table* table,
     r->n_cols = n_cols_to_select;
     sark_mem_cpy(r->col_indices, col_indices_to_select,
                  n_cols_to_select * sizeof(uchar));
-
-    log_info("MATCH. Directing to branch %d value %s", branch, addr);
 
     msg->length = sizeof(sdp_hdr_t) + sizeof(selectResponse);
 
@@ -41,10 +40,14 @@ sdp_msg_t* direct_to_branch(Table* table,
     return msg;
 }
 
-sdp_msg_t* send_response_msg(Table* table,
-                             uint32_t sel_id,
-                             uint32_t col_index,
-                             address_t addr){
+sdp_msg_t* send_response_msg(selectResponse* selResp,
+                             uint32_t col_index){
+
+    try(selResp);
+
+    Table* table = selResp->table;
+    id_t sel_id = selResp->id;
+    address_t addr = selResp->addr;
 
     try(table && col_index > 0 && addr);
 
@@ -58,21 +61,6 @@ sdp_msg_t* send_response_msg(Table* table,
     sdp_msg_t* msg = create_sdp_header_to_host_alloc_extra(
                         sizeof(Response_hdr) + sizeof(Entry_hdr) + data_size);
 
-    //Entry* e = (Entry*)&(r->data);
-    Entry* e = (Entry*) sark_alloc(1,
-                         sizeof(Response_hdr) + sizeof(Entry_hdr) + data_size);
-
-    e->row_id = myId << 24 | (uint32_t)addr;
-    e->type   = table->cols[col_index].type;
-    e->size   = (e->type == UINT32) ?
-                    sizeof(uint32_t) : sark_str_len(&addr[pos]);
-
-    sark_word_cpy(e->col_name, col_name, MAX_COL_NAME_SIZE);
-
-    sark_mem_cpy(e->value, &addr[pos], e->size);
-
-    log_info("Sending to host (%s,%s)", e->col_name, e->value);
-
     Response* r = (Response*)&msg->cmd_rc;
     r->id  = sel_id;
     r->cmd = SELECT;
@@ -80,8 +68,17 @@ sdp_msg_t* send_response_msg(Table* table,
     r->x = chipx;
     r->y = chipy;
     r->p = core;
-    sark_mem_cpy(r->data, e,
-                 sizeof(Response_hdr) + sizeof(Entry_hdr) + e->size);
+
+    Entry* e = (Entry*)&(r->data);
+    e->row_id = myId << 24 | (uint32_t)addr;
+    e->type   = table->cols[col_index].type;
+    e->size   = (e->type == UINT32) ?
+                    sizeof(uint32_t) : sark_str_len(&addr[pos]);
+
+    sark_word_cpy(e->col_name, col_name, MAX_COL_NAME_SIZE);
+    sark_word_cpy(e->value, &addr[pos], e->size);
+
+    log_info("Sending to host (%s,%s)", e->col_name, e->value);
 
     msg->length = sizeof(sdp_hdr_t) + sizeof(Response_hdr) +
                   sizeof(Entry_hdr) + e->size;
@@ -98,30 +95,26 @@ void breakInBlocks(selectResponse* selResp){
 
     if(selResp->n_cols == 0){ //wildcard '*'
         for(uchar i = 0; i < selResp->table->n_cols; i++){
-            sdp_msg_t* msg = send_response_msg(selResp->table,
-                                               selResp->id,
-                                               i,
-                                               selResp->addr);
+            sdp_msg_t* msg = send_response_msg(selResp,i);
             if(!msg){
                 log_info("Failed to send entry message...");
             }
             else{
                 sark_delay_us(2);
+                sark_free(msg);
             }
         }
     }
     else{ //columns specified
         for(uchar i = 0; i < selResp->n_cols; i++){
-            sdp_msg_t* msg = send_response_msg(selResp->table,
-                                               selResp->id,
-                                               selResp->col_indices[i],
-                                               selResp->addr);
+            sdp_msg_t* msg = send_response_msg(selResp,selResp->col_indices[i]);
 
             if(!msg){
                 log_info("Failed to send entry message...");
             }
             else{
                 sark_delay_us(2);
+                sark_free(msg);
             }
         }
     }
@@ -232,5 +225,7 @@ void scan_ids(Table* table,
             sark_delay_us(1);
         }
     }
+
+    sark_free(col_indices_to_sel);
 }
 #endif

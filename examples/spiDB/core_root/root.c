@@ -105,6 +105,8 @@ void update (uint ticks, uint b){
                 log_info("Attempting to send INSERT_INTO to %d again",
                          dest_core);
             }
+
+            sark_free(msg);
         }
     }
 }
@@ -186,15 +188,15 @@ void process_requests(uint arg0, uint arg1){
 
                         h_chipx =  (h & 0x00FF0000 >> 16) % CHIP_X_SIZE;
                         h_chipy =  (h & 0x0000FF00 >> 8)  % CHIP_Y_SIZE;
-                        h_core  = ((h & 0x000000FF)       % CORE_SIZE)
+                        h_core  = ((h & 0x000000FF)       % NUMBER_OF_LEAVES)
                                     + FIRST_LEAF;
                 #else
                     if(header->cmd == PUT){
                         if(++h_core > LAST_LEAF){
                             h_core = FIRST_LEAF;
-                            if(++h_chipx > CHIP_X_SIZE){
+                            if(++h_chipx >= CHIP_X_SIZE){
                                 h_chipx = 0;
-                                if(++h_chipy > CHIP_Y_SIZE){
+                                if(++h_chipy >= CHIP_Y_SIZE){
                                     h_chipy = 0;
                                 }
                             }
@@ -335,8 +337,8 @@ void process_requests(uint arg0, uint arg1){
 }
 
 void c_main(){
-    chipx = spin1_get_chip_id() & 0xF0 >> 8;
-    chipy = spin1_get_chip_id() & 0x0F;
+    chipx = (spin1_get_chip_id() & 0xFF00) >> 8;
+    chipy = spin1_get_chip_id() & 0x00FF;
     core  = spin1_get_core_id();
 
     log_info("Initializing Root...");
@@ -352,40 +354,13 @@ void c_main(){
     //timer tick in microseconds
     spin1_set_timer_tick(TIMER_PERIOD);
 
-    //Global assignments
-    //unreplied_puts  = init_double_linked_list();
-    //unreplied_pulls = init_double_linked_list();
-
     sdp_buffer       = circular_buffer_initialize(200);
     capacitor_buffer = circular_buffer_initialize(200);
-
-    /*
-    TODO keep track of how full each core is
-    core_db_current_sizes = (size_t***)
-                            sark_alloc(CHIP_X_SIZE, sizeof(size_t**));
-
-    for(int x = 0; x < CHIP_X_SIZE; x++){
-        core_db_current_sizes[x] = (size_t**)
-                                   sark_alloc(CHIP_Y_SIZE, sizeof(size_t*));
-
-        for(int y = 0; y < CHIP_Y_SIZE; y++){
-            core_db_current_sizes[x][y] = (size_t*)
-                                          sark_alloc(CORE_SIZE, sizeof(size_t));
-
-            for(int c = 0; c < CORE_SIZE; c++){
-                 core_db_current_sizes[x][y][c] = 0;
-            }
-        }
-    }
-    */
 
     // register callbacks
     spin1_callback_on(SDP_PACKET_RX,    sdp_packet_callback, 0);
     spin1_callback_on(TIMER_TICK,       update,              1);
     spin1_callback_on(USER_EVENT,       process_requests,    2);
-
-    // kick-start the update process
-    //spin1_schedule_callback(send_first_value, 0, 0, 3);
 
     simulation_run();
 }

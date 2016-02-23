@@ -212,16 +212,26 @@ def runQuery():
 
     error = True
     results = []
+    downloads = dict()
+    uploads = dict()
 
     #try:
     if currentDbTypeStringVar.get() == 'SQL':
         for stage in qText.split('.'):
             statements = [s.strip() for s in stage.split(';')]
 
-            results.extend(conn.run(statements, 'SQL'))
+            r = conn.run(statements, 'SQL')
+
+            results.extend(r["results"])
+            downloads.update(r["download"])
+            uploads.update(r["upload"])
     else:
         for stage in qText.split('.'):
-                results.extend(conn.run(stage.split('\n'), 'Key-Value'))
+            r = conn.run(stage.split('\n'), 'Key-Value')
+
+            results.extend(r["results"])
+            downloads.update(r["download"])
+            uploads.update(r["upload"])
 
     pausePing = False
     """except Exception as e:
@@ -233,6 +243,7 @@ def runQuery():
     s = ""
     xyp_occurences = dict()
     responseTimes = list()
+    occ = [[[0 for p in range(18)] for y in range(2)] for x in range(2)]
 
     for r in results:
         if r is None:
@@ -247,6 +258,10 @@ def runQuery():
                 else:
                     xyp_occurences[resp.__xyp__()] = 1
                 responseTimes.append(resp.response_time)
+
+            for xyp, o in xyp_occurences.iteritems():
+                (x, y, p) = xyp
+                occ[x][y][p] = o
 
     outputText.delete('1.0', END)
     outputText.insert(INSERT, s)
@@ -263,21 +278,53 @@ def runQuery():
 
     if not error and len(responseTimes) > 1:
         pylab.figure()
-        pylab.plot(range(len(responseTimes)), responseTimes)
-        pylab.xlabel('Response')
-        pylab.ylabel('ResponseTime')
+        fig = pylab.gcf()
+        fig.canvas.set_window_title('Network Traffic')
+        pylab.plot(list(uploads.keys()), list(uploads.values()),
+                   label='upload')
+        pylab.plot(list(downloads.keys()), list(downloads.values()),
+                   label='download')
+        pylab.legend(loc='upper left')
+        pylab.xlabel('Query ID')
+        pylab.ylabel('Bytes')
+        pylab.title('Network Traffic')
+
+        ######################################################
+        pylab.figure()
+        fig = pylab.gcf()
+        fig.canvas.set_window_title('Response Times')
+        pylab.plot(range(len(responseTimes)), responseTimes,
+                   'bo', label='sample')
+        pylab.plot(range(len(responseTimes)), responseTimes,
+                   ':k', label='fitting')
+        pylab.xlabel('Query ID')
+        pylab.ylabel('Response Time (ms)')
         pylab.title('Response Times')
 
+        ######################################################
+        """
         tuples = xyp_occurences.keys()
         y_pos = np.arange(len(tuples))
         occurences = xyp_occurences.values()
 
         pylab.figure()
+        fig = pylab.gcf()
+        fig.canvas.set_window_title('Response distribution')
         pylab.bar(y_pos, occurences, align='center', alpha=0.5)
         pylab.xticks(y_pos, tuples)
         pylab.xlabel('Core')
-        pylab.ylabel('Occurence')
-        pylab.title('Usage by core')
+        pylab.ylabel('Responses')
+        pylab.title('Response distribution')
+        """
+
+        #####################################################################3
+
+        fig, ax = pylab.subplots(2, 2, sharex=True, sharey=True) #2x2
+
+        for i in range(2):
+            for j in range(2):
+                ax[i, j].set_title("Chip ({},{})".format(i,j))
+                ax[i, j].bar(range(18), occ[i][j])
 
         pylab.show()
     """

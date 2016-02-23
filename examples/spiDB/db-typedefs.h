@@ -6,7 +6,7 @@
     ///////////////////////////////////////////////////////////////////////////
     #define DB_TYPE_KEY_VALUE_STORE
         #ifdef DB_TYPE_KEY_VALUE_STORE
-            //#define DB_SUBTYPE_HASH_TABLE
+            #define DB_SUBTYPE_HASH_TABLE
     #endif
 
     #define DB_TYPE_RELATIONAL
@@ -14,7 +14,7 @@
 
     #define CHIP_X_SIZE                 2
     #define CHIP_Y_SIZE                 2
-    #define CORE_SIZE                   16
+    #define CORE_SIZE                   17
 
     #define ROOT_CORE                   1
     #define FIRST_LEAF                  5
@@ -84,6 +84,16 @@
 
         uchar         data[256];
     } Response;
+
+    void printResponse(Response* r){
+        log_info("###### RESPONSE #######");
+        log_info("id : %d", r->id);
+        log_info("cmd: %d", r->cmd);
+        log_info("success: %d", r->success);
+        log_info("x: %d, y: %d, p: %d", r->x, r->y, r->p);
+        log_info("data %s", r->data);
+        log_info("");
+    }
 
     #ifdef DB_TYPE_RELATIONAL
         uint32_t to_info_single(var_type type, size_t size){
@@ -348,7 +358,6 @@
                       selQ->condition.right.value);
         }
     #endif
-
     #ifdef DB_TYPE_KEY_VALUE_STORE
         typedef struct putPullQuery{
             spiDBcommand    cmd;
@@ -382,6 +391,22 @@
 
             uchar    data[256];
         } pullValue;
+
+        typedef struct pullValueResponse_hdr{
+            spiDBcommand    cmd;
+            id_t            id;
+
+            uchar           pad[3];
+        } pullValueResponse_hdr;
+
+        typedef struct pullValueResponse{
+            spiDBcommand    cmd;
+            id_t            id;
+
+            uchar           pad[3];
+
+            pullValue       v;
+        } pullValueResponse;
 
         void printPullValue(pullValue* p){
             log_info("(type: %s, size: %d, data: %s)",

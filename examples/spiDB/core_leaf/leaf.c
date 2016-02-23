@@ -94,20 +94,41 @@ uchar getBranch(){
   }
 }
 
+sdp_msg_t* send_data_response_to_branch(void* data,
+                                        size_t data_size_bytes){
+    return send_internal_data_response(chipx, chipy, branch,
+                                       data, data_size_bytes);
+}
+
 pullValue* pull_respond(pullQuery* pullQ){
 
     pullValue* v = pull(data_region, pullQ->info, pullQ->k);
 
     if(v){
         printPullValue(v);
+        /*
         send_data_response_to_host(PULL,
                                    pullQ->id,
                                    v,
-                                   //8 = size of type_t+size_t+3 padding
-                                   8 + ((v->size+3)/4)*4);
+                                   sizeof(v->type) + sizeof(v->size)
+                                   + sizeof(v->pad) + v->size + 3);
+        */
+
+        pullValueResponse* r = (pullValueResponse*)
+                               sark_alloc(1, sizeof(pullValueResponse));
+        r->id = pullQ->id;
+        r->cmd = PULL_REPLY;
+        sark_mem_cpy(&r->v, v, sizeof(pullValue));
+
+        send_data_response_to_branch(r,
+                                     sizeof(pullValueResponse_hdr) +
+                                     sizeof(v->type) + sizeof(v->size) +
+                                     sizeof(v->pad) + v->size + 3);
+
+        sark_free(r);
     }
     else{
-        log_info("Not found");
+        //log_info("Not found");
     }
 
     return v;
@@ -120,24 +141,6 @@ void process_requests(uint arg0, uint arg1){
         sdp_msg_t* msg = (sdp_msg_t*)mailbox;
 
         spiDBQueryHeader* header = (spiDBQueryHeader*) &msg->cmd_rc;
-
-        if(header->cmd == SELECT_RESPONSE){
-            //gather responses
-
-            selectResponse* selResp = (selectResponse*)header;
-            if(!selResp || !selResp->table){
-                //cold occur due to concurrency
-                //Eg. DROP TABLE at the same time as SELECT
-                log_error("Error processing SELECT_RESPONSE %08x");
-                continue;
-            }
-
-            log_info("SELECT_RESPONSE on '%s' with addr %08x from core %d",
-                     selResp->table->name, selResp->addr, get_srce_core(msg));
-
-            breakInBlocks(selResp);
-            continue;
-        }
 
         #ifdef DB_TYPE_KEY_VALUE_STORE
             uint32_t info;
@@ -163,12 +166,32 @@ void process_requests(uint arg0, uint arg1){
                     pull_respond((pullQuery*)header);
                     break;
                 #endif
+                case PULL_REPLY:;
+                    log_info("PULL_REPLY");
+                    pullValueResponse* r = (pullValueResponse*)header;
+
+                    send_data_response_to_host(PULL,
+                                               r->id,
+                                               &r->v,
+                                               sizeof(r->v.type)
+                                               + sizeof(r->v.size)
+                                               + sizeof(r->v.pad)
+                                               + r->v.size + 3);
+                    break;
                 default:;
                     break;
             }
         #endif
         #ifdef DB_TYPE_RELATIONAL
             switch(header->cmd){
+                case SELECT_RESPONSE:;
+                    selectResponse* selResp = (selectResponse*)header;
+                    log_info("SELECT_RESPONSE on '%s' with addr %08x from core %d",
+                             selResp->table->name, selResp->addr, get_srce_core(msg));
+
+                    breakInBlocks(selResp);
+
+                    break;
                 case INSERT_INTO:;
                     log_info("INSERT_INTO");
 
@@ -226,8 +249,8 @@ void process_requests(uint arg0, uint arg1){
                                                16);
                     break;
                 default:;
-                    log_info("[Warning] cmd not recognized: %d with id %d",
-                             header->cmd, header->id);
+                    //log_info("[Warning] cmd not recognized: %d with id %d",
+                    //         header->cmd, header->id);
                     break;
             }
         #endif
@@ -239,7 +262,7 @@ void process_requests(uint arg0, uint arg1){
 
 void receive_MC_data(uint key, uint payload)
 {
-    log_info("Received MC packet with key=%d, payload=%08x", key, payload);
+    //log_info("Received MC packet with key=%d, payload=%08x", key, payload);
 
     spiDBQueryHeader* header = (spiDBQueryHeader*)payload;
 
@@ -270,8 +293,8 @@ void receive_MC_data(uint key, uint payload)
             break;
         #ifndef DB_SUBTYPE_HASH_TABLE
         case PULL:
-                    log_info("PULL");
-                    pull_respond((pullQuery*)header);
+            log_info("PULL");
+            pull_respond((pullQuery*)header);
             break;
         #endif
         default:
@@ -299,8 +322,8 @@ void resetLeafGlobals(){
 
 void c_main()
 {
-    chipx = spin1_get_chip_id() & 0xF0 >> 8;
-    chipy = spin1_get_chip_id() & 0x0F;
+    chipx = (spin1_get_chip_id() & 0xFF00) >> 8;
+    chipy = spin1_get_chip_id() & 0x00FF;
     core  = spin1_get_core_id();
     branch = getBranch();
 
