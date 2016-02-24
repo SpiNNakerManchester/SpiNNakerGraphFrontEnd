@@ -43,7 +43,11 @@ class SpiDBSocketConnection(UDPConnection):
         return (time.time()-time_sent)*1000
 
     def sendQuery(self, i, q, type="SQL"):
-        queryStructs = socket_translator.generateQueryStructs(i,q,type)
+        try:
+            queryStructs = socket_translator.generateQueryStructs(i,q,type)
+        except Exception as e:
+            print e
+            return 0
 
         bytes = 0
 
@@ -53,12 +57,16 @@ class SpiDBSocketConnection(UDPConnection):
 
         return bytes
 
-    def receive_all(self, sent_times, results, downloadBytes):
+    def receive_all(self, sent_times, results,
+                    downloadBytes, accumDownloadKb):
+
         responseBuffer = []
+
+        firstReceived = time.time()
 
         while True:
             try:
-                s = self.receive(0.3)
+                s = self.receive(0.1)
                 responseBuffer.append((time.time(), s))
                 print s
             except SpinnmanTimeoutException:
@@ -67,12 +75,16 @@ class SpiDBSocketConnection(UDPConnection):
         for id, t in sent_times.iteritems():
             results[id] = Result() #empty result
 
+        total = 0
+
         for t, s in responseBuffer:
             response = socket_translator.translateResponse(s)
             if response is None:
                 continue
 
-            response.response_time = (t-sent_times[response.id])*1000
+            total += len(s)
+            accumDownloadKb[(t-firstReceived) * 1000] = total / 1000
+            response.response_time = (t-sent_times[response.id]) * 1000
 
             r = results.get(response.id)
             if r is None or not r.responses:
@@ -91,29 +103,45 @@ class SpiDBSocketConnection(UDPConnection):
 
     def run(self, sqlQueries, type="SQL"):
         sentTimes = dict()
+
         results = dict()
+
         uploadBytes = dict()
         downloadBytes = dict()
 
+        accumUploadBytes = dict()
+        accumDownloadKb = dict()
+
         t = threading.Thread(target=self.receive_all,
-                             args=(sentTimes, results, downloadBytes))
+                             args=(sentTimes, results,
+                                   downloadBytes, accumDownloadKb))
         t.start()
+
+        firstSentTime = time.time()
+        total = 0
 
         for q in sqlQueries:
             if len(q) is 0 or q.isspace():
                 continue
 
-            time.sleep(0.1)
-            uploadBytes[self.i] = self.sendQuery(self.i, q, type)
-            sentTimes[self.i] = time.time()
+            time.sleep(0.0008)
+            b = uploadBytes[self.i] = self.sendQuery(self.i, q, type)
+            ti = time.time()
+            sentTimes[self.i] = ti
+            total += b
+            accumUploadBytes[(ti-firstSentTime)*1000] = total / 1000
 
             self.i += 1
 
         t.join()
 
+        print len(accumUploadBytes)
+
         return {'results': list(results.values()),
-                'upload': uploadBytes,
-                'download': downloadBytes}
+                'upload': sorted(uploadBytes.iteritems()),
+                'download': sorted(downloadBytes.iteritems()),
+                'accumUploadKb': sorted(accumUploadBytes.iteritems()),
+                'accumDownloadKb': sorted(accumDownloadKb.iteritems())}
 
     def iobuf(self, x, y, p):
         iobufs = self.transceiver.get_iobuf(

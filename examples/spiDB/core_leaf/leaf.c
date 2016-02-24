@@ -260,6 +260,8 @@ void process_requests(uint arg0, uint arg1){
     }
 }
 
+uint pull_n = 0;
+
 void receive_MC_data(uint key, uint payload)
 {
     //log_info("Received MC packet with key=%d, payload=%08x", key, payload);
@@ -293,7 +295,7 @@ void receive_MC_data(uint key, uint payload)
             break;
         #ifndef DB_SUBTYPE_HASH_TABLE
         case PULL:
-            log_info("PULL");
+            log_info("PULL %d", pull_n++);
             pull_respond((pullQuery*)header);
             break;
         #endif
@@ -330,8 +332,6 @@ void c_main()
     myId  = chipx << 16 | chipy << 8 | core;
 
     log_info("Initializing Leaf (%d,%d,%d)\n", chipx, chipy, core);
-
-
 
     table_rows_in_this_core = (uint32_t*)sark_alloc(DEFAULT_NUMBER_OF_TABLES,
                                                     sizeof(uint32_t));

@@ -2,6 +2,8 @@
 from pacman.model.partitioned_graph.partitioned_vertex import PartitionedVertex
 from pacman.model.resources.cpu_cycles_per_tick_resource import \
     CPUCyclesPerTickResource
+from pacman.model.constraints.placer_constraints\
+    .placer_chip_and_core_constraint import PlacerChipAndCoreConstraint
 from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.sdram_resource import SDRAMResource
@@ -38,8 +40,11 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
 
     CORE_APP_IDENTIFIER = 0xBEEF
 
-    def __init__(self, label, machine_time_step, time_scale_factor, port,
+    def __init__(self, label, machine_time_step, time_scale_factor,
+                 port, placement,
                  constraints=None, board_address=None, sdp_port=1, tag=None):
+
+        x, y, p = placement
 
         resoruces = ResourceContainer(cpu=CPUCyclesPerTickResource(45),
                                       dtcm=DTCMResource(100),
@@ -51,7 +56,7 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         AbstractPartitionedDataSpecableVertex.__init__(self)
         AbstractProvidesOutgoingEdgeConstraints.__init__(self)
 
-        self.add_constraint(TagAllocatorRequireReverseIptagConstraint(port, sdp_port, board_address, tag))
+        #self.add_constraint(TagAllocatorRequireReverseIptagConstraint(port, sdp_port, board_address, tag))
 
         self._machine_time_step = machine_time_step
         self._time_scale_factor = time_scale_factor
@@ -59,6 +64,9 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         self._string_data_size = 500
 
         self.placement = None
+
+        placement_constaint = PlacerChipAndCoreConstraint(x, y, p)
+        self.add_constraint(placement_constaint)
 
     def get_binary_file_name(self):
         return "root.aplx"

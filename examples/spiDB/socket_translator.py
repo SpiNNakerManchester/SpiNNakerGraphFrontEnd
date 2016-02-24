@@ -252,7 +252,7 @@ def generateQueryStructs(id, queryString, type="SQL"):
         if upper.startswith("PUT") or upper.startswith("PUSH"):
             m = put_pattern.match(queryString)
             if m is None:
-                raise Exception("Invalid PUT format")
+                raise Exception("Invalid PUT format: {}".format(queryString))
 
             k = convertFromUnicode(m.group(1))
             v = convertFromUnicode(m.group(2))
@@ -261,7 +261,7 @@ def generateQueryStructs(id, queryString, type="SQL"):
         if upper.startswith("PULL") or upper.startswith("POP"):
             m = pull_pattern.match(queryString)
             if m is None:
-                raise Exception("Invalid PULL format")
+                raise Exception("Invalid PULL format: {}".format(queryString))
 
             k = convertFromUnicode(m.group(1))
             return PULL(id, k)

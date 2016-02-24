@@ -23,59 +23,49 @@ machine_port = 11111
 machine_recieve_port = 22222
 machine_host = "0.0.0.0"
 
-number_of_leaves = 13
-number_of_branches = 3
+number_of_leaves = 16
+leaf_starting_p = 2
+#number_of_branches = 3
 
-root_vertex = front_end.add_partitioned_vertex(
-    RootVertex,
-    {'label': 'Root',
-     'machine_time_step': machine_time_step,
-     'time_scale_factor': time_scale_factor,
-     'port': machine_port},
-    label="root")
+chip_x_dimension = 1
+chip_y_dimension = 1
 
-"""
-front_end.add_partitioned_vertex(
-            BranchVertex,
-            {'label':"branch{}".format(1),
+roots = [[None for yy in range(chip_y_dimension)] for xx in range(chip_x_dimension)]
+root_leaves = [[dict() for yy in range(chip_y_dimension)] for xx in range(chip_x_dimension)]
+
+for x in range(chip_x_dimension):
+    for y in range(chip_y_dimension):
+        roots[x][y] = front_end.add_partitioned_vertex(
+            RootVertex,
+            {'label': 'root_{}_{}'.format(x,y),
              'machine_time_step': machine_time_step,
-             'time_scale_factor': time_scale_factor})
-"""
+             'time_scale_factor': time_scale_factor,
+             'port': machine_port,
+             'placement': (x, y, 1)},
+            label='root_{}_{}'.format(x,y))
 
-for x_position in range(number_of_branches):
-        v = front_end.add_partitioned_vertex(
-            LeafVertex,
-            {'machine_time_step': machine_time_step,
-             'time_scale_factor': time_scale_factor},
-             label="branch{}".format(x_position))
+for x in range(chip_x_dimension):
+    for y in range(chip_y_dimension):
+        for p in range(leaf_starting_p, number_of_leaves+leaf_starting_p):
+            l = front_end.add_partitioned_vertex(
+                LeafVertex,
+                {'label': 'leaf_{}_{}_{}'.format(x, y, p),
+                 'machine_time_step': machine_time_step,
+                 'time_scale_factor': time_scale_factor,
+                 'placement': (x, y, p)},
+                 label='leaf_{}_{}_{}'.format(x, y, p))
+            root_leaves[x][y][p] = l
 
-leaves = list()
-
-for x_position in range(number_of_leaves):
-        l = front_end.add_partitioned_vertex(
-            LeafVertex,
-            {'machine_time_step': machine_time_step,
-             'time_scale_factor': time_scale_factor},
-             label="leaf{}".format(x_position))
-        leaves.append(l)
-
-for x_position in range(3 * (number_of_leaves+number_of_branches+1)):
-    l = front_end.add_partitioned_vertex(
-        LeafVertex,
-        {'machine_time_step': machine_time_step,
-         'time_scale_factor': time_scale_factor},
-         label="other_leaf{}".format(x_position))
-    if x_position >= number_of_branches:
-        leaves.append(l)
-
-for l in leaves:
-    front_end.add_partitioned_edge(
-        TreeEdge,
-        {'pre_subvertex': root_vertex,
-         'post_subvertex': l},
-        label="Edge from {} to {}"
-              .format(root_vertex.label, l.label),
-        partition_id="TREE_EDGE")
+for x in range(chip_x_dimension):
+    for y in range(chip_y_dimension):
+        for p in range(leaf_starting_p, number_of_leaves+leaf_starting_p):
+            front_end.add_partitioned_edge(
+                TreeEdge,
+                {'pre_subvertex': roots[x][y],
+                 'post_subvertex': root_leaves[x][y][p]},
+                label="edge{}_to_{}"
+                      .format(roots[x][y].label, root_leaves[x][y][p].label),
+                partition_id="TREE_EDGE_{}".format(roots[x][y].label))
 
 front_end.run(5)
 front_end.stop()

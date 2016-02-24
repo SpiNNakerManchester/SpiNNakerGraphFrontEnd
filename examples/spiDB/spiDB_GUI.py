@@ -6,6 +6,7 @@ from time import *
 import sys
 import pylab
 import numpy as np
+import matplotlib.ticker as ticker
 
 from spiDB_socket_connection import SpiDBSocketConnection
 
@@ -62,8 +63,8 @@ class MainMenu(Frame):
         sys.exit(0)
 
     def onOpen(self):
-        filespes = [('SQL file', '*.sql'),
-                    ('KV file', '*.kv'),
+        filespes = [('KV file', '*.kv'),
+                    ('SQL file', '*.sql'),
                     ('CSV file', '*.csv'),
                     ('All files', '*')]
         dlg = tkFileDialog.Open(self, filetypes = filespes)
@@ -212,8 +213,11 @@ def runQuery():
 
     error = True
     results = []
-    downloads = dict()
-    uploads = dict()
+    downloads = list()
+    uploads = list()
+
+    accumDownloadKb = list()
+    accumUploadKb = list()
 
     #try:
     if currentDbTypeStringVar.get() == 'SQL':
@@ -223,15 +227,19 @@ def runQuery():
             r = conn.run(statements, 'SQL')
 
             results.extend(r["results"])
-            downloads.update(r["download"])
-            uploads.update(r["upload"])
+            downloads.extend(r["download"])
+            uploads.extend(r["upload"])
+            accumUploadKb.extend(r["accumUploadKb"])
+            accumDownloadKb.extend(r["accumDownloadKb"])
     else:
         for stage in qText.split('.'):
             r = conn.run(stage.split('\n'), 'Key-Value')
 
             results.extend(r["results"])
-            downloads.update(r["download"])
-            uploads.update(r["upload"])
+            downloads.extend(r["download"])
+            uploads.extend(r["upload"])
+            accumUploadKb.extend(r["accumUploadKb"])
+            accumDownloadKb.extend(r["accumDownloadKb"])
 
     pausePing = False
     """except Exception as e:
@@ -277,13 +285,38 @@ def runQuery():
     history[qText] = queryResultTuple
 
     if not error and len(responseTimes) > 1:
+        #########################################################
+
+        xUpload = [x[0] for x in accumUploadKb]
+        yUpload = [x[1] for x in accumUploadKb]
+
+        xDownload = [x[0] for x in accumDownloadKb]
+        yDownload = [x[1] for x in accumDownloadKb]
+
+        pylab.figure()
+        fig = pylab.gcf()
+        fig.canvas.set_window_title('Accumulated Network Usage')
+        pylab.plot(xUpload, yUpload, label='upload')
+        pylab.plot(xDownload, yDownload, label='download')
+
+        pylab.legend(loc='upper left')
+        pylab.xlabel('Time (ms)')
+        pylab.ylabel('Transfer (kb)')
+        pylab.title('Accumulated Network Usage')
+
+        #########################################################
+
+        xUpload = [x[0] for x in uploads]
+        yUpload = [x[1] for x in uploads]
+
+        xDownload = [x[0] for x in downloads]
+        yDownload = [x[1] for x in downloads]
+
         pylab.figure()
         fig = pylab.gcf()
         fig.canvas.set_window_title('Network Traffic')
-        pylab.plot(list(uploads.keys()), list(uploads.values()),
-                   label='upload')
-        pylab.plot(list(downloads.keys()), list(downloads.values()),
-                   label='download')
+        pylab.plot(xUpload, yUpload, label='upload')
+        pylab.plot(xDownload, yDownload, label='download')
         pylab.legend(loc='upper left')
         pylab.xlabel('Query ID')
         pylab.ylabel('Bytes')
@@ -293,29 +326,19 @@ def runQuery():
         pylab.figure()
         fig = pylab.gcf()
         fig.canvas.set_window_title('Response Times')
-        pylab.plot(range(len(responseTimes)), responseTimes,
-                   'bo', label='sample')
-        pylab.plot(range(len(responseTimes)), responseTimes,
-                   ':k', label='fitting')
+
+        x = range(len(responseTimes))
+        y = responseTimes
+        pylab.ylim([0, max(1, max(responseTimes)+0.1)])
+        pylab.plot(x, y, 'bo', label='sample')
+
+        pylab.plot(x, np.poly1d(np.polyfit(x, y, 5))(x), 'r', label='fitting')
+        #pylab.plot(1, fit[0] * 1 + fit[1], color='red')
+        #pylab.plot(range(len(responseTimes)), responseTimes,
+        #           ':k', label='fitting')
         pylab.xlabel('Query ID')
         pylab.ylabel('Response Time (ms)')
         pylab.title('Response Times')
-
-        ######################################################
-        """
-        tuples = xyp_occurences.keys()
-        y_pos = np.arange(len(tuples))
-        occurences = xyp_occurences.values()
-
-        pylab.figure()
-        fig = pylab.gcf()
-        fig.canvas.set_window_title('Response distribution')
-        pylab.bar(y_pos, occurences, align='center', alpha=0.5)
-        pylab.xticks(y_pos, tuples)
-        pylab.xlabel('Core')
-        pylab.ylabel('Responses')
-        pylab.title('Response distribution')
-        """
 
         #####################################################################3
 

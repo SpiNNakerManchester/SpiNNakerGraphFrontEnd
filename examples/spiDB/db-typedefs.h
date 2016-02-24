@@ -6,7 +6,7 @@
     ///////////////////////////////////////////////////////////////////////////
     #define DB_TYPE_KEY_VALUE_STORE
         #ifdef DB_TYPE_KEY_VALUE_STORE
-            #define DB_SUBTYPE_HASH_TABLE
+            //#define DB_SUBTYPE_HASH_TABLE
     #endif
 
     #define DB_TYPE_RELATIONAL

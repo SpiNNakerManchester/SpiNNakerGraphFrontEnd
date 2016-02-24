@@ -299,6 +299,7 @@ void process_requests(uint arg0, uint arg1){
                     }
                     break;
                 case SELECT:;
+                    log_info("SELECT");
                     print_SELECT((selectQuery*)header);
 
                     //store SELECT query message to SDRAM
@@ -317,12 +318,10 @@ void process_requests(uint arg0, uint arg1){
                         log_info("Attempting to send MC packet again.");
                         spin1_delay_us(1);
                     }
-
-                    log_info("Sent SELECT MC packet.");
                     break;
                 default:;
-                    log_info("[Warning] cmd not recognized: %d with id %d",
-                             header->cmd, header->id);
+                    //log_info("[Warning] cmd not recognized: %d with id %d",
+                    //         header->cmd, header->id);
                     break;
             }
             #endif
