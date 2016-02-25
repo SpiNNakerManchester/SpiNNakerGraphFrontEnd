@@ -1,20 +1,9 @@
 from spinn_front_end_common.interface.executable_finder import ExecutableFinder
-from utilities import conf
 
-from ._version import __version__, __version_name__, __version_month__,\
-    __version_year__
-
-
+from spinnaker_graph_front_end.utilities import conf
+from spinnaker_graph_front_end._version import \
+    __version__, __version_name__, __version_month__, __version_year__
 # utility models for graph front ends
-from spinn_front_end_common.utility_models.\
-    reverse_ip_tag_multi_cast_source import ReverseIpTagMultiCastSource
-from spinn_front_end_common.utility_models.command_sender import CommandSender
-from spinn_front_end_common.utility_models.live_packet_gather \
-    import LivePacketGather
-from pacman.model.partitioned_graph.multi_cast_partitioned_edge \
-    import MultiCastPartitionedEdge
-from pacman.model.partitionable_graph.multi_cast_partitionable_edge \
-    import MultiCastPartitionableEdge
 
 import logging
 
@@ -28,7 +17,7 @@ _none_labelled_edge_count = None
 
 def setup(hostname=None, graph_label=None, model_binary_module=None,
           model_binary_folder=None, database_socket_addresses=None,
-          partitioner_algorithm=None, algorithms=None):
+          algorithms_for_auto_pause_and_resume=None):
     """ for builders with pynn attitude, allows end users to define wherever\
         their binaries are
 
@@ -37,14 +26,12 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
     :param model_binary_module:
     :param model_binary_folder:
     :param database_socket_addresses:
-    :param partitioner_algorithm:
-    :param algorithms:
+    :param algorithms_for_auto_pause_and_resume:
 
     :return:
     """
-    from spinnaker_graph_front_end import \
-        SpiNNakerGraphFrontEnd
-    import spinnaker_graph_front_end
+    from spinnaker_graph_front_end.spinnaker import SpiNNaker
+    from spinnaker_graph_front_end import spinnaker
     import os
     global _spinnaker
     global _none_labelled_vertex_count
@@ -54,14 +41,14 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         "SpiNNaker graph front end (c) {} APT Group, University of Manchester"
         .format(__version_year__))
     parent_dir = os.path.split(os.path.split(
-        spinnaker_graph_front_end.__file__)[0])[0]
+        spinnaker.__file__)[0])[0]
     logger.info(
         "Release version {}({}) - {} {}. Installed in folder {}".format(
             __version__, __version_name__, __version_month__, __version_year__,
             parent_dir))
 
-    executable_finder = ExecutableFinder()
     # add the directorities for where to locate the binaries
+    executable_finder = ExecutableFinder()
     if model_binary_module is not None:
         executable_finder.add_path(
             os.path.dirname(model_binary_module.__file__))
@@ -69,15 +56,12 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         executable_finder.add_path(model_binary_folder)
 
     # set up the spinnaker object
-    _spinnaker = SpiNNakerGraphFrontEnd(
+    _spinnaker = SpiNNaker(
         host_name=hostname, graph_label=graph_label,
         executable_finder=executable_finder,
         database_socket_addresses=database_socket_addresses,
-        algorithms=algorithms, partitioner_algorithm=partitioner_algorithm)
-
-    # set up none label count params.
-    _none_labelled_edge_count = 0
-    _none_labelled_vertex_count = 0
+        extra_algorithms_for_auto_pause_and_resume=
+        algorithms_for_auto_pause_and_resume)
 
 
 def run(duration=None):
@@ -126,16 +110,15 @@ def add_vertex(cellclass, cellparams, label=None, constraints=None):
     :return:
     """
     global _spinnaker
-    global _none_labelled_vertex_count
 
     # correct label if needed
     if label is None and 'label' not in cellparams:
-        label = "Vertex {}".format(_none_labelled_vertex_count)
-        _none_labelled_vertex_count += 1
+        label = "Vertex {}".format(_spinnaker.none_labelled_vertex_count)
+        _spinnaker.increment_none_labelled_vertex_count()
         cellparams['label'] = label
     elif 'label' in cellparams and cellparams['label'] is None:
-        label = "Vertex {}".format(_none_labelled_vertex_count)
-        _none_labelled_vertex_count += 1
+        label = "Vertex {}".format(_spinnaker.none_labelled_vertex_count)
+        _spinnaker.increment_none_labelled_vertex_count()
         cellparams['label'] = label
     elif label is not None:
         cellparams['label'] = label
@@ -159,16 +142,15 @@ def add_edge(cell_type, cellparams, label=None, constraints=None,
     :return:
     """
     global _spinnaker
-    global _none_labelled_edge_count
 
     # correct label if needed
     if label is None and 'label' not in cellparams:
-        label = "Vertex {}".format(_none_labelled_edge_count)
-        _none_labelled_edge_count += 1
+        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
+        _spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif 'label' in cellparams and cellparams['label'] is None:
-        label = "Vertex {}".format(_none_labelled_edge_count)
-        _none_labelled_edge_count += 1
+        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
+        _spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif label is not None:
         cellparams['label'] = label

@@ -43,102 +43,6 @@
             </parameter>
         </produces_outputs>
     </algorithm>
-    <algorithm name="SpinnakerGraphFrontEndPartitionedGraphDataSpecificationWriter">
-        <python_module>spinnaker_graph_front_end.extra_pacman_algorithms.spinnaker_graph_front_end_partitioned_graph_data_specification_writer</python_module>
-        <python_class>SpinnakerGraphFrontEndPartitionedGraphDataSpecificationWriter</python_class>
-        <required_inputs>
-            <parameter>
-                <param_name>placements</param_name>
-                <param_type>MemoryPlacements</param_type>
-            </parameter>
-            <parameter>
-                <param_name>tags</param_name>
-                <param_type>MemoryTags</param_type>
-            </parameter>
-            <parameter>
-                <param_name>executable_finder</param_name>
-                <param_type>ExecutableFinder</param_type>
-            </parameter>
-            <parameter>
-                <param_name>partitioned_graph</param_name>
-                <param_type>MemoryPartitionedGraph</param_type>
-            </parameter>
-            <parameter>
-                <param_name>routing_infos</param_name>
-                <param_type>MemoryRoutingInfos</param_type>
-            </parameter>
-            <parameter>
-                <param_name>hostname</param_name>
-                <param_type>IPAddress</param_type>
-            </parameter>
-            <parameter>
-                <param_name>report_default_directory</param_name>
-                <param_type>ReportFolder</param_type>
-            </parameter>
-            <parameter>
-                <param_name>write_text_specs</param_name>
-                <param_type>WriteTextSpecsFlag</param_type>
-            </parameter>
-            <parameter>
-                <param_name>app_data_runtime_folder</param_name>
-                <param_type>ApplicationDataFolder</param_type>
-            </parameter>
-        </required_inputs>
-        <produces_outputs>
-            <parameter>
-                <param_name>executable_targets</param_name>
-                <param_type>ExecutableTargets</param_type>
-            </parameter>
-            <parameter>
-                <param_name>dsg_targets</param_name>
-                <param_type>DataSpecificationTargets</param_type>
-            </parameter>
-        </produces_outputs>
-    </algorithm>
-    <algorithm name="SpinnakerGraphFrontEndPartitionedGraphHostBasedDataSpecificationExeuctor">
-        <python_module>spinnaker_graph_front_end.extra_pacman_algorithms.spinnaker_graph_front_end_partitioned_graph_host_based_data_specification_executor</python_module>
-        <python_class>SpinnakerGraphFrontEndPartitionedGraphHostBasedDataSpecificationExeuctor</python_class>
-        <required_inputs>
-            <parameter>
-                <param_name>hostname</param_name>
-                <param_type>IPAddress</param_type>
-            </parameter>
-            <parameter>
-                <param_name>placements</param_name>
-                <param_type>MemoryPlacements</param_type>
-            </parameter>
-            <parameter>
-                <param_name>report_default_directory</param_name>
-                <param_type>ReportFolder</param_type>
-            </parameter>
-            <parameter>
-                <param_name>write_text_specs</param_name>
-                <param_type>WriteTextSpecsFlag</param_type>
-            </parameter>
-            <parameter>
-                <param_name>application_data_runtime_folder</param_name>
-                <param_type>ApplicationDataFolder</param_type>
-            </parameter>
-            <parameter>
-                <param_name>machine</param_name>
-                <param_type>MemoryExtendedMachine</param_type>
-            </parameter>
-            <parameter>
-                <param_name>dsg_targets</param_name>
-                <param_type>DataSpecificationTargets</param_type>
-            </parameter>
-        </required_inputs>
-        <produces_outputs>
-            <parameter>
-                <param_name>processor_to_app_data_base_address</param_name>
-                <param_type>ProcessorToAppDataBaseAddress</param_type>
-            </parameter>
-            <parameter>
-                <param_name>placement_to_app_data_files</param_name>
-                <param_type>PlacementToAppDataFilePaths</param_type>
-            </parameter>
-        </produces_outputs>
-    </algorithm>
     <algorithm name="SpiNNakerGraphFrontEndDatabaseWriter">
         <python_module>spinnaker_graph_front_end.extra_pacman_algorithms.spinnaker_graph_front_end_database_interface</python_module>
         <python_class>SpinnakerGraphFrontEndDatabaseInterface</python_class>
@@ -204,5 +108,23 @@
                 <param_type>DatabaseFilePath</param_type>
             </parameter>
         </produces_outputs>
+    </algorithm>
+    <algorithm name="SpiNNakerGraphFrontEndRuntimeUpdater">
+        <python_module>spynnaker.pyNN.overridden_pacman_functions.spynnaker_runtime_updater</python_module>
+        <python_class>SpyNNakerRuntimeUpdater</python_class>
+        <required_inputs>
+            <parameter>
+                <param_name>run_time</param_name>
+                <param_type>RunTime</param_type>
+            </parameter>
+            <parameter>
+                <param_name>partitionable_graph</param_name>
+                <param_type>MemoryPartitionableGraph</param_type>
+            </parameter>
+            <parameter>
+                <param_name>current_run_ms</param_name>
+                <param_type>TotalAccumulativeRunTime</param_type>
+            </parameter>
+        </required_inputs>
     </algorithm>
 </algorithms>
