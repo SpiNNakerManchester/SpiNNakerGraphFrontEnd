@@ -1,16 +1,13 @@
 
-# common front end imports
+# pacman imports
 from pacman.operations.pacman_algorithm_executor import PACMANAlgorithmExecutor
+
+# common front end imports
 from spinn_front_end_common.interface.spinnaker_main_interface import \
     SpinnakerMainInterface
-from spinn_front_end_common.utilities import exceptions as exceptions
-from spinn_front_end_common.utilities import helpful_functions
-from spinn_front_end_common.abstract_models.abstract_data_specable_vertex \
-    import AbstractDataSpecableVertex
+from spinn_front_end_common.interface import interface_functions
 
 # graph front end imports
-from spinnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
-    import AbstractPartitionedDataSpecableVertex
 from spinnaker_graph_front_end.utilities.xml_interface import XMLInterface
 from spinnaker_graph_front_end.utilities.conf import config
 from spinnaker_graph_front_end import extra_pacman_algorithms
@@ -18,7 +15,6 @@ from spinnaker_graph_front_end import _version
 
 # general imports
 import logging
-import math
 import os
 
 
@@ -50,7 +46,7 @@ class SpiNNaker(SpinnakerMainInterface):
             extra_algorithms_for_auto_pause_and_resume=
             extra_algorithms_for_auto_pause_and_resume)
 
-        # set up machine targetted data
+        # set up machine targeted data
         self._set_up_machine_specifics(host_name)
 
         self._time_scale_factor = 1
@@ -80,27 +76,29 @@ class SpiNNaker(SpinnakerMainInterface):
             raise Exception("A SpiNNaker machine must be specified in "
                             "spynnaker.cfg.")
 
-    def  _create_algorithm_list(
+    def _create_algorithm_list(
             self, in_debug_mode, application_graph_changed, executing_reset,
             using_auto_pause_and_resume):
 
-        algorithms = list()
-        algorithms.append("SpiNNakerGraphFrontEndRuntimeUpdater")
+        mapping_algorithms = list()
+        mapping_algorithms.append("SpiNNakerGraphFrontEndRuntimeUpdater")
 
         if application_graph_changed and not executing_reset:
-            algorithms.append("FrontEndCommonEdgeToKeyMapper")
+            mapping_algorithms.append("FrontEndCommonEdgeToKeyMapper")
 
             if len(self._partitionable_graph.vertices) != 0:
-                algorithms.append("FrontEndCommonEdgeToKeyMapper")
-                algorithms.append("FrontEndCommonDatabaseWriter")
+                mapping_algorithms.append("FrontEndCommonEdgeToKeyMapper")
+                mapping_algorithms.append("FrontEndCommonDatabaseWriter")
             else:
-                algorithms.append("SpiNNakerGraphFrontEndDatabaseWriter")
+                mapping_algorithms.append(
+                    "SpiNNakerGraphFrontEndDatabaseWriter")
 
         algorithms, optional_algorithms = \
             self._create_all_flows_algorithm_common(
                 in_debug_mode, application_graph_changed, executing_reset,
-                using_auto_pause_and_resume, algorithms)
-        return algorithms, optional_algorithms
+                using_auto_pause_and_resume)
+        mapping_algorithms.extend(algorithms)
+        return mapping_algorithms, optional_algorithms
 
     def read_partitionable_graph_xml_file(self, file_path):
         """
@@ -130,18 +128,22 @@ class SpiNNaker(SpinnakerMainInterface):
         return {'x': self._machine.max_chip_x, 'y': self._machine.max_chip_y}
 
     def _run_algorithms_for_machine_gain(self):
-        inputs = self._create_pacman_executor_inputs(self._current_run_ms)
-        algorthims = list()
+        inputs, _, _= self._create_pacman_executor_inputs(self._current_run_ms)
+        algorithms = list()
         if config.getboolean("Machine", "virtual_board"):
-            algorthims.append("FrontEndCommonVirtualMachineInterfacer")
+            algorithms.append("FrontEndCommonVirtualMachineInterfacer")
+
         else:
-            algorthims.append("FrontEndCommonMachineInterfacer")
+            algorithms.append("FrontEndCommonMachineInterfacer")
         required_outputs = list()
         required_outputs.append("MemoryMachine")
         xml_paths = list()
+        xml_paths.append(os.path.join(
+            os.path.dirname(interface_functions.__file__),
+            "front_end_common_interface_functions.xml"))
 
         pacman_executor = PACMANAlgorithmExecutor(
-            algorithms=algorthims, inputs=inputs,
+            algorithms=algorithms, inputs=inputs,
             xml_paths=xml_paths, required_outputs=required_outputs,
             optional_algorithms=list(),
             do_timings=config.getboolean("Reports", "outputTimesForSections"))

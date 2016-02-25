@@ -1,12 +1,22 @@
-from spinn_front_end_common.interface.executable_finder import ExecutableFinder
+# front end common imports
+from spinn_front_end_common.utilities.utility_objs.executable_finder \
+    import ExecutableFinder
 
+# graph front end imports
 from spinnaker_graph_front_end.utilities import conf
 from spinnaker_graph_front_end._version import \
     __version__, __version_name__, __version_month__, __version_year__
+
 # utility models for graph front ends
+from spinn_front_end_common.utility_models.live_packet_gather \
+    import LivePacketGather  # @IgnorePep8
+from spinn_front_end_common.utility_models.reverse_ip_tag_multi_cast_source \
+    import ReverseIpTagMultiCastSource  # @IgnorePep8
+from pacman.model.partitioned_graph.multi_cast_partitioned_edge \
+    import MultiCastPartitionedEdge
+
 
 import logging
-
 logger = logging.getLogger(__name__)
 
 
@@ -47,7 +57,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
             __version__, __version_name__, __version_month__, __version_year__,
             parent_dir))
 
-    # add the directorities for where to locate the binaries
+    # add the directorates for where to locate the binaries
     executable_finder = ExecutableFinder()
     if model_binary_module is not None:
         executable_finder.add_path(
@@ -193,16 +203,15 @@ def add_partitioned_vertex(
     :return:
     """
     global _spinnaker
-    global _none_labelled_vertex_count
 
     # correct label if needed
     if label is None and 'label' not in cellparams:
-        label = "Vertex {}".format(_none_labelled_vertex_count)
-        _none_labelled_vertex_count += 1
+        label = "Vertex {}".format(_spinnaker.none_labelled_vertex_count)
+        _spinnaker.increment_none_labelled_vertex_count()
         cellparams['label'] = label
     elif 'label' in cellparams and cellparams['label'] is None:
-        label = "Vertex {}".format(_none_labelled_vertex_count)
-        _none_labelled_vertex_count += 1
+        label = "Vertex {}".format(_spinnaker.none_labelled_vertex_count)
+        _spinnaker.increment_none_labelled_vertex_count()
         cellparams['label'] = label
     elif label is not None:
         cellparams['label'] = label
@@ -226,16 +235,15 @@ def add_partitioned_edge(cellclass, cellparams, label=None, constraints=None,
     :return:
     """
     global _spinnaker
-    global _none_labelled_edge_count
 
     # correct label if needed
     if label is None and 'label' not in cellparams:
-        label = "Vertex {}".format(_none_labelled_edge_count)
-        _none_labelled_edge_count += 1
+        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
+        _spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif 'label' in cellparams and cellparams['label'] is None:
-        label = "Vertex {}".format(_none_labelled_edge_count)
-        _none_labelled_edge_count += 1
+        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
+        _spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif label is not None:
         cellparams['label'] = label
@@ -248,13 +256,17 @@ def add_partitioned_edge(cellclass, cellparams, label=None, constraints=None,
 
 
 def get_txrx():
+    """
+    returns the transceiver used by the tool chain
+    :return:
+    """
     global _spinnaker
     return _spinnaker.transceiver
 
 
 def get_machine_dimensions():
     """
-
+    returns the x and y dimension of the machine
     :return:
     """
     global _spinnaker

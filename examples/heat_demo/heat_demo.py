@@ -7,7 +7,7 @@ heat demo main entrance allows users to run the heat demo on the tool chain
 from spinn_front_end_common.utility_models.live_packet_gather import \
     LivePacketGather
 
-# spinnman imports
+# SpiNNMan imports
 from spinnman.messages.eieio.eieio_type import EIEIOType
 
 # graph front end imports
@@ -30,17 +30,17 @@ from examples import model_binaries
 # set up the front end and ask for the detected machines dimensions
 front_end.setup(graph_label="heat_demo_graph",
                 model_binary_module=model_binaries)
-dimenions = front_end.get_machine_dimensions()
+dimensions = front_end.get_machine_dimensions()
 
 machine_time_step = 1000
 time_scale_factor = 1
 machine_port = 11111
-machine_recieve_port = 22222
+machine_receive_port = 22222
 machine_host = "0.0.0.0"
 
 # hard code dimensions here (useful for debug) (chip based)
-x_dimension = dimenions['x']
-y_dimension = dimenions['y']
+x_dimension = dimensions['x']
+y_dimension = dimensions['y']
 
 max_x_element_id = x_dimension * 4
 max_y_element_id = y_dimension * 4
@@ -66,7 +66,7 @@ live_gatherer = \
          'timescale_factor': time_scale_factor,
          'label': "gatherer from heat elements",
          'ip_address': machine_host,
-         'port': machine_recieve_port,
+         'port': machine_receive_port,
          'message_type': EIEIOType.KEY_32_BIT})
 #         'message_type': EIEIOType.KEY_PAYLOAD_32_BIT})
 

@@ -10,7 +10,7 @@ from spinnaker_graph_front_end.models.\
 
 
 class HeatDemoEdge(MultiCastPartitionedEdgeWithNKeys,
-                   AbstractProvidesNKeysForEdge):
+                   AbstractProvidesNKeysForPartition):
     """ Used in conjunction with a heat demo vertex to execute the heat demo
     """
 
@@ -52,5 +52,5 @@ class HeatDemoEdge(MultiCastPartitionedEdgeWithNKeys,
         return self.__repr__()
 
     def __repr__(self):
-        return "HeatDemoedge:{}:{}:{}".format(self._label, self._direction,
+        return "HeatDemoEdge:{}:{}:{}".format(self._label, self._direction,
                                               self._n_keys)
