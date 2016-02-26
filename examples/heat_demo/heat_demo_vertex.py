@@ -17,6 +17,8 @@ from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.sdram_resource import SDRAMResource
 
 # graph front end imports
+from spinn_front_end_common.interface.abstract_mappable_interface import \
+    AbstractMappableInterface
 from spinn_front_end_common.utility_models.live_packet_gather import \
     LivePacketGather
 from spinn_front_end_common.utility_models.\
@@ -33,7 +35,8 @@ from enum import Enum
 
 
 class HeatDemoVertexPartitioned(
-        PartitionedVertex, AbstractPartitionedDataSpecableVertex):
+        PartitionedVertex, AbstractPartitionedDataSpecableVertex,
+        AbstractMappableInterface):
     """ A vertex partition for a heat demo; represents a heat element.
     """
 
@@ -71,12 +74,14 @@ class HeatDemoVertexPartitioned(
             self, label=label, resources_required=resources,
             constraints=constraints)
         AbstractPartitionedDataSpecableVertex.__init__(self)
+        AbstractMappableInterface.__init__(self)
         self._machine_time_step = machine_time_step
         self._time_scale_factor = time_scale_factor
         self._heat_temperature = heat_temperature
 
         # used to support
         self._first_partitioned_edge = None
+        self._requires_mapping = True
 
     def get_binary_file_name(self):
         """
@@ -330,3 +335,9 @@ class HeatDemoVertexPartitioned(
 
     def is_partitioned_data_specable(self):
         return True
+
+    def requires_mapping(self):
+        return self._requires_mapping
+
+    def mark_no_changes(self):
+        self._requires_mapping = False

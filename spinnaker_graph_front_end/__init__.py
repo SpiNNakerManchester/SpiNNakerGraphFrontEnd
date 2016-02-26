@@ -166,9 +166,8 @@ def add_edge(cell_type, cellparams, label=None, constraints=None,
         cellparams['label'] = label
 
     # add edge
-    cellparams['constraints'] = constraints
     edge = cell_type(**cellparams)
-    _spinnaker.add_partitionable_edge(edge, partition_id)
+    _spinnaker.add_partitionable_edge(edge, partition_id, constraints)
     return edge
 
 
@@ -249,9 +248,8 @@ def add_partitioned_edge(cellclass, cellparams, label=None, constraints=None,
         cellparams['label'] = label
 
     # add partitioned edge
-    cellparams['constraints'] = constraints
     edge = cellclass(**cellparams)
-    _spinnaker.add_partitioned_edge(edge, partition_id)
+    _spinnaker.add_partitioned_edge(edge, partition_id, constraints)
     return edge
 
 

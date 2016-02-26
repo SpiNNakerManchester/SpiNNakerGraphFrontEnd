@@ -10,11 +10,9 @@ class MultiCastPartitionedEdgeWithNKeys(MultiCastPartitionedEdge,
     """ A partitioned edge which will use the multicast fabric
     """
 
-    def __init__(self, pre_subvertex, post_subvertex, n_keys, label=None,
-                 constraints=None):
+    def __init__(self, pre_subvertex, post_subvertex, n_keys, label=None):
         MultiCastPartitionedEdge.__init__(
-            self, pre_subvertex, post_subvertex, label=label,
-            constraints=constraints)
+            self, pre_subvertex, post_subvertex, label=label)
         AbstractProvidesNKeysForPartition.__init__(self)
         self._n_keys = n_keys
 

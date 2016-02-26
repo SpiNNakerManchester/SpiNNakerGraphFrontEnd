@@ -6,6 +6,7 @@ from pacman.operations.pacman_algorithm_executor import PACMANAlgorithmExecutor
 from spinn_front_end_common.interface.spinnaker_main_interface import \
     SpinnakerMainInterface
 from spinn_front_end_common.interface import interface_functions
+from spinn_front_end_common.utilities import exceptions as common_exceptions
 
 # graph front end imports
 from spinnaker_graph_front_end.utilities.xml_interface import XMLInterface
@@ -76,22 +77,50 @@ class SpiNNaker(SpinnakerMainInterface):
             raise Exception("A SpiNNaker machine must be specified in "
                             "spynnaker.cfg.")
 
+    def _create_pacman_executor_inputs(self, this_run_time, is_resetting=False):
+        inputs, application_graph_changed, using_auto_pause_and_resume = \
+            SpinnakerMainInterface._create_pacman_executor_inputs(
+                self, this_run_time, is_resetting)
+        if application_graph_changed and not is_resetting:
+            inputs.append({
+                'type': "ExecuteMapping",
+                'value': config.getboolean(
+                    "Database", "create_routing_info_to_atom_id_mapping")})
+        return inputs, application_graph_changed, using_auto_pause_and_resume
+
     def _create_algorithm_list(
             self, in_debug_mode, application_graph_changed, executing_reset,
             using_auto_pause_and_resume):
 
         mapping_algorithms = list()
+
+        # get config mapping algorithms and convert as needed
+        algorithm_names = config.get("Mapping", "algorithms")
+        algorithm_strings = algorithm_names.split(",")
+        for algorithm_string in algorithm_strings:
+            split_string = algorithm_string.split(":")
+            if len(split_string) == 1:
+                mapping_algorithms.append(split_string[0])
+            else:
+                raise common_exceptions.ConfigurationException(
+                    "The tool chain expects config params of list of 1 "
+                    "element with ,. Where the elements are either: the "
+                    "algorithm_name:algorithm_config_file_path, or "
+                    "algorithm_name if its a internal to pacman algorithm."
+                    " Please rectify this and try again")
+
         mapping_algorithms.append("SpiNNakerGraphFrontEndRuntimeUpdater")
 
         if application_graph_changed and not executing_reset:
-            mapping_algorithms.append("FrontEndCommonEdgeToKeyMapper")
+            mapping_algorithms.append("FrontEndCommonEdgeToNKeysMapper")
 
             if len(self._partitionable_graph.vertices) != 0:
-                mapping_algorithms.append("FrontEndCommonEdgeToKeyMapper")
                 mapping_algorithms.append("FrontEndCommonDatabaseWriter")
             else:
                 mapping_algorithms.append(
                     "SpiNNakerGraphFrontEndDatabaseWriter")
+
+
 
         algorithms, optional_algorithms = \
             self._create_all_flows_algorithm_common(
@@ -128,30 +157,49 @@ class SpiNNaker(SpinnakerMainInterface):
         return {'x': self._machine.max_chip_x, 'y': self._machine.max_chip_y}
 
     def _run_algorithms_for_machine_gain(self):
-        inputs, _, _= self._create_pacman_executor_inputs(self._current_run_ms)
+        # get inputs
+        inputs = list()
+        application_graph_changed, self._no_sync_changes, \
+            no_machine_time_steps, json_folder, width, height, \
+            number_of_boards, scamp_socket_addresses, boot_port_num, \
+            using_auto_pause_and_resume, max_sdram_size = \
+            self._deduce_standard_input_params(False, 0)
+        inputs = self._add_mapping_inputs(
+            inputs, width, height, scamp_socket_addresses, boot_port_num,
+            json_folder, number_of_boards)
+        inputs = self._add_standard_basic_inputs(
+            inputs, no_machine_time_steps, False, max_sdram_size, 0)
+
+        # get algorithms
         algorithms = list()
         if config.getboolean("Machine", "virtual_board"):
             algorithms.append("FrontEndCommonVirtualMachineInterfacer")
 
         else:
             algorithms.append("FrontEndCommonMachineInterfacer")
+
+        # get outputs
         required_outputs = list()
         required_outputs.append("MemoryMachine")
+
+        # get xmls
         xml_paths = list()
         xml_paths.append(os.path.join(
             os.path.dirname(interface_functions.__file__),
             "front_end_common_interface_functions.xml"))
 
+        # run executor
         pacman_executor = PACMANAlgorithmExecutor(
             algorithms=algorithms, inputs=inputs,
             xml_paths=xml_paths, required_outputs=required_outputs,
             optional_algorithms=list(),
             do_timings=config.getboolean("Reports", "outputTimesForSections"))
-        pacman_executor = pacman_executor.execute_mapping()
+        pacman_executor.execute_mapping()
 
+        # get machine object and transciever
         self._machine = pacman_executor.get_item("MemoryMachine")
         if not config.getboolean("Machine", "virtual_board"):
-            self._txrx = pacman_executor.get_item("MemoryTransciever")
+            self._txrx = pacman_executor.get_item("MemoryTransceiver")
 
     def __repr__(self):
         return "SpiNNaker Graph Front End object for machine {}"\

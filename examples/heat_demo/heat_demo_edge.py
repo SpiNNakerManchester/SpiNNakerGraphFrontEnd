@@ -21,10 +21,9 @@ class HeatDemoEdge(MultiCastPartitionedEdgeWithNKeys,
                              ("SOUTH", 3)])
 
     def __init__(self, pre_subvertex, post_subvertex, direction, n_keys=1,
-                 label=None, constraints=None):
+                 label=None):
         MultiCastPartitionedEdgeWithNKeys.__init__(
-            self, pre_subvertex, post_subvertex, n_keys=n_keys, label=label,
-            constraints=constraints)
+            self, pre_subvertex, post_subvertex, n_keys=n_keys, label=label)
         AbstractProvidesNKeysForPartition.__init__(self)
         self._direction = direction
 
