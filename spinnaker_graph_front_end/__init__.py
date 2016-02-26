@@ -48,8 +48,8 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
     global _none_labelled_edge_count
 
     logger.info(
-        "SpiNNaker graph front end (c) {} APT Group, University of Manchester"
-        .format(__version_year__))
+        "SpiNNaker graph front end (c) {}, Alan Stokes, "
+        "University of Manchester".format(__version_year__))
     parent_dir = os.path.split(os.path.split(
         spinnaker.__file__)[0])[0]
     logger.info(

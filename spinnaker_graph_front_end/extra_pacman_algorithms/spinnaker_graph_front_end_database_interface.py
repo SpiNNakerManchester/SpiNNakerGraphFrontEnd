@@ -23,16 +23,16 @@ class SpinnakerGraphFrontEndDatabaseInterface(object):
             placements, routing_infos, router_tables, execute_mapping,
             database_directory):
 
+        self._writer = GraphFrontEndDataBaseWriter(database_directory)
+
         self._needs_database = \
-            helpful_functions.auto_detect_database(partitioned_graph)
+            self._writer.auto_detect_database(partitioned_graph)
         self._user_create_database = user_create_database
 
         if ((self._user_create_database == "None" and self._needs_database) or
                 self._user_create_database == "True"):
 
             database_progress = ProgressBar(8, "Creating database")
-
-            self._writer = GraphFrontEndDataBaseWriter(database_directory)
 
             self._writer.add_system_params(
                 time_scale_factor, machine_time_step, runtime)

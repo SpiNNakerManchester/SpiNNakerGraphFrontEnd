@@ -33,7 +33,6 @@ class GraphFrontEndDataBaseWriter(DatabaseWriter):
             connection = sqlite.connect(self._database_path)
             cur = connection.cursor()
             # create table
-            self._done_mapping = True
             cur.execute(
                 "CREATE TABLE event_to_atom_mapping("
                 "vertex_id INTEGER, atom_id INTEGER, "

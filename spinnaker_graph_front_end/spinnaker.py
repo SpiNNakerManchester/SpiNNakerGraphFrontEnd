@@ -119,8 +119,13 @@ class SpiNNaker(SpinnakerMainInterface):
             else:
                 mapping_algorithms.append(
                     "SpiNNakerGraphFrontEndDatabaseWriter")
-
-
+        # if not in auto pause and resume mode, use front end common
+        # chip runtime updater
+        if (application_graph_changed and not executing_reset and
+                not using_auto_pause_and_resume):
+            mapping_algorithms.append("GraphFrontEndCommonChipRuntimeUpdater")
+        if not application_graph_changed and not executing_reset:
+            mapping_algorithms.append("GraphFrontEndCommonChipRuntimeUpdater")
 
         algorithms, optional_algorithms = \
             self._create_all_flows_algorithm_common(
