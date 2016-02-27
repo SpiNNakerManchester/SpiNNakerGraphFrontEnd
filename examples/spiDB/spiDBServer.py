@@ -19,63 +19,67 @@ front_end.setup(graph_label="spiDB",
 machine_time_step = 100
 time_scale_factor = 1
 
+root_core = 1
+
+first_branch = 2
+n_branches = 3
+
+first_leaf = 5
+n_leaves = 13
+
 machine_port = 11111
 machine_recieve_port = 22222
 machine_host = "0.0.0.0"
 
-number_of_leaves = 13
-number_of_branches = 3
+chip_x_dimension = 2
+chip_y_dimension = 2
 
-root_vertex = front_end.add_partitioned_vertex(
-    RootVertex,
-    {'label': 'Root',
-     'machine_time_step': machine_time_step,
-     'time_scale_factor': time_scale_factor,
-     'port': machine_port},
-    label="root")
+roots = [[None for yy in range(chip_y_dimension)] for xx in range(chip_x_dimension)]
+root_leaves = [[dict() for yy in range(chip_y_dimension)] for xx in range(chip_x_dimension)]
 
-"""
-front_end.add_partitioned_vertex(
-            BranchVertex,
-            {'label':"branch{}".format(1),
+for x in range(chip_x_dimension):
+    for y in range(chip_y_dimension):
+        roots[x][y] = front_end.add_partitioned_vertex(
+            RootVertex,
+            {'label': 'root_{}_{}'.format(x,y),
              'machine_time_step': machine_time_step,
-             'time_scale_factor': time_scale_factor})
-"""
+             'time_scale_factor': time_scale_factor,
+             'port': machine_port if x is 0 and y is 0 else None,
+             'placement': (x, y, 1)},
+            label='root_{}_{}'.format(x, y))
 
-for x_position in range(number_of_branches):
-        v = front_end.add_partitioned_vertex(
-            LeafVertex,
-            {'machine_time_step': machine_time_step,
-             'time_scale_factor': time_scale_factor},
-             label="branch{}".format(x_position))
+for x in range(chip_x_dimension):
+    for y in range(chip_y_dimension):
+        for p in range(first_branch, first_branch+n_branches):
+            b = front_end.add_partitioned_vertex(
+                BranchVertex,
+                {'label': 'branch_{}_{}_{}'.format(x, y, p),
+                 'machine_time_step': machine_time_step,
+                 'time_scale_factor': time_scale_factor,
+                 'placement': (x, y, p)},
+                 label='branch_{}_{}_{}'.format(x, y, p))
 
-leaves = list()
+for x in range(chip_x_dimension):
+    for y in range(chip_y_dimension):
+        for p in range(first_leaf, first_leaf+n_leaves):
+            l = front_end.add_partitioned_vertex(
+                LeafVertex,
+                {'label': 'leaf_{}_{}_{}'.format(x, y, p),
+                 'machine_time_step': machine_time_step,
+                 'time_scale_factor': time_scale_factor,
+                 'placement': (x, y, p)},
+                 label='leaf_{}_{}_{}'.format(x, y, p))
+            root_leaves[x][y][p] = l
 
-for x_position in range(number_of_leaves):
-        l = front_end.add_partitioned_vertex(
-            LeafVertex,
-            {'machine_time_step': machine_time_step,
-             'time_scale_factor': time_scale_factor},
-             label="leaf{}".format(x_position))
-        leaves.append(l)
+for x in range(chip_x_dimension):
+    for y in range(chip_y_dimension):
+        for p in range(first_leaf, first_leaf+n_leaves):
+            front_end.add_partitioned_edge(
+                TreeEdge,
+                {'pre_subvertex': roots[x][y],
+                 'post_subvertex': root_leaves[x][y][p]},
+                label="edge_{}_to_{}"
+                      .format(roots[x][y].label, root_leaves[x][y][p].label),
+                partition_id="TREE_EDGE_{}".format(roots[x][y].label))
 
-for x_position in range(3 * (number_of_leaves+number_of_branches+1)):
-    l = front_end.add_partitioned_vertex(
-        LeafVertex,
-        {'machine_time_step': machine_time_step,
-         'time_scale_factor': time_scale_factor},
-         label="other_leaf{}".format(x_position))
-    if x_position >= number_of_branches:
-        leaves.append(l)
-
-for l in leaves:
-    front_end.add_partitioned_edge(
-        TreeEdge,
-        {'pre_subvertex': root_vertex,
-         'post_subvertex': l},
-        label="Edge from {} to {}"
-              .format(root_vertex.label, l.label),
-        partition_id="TREE_EDGE")
-
-front_end.run(5)
-front_end.stop()
+front_end.run()

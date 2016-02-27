@@ -233,7 +233,7 @@ def convertFromUnicode(u):
 
 def generateQueryStructs(id, queryString, type="SQL"):
     if queryString is None:
-        return None
+        return []
 
     if type == "SQL":
         inst = StatementParser.parse(queryString)
@@ -246,13 +246,13 @@ def generateQueryStructs(id, queryString, type="SQL"):
         elif isinstance(inst, Select):
             return SELECT(id, inst)
         else:
-            return None
+            return []
     else:
         upper = queryString.upper()
         if upper.startswith("PUT") or upper.startswith("PUSH"):
             m = put_pattern.match(queryString)
             if m is None:
-                raise Exception("Invalid PUT format")
+                raise Exception("Invalid PUT format: '{}'".format(queryString))
 
             k = convertFromUnicode(m.group(1))
             v = convertFromUnicode(m.group(2))
@@ -261,10 +261,12 @@ def generateQueryStructs(id, queryString, type="SQL"):
         if upper.startswith("PULL") or upper.startswith("POP"):
             m = pull_pattern.match(queryString)
             if m is None:
-                raise Exception("Invalid PULL format")
+                raise Exception("Invalid PULL format: '{}'".format(queryString))
 
             k = convertFromUnicode(m.group(1))
             return PULL(id, k)
+
+        raise Exception("Invalid query format {}".format(queryString))
 
 def translateResponse(responseStr):
     fmt = "IB?BBBBBB"
@@ -277,7 +279,24 @@ def translateResponse(responseStr):
 
     data_i = struct.calcsize(fmt)
 
-    if cmd == "SELECT":
+    if cmd == "PULL":
+        data = responseStr[data_i:]
+        bibbb = "BIBBB"
+
+        (type, size, pad0, pad1, pad2) = struct.unpack_from(bibbb, data)
+        type = get_datatype_name(type)
+
+        value = data[struct.calcsize(bibbb):]
+        if type == 'integer':
+            value = struct.unpack("<I", value)[0]
+
+        response.data = Entry(type=type, size=size, value=value)
+    elif cmd == "PUT":
+        data = responseStr[data_i:]
+        bytes_written = struct.unpack_from("I", data[:4])[0]
+
+        response.data = bytes_written
+    elif cmd == "SELECT":
         data = responseStr[data_i:]
 
         row_id   = struct.unpack("I", data[:4])[0]
@@ -302,19 +321,5 @@ def translateResponse(responseStr):
         i = response.data.index('\0')
         if i > 0:
             response.data = response.data[:i]
-    elif cmd == "PULL":
-        data = responseStr[data_i:]
-        bibbb = "BIBBB"
-
-        (type, size, pad0, pad1, pad2) = struct.unpack_from(bibbb, data)
-        type = get_datatype_name(type)
-
-        value = data[struct.calcsize(bibbb):]
-        if type == 'integer':
-            print_bytearr(value)
-            print value
-            value = struct.unpack("<I", value)[0]
-
-        response.data = Entry(type=type, size=size, value=value)
 
     return response

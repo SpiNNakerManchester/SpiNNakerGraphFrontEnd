@@ -1,8 +1,10 @@
 #include "spin1_api.h"
 #include <debug.h>
+#include "timer2.h"
+#include "db-typedefs.h"
 
 #define SDP_PORT        3
-#define SDP_TIMEOUT     10
+#define SDP_TIMEOUT     10 //milliseconds
 #define MAX_RETRIES     3
 
 void revert_src_dest(sdp_msg_t* msg){
@@ -75,20 +77,24 @@ sdp_msg_t* send_internal_data_response(uchar x, uchar y, uchar p,
     return msg;
 }
 
-sdp_msg_t* send_data_response_to_host(spiDBcommand cmd,
-                                      id_t id,
-                                      void* data,
-                                      size_t data_size_bytes){
+#define UNDEF 255
+
+sdp_msg_t* send_xyp_data_response_to_host(spiDBQueryHeader* q,
+                                          void* data,
+                                          size_t data_size_bytes,
+                                          uchar x_origin,
+                                          uchar y_origin,
+                                          uchar p_origin){
 
     sdp_msg_t* msg = create_sdp_header_to_host();
 
     Response* r = (Response*)&msg->cmd_rc;
-    r->id  = id;
-    r->cmd = cmd;
+    r->id  = q->id;
+    r->cmd = q->cmd;
     r->success = true;
-    r->x = chipx;
-    r->y = chipy;
-    r->p = core;
+    r->x = x_origin == UNDEF ? chipx : x_origin;
+    r->y = y_origin == UNDEF ? chipy : y_origin;
+    r->p = p_origin == UNDEF ? core  : p_origin;
 
     sark_mem_cpy(&r->data, data, data_size_bytes);
 
@@ -102,8 +108,16 @@ sdp_msg_t* send_data_response_to_host(spiDBcommand cmd,
     return msg;
 }
 
-sdp_msg_t* send_empty_response_to_host(spiDBcommand cmd, id_t id){
-    return send_data_response_to_host(cmd, id, NULL, 0);
+
+sdp_msg_t* send_data_response_to_host(spiDBQueryHeader* q,
+                                      void* data,
+                                      size_t data_size_bytes){
+    return send_xyp_data_response_to_host(q, data, data_size_bytes,
+                                          UNDEF, UNDEF, UNDEF);
+}
+
+sdp_msg_t* send_empty_response_to_host(spiDBQueryHeader* q){
+    return send_data_response_to_host(q, NULL, 0);
 }
 
 void set_dest_host(sdp_msg_t* msg){
@@ -124,27 +138,32 @@ void set_dest_xyp(sdp_msg_t* msg, uint8_t x, uint8_t y, uint8_t p){
     set_dest_core(msg, p);
 }
 
-uint32_t get_srce_chip_x(sdp_msg_t* msg){
+void set_srce_as_self(sdp_msg_t* msg){
+    msg->srce_addr = spin1_get_chip_id();
+    msg->srce_port = (SDP_PORT << PORT_SHIFT) | spin1_get_core_id();
+}
+
+uchar get_srce_chip_x(sdp_msg_t* msg){
     return (msg->srce_addr & 0xFF00) >> 8;
 }
 
-uint32_t get_srce_chip_y(sdp_msg_t* msg){
+uchar get_srce_chip_y(sdp_msg_t* msg){
     return msg->srce_addr & 0x00FF;
 }
 
-uint32_t get_srce_core(sdp_msg_t* msg){
+uchar get_srce_core(sdp_msg_t* msg){
     return msg->srce_port & 0x1F;
 }
 
-uint32_t get_dest_chip_x(sdp_msg_t* msg){
+uchar get_dest_chip_x(sdp_msg_t* msg){
     return (msg->dest_addr & 0xFF00) >> 8;
 }
 
-uint32_t get_dest_chip_y(sdp_msg_t* msg){
+uchar get_dest_chip_y(sdp_msg_t* msg){
     return msg->dest_addr & 0x00FF;
 }
 
-uint32_t get_dest_core(sdp_msg_t* msg){
+uchar get_dest_core(sdp_msg_t* msg){
     return msg->dest_port & 0x1F;
 }
 

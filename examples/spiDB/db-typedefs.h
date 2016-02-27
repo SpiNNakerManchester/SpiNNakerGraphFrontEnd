@@ -6,7 +6,12 @@
     ///////////////////////////////////////////////////////////////////////////
     #define DB_TYPE_KEY_VALUE_STORE
         #ifdef DB_TYPE_KEY_VALUE_STORE
-            #define DB_SUBTYPE_HASH_TABLE
+            //#define DB_SUBTYPE_HASH_TABLE
+            #ifdef DB_SUBTYPE_HASH_TABLE
+                //#define HASH_FUNCTION_DFJB
+                //#define HASH_FUNCTION_XOR
+                #define HASH_FUNCTION_JENKINGS
+            #endif
     #endif
 
     #define DB_TYPE_RELATIONAL
@@ -29,11 +34,13 @@
 
     #define DEFAULT_TABLE_SIZE_WORDS    1024 //todo careful with overflow
 
+    #define MULTIPLE_OF_4(n) (((n+3)/4)*4)
     #define try(cond) do { if (!cond) return false; } while (0)
 
     typedef enum var_type  { UINT32=0, STRING } var_type;
     typedef enum regions_e { SYSTEM_REGION=0, DB_DATA_REGION} regions_e;
     typedef uint32_t id_t;
+    typedef uint32_t info_t;
 
     uchar chipx, chipy, core;
 
@@ -106,19 +113,19 @@
                     | to_info_single(v_type,v_size);
         }
 
-        var_type k_type_from_info(uint32_t info){
+        var_type k_type_from_info(info_t info){
             return (info & 0xF0000000) >> 28;
         }
 
-        size_t k_size_from_info(uint32_t info){
+        size_t k_size_from_info(info_t info){
             return (info & 0x0FFF0000) >> 16;
         }
 
-        var_type v_type_from_info(uint32_t info){
+        var_type v_type_from_info(info_t info){
             return (info & 0x0000F000) >> 12;
         }
 
-        size_t v_size_from_info(uint32_t info){
+        size_t v_size_from_info(info_t info){
             return (info & 0x00000FFF);
         }
 
@@ -363,7 +370,7 @@
             spiDBcommand    cmd;
             id_t            id;
 
-            uint32_t        info;
+            info_t          info;
             uchar           data[256];
         } putPullQuery;
 
@@ -371,7 +378,7 @@
             spiDBcommand    cmd;
             id_t            id;
 
-            uint32_t        info;
+            info_t          info;
             uchar           k_v[256];
         } putQuery;
 
@@ -379,11 +386,11 @@
             spiDBcommand    cmd;
             id_t            id;
 
-            uint32_t        info;
+            info_t          info;
             uchar           k[256];
         } pullQuery;
 
-        typedef struct pullValue {
+        typedef struct pullValue{
             var_type type;
             size_t   size;
 

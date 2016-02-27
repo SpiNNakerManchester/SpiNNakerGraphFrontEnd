@@ -5,18 +5,20 @@
         #include "../memory_utils.h"
         #include "../db-typedefs.h"
 
-        bool put(address_t* addr, uint32_t info, void* k, void* v){
+        size_t put(address_t* addr, info_t info, void* k, void* v){
 
             size_t k_size = k_size_from_info(info);
             size_t v_size = v_size_from_info(info);
 
-            try(k_size && v_size && k && v); //return false if any of these are 0
+            try(k_size && v_size && k && v); //return 0 if any of these are 0
 
             append(addr, &info, sizeof(uint32_t));
             append(addr, k,     k_size);
             append(addr, v,     v_size);
 
-            return true;
+            return sizeof(info_t) +
+                   MULTIPLE_OF_4(k_size) +
+                   MULTIPLE_OF_4(v_size);
         }
     #endif
 #endif

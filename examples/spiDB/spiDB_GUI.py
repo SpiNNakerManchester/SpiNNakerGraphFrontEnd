@@ -6,11 +6,9 @@ from time import *
 import sys
 import pylab
 import numpy as np
+import matplotlib.ticker as ticker
 
 from spiDB_socket_connection import SpiDBSocketConnection
-
-pylab.rc('xtick', labelsize=7)
-pylab.rc('ytick', labelsize=7)
 
 def highlight(e, scrolledText='input'):
 
@@ -62,8 +60,8 @@ class MainMenu(Frame):
         sys.exit(0)
 
     def onOpen(self):
-        filespes = [('SQL file', '*.sql'),
-                    ('KV file', '*.kv'),
+        filespes = [('KV file', '*.kv'),
+                    ('SQL file', '*.sql'),
                     ('CSV file', '*.csv'),
                     ('All files', '*')]
         dlg = tkFileDialog.Open(self, filetypes = filespes)
@@ -212,8 +210,15 @@ def runQuery():
 
     error = True
     results = []
-    downloads = dict()
-    uploads = dict()
+    downloads = list()
+    uploads = list()
+
+    #ms
+    totalDownloadTime = 0
+    totalUploadTime = 0
+
+    packetsSent = 0
+    packetsReceived = 0
 
     #try:
     if currentDbTypeStringVar.get() == 'SQL':
@@ -223,15 +228,23 @@ def runQuery():
             r = conn.run(statements, 'SQL')
 
             results.extend(r["results"])
-            downloads.update(r["download"])
-            uploads.update(r["upload"])
+            downloads.extend(r["download"])
+            uploads.extend(r["upload"])
+            totalUploadTime += r["uploadTime"]
+            totalDownloadTime += r["downloadTime"]
+            packetsSent += r["packetsSent"]
+            packetsReceived += r["packetsReceived"]
     else:
         for stage in qText.split('.'):
             r = conn.run(stage.split('\n'), 'Key-Value')
 
             results.extend(r["results"])
-            downloads.update(r["download"])
-            uploads.update(r["upload"])
+            downloads.extend(r["download"])
+            uploads.extend(r["upload"])
+            totalUploadTime += r["uploadTime"]
+            totalDownloadTime += r["downloadTime"]
+            packetsSent += r["packetsSent"]
+            packetsReceived += r["packetsReceived"]
 
     pausePing = False
     """except Exception as e:
@@ -240,10 +253,49 @@ def runQuery():
         return
     """
 
-    s = ""
     xyp_occurences = dict()
+    xyp_bytes = dict()
     responseTimes = list()
     occ = [[[0 for p in range(18)] for y in range(2)] for x in range(2)]
+
+    totalResponseTimesAddedUp = 0
+    packetsUnreplied = 0
+    for r in results:
+        if r is None:
+            packetsUnreplied += 1
+        else:
+            if not r.responses:
+                packetsUnreplied += 1
+            else:
+                for resp in r.responses:
+                    if resp.__xyp__() in xyp_occurences:
+                        xyp_occurences[resp.__xyp__()] += 1
+                        if resp.cmd == "PUT":
+                            xyp_bytes[resp.__xyp__()] += resp.data
+                    else:
+                        xyp_occurences[resp.__xyp__()] = 1
+                        if resp.cmd == "PUT":
+                            xyp_bytes[resp.__xyp__()] = resp.data
+                    responseTimes.append(resp.response_time)
+                    totalResponseTimesAddedUp += resp.response_time
+
+    for xyp, o in xyp_occurences.iteritems():
+        (x, y, p) = xyp
+        occ[x][y][p] = o
+
+    s = "Statistics:\n\n" \
+        "  total upload time:      {:>11}\n"\
+        "  total download time:    {:>11}\n\n"\
+        "  average response time:  {:.3f}ms\n\n"\
+        "  number of packets sent:               {:>6} {:>12}\n"\
+        "  number of packets received:           {:>6} {:>12}\n"\
+        "  number of packets unreplied or lost:  {:>6}\n\n"\
+        .format("{:.2f}ms".format(totalUploadTime),
+                "{:.2f}ms".format(totalDownloadTime),
+                totalResponseTimesAddedUp/packetsReceived,
+                packetsSent, "({} bytes)".format(sum([x[1] for x in uploads])),
+                packetsReceived, "({} bytes)".format(sum([x[1] for x in downloads])),
+                packetsUnreplied)
 
     for r in results:
         if r is None:
@@ -251,17 +303,6 @@ def runQuery():
         else:
             error = False
             s += "{}\n".format(str(r))
-
-            for resp in r.responses:
-                if resp.__xyp__() in xyp_occurences:
-                    xyp_occurences[resp.__xyp__()] += 1
-                else:
-                    xyp_occurences[resp.__xyp__()] = 1
-                responseTimes.append(resp.response_time)
-
-            for xyp, o in xyp_occurences.iteritems():
-                (x, y, p) = xyp
-                occ[x][y][p] = o
 
     outputText.delete('1.0', END)
     outputText.insert(INSERT, s)
@@ -276,48 +317,44 @@ def runQuery():
     historyListbox.insert(0,qText)
     history[qText] = queryResultTuple
 
-    if not error and len(responseTimes) > 1:
+    if not error and len(responseTimes) > 2:
+        #########################################################
+
+        xUpload = [x[0] for x in uploads]
+        yUpload = [x[1] for x in uploads]
+
+        xDownload = [x[0] for x in downloads]
+        yDownload = [x[1] for x in downloads]
+
         pylab.figure()
         fig = pylab.gcf()
         fig.canvas.set_window_title('Network Traffic')
-        pylab.plot(list(uploads.keys()), list(uploads.values()),
-                   label='upload')
-        pylab.plot(list(downloads.keys()), list(downloads.values()),
-                   label='download')
+        pylab.plot(xUpload, yUpload, label='upload')
+        pylab.plot(xDownload, yDownload, label='download')
         pylab.legend(loc='upper left')
         pylab.xlabel('Query ID')
         pylab.ylabel('Bytes')
         pylab.title('Network Traffic')
 
-        ######################################################
+        ####################################################################
         pylab.figure()
         fig = pylab.gcf()
         fig.canvas.set_window_title('Response Times')
-        pylab.plot(range(len(responseTimes)), responseTimes,
-                   'bo', label='sample')
-        pylab.plot(range(len(responseTimes)), responseTimes,
-                   ':k', label='fitting')
+
+        x = range(len(responseTimes))
+        y = responseTimes
+        pylab.ylim([0, max(1, max(responseTimes)+0.1)])
+        pylab.plot(x, y, 'bo', label='sample')
+
+        pylab.plot(x, np.poly1d(np.polyfit(x, y, 5))(x), 'r', label='fitting')
+        #pylab.plot(1, fit[0] * 1 + fit[1], color='red')
+        #pylab.plot(range(len(responseTimes)), responseTimes,
+        #           ':k', label='fitting')
         pylab.xlabel('Query ID')
         pylab.ylabel('Response Time (ms)')
         pylab.title('Response Times')
 
-        ######################################################
-        """
-        tuples = xyp_occurences.keys()
-        y_pos = np.arange(len(tuples))
-        occurences = xyp_occurences.values()
-
-        pylab.figure()
-        fig = pylab.gcf()
-        fig.canvas.set_window_title('Response distribution')
-        pylab.bar(y_pos, occurences, align='center', alpha=0.5)
-        pylab.xticks(y_pos, tuples)
-        pylab.xlabel('Core')
-        pylab.ylabel('Responses')
-        pylab.title('Response distribution')
-        """
-
-        #####################################################################3
+        ####################################################################
 
         fig, ax = pylab.subplots(2, 2, sharex=True, sharey=True) #2x2
 
@@ -325,6 +362,58 @@ def runQuery():
             for j in range(2):
                 ax[i, j].set_title("Chip ({},{})".format(i,j))
                 ax[i, j].bar(range(18), occ[i][j])
+
+        ####################################################################
+
+        chips = ('Chip (0,0)', 'Chip (0,1)', 'Chip (1,0)', 'Chip (1,1)')
+        r = len(chips)
+
+        colors ='rgbwmc'
+
+        patch_handles = []
+
+        fig = pylab.figure(figsize=(10,8))
+        ax = fig.add_subplot(111)
+
+        left = np.zeros(r,)
+        row_counts = np.zeros(r,)
+
+        def getID(x, y):
+            if x is 0 and y is 0:
+                return 0
+            if x is 0 and y is 1:
+                return 1
+            if x is 1 and y is 0:
+                return 2
+            if x is 1 and y is 1:
+                return 3
+
+        print xyp_bytes
+        for x, y, p in sorted(xyp_bytes):
+            r = getID(x,y)
+            bytes = xyp_bytes[x,y,p]
+
+            patch_handles.append(
+                ax.barh(r, bytes, align='center', left=left[r],
+                        color=colors[int(row_counts[r]) % len(colors)],
+                        edgecolor='black')
+            )
+            left[r] += bytes
+            row_counts[r] += 1
+
+            # we know there is only one patch but could enumerate if expanded
+            patch = patch_handles[-1][0]
+            bl = patch.get_xy()
+
+            ax.text(0.5*patch.get_width() + bl[0],
+                    0.5*patch.get_height() + bl[1],
+                    bytes, ha='center',va='center')
+
+        y_pos = np.arange(4)
+        ax.set_yticks(y_pos)
+        ax.set_yticklabels(chips)
+        ax.set_xlabel('Bytes')
+        pylab.xlim([0, 120000000])
 
         pylab.show()
     """

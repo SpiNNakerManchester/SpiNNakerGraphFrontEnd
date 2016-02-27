@@ -18,6 +18,7 @@
 #include "../db-typedefs.h"
 #include "../memory_utils.h"
 #include "../sdp_utils.h"
+#include "../timer2.h"
 #include "pull.h"
 #include "put.h"
 #include "scan.h"
@@ -25,8 +26,6 @@
 #define TIMER_PERIOD 100
 
 //Globals
-uint32_t time = 0;
-
 static circular_buffer sdp_buffer;
 
 extern uchar chipx, chipy, core;
@@ -47,7 +46,10 @@ void update(uint ticks, uint b){
     use(ticks);
     use(b);
 
-    time += TIMER_PERIOD;
+    if(ticks == 0){
+        START_TIMER();
+    }
+
 }
 
 void sdp_packet_callback(uint mailbox, uint port) {
@@ -55,9 +57,9 @@ void sdp_packet_callback(uint mailbox, uint port) {
 
     sdp_msg_t* msg     = (sdp_msg_t*)mailbox;
     sdp_msg_t* msg_cpy = (sdp_msg_t*)sark_alloc(1,
-                           sizeof(sdp_msg_t) + sizeof(insertEntryQuery));
+                          sizeof(sdp_hdr_t) + 256);
 
-    sark_word_cpy(msg_cpy, msg, sizeof(sdp_msg_t) + sizeof(insertEntryQuery));
+    sark_word_cpy(msg_cpy, msg, sizeof(sdp_hdr_t) + 256);
 
     spin1_msg_free(msg);
 
@@ -150,15 +152,19 @@ void process_requests(uint arg0, uint arg1){
                 case PUT:;
                     log_info("PUT");
                     putQuery* putQ = (putQuery*) header;
-                    log_info("  |- %08x  k_v: %s", *addr, putQ->k_v);
+                    //log_info("  |- %08x  k_v: %s", *addr, putQ->k_v);
 
                     info    = putQ->info;
                     k       = putQ->k_v;
                     v       = &putQ->k_v[k_size_from_info(info)];
 
-                    put(addr, info, k, v);
+                    size_t bytes_written = put(addr, info, k, v);
+                    log_info("data_region >> %08x", data_region);
+                    log_info("addr >> %08x", *addr);
+                    log_info("diff >> %08x", ((uint32_t)*addr)-(uint32_t)data_region);
 
-                    send_empty_response_to_host(PUT, putQ->id);
+                    send_data_response_to_host(putQ,
+                                               &bytes_written, sizeof(size_t));
                     break;
                 #ifdef DB_SUBTYPE_HASH_TABLE
                 case PULL:;
@@ -166,32 +172,12 @@ void process_requests(uint arg0, uint arg1){
                     pull_respond((pullQuery*)header);
                     break;
                 #endif
-                case PULL_REPLY:;
-                    log_info("PULL_REPLY");
-                    pullValueResponse* r = (pullValueResponse*)header;
-
-                    send_data_response_to_host(PULL,
-                                               r->id,
-                                               &r->v,
-                                               sizeof(r->v.type)
-                                               + sizeof(r->v.size)
-                                               + sizeof(r->v.pad)
-                                               + r->v.size + 3);
-                    break;
                 default:;
                     break;
             }
         #endif
         #ifdef DB_TYPE_RELATIONAL
             switch(header->cmd){
-                case SELECT_RESPONSE:;
-                    selectResponse* selResp = (selectResponse*)header;
-                    log_info("SELECT_RESPONSE on '%s' with addr %08x from core %d",
-                             selResp->table->name, selResp->addr, get_srce_core(msg));
-
-                    breakInBlocks(selResp);
-
-                    break;
                 case INSERT_INTO:;
                     log_info("INSERT_INTO");
 
@@ -243,8 +229,7 @@ void process_requests(uint arg0, uint arg1){
 
                     sark_mem_cpy(address_to_write, e.value, e.size);
 
-                    send_data_response_to_host(INSERT_INTO,
-                                               insertE->id,
+                    send_data_response_to_host(insertE,
                                                e.col_name,
                                                16);
                     break;
@@ -257,6 +242,7 @@ void process_requests(uint arg0, uint arg1){
 
         // free the message to stop overload
         //spin1_msg_free(msg);
+        sark_free(msg);
     }
 }
 
@@ -267,6 +253,7 @@ void receive_MC_data(uint key, uint payload)
     spiDBQueryHeader* header = (spiDBQueryHeader*)payload;
 
     switch(header->cmd){
+        /*
         case CLEAR:
             log_info("CLEAR");
 
@@ -275,6 +262,7 @@ void receive_MC_data(uint key, uint payload)
             *addr = data_region;
 
             break;
+        */
         case SELECT:
             log_info("SELECT");
 
@@ -331,8 +319,6 @@ void c_main()
 
     log_info("Initializing Leaf (%d,%d,%d)\n", chipx, chipy, core);
 
-
-
     table_rows_in_this_core = (uint32_t*)sark_alloc(DEFAULT_NUMBER_OF_TABLES,
                                                     sizeof(uint32_t));
     table_max_row_id_in_this_core =
@@ -368,6 +354,8 @@ void c_main()
 
     spin1_callback_on(MCPL_PACKET_RECEIVED, receive_MC_data,     0);
     spin1_callback_on(MC_PACKET_RECEIVED,   receive_MC_void,     0);
+
+    ENABLE_TIMER ();	// Enable timer (once)
 
     simulation_run();
 }

@@ -74,6 +74,13 @@ class Result:
             return "{}\n".format(str(self.responses[0]))
         return "{}\n".format(str(self.responses))
 
+class PutResult(Result):
+    def __init__(self):
+        Result.__init__(self)
+
+    def addResponse(self, r):
+        Result.addResponse(self, r)
+
 class PullResult(Result):
     def __init__(self):
         Result.__init__(self)

@@ -2,6 +2,8 @@
 from pacman.model.partitioned_graph.partitioned_vertex import PartitionedVertex
 from pacman.model.resources.cpu_cycles_per_tick_resource import \
     CPUCyclesPerTickResource
+from pacman.model.constraints.placer_constraints\
+    .placer_chip_and_core_constraint import PlacerChipAndCoreConstraint
 from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.sdram_resource import SDRAMResource
@@ -29,7 +31,10 @@ class LeafVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
 
     CORE_APP_IDENTIFIER = 0xBEEF
 
-    def __init__(self, label, machine_time_step, time_scale_factor, constraints=None):
+    def __init__(self, label, machine_time_step, time_scale_factor, placement,
+                 constraints=None):
+
+        x, y, p = placement
 
         resoruces = ResourceContainer(cpu=CPUCyclesPerTickResource(45),
                                       dtcm=DTCMResource(100),
@@ -46,6 +51,9 @@ class LeafVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
 
         self.placement = None
         self.spec = None
+
+        placement_constaint = PlacerChipAndCoreConstraint(x, y, p)
+        self.add_constraint(placement_constaint)
 
     def get_binary_file_name(self):
         return "leaf.aplx"
@@ -126,11 +134,6 @@ class LeafVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         :return:
         """
         self._write_basic_setup_info(spec, region_id)
-        spec.switch_write_focus(region=region_id)
-
-        spec.write_value(data=core_app_identifier)
-        spec.write_value(data=self._machine_time_step * self._time_scale_factor)
-        spec.write_value(data=self._no_machine_time_steps)
 
     def append(self,data):
         self.spec.switch_write_focus(region=self.DATA_REGIONS.DATABASE.value)

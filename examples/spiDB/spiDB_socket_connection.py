@@ -7,6 +7,7 @@ from spinnman.transceiver import create_transceiver_from_hostname
 from spinnman.model.core_subset import CoreSubset
 import time
 from spinnman.exceptions import SpinnmanTimeoutException
+from result import PutResult
 from result import SelectResult
 from result import InsertIntoResult
 from result import Result
@@ -43,7 +44,11 @@ class SpiDBSocketConnection(UDPConnection):
         return (time.time()-time_sent)*1000
 
     def sendQuery(self, i, q, type="SQL"):
-        queryStructs = socket_translator.generateQueryStructs(i,q,type)
+        try:
+            queryStructs = socket_translator.generateQueryStructs(i,q,type)
+        except Exception as e:
+            print e
+            return 0
 
         bytes = 0
 
@@ -51,28 +56,37 @@ class SpiDBSocketConnection(UDPConnection):
             bytes += len(s)
             self.send_to(s, (self.ip_address, self.port))
 
-        return bytes
+        return {'bytes': bytes, 'packets': len(queryStructs)}
 
-    def receive_all(self, sent_times, results, downloadBytes):
+    def receive_all(self, sent_times, results,
+                    downloadBytes, downloadTimeArr, packetsReceivedArr):
+
         responseBuffer = []
+
+        firstReceived = time.time()
 
         while True:
             try:
-                s = self.receive(0.3)
+                s = self.receive(0.2)
                 responseBuffer.append((time.time(), s))
                 print s
             except SpinnmanTimeoutException:
                 break
 
+        lastReceived = time.time()
+
         for id, t in sent_times.iteritems():
             results[id] = Result() #empty result
+
+        total = 0
 
         for t, s in responseBuffer:
             response = socket_translator.translateResponse(s)
             if response is None:
                 continue
 
-            response.response_time = (t-sent_times[response.id])*1000
+            total += len(s)
+            response.response_time = (t-sent_times[response.id]) * 1000
 
             r = results.get(response.id)
             if r is None or not r.responses:
@@ -81,39 +95,62 @@ class SpiDBSocketConnection(UDPConnection):
                     results[response.id] = SelectResult()
                 elif response.cmd == "INSERT_INTO":
                     results[response.id] = InsertIntoResult()
+                elif response.cmd == "PUT":
+                    results[response.id] = PutResult()
                 else:
                     results[response.id] = Result()
 
             results[response.id].addResponse(response)
             downloadBytes[response.id] += len(s)
+            downloadTimeArr[0] = (lastReceived-firstReceived)*1000
+            packetsReceivedArr[0] = len(responseBuffer)
 
         return results
 
     def run(self, sqlQueries, type="SQL"):
         sentTimes = dict()
+
         results = dict()
+
         uploadBytes = dict()
         downloadBytes = dict()
 
+        downloadTimeArr = [1]
+
+        packetsSent = 0
+        packetsReceivedArr = [1]
+
         t = threading.Thread(target=self.receive_all,
-                             args=(sentTimes, results, downloadBytes))
+                             args=(sentTimes, results,
+                                   downloadBytes, downloadTimeArr,
+                                   packetsReceivedArr))
         t.start()
+
+        firstTimeSent = time.time()
 
         for q in sqlQueries:
             if len(q) is 0 or q.isspace():
                 continue
 
-            time.sleep(0.1)
-            uploadBytes[self.i] = self.sendQuery(self.i, q, type)
+            time.sleep(0.0002)
+            sq = self.sendQuery(self.i, q, type)
+            uploadBytes[self.i] = sq['bytes']
+            packetsSent += sq['packets']
             sentTimes[self.i] = time.time()
 
             self.i += 1
 
+        lastTimeSent = time.time()
+
         t.join()
 
         return {'results': list(results.values()),
-                'upload': uploadBytes,
-                'download': downloadBytes}
+                'upload': sorted(uploadBytes.iteritems()),
+                'download': sorted(downloadBytes.iteritems()),
+                'packetsSent': packetsSent,
+                'packetsReceived': packetsReceivedArr[0],
+                'uploadTime': (lastTimeSent-firstTimeSent)*1000,
+                'downloadTime': downloadTimeArr[0]}
 
     def iobuf(self, x, y, p):
         iobufs = self.transceiver.get_iobuf(
