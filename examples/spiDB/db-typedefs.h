@@ -14,7 +14,7 @@
             #endif
     #endif
 
-    //#define DB_TYPE_RELATIONAL
+    #define DB_TYPE_RELATIONAL
     ///////////////////////////////////////////////////////////////////////////
 
     #define CHIP_X_SIZE                 2
@@ -331,6 +331,7 @@
         }
 
         void print_tables(Table* tables){
+            log_info("---- Tables at %08x", tables);
             for(uint i = 0; i < DEFAULT_NUMBER_OF_TABLES; i++){
                 print_table(&tables[i]);
             }

@@ -339,6 +339,8 @@ void process_requests(uint arg0, uint arg1){
 
                     log_info("  Table '%s'-> %08x", newTable->name, newTable);
                     print_table(newTable);
+
+                    n_tables++;
                 }
 
                 revert_src_dest(msg);
@@ -353,17 +355,15 @@ void process_requests(uint arg0, uint arg1){
                 response->y = chipy;
                 response->p = core;
 
-                n_tables++;
-
                 if(!spin1_send_sdp_msg(msg, SDP_TIMEOUT)){
                     log_error("Unable to send CREATE_TABLE ack");
                 }
-
                 break;
             case INSERT_INTO:;
                 log_info("INSERT_INTO");
-                sdp_msg_t* msg_cpy = (sdp_msg_t*) sark_alloc(1,
-                            sizeof(sdp_hdr_t) + sizeof(insertEntryQuery));
+                sdp_msg_t* msg_cpy =
+                    (sdp_msg_t*) sark_alloc(1,
+                                sizeof(sdp_hdr_t) + sizeof(insertEntryQuery));
 
                 //copy message out of the buffer, so it will not be
                 //written to when a new message arrives
@@ -426,13 +426,13 @@ void c_main(){
         rt_error(RTE_SWERR);
     }
 
+    #ifdef DB_TYPE_KEY_VALUE_STORE
+        startQueryAddr = data_region;
+    #endif
     #ifdef DB_TYPE_RELATIONAL
         tables = (Table*) data_region;
 
         startQueryAddr = data_region + sizeof(Table) * DEFAULT_NUMBER_OF_TABLES;
-    #endif
-    #ifdef DB_TYPE_KEY_VALUE_STORE
-        startQueryAddr = data_region;
     #endif
 
     currentQueryAddr = startQueryAddr;

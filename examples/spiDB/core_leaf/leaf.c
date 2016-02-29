@@ -200,7 +200,6 @@ void process_requests(uint arg0, uint arg1){
                 switch(header->cmd){
                     case INSERT_INTO:;
                         log_info("INSERT_INTO");
-
                         insertEntryQuery* insertE = (insertEntryQuery*) header;
 
                         uint32_t table_index = getTableIndex(tables,
@@ -296,7 +295,7 @@ void receive_MC_data(uint key, uint payload)
 
             uint32_t table_index = getTableIndex(tables, selQ->table_name);
             if(table_index == -1){
-                log_error("  Unable to find table '%d'", selQ->table_name);
+                log_error("  Unable to find table '%s'", selQ->table_name);
                 return;
             }
 
@@ -362,6 +361,8 @@ void c_main()
     //get the ROOT data address, which points to the table definitions
     tables = (Table*)data_specification_get_region(DB_DATA_REGION,
                     (address_t)sark_virtual_processor_info[ROOT_CORE].user0);
+
+    log_info("Tables at %08x", tables);
 
     #endif
 
