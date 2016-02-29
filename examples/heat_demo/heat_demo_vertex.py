@@ -32,6 +32,9 @@ from spinn_front_end_common.utilities import exceptions
 
 # general imports
 from enum import Enum
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class HeatDemoVertexPartitioned(
@@ -164,13 +167,13 @@ class HeatDemoVertexPartitioned(
             region=self.DATA_REGIONS.TRANSMISSIONS.value,
             size=self.TRANSMISSION_DATA_SIZE, label="inputs")
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.NEIGBOUR_KEYS.value,
+            region=self.DATA_REGIONS.NEIGHBOUR_KEYS.value,
             size=self.NEIGHBOUR_DATA_SIZE, label="inputs")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.COMMAND_KEYS.value,
             size=self.COMMAND_KEYS_SIZE, label="commands")
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.OUPUT_KEY.value,
+            region=self.DATA_REGIONS.OUTPUT_KEY.value,
             size=self.OUTPUT_KEY_SIZE, label="outputs")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.TEMP_VALUE.value,
@@ -215,7 +218,7 @@ class HeatDemoVertexPartitioned(
         :param sub_graph:
         :return:
         """
-        spec.switch_write_focus(region=self.DATA_REGIONS.NEIGBOUR_KEYS.value)
+        spec.switch_write_focus(region=self.DATA_REGIONS.NEIGHBOUR_KEYS.value)
 
         # get incoming edges
         incoming_edges = sub_graph.incoming_subedges_from_subvertex(self)
@@ -299,7 +302,7 @@ class HeatDemoVertexPartitioned(
                 spec.write_value(data_type=DataType.INT32, data=-1)
 
         # write key for host output
-        spec.switch_write_focus(region=self.DATA_REGIONS.OUPUT_KEY.value)
+        spec.switch_write_focus(region=self.DATA_REGIONS.OUTPUT_KEY.value)
         spec.comment("\n the key for transmitting temp to host gatherer:\n\n")
         if output_edge is not None:
             partition = sub_graph.get_partition_of_subedge(output_edge)
@@ -320,18 +323,24 @@ class HeatDemoVertexPartitioned(
 
         # get just the keys
         keys = list()
-        for key_and_mask in commands_keys_and_masks:
-            keys_given, _ = key_and_mask.get_keys(n_keys=3)
-            keys.extend(keys_given)
-
-        # sort keys in ascending order
-        keys = sorted(keys, reverse=False)
-        if len(keys) != 3:
-            raise exceptions.ConfigurationException(
-                "Do not have enough keys to reflect the commands. broken."
-                "There are {} keys instead of 3".format(len(keys)))
-        for key in keys:
-            spec.write_value(data=key)
+        if commands_keys_and_masks is not None:
+            for key_and_mask in commands_keys_and_masks:
+                keys_given, _ = key_and_mask.get_keys(n_keys=3)
+                keys.extend(keys_given)
+            # sort keys in ascending order
+            keys = sorted(keys, reverse=False)
+            if len(keys) != 3:
+                raise exceptions.ConfigurationException(
+                    "Do not have enough keys to reflect the commands. broken."
+                    "There are {} keys instead of 3".format(len(keys)))
+            for key in keys:
+                spec.write_value(data=key)
+        else:
+            for _ in range(0, 3):
+                spec.write_value(data=0)
+            logger.warn(
+                "Set up to not use commands. If commands are needed, "
+                "Please create a command sender and wire it to this vertex.")
 
     def is_partitioned_data_specable(self):
         return True

@@ -45,9 +45,10 @@ class GraphFrontEndDataBaseWriter(DatabaseWriter):
             for partitioned_vertex in partitioned_graph.subvertices:
                 partitions = partitioned_graph.\
                     outgoing_edges_partitions_from_vertex(partitioned_vertex)
-                for partition in partitions:
-                    event_ids = routing_infos.\
-                        get_keys_and_masks_from_partition(partition)[0].keys
+                for partition in partitions.values():
+                    routing_info = routing_infos.\
+                        get_routing_info_from_partition(partition)
+                    event_ids = routing_info.get_keys()
                     vertex_id = vertices.index(partitioned_vertex) + 1
                     for key in event_ids:
                         cur.execute(
