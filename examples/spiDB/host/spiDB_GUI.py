@@ -293,7 +293,7 @@ def runQuery():
                 "{:,}".format(packetsSent), bytes_snt/1000,
                 "{:,}".format(packetsReceived), bytes_rcv/1000,
                 "{:,}".format(packetsSent-packetsReceived),
-                100*((packetsSent-packetsReceived)/packetsSent))
+                (100.0*(packetsSent-packetsReceived))/packetsSent)
 
     for r in results:
         if r is None:
