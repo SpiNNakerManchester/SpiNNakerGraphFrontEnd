@@ -33,23 +33,28 @@ extern uchar chipx, chipy, core;
 uchar branch;
 
 id_t  myId;
-
-Table* tables;
-
 address_t* addr;
 
-uint32_t*  table_rows_in_this_core;
-int*  table_max_row_id_in_this_core; //needs to be signed
-address_t* table_base_addr;
+#ifdef DB_TYPE_RELATIONAL
+    Table* tables;
+    uint32_t*  table_rows_in_this_core;
+    int*  table_max_row_id_in_this_core; //needs to be signed
+    address_t* table_base_addr;
+
+    void resetLeafGlobals(){
+        address_t b = 0;
+        for(uint i=0; i<DEFAULT_NUMBER_OF_TABLES; i++){
+            table_rows_in_this_core[i] = 0;
+            table_max_row_id_in_this_core[i] = -1;
+            table_base_addr[i] = b;
+            b += DEFAULT_TABLE_SIZE_WORDS;
+        }
+    }
+#endif
 
 void update(uint ticks, uint b){
     use(ticks);
     use(b);
-
-    if(ticks == 0){
-        START_TIMER();
-    }
-
 }
 
 void sdp_packet_callback(uint mailbox, uint port) {
@@ -63,7 +68,7 @@ void sdp_packet_callback(uint mailbox, uint port) {
 
     spin1_msg_free(msg);
 
-    if (circular_buffer_add(sdp_buffer, msg_cpy)){
+    if (circular_buffer_add(sdp_buffer, (uint32_t)msg_cpy)){
         if(!spin1_trigger_user_event(0, 0)){
           log_error("Unable to trigger user event.");
           //sark_delay_us(1);
@@ -102,20 +107,13 @@ sdp_msg_t* send_data_response_to_branch(void* data,
                                        data, data_size_bytes);
 }
 
+#ifdef DB_TYPE_KEY_VALUE_STORE
 pullValue* pull_respond(pullQuery* pullQ){
 
     pullValue* v = pull(data_region, pullQ->info, pullQ->k);
 
     if(v){
         printPullValue(v);
-        /*
-        send_data_response_to_host(PULL,
-                                   pullQ->id,
-                                   v,
-                                   sizeof(v->type) + sizeof(v->size)
-                                   + sizeof(v->pad) + v->size + 3);
-        */
-
         pullValueResponse* r = (pullValueResponse*)
                                sark_alloc(1, sizeof(pullValueResponse));
         r->id = pullQ->id;
@@ -135,8 +133,11 @@ pullValue* pull_respond(pullQuery* pullQ){
 
     return v;
 }
+#endif
 
 void process_requests(uint arg0, uint arg1){
+    use(arg0);
+    use(arg1);
 
     uint32_t mailbox;
     while(circular_buffer_get_next(sdp_buffer, &mailbox)){
@@ -144,8 +145,12 @@ void process_requests(uint arg0, uint arg1){
 
         spiDBQueryHeader* header = (spiDBQueryHeader*) &msg->cmd_rc;
 
+        if(!header){
+            continue;
+        }
+
         #ifdef DB_TYPE_KEY_VALUE_STORE
-            uint32_t info;
+            info_t info;
             uchar* k,v;
 
             switch(header->cmd){
@@ -156,15 +161,13 @@ void process_requests(uint arg0, uint arg1){
 
                     info    = putQ->info;
                     k       = putQ->k_v;
-                    v       = &putQ->k_v[k_size_from_info(info)];
+                    v       = (uchar*)&putQ->k_v[k_size_from_info(info)];
 
                     size_t bytes_written = put(addr, info, k, v);
-                    log_info("data_region >> %08x", data_region);
-                    log_info("addr >> %08x", *addr);
-                    log_info("diff >> %08x", ((uint32_t)*addr)-(uint32_t)data_region);
 
-                    send_data_response_to_host(putQ,
+                    sdp_msg_t* respMsg = send_data_response_to_host(putQ,
                                                &bytes_written, sizeof(size_t));
+                    sark_free(respMsg);
                     break;
                 #ifdef DB_SUBTYPE_HASH_TABLE
                 case PULL:;
@@ -248,6 +251,8 @@ void process_requests(uint arg0, uint arg1){
 
 void receive_MC_data(uint key, uint payload)
 {
+    use(key);
+    use(payload);
     //log_info("Received MC packet with key=%d, payload=%08x", key, payload);
 
     spiDBQueryHeader* header = (spiDBQueryHeader*)payload;
@@ -263,6 +268,7 @@ void receive_MC_data(uint key, uint payload)
 
             break;
         */
+        #ifdef DB_TYPE_RELATIONAL
         case SELECT:
             log_info("SELECT");
 
@@ -279,6 +285,7 @@ void receive_MC_data(uint key, uint payload)
                      selQ,
                      table_rows_in_this_core[table_index]);
             break;
+        #endif
         #ifndef DB_SUBTYPE_HASH_TABLE
         case PULL:
             log_info("PULL");
@@ -298,16 +305,6 @@ void receive_MC_void (uint key, uint unknown){
     log_error("Received unexpected MC packet with no payload.");
 }
 
-void resetLeafGlobals(){
-    address_t b = 0;
-    for(uint i=0; i<DEFAULT_NUMBER_OF_TABLES; i++){
-        table_rows_in_this_core[i] = 0;
-        table_max_row_id_in_this_core[i] = -1;
-        table_base_addr[i] = b;
-        b += DEFAULT_TABLE_SIZE_WORDS;
-    }
-}
-
 void c_main()
 {
     chipx = (spin1_get_chip_id() & 0xFF00) >> 8;
@@ -318,6 +315,15 @@ void c_main()
     myId  = chipx << 16 | chipy << 8 | core;
 
     log_info("Initializing Leaf (%d,%d,%d)\n", chipx, chipy, core);
+
+    if (!initialize()) {
+        rt_error(RTE_SWERR);
+    }
+
+    addr = (address_t*)malloc(sizeof(address_t));
+    *addr = data_region;
+
+    #ifdef DB_TYPE_RELATIONAL
 
     table_rows_in_this_core = (uint32_t*)sark_alloc(DEFAULT_NUMBER_OF_TABLES,
                                                     sizeof(uint32_t));
@@ -330,12 +336,6 @@ void c_main()
 
     resetLeafGlobals();
 
-    if (!initialize()) {
-        rt_error(RTE_SWERR);
-    }
-
-    addr = (address_t*)malloc(sizeof(address_t));
-    *addr = data_region;
 
     vcpu_t *sark_virtual_processor_info = (vcpu_t*) SV_VCPU;
 
@@ -343,9 +343,11 @@ void c_main()
     tables = (Table*)data_specification_get_region(DB_DATA_REGION,
                     (address_t)sark_virtual_processor_info[ROOT_CORE].user0);
 
+    #endif
+
     spin1_set_timer_tick(TIMER_PERIOD);
 
-    sdp_buffer = circular_buffer_initialize(150);
+    sdp_buffer = circular_buffer_initialize(250);
 
     // register callbacks
     spin1_callback_on(SDP_PACKET_RX,        sdp_packet_callback, 0);
@@ -354,8 +356,6 @@ void c_main()
 
     spin1_callback_on(MCPL_PACKET_RECEIVED, receive_MC_data,     0);
     spin1_callback_on(MC_PACKET_RECEIVED,   receive_MC_void,     0);
-
-    ENABLE_TIMER ();	// Enable timer (once)
 
     simulation_run();
 }

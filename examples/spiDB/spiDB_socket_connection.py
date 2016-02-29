@@ -67,13 +67,13 @@ class SpiDBSocketConnection(UDPConnection):
 
         while True:
             try:
-                s = self.receive(0.2)
+                s = self.receive(1.5) #todo
                 responseBuffer.append((time.time(), s))
-                print s
+                #print s
             except SpinnmanTimeoutException:
                 break
 
-        lastReceived = time.time()
+        lastReceived = time.time() #todo
 
         for id, t in sent_times.iteritems():
             results[id] = Result() #empty result
@@ -86,6 +86,8 @@ class SpiDBSocketConnection(UDPConnection):
                 continue
 
             total += len(s)
+            packetsReceivedArr[0] += 1
+
             response.response_time = (t-sent_times[response.id]) * 1000
 
             r = results.get(response.id)
@@ -103,7 +105,7 @@ class SpiDBSocketConnection(UDPConnection):
             results[response.id].addResponse(response)
             downloadBytes[response.id] += len(s)
             downloadTimeArr[0] = (lastReceived-firstReceived)*1000
-            packetsReceivedArr[0] = len(responseBuffer)
+
 
         return results
 
@@ -132,7 +134,8 @@ class SpiDBSocketConnection(UDPConnection):
             if len(q) is 0 or q.isspace():
                 continue
 
-            time.sleep(0.0002)
+            time.sleep(0.00008)
+            #time.sleep(0.0005)
             sq = self.sendQuery(self.i, q, type)
             uploadBytes[self.i] = sq['bytes']
             packetsSent += sq['packets']

@@ -18,6 +18,54 @@ void revert_src_dest(sdp_msg_t* msg){
     msg->srce_addr = dest_addr;
 }
 
+
+void set_dest_host(sdp_msg_t* msg){
+    msg->dest_addr   = 0;
+    msg->dest_port   = PORT_ETH;
+}
+
+void set_dest_chip(sdp_msg_t* msg, uint32_t dest_chip){
+    msg->dest_addr   = dest_chip;
+}
+
+void set_dest_core(sdp_msg_t* msg, uint8_t dest_core){
+    msg->dest_port   = (SDP_PORT << PORT_SHIFT) | dest_core;
+}
+
+void set_dest_xyp(sdp_msg_t* msg, uint8_t x, uint8_t y, uint8_t p){
+    set_dest_chip(msg, (x << 8) | y);
+    set_dest_core(msg, p);
+}
+
+void set_srce_as_self(sdp_msg_t* msg){
+    msg->srce_addr = spin1_get_chip_id();
+    msg->srce_port = (SDP_PORT << PORT_SHIFT) | spin1_get_core_id();
+}
+
+uchar get_srce_chip_x(sdp_msg_t* msg){
+    return (msg->srce_addr & 0xFF00) >> 8;
+}
+
+uchar get_srce_chip_y(sdp_msg_t* msg){
+    return msg->srce_addr & 0x00FF;
+}
+
+uchar get_srce_core(sdp_msg_t* msg){
+    return msg->srce_port & 0x1F;
+}
+
+uchar get_dest_chip_x(sdp_msg_t* msg){
+    return (msg->dest_addr & 0xFF00) >> 8;
+}
+
+uchar get_dest_chip_y(sdp_msg_t* msg){
+    return msg->dest_addr & 0x00FF;
+}
+
+uchar get_dest_core(sdp_msg_t* msg){
+    return msg->dest_port & 0x1F;
+}
+
 sdp_msg_t* create_sdp_header(uint32_t dest_chip, uint32_t dest_core){
     sdp_msg_t* msg = (sdp_msg_t*) sark_alloc(1, sizeof(sdp_msg_t));
 
@@ -86,7 +134,8 @@ sdp_msg_t* send_xyp_data_response_to_host(spiDBQueryHeader* q,
                                           uchar y_origin,
                                           uchar p_origin){
 
-    sdp_msg_t* msg = create_sdp_header_to_host();
+    sdp_msg_t* msg = create_sdp_header_to_host_alloc_extra(
+                        data_size_bytes + sizeof(Response_hdr));
 
     Response* r = (Response*)&msg->cmd_rc;
     r->id  = q->id;
@@ -118,53 +167,6 @@ sdp_msg_t* send_data_response_to_host(spiDBQueryHeader* q,
 
 sdp_msg_t* send_empty_response_to_host(spiDBQueryHeader* q){
     return send_data_response_to_host(q, NULL, 0);
-}
-
-void set_dest_host(sdp_msg_t* msg){
-    msg->dest_addr   = 0;
-    msg->dest_port   = PORT_ETH;
-}
-
-void set_dest_chip(sdp_msg_t* msg, uint32_t dest_chip){
-    msg->dest_addr   = dest_chip;
-}
-
-void set_dest_core(sdp_msg_t* msg, uint8_t dest_core){
-    msg->dest_port   = (SDP_PORT << PORT_SHIFT) | dest_core;
-}
-
-void set_dest_xyp(sdp_msg_t* msg, uint8_t x, uint8_t y, uint8_t p){
-    set_dest_chip(msg, (x << 8) | y);
-    set_dest_core(msg, p);
-}
-
-void set_srce_as_self(sdp_msg_t* msg){
-    msg->srce_addr = spin1_get_chip_id();
-    msg->srce_port = (SDP_PORT << PORT_SHIFT) | spin1_get_core_id();
-}
-
-uchar get_srce_chip_x(sdp_msg_t* msg){
-    return (msg->srce_addr & 0xFF00) >> 8;
-}
-
-uchar get_srce_chip_y(sdp_msg_t* msg){
-    return msg->srce_addr & 0x00FF;
-}
-
-uchar get_srce_core(sdp_msg_t* msg){
-    return msg->srce_port & 0x1F;
-}
-
-uchar get_dest_chip_x(sdp_msg_t* msg){
-    return (msg->dest_addr & 0xFF00) >> 8;
-}
-
-uchar get_dest_chip_y(sdp_msg_t* msg){
-    return msg->dest_addr & 0x00FF;
-}
-
-uchar get_dest_core(sdp_msg_t* msg){
-    return msg->dest_port & 0x1F;
 }
 
 void print_msg_header(sdp_msg_t* msg){

@@ -28,6 +28,7 @@ extern uchar chipx, chipy, core;
 
 id_t  myId;
 
+#ifdef DB_TYPE_RELATIONAL
 sdp_msg_t* send_response_msg(selectResponse* selResp,
                              uint32_t col_index){
 
@@ -61,7 +62,7 @@ sdp_msg_t* send_response_msg(selectResponse* selResp,
     e->row_id = myId << 24 | (uint32_t)addr;
     e->type   = table->cols[col_index].type;
     e->size   = (e->type == UINT32) ?
-                    sizeof(uint32_t) : sark_str_len(&addr[pos]);
+                 sizeof(uint32_t) : sark_str_len((char*)&addr[pos]);
 
     sark_word_cpy(e->col_name, col_name, MAX_COL_NAME_SIZE);
     sark_word_cpy(e->value, &addr[pos], e->size);
@@ -107,6 +108,8 @@ void breakInBlocks(selectResponse* selResp){
         }
     }
 }
+#endif
+
 
 void update(uint ticks, uint b){
     use(ticks);
@@ -124,7 +127,7 @@ void sdp_packet_callback(uint mailbox, uint port) {
 
     spin1_msg_free(msg);
 
-    if (circular_buffer_add(sdp_buffer, msg_cpy)){
+    if (circular_buffer_add(sdp_buffer, (uint32_t)msg_cpy)){
         if(!spin1_trigger_user_event(0, 0)){
           log_error("Unable to trigger user event.");
           //sark_delay_us(1);
@@ -136,6 +139,8 @@ void sdp_packet_callback(uint mailbox, uint port) {
 }
 
 void process_requests(uint arg0, uint arg1){
+    use(arg0);
+    use(arg1);
 
     uint32_t mailbox;
     while(circular_buffer_get_next(sdp_buffer, &mailbox)){
@@ -151,7 +156,7 @@ void process_requests(uint arg0, uint arg1){
 
                     r->cmd = PULL;
 
-                    send_xyp_data_response_to_host(r,
+                    send_xyp_data_response_to_host(header,
                                                    &r->v,
                                                    sizeof(r->v.type)
                                                       + sizeof(r->v.size)

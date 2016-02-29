@@ -6,7 +6,7 @@
     ///////////////////////////////////////////////////////////////////////////
     #define DB_TYPE_KEY_VALUE_STORE
         #ifdef DB_TYPE_KEY_VALUE_STORE
-            //#define DB_SUBTYPE_HASH_TABLE
+            #define DB_SUBTYPE_HASH_TABLE
             #ifdef DB_SUBTYPE_HASH_TABLE
                 //#define HASH_FUNCTION_DFJB
                 //#define HASH_FUNCTION_XOR
@@ -14,7 +14,7 @@
             #endif
     #endif
 
-    #define DB_TYPE_RELATIONAL
+    //#define DB_TYPE_RELATIONAL
     ///////////////////////////////////////////////////////////////////////////
 
     #define CHIP_X_SIZE                 2
@@ -102,12 +102,12 @@
         log_info("");
     }
 
-    #ifdef DB_TYPE_RELATIONAL
-        uint32_t to_info_single(var_type type, size_t size){
+    #ifdef DB_TYPE_KEY_VALUE_STORE
+        info_t to_info_single(var_type type, size_t size){
             return  ((type) << 12) | size;
         }
 
-        uint32_t to_info(var_type k_type, size_t k_size,
+        info_t to_info(var_type k_type, size_t k_size,
                          var_type v_type, size_t v_size){
             return (to_info_single(k_type,k_size) << 16)
                     | to_info_single(v_type,v_size);
@@ -128,7 +128,10 @@
         size_t v_size_from_info(info_t info){
             return (info & 0x00000FFF);
         }
+    #endif
 
+
+    #ifdef DB_TYPE_RELATIONAL
         typedef struct Column {
             uchar       name[16];
             var_type    type;
@@ -274,11 +277,11 @@
         }
 
         Table* getTable(Table* tables, uchar* name){
-            uint32_t i = getTableIndex(tables, name);
+            int i = getTableIndex(tables, name);
             return i == -1 ? NULL : &tables[i];
         }
 
-        uchar* getOperatorName(Operator o){
+        char* getOperatorName(Operator o){
             switch(o){
               case EQ:      return "=";
               case NE:      return "!=";

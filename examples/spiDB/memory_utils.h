@@ -7,8 +7,8 @@
 #include <debug.h>
 
 // returns address of where data was written
-address_t append(address_t* address, void* data, uint32_t size_bytes){
-    if(!address || !data || size_bytes <= 0){ return NULL; }
+address_t append(address_t* address, void* data, size_t size_bytes){
+    try(address && data && size_bytes);
 
     address_t old_addr = *address;
 
@@ -19,10 +19,9 @@ address_t append(address_t* address, void* data, uint32_t size_bytes){
 }
 
 bool write(address_t address, void* data, size_t size_bytes){
-    if(!address || !data || size_bytes <= 0){ return false; }
+    try(address && data && size_bytes);
 
     sark_word_cpy(address, data, size_bytes);
-    //sark_mem_cpy
 
     return true;
 }

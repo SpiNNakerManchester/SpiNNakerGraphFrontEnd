@@ -259,43 +259,41 @@ def runQuery():
     occ = [[[0 for p in range(18)] for y in range(2)] for x in range(2)]
 
     totalResponseTimesAddedUp = 0
-    packetsUnreplied = 0
     for r in results:
-        if r is None:
-            packetsUnreplied += 1
-        else:
-            if not r.responses:
-                packetsUnreplied += 1
-            else:
-                for resp in r.responses:
-                    if resp.__xyp__() in xyp_occurences:
-                        xyp_occurences[resp.__xyp__()] += 1
-                        if resp.cmd == "PUT":
-                            xyp_bytes[resp.__xyp__()] += resp.data
-                    else:
-                        xyp_occurences[resp.__xyp__()] = 1
-                        if resp.cmd == "PUT":
-                            xyp_bytes[resp.__xyp__()] = resp.data
-                    responseTimes.append(resp.response_time)
-                    totalResponseTimesAddedUp += resp.response_time
+        if r is not None:
+            for resp in r.responses:
+                if resp.__xyp__() in xyp_occurences:
+                    xyp_occurences[resp.__xyp__()] += 1
+                    if resp.cmd == "PUT":
+                        xyp_bytes[resp.__xyp__()] += resp.data
+                else:
+                    xyp_occurences[resp.__xyp__()] = 1
+                    if resp.cmd == "PUT":
+                        xyp_bytes[resp.__xyp__()] = resp.data
+                responseTimes.append(resp.response_time)
+                totalResponseTimesAddedUp += resp.response_time
 
     for xyp, o in xyp_occurences.iteritems():
         (x, y, p) = xyp
         occ[x][y][p] = o
 
+    bytes_snt = sum([x[1] for x in uploads])
+    bytes_rcv = sum([x[1] for x in downloads])
+
     s = "Statistics:\n\n" \
-        "  total upload time:      {:>11}\n"\
-        "  total download time:    {:>11}\n\n"\
-        "  average response time:  {:.3f}ms\n\n"\
-        "  number of packets sent:               {:>6} {:>12}\n"\
-        "  number of packets received:           {:>6} {:>12}\n"\
-        "  number of packets unreplied or lost:  {:>6}\n\n"\
-        .format("{:.2f}ms".format(totalUploadTime),
-                "{:.2f}ms".format(totalDownloadTime),
+        "  total upload time:       {:.3f} sec\n"\
+        "  total download time:     {:.3f} sec\n\n"\
+        "  average latency:         {:.3f} ms\n\n"\
+        "  packets sent:            {:>8} - {:.3f} Kbytes\n"\
+        "  packets received:        {:>8} - {:.3f} Kbytes\n"\
+        "  packets unreplied/lost:  {:>8} - {:.3f}%\n\n"\
+        .format(totalUploadTime/1000,
+                totalDownloadTime/1000,
                 totalResponseTimesAddedUp/packetsReceived,
-                packetsSent, "({} bytes)".format(sum([x[1] for x in uploads])),
-                packetsReceived, "({} bytes)".format(sum([x[1] for x in downloads])),
-                packetsUnreplied)
+                "{:,}".format(packetsSent), bytes_snt/1000,
+                "{:,}".format(packetsReceived), bytes_rcv/1000,
+                "{:,}".format(packetsSent-packetsReceived),
+                100*((packetsSent-packetsReceived)/packetsSent))
 
     for r in results:
         if r is None:
@@ -388,7 +386,7 @@ def runQuery():
             if x is 1 and y is 1:
                 return 3
 
-        print xyp_bytes
+        #print xyp_bytes
         for x, y, p in sorted(xyp_bytes):
             r = getID(x,y)
             bytes = xyp_bytes[x,y,p]
