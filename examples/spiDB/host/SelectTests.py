@@ -3,7 +3,7 @@ __author__ = 'gmtuca'
 import unittest
 import random
 
-from spiDB_socket_connection import SpiDBSocketConnection
+from socket_connection import SpiDBSocketConnection
 
 conn = SpiDBSocketConnection()
 

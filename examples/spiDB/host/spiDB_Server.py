@@ -2,11 +2,11 @@
 import logging
 
 import spynnaker_graph_front_end as front_end
-from core_leaf.leaf_vertex import LeafVertex
-from core_branch.branch_vertex import BranchVertex
-from core_root.root_vertex import RootVertex
 
-from tree_edge import TreeEdge
+from spiDB_graph.leaf_vertex import LeafVertex
+from spiDB_graph.branch_vertex import BranchVertex
+from spiDB_graph.root_vertex import RootVertex
+from spiDB_graph.tree_edge import TreeEdge
 
 import os
 
@@ -71,15 +71,18 @@ for x in range(chip_x_dimension):
                  label='leaf_{}_{}_{}'.format(x, y, p))
             root_leaves[x][y][p] = l
 
+e = []
+
 for x in range(chip_x_dimension):
     for y in range(chip_y_dimension):
         for p in range(first_leaf, first_leaf+n_leaves):
-            front_end.add_partitioned_edge(
+            e.append(front_end.add_partitioned_edge(
                 TreeEdge,
                 {'pre_subvertex': roots[x][y],
                  'post_subvertex': root_leaves[x][y][p]},
                 label="edge_{}_to_{}"
                       .format(roots[x][y].label, root_leaves[x][y][p].label),
-                partition_id="TREE_EDGE_{}".format(roots[x][y].label))
+                partition_id="TREE_EDGE_{}".format(roots[x][y].label)))
+
 
 front_end.run()

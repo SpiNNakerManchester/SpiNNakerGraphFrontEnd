@@ -1,4 +1,4 @@
-__author__ = 'gmtuca'
+__author__ = 'Arthur'
 
 from enum import Enum
 import re

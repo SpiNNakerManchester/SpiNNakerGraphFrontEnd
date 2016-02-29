@@ -78,15 +78,17 @@ static bool initialize_with_MC_key() {
 
     //myKey = system_region[4];
 
-    //todo ....
-    if(chipx == chipy){
-        myKey = chipx + chipy;
+    if(chipx == 0 && chipy == 0){
+        myKey = 0;
     }
     else if(chipx == 0 && chipy == 1){
         myKey = 1;
     }
     else if(chipx == 1 && chipy == 0){
         myKey = 2;
+    }
+    else if(chipx == 1 && chipy == 1){
+        myKey = 3;
     }
 
     log_info("My key is %d", myKey);

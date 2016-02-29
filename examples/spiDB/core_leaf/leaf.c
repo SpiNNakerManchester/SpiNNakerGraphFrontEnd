@@ -24,11 +24,13 @@
 #include "scan.h"
 
 #define TIMER_PERIOD 100
+#define QUEUE_SIZE 128
 
 //Globals
 static circular_buffer sdp_buffer;
 
 extern uchar chipx, chipy, core;
+static bool processing_events = false;
 
 uchar branch;
 
@@ -57,25 +59,28 @@ void update(uint ticks, uint b){
     use(b);
 }
 
+sdp_msg_t** msg_cpies;
+uint i = 0;
+
 void sdp_packet_callback(uint mailbox, uint port) {
     use(port);
 
-    sdp_msg_t* msg     = (sdp_msg_t*)mailbox;
-    sdp_msg_t* msg_cpy = (sdp_msg_t*)sark_alloc(1,
-                          sizeof(sdp_hdr_t) + 256);
+    i = (i+1)%QUEUE_SIZE;
+    register sdp_msg_t* m = msg_cpies[i];
+    sark_word_cpy(m, (sdp_msg_t*)mailbox, sizeof(sdp_hdr_t)+256);
+    spin1_msg_free((sdp_msg_t*)mailbox);
 
-    sark_word_cpy(msg_cpy, msg, sizeof(sdp_hdr_t) + 256);
-
-    spin1_msg_free(msg);
-
-    if (circular_buffer_add(sdp_buffer, (uint32_t)msg_cpy)){
-        if(!spin1_trigger_user_event(0, 0)){
-          log_error("Unable to trigger user event.");
-          //sark_delay_us(1);
+    // If there was space, add packet to the ring buffer
+    if (circular_buffer_add(sdp_buffer, (uint32_t)m)) {
+        if (!processing_events) {
+            processing_events = true;
+            if(!spin1_trigger_user_event(0, 0)){
+                log_error("Unable to trigger user event.");
+            }
         }
     }
     else{
-        log_error("Unable to add msg_cpy to SDP circular buffer");
+        log_error("Unable to add SDP packet to circular buffer.");
     }
 }
 
@@ -125,11 +130,20 @@ pullValue* pull_respond(pullQuery* pullQ){
                                      sizeof(v->type) + sizeof(v->size) +
                                      sizeof(v->pad) + v->size + 3);
 
+/*
+        send_xyp_data_response_to_host(pullQ,
+                                       &r->v,
+                                       sizeof(r->v.type)
+                                          + sizeof(r->v.size)
+                                          + sizeof(r->v.pad)
+                                          + r->v.size + 3,
+                                       chipx,
+                                       chipy,
+                                       core);
+*/
         sark_free(r);
     }
-    else{
-        //log_info("Not found");
-    }
+    //else if not found, ignore
 
     return v;
 }
@@ -140,114 +154,120 @@ void process_requests(uint arg0, uint arg1){
     use(arg1);
 
     uint32_t mailbox;
-    while(circular_buffer_get_next(sdp_buffer, &mailbox)){
-        sdp_msg_t* msg = (sdp_msg_t*)mailbox;
+    do {
+        if (circular_buffer_get_next(sdp_buffer, &mailbox)) {
+            sdp_msg_t* msg = (sdp_msg_t*)mailbox;
 
-        spiDBQueryHeader* header = (spiDBQueryHeader*) &msg->cmd_rc;
+            spiDBQueryHeader* header = (spiDBQueryHeader*) &msg->cmd_rc;
 
-        if(!header){
-            continue;
+            if(!header){
+                continue;
+            }
+
+            #ifdef DB_TYPE_KEY_VALUE_STORE
+                info_t info;
+                uchar* k,v;
+
+                switch(header->cmd){
+                    case PUT:;
+                        log_info("PUT");
+                        putQuery* putQ = (putQuery*) header;
+                        //log_info("  |- %08x  k_v: %s", *addr, putQ->k_v);
+
+                        info    = putQ->info;
+                        k       = putQ->k_v;
+                        v       = (uchar*)&putQ->k_v[k_size_from_info(info)];
+
+                        size_t bytes_written = put(addr, info, k, v);
+
+                        sdp_msg_t* respMsg =
+                            send_data_response_to_host(putQ,
+                                                       &bytes_written,
+                                                       sizeof(size_t));
+                        sark_free(respMsg);
+                        break;
+                    #ifdef DB_SUBTYPE_HASH_TABLE
+                    case PULL:;
+                        log_info("PULL");
+                        pull_respond((pullQuery*)header);
+                        break;
+                    #endif
+                    default:;
+                        break;
+                }
+            #endif
+            #ifdef DB_TYPE_RELATIONAL
+                switch(header->cmd){
+                    case INSERT_INTO:;
+                        log_info("INSERT_INTO");
+
+                        insertEntryQuery* insertE = (insertEntryQuery*) header;
+
+                        uint32_t table_index = getTableIndex(tables,
+                                                             insertE->table_name);
+
+                        if(table_index == -1){
+                            log_error("Unable to find table of name '%s' in tables");
+                            return;
+                        }
+
+                        Table* t = &tables[table_index];
+                        Entry e = insertE->e;
+
+                        if(e.type == UINT32){
+                            log_info("  %s < (%s, %d) (integer)",
+                                 insertE->table_name, e.col_name, *e.value);
+                        }
+                        else{
+                        log_info("  %s < (%s, %s) (varchar)",
+                                 insertE->table_name, e.col_name, e.value);
+                        }
+
+                        uint32_t i = get_col_index(tables, e.col_name);
+                        uint32_t p = get_byte_pos(tables, i);
+
+                        //todo problem if packets interleave...
+                        //needs to be signed, as table_max_row_id_in_this_core
+                        //initializes to -1 (otherwise calculated as 0xFFFFFFFF)
+                        if((int)e.row_id > table_max_row_id_in_this_core[table_index]){
+                            table_rows_in_this_core[table_index]++;
+                            table_max_row_id_in_this_core[table_index] = e.row_id;
+                        }
+
+                        uint32_t table_offset_words   = (uint32_t)table_base_addr[table_index];
+                        uint32_t new_row_offset_words = ((t->row_size * (table_rows_in_this_core[table_index]-1)) + 3) >> 2;
+                        uint32_t column_offset_words  = p >> 2;
+
+                        address_t address_to_write = data_region +
+                                                     table_offset_words +
+                                                     new_row_offset_words +
+                                                     column_offset_words;
+
+                        log_info("  |- %08x (base: %08x)",
+                                 address_to_write,
+                                 data_region+(uint32_t)table_base_addr[table_index]);
+
+                        sark_mem_cpy(address_to_write, e.value, e.size);
+
+                        send_data_response_to_host(insertE,
+                                                   e.col_name,
+                                                   16);
+                        break;
+                    default:;
+                        //log_info("[Warning] cmd not recognized: %d with id %d",
+                        //         header->cmd, header->id);
+                        break;
+                }
+            #endif
+
         }
-
-        #ifdef DB_TYPE_KEY_VALUE_STORE
-            info_t info;
-            uchar* k,v;
-
-            switch(header->cmd){
-                case PUT:;
-                    log_info("PUT");
-                    putQuery* putQ = (putQuery*) header;
-                    //log_info("  |- %08x  k_v: %s", *addr, putQ->k_v);
-
-                    info    = putQ->info;
-                    k       = putQ->k_v;
-                    v       = (uchar*)&putQ->k_v[k_size_from_info(info)];
-
-                    size_t bytes_written = put(addr, info, k, v);
-
-                    sdp_msg_t* respMsg = send_data_response_to_host(putQ,
-                                               &bytes_written, sizeof(size_t));
-                    sark_free(respMsg);
-                    break;
-                #ifdef DB_SUBTYPE_HASH_TABLE
-                case PULL:;
-                    log_info("PULL");
-                    pull_respond((pullQuery*)header);
-                    break;
-                #endif
-                default:;
-                    break;
-            }
-        #endif
-        #ifdef DB_TYPE_RELATIONAL
-            switch(header->cmd){
-                case INSERT_INTO:;
-                    log_info("INSERT_INTO");
-
-                    insertEntryQuery* insertE = (insertEntryQuery*) header;
-
-                    uint32_t table_index = getTableIndex(tables,
-                                                         insertE->table_name);
-
-                    if(table_index == -1){
-                        log_error("Unable to find table of name '%s' in tables");
-                        return;
-                    }
-
-                    Table* t = &tables[table_index];
-                    Entry e = insertE->e;
-
-                    if(e.type == UINT32){
-                        log_info("  %s < (%s, %d) (integer)",
-                             insertE->table_name, e.col_name, *e.value);
-                    }
-                    else{
-                    log_info("  %s < (%s, %s) (varchar)",
-                             insertE->table_name, e.col_name, e.value);
-                    }
-
-                    uint32_t i = get_col_index(tables, e.col_name);
-                    uint32_t p = get_byte_pos(tables, i);
-
-                    //todo problem if packets interleave...
-                    //needs to be signed, as table_max_row_id_in_this_core
-                    //initializes to -1 (otherwise calculated as 0xFFFFFFFF)
-                    if((int)e.row_id > table_max_row_id_in_this_core[table_index]){
-                        table_rows_in_this_core[table_index]++;
-                        table_max_row_id_in_this_core[table_index] = e.row_id;
-                    }
-
-                    uint32_t table_offset_words   = (uint32_t)table_base_addr[table_index];
-                    uint32_t new_row_offset_words = ((t->row_size * (table_rows_in_this_core[table_index]-1)) + 3) >> 2;
-                    uint32_t column_offset_words  = p >> 2;
-
-                    address_t address_to_write = data_region +
-                                                 table_offset_words +
-                                                 new_row_offset_words +
-                                                 column_offset_words;
-
-                    log_info("  |- %08x (base: %08x)",
-                             address_to_write,
-                             data_region+(uint32_t)table_base_addr[table_index]);
-
-                    sark_mem_cpy(address_to_write, e.value, e.size);
-
-                    send_data_response_to_host(insertE,
-                                               e.col_name,
-                                               16);
-                    break;
-                default:;
-                    //log_info("[Warning] cmd not recognized: %d with id %d",
-                    //         header->cmd, header->id);
-                    break;
-            }
-        #endif
-
-        // free the message to stop overload
-        //spin1_msg_free(msg);
-        sark_free(msg);
-    }
+        else {
+            processing_events = false;
+        }
+    }while (processing_events);
 }
+
+uint a = 0;
 
 void receive_MC_data(uint key, uint payload)
 {
@@ -288,7 +308,7 @@ void receive_MC_data(uint key, uint payload)
         #endif
         #ifndef DB_SUBTYPE_HASH_TABLE
         case PULL:
-            log_info("PULL");
+            log_info("PULL %d", ++a);
             pull_respond((pullQuery*)header);
             break;
         #endif
@@ -345,9 +365,23 @@ void c_main()
 
     #endif
 
-    spin1_set_timer_tick(TIMER_PERIOD);
+    msg_cpies = (sdp_msg_t**)sark_alloc(QUEUE_SIZE, sizeof(sdp_msg_t*));
+    for(uint i = 0; i < QUEUE_SIZE; i++){
+        msg_cpies[i] = (sdp_msg_t*)sark_alloc(1, sizeof(sdp_hdr_t)+256);
+    }
 
-    sdp_buffer = circular_buffer_initialize(250);
+    if(!msg_cpies){
+        log_error("Unable to allocate memory for msg_cpies");
+        rt_error(RTE_SWERR);
+    }
+
+    sdp_buffer = circular_buffer_initialize(QUEUE_SIZE);
+
+    if(!sdp_buffer){
+        rt_error(RTE_SWERR);
+    }
+
+    spin1_set_timer_tick(TIMER_PERIOD);
 
     // register callbacks
     spin1_callback_on(SDP_PACKET_RX,        sdp_packet_callback, 0);

@@ -19,12 +19,13 @@
 #include "../sdp_utils.h"
 
 #define TIMER_PERIOD 100
+#define QUEUE_SIZE 128
 
 //Globals
-
 static circular_buffer sdp_buffer;
 
 extern uchar chipx, chipy, core;
+static bool processing_events = false;
 
 id_t  myId;
 
@@ -116,25 +117,29 @@ void update(uint ticks, uint b){
     use(b);
 }
 
+
+sdp_msg_t** msg_cpies;
+uint i = 0;
+
 void sdp_packet_callback(uint mailbox, uint port) {
     use(port);
 
-    sdp_msg_t* msg     = (sdp_msg_t*)mailbox;
-    sdp_msg_t* msg_cpy = (sdp_msg_t*)sark_alloc(1,
-                           sizeof(sdp_hdr_t) + 256);
+    i = (i+1)%QUEUE_SIZE;
+    register sdp_msg_t* m = msg_cpies[i];
+    sark_word_cpy(m, (sdp_msg_t*)mailbox, sizeof(sdp_hdr_t)+256);
+    spin1_msg_free((sdp_msg_t*)mailbox);
 
-    sark_word_cpy(msg_cpy, msg, sizeof(sdp_hdr_t) + 256);
-
-    spin1_msg_free(msg);
-
-    if (circular_buffer_add(sdp_buffer, (uint32_t)msg_cpy)){
-        if(!spin1_trigger_user_event(0, 0)){
-          log_error("Unable to trigger user event.");
-          //sark_delay_us(1);
+    // If there was space, add packet to the ring buffer
+    if (circular_buffer_add(sdp_buffer, (uint32_t)m)) {
+        if (!processing_events) {
+            processing_events = true;
+            if(!spin1_trigger_user_event(0, 0)){
+                log_error("Unable to trigger user event.");
+            }
         }
     }
     else{
-        log_error("Unable to add msg_cpy to SDP circular buffer");
+        log_error("Unable to add SDP packet to circular buffer.");
     }
 }
 
@@ -143,51 +148,58 @@ void process_requests(uint arg0, uint arg1){
     use(arg1);
 
     uint32_t mailbox;
-    while(circular_buffer_get_next(sdp_buffer, &mailbox)){
-        sdp_msg_t* msg = (sdp_msg_t*)mailbox;
-
-        spiDBQueryHeader* header = (spiDBQueryHeader*) &msg->cmd_rc;
-
-        #ifdef DB_TYPE_KEY_VALUE_STORE
-            switch(header->cmd){
-                case PULL_REPLY:;
-                    log_info("PULL_REPLY");
-                    pullValueResponse* r = (pullValueResponse*)header;
-
-                    r->cmd = PULL;
-
-                    send_xyp_data_response_to_host(header,
-                                                   &r->v,
-                                                   sizeof(r->v.type)
-                                                      + sizeof(r->v.size)
-                                                      + sizeof(r->v.pad)
-                                                      + r->v.size + 3,
-                                                   get_srce_chip_x(msg),
-                                                   get_srce_chip_y(msg),
-                                                   get_srce_core(msg));
-                    break;
-                default:;
-                    break;
+    uint i = 0;
+    do {
+        if (circular_buffer_get_next(sdp_buffer, &mailbox)) {
+            if(++i > 1){
+                log_info("i is %d", i);
             }
-        #endif
-        #ifdef DB_TYPE_RELATIONAL
-            switch(header->cmd){
-                case SELECT_RESPONSE:;
-                    selectResponse* selResp = (selectResponse*)header;
-                    log_info("SELECT_RESPONSE on '%s' with addr %08x from core %d",
-                             selResp->table->name, selResp->addr, get_srce_core(msg));
-                    breakInBlocks(selResp);
-                    break;
-                default:;
-                    //log_info("[Warning] cmd not recognized: %d with id %d",
-                    //         header->cmd, header->id);
-                    break;
-            }
-        #endif
 
-        // free the message to stop overload
-        sark_free(msg);
-    }
+            sdp_msg_t* msg = (sdp_msg_t*)mailbox;
+
+            spiDBQueryHeader* header = (spiDBQueryHeader*) &msg->cmd_rc;
+
+            #ifdef DB_TYPE_KEY_VALUE_STORE
+                switch(header->cmd){
+                    case PULL_REPLY:;
+                        log_info("PULL_REPLY");
+                        pullValueResponse* r = (pullValueResponse*)header;
+
+                        r->cmd = PULL;
+
+                        send_xyp_data_response_to_host(header,
+                                                       &r->v,
+                                                       sizeof(r->v.type)
+                                                          + sizeof(r->v.size)
+                                                          + sizeof(r->v.pad)
+                                                          + r->v.size + 3,
+                                                       get_srce_chip_x(msg),
+                                                       get_srce_chip_y(msg),
+                                                       get_srce_core(msg));
+                        break;
+                    default:;
+                        break;
+                }
+            #endif
+            #ifdef DB_TYPE_RELATIONAL
+                switch(header->cmd){
+                    case SELECT_RESPONSE:;
+                        selectResponse* selResp = (selectResponse*)header;
+                        log_info("SELECT_RESPONSE on '%s' with addr %08x from core %d",
+                                 selResp->table->name, selResp->addr, get_srce_core(msg));
+                        breakInBlocks(selResp);
+                        break;
+                    default:;
+                        //log_info("[Warning] cmd not recognized: %d with id %d",
+                        //         header->cmd, header->id);
+                        break;
+                }
+            #endif
+        }
+        else {
+            processing_events = false;
+        }
+    }while (processing_events);
 }
 
 void receive_MC_data(uint key, uint payload)
@@ -214,9 +226,23 @@ void c_main()
 
     log_info("Initializing Branch (%d,%d,%d)\n", chipx, chipy, core);
 
-    spin1_set_timer_tick(TIMER_PERIOD);
+    msg_cpies = (sdp_msg_t**)sark_alloc(QUEUE_SIZE, sizeof(sdp_msg_t*));
+    for(uint i = 0; i < QUEUE_SIZE; i++){
+        msg_cpies[i] = (sdp_msg_t*)sark_alloc(1, sizeof(sdp_hdr_t)+256);
+    }
 
-    sdp_buffer = circular_buffer_initialize(150);
+    if(!msg_cpies){
+        log_error("Unable to allocate memory for msg_cpies");
+        rt_error(RTE_SWERR);
+    }
+
+    sdp_buffer = circular_buffer_initialize(QUEUE_SIZE);
+
+    if(!sdp_buffer){
+        rt_error(RTE_SWERR);
+    }
+
+    spin1_set_timer_tick(TIMER_PERIOD);
 
     // register callbacks
     spin1_callback_on(SDP_PACKET_RX,        sdp_packet_callback, 0);

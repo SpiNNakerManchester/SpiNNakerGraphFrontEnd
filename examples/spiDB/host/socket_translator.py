@@ -221,7 +221,6 @@ pull_pattern = re.compile(
     r"\s*(?:PULL|pull|POP|pop)"
         r"\s+((?:\"|\')?.+(?:\"|\')?)\s*")
 
-
 def convertFromUnicode(u):
     s = u.encode('ascii','ignore')
     if s.isdigit():
@@ -232,9 +231,6 @@ def convertFromUnicode(u):
         return s
 
 def generateQueryStructs(id, queryString, type="SQL"):
-    if queryString is None:
-        return []
-
     if type == "SQL":
         inst = StatementParser.parse(queryString)
         print inst
@@ -249,7 +245,7 @@ def generateQueryStructs(id, queryString, type="SQL"):
             return []
     else:
         upper = queryString.upper()
-        if upper.startswith("PUT") or upper.startswith("PUSH"):
+        if upper.startswith("PUT"):
             m = put_pattern.match(queryString)
             if m is None:
                 raise Exception("Invalid PUT format: '{}'".format(queryString))
@@ -258,7 +254,7 @@ def generateQueryStructs(id, queryString, type="SQL"):
             v = convertFromUnicode(m.group(2))
             return PUT(id, k, v)
 
-        if upper.startswith("PULL") or upper.startswith("POP"):
+        if upper.startswith("PULL"):
             m = pull_pattern.match(queryString)
             if m is None:
                 raise Exception("Invalid PULL format: '{}'".format(queryString))

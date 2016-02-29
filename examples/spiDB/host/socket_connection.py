@@ -43,6 +43,33 @@ class SpiDBSocketConnection(UDPConnection):
 
         return (time.time()-time_sent)*1000
 
+    def generateAllQueries(self, sqlQueries, type="SQL"):
+        uploadBytes = dict()
+        packetsSent = 0
+        queries = []
+
+        for q in sqlQueries:
+            if q is None or not q:
+                continue
+
+            queryStructs = \
+                socket_translator.generateQueryStructs(self.i, q, type)
+
+            queries.append((self.i,queryStructs))
+
+            bytes = 0
+
+            for s in queryStructs:
+                bytes += len(s)
+
+            uploadBytes[self.i] = bytes
+            packetsSent += len(queryStructs)
+            self.i += 1
+
+        return {'queries': queries,
+                'uploadBytes': uploadBytes,
+                'packetsSent': packetsSent}
+
     def sendQuery(self, i, q, type="SQL"):
         try:
             queryStructs = socket_translator.generateQueryStructs(i,q,type)
@@ -59,24 +86,34 @@ class SpiDBSocketConnection(UDPConnection):
         return {'bytes': bytes, 'packets': len(queryStructs)}
 
     def receive_all(self, sent_times, results,
-                    downloadBytes, downloadTimeArr, packetsReceivedArr):
+                    downloadBytes, downloadTimeArr, lastReceivedArr, packetsReceivedArr):
 
         responseBuffer = []
 
-        firstReceived = time.time()
-
         while True:
             try:
-                s = self.receive(1.5) #todo
+                s = self.receive(0.5) #todo
                 responseBuffer.append((time.time(), s))
                 #print s
             except SpinnmanTimeoutException:
                 break
 
-        lastReceived = time.time() #todo
+        if responseBuffer:
+            firstReceived = responseBuffer[0][0]
+            lastReceived = responseBuffer[len(responseBuffer)-1][0]
+        else:
+            firstReceived = 0
+            lastReceived = 0
 
-        for id, t in sent_times.iteritems():
-            results[id] = Result() #empty result
+        downloadTimeArr[0] = lastReceived-firstReceived
+        lastReceivedArr[0] = lastReceived
+
+        try:
+            for id, t in sent_times.iteritems():
+                results[id] = Result() #empty result
+        except Exception as e:
+            print e
+            pass
 
         total = 0
 
@@ -104,8 +141,6 @@ class SpiDBSocketConnection(UDPConnection):
 
             results[response.id].addResponse(response)
             downloadBytes[response.id] += len(s)
-            downloadTimeArr[0] = (lastReceived-firstReceived)*1000
-
 
         return results
 
@@ -114,36 +149,35 @@ class SpiDBSocketConnection(UDPConnection):
 
         results = dict()
 
-        uploadBytes = dict()
         downloadBytes = dict()
 
-        downloadTimeArr = [1]
+        downloadTimeArr = [0]
+        lastReceivedArr = [0]
 
-        packetsSent = 0
-        packetsReceivedArr = [1]
+        packetsReceivedArr = [0]
+
+        allQ = self.generateAllQueries(sqlQueries, type)
+        packetsSent = allQ['packetsSent']
+        uploadBytes = allQ['uploadBytes']
+        queries = allQ['queries']
 
         t = threading.Thread(target=self.receive_all,
                              args=(sentTimes, results,
                                    downloadBytes, downloadTimeArr,
+                                   lastReceivedArr,
                                    packetsReceivedArr))
         t.start()
 
+        sleep_time = 0.00011
         firstTimeSent = time.time()
 
-        for q in sqlQueries:
-            if len(q) is 0 or q.isspace():
-                continue
+        for i, queryStructs in queries:
+            sentTimes[i] = time.time()
+            for s in queryStructs:
+                time.sleep(sleep_time)
+                self.send_to(s, (self.ip_address, self.port))
 
-            time.sleep(0.00008)
-            #time.sleep(0.0005)
-            sq = self.sendQuery(self.i, q, type)
-            uploadBytes[self.i] = sq['bytes']
-            packetsSent += sq['packets']
-            sentTimes[self.i] = time.time()
-
-            self.i += 1
-
-        lastTimeSent = time.time()
+        lastTimeSent = time.time()-sleep_time
 
         t.join()
 
@@ -152,8 +186,9 @@ class SpiDBSocketConnection(UDPConnection):
                 'download': sorted(downloadBytes.iteritems()),
                 'packetsSent': packetsSent,
                 'packetsReceived': packetsReceivedArr[0],
-                'uploadTime': (lastTimeSent-firstTimeSent)*1000,
-                'downloadTime': downloadTimeArr[0]}
+                'uploadTimeSec': lastTimeSent-firstTimeSent,
+                'downloadTimeSec': downloadTimeArr[0],
+                'totalTimeSec': lastReceivedArr[0]-firstTimeSent}
 
     def iobuf(self, x, y, p):
         iobufs = self.transceiver.get_iobuf(

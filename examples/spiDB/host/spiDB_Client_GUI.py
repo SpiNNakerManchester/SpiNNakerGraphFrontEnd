@@ -8,7 +8,7 @@ import pylab
 import numpy as np
 import matplotlib.ticker as ticker
 
-from spiDB_socket_connection import SpiDBSocketConnection
+from socket_connection import SpiDBSocketConnection
 
 def highlight(e, scrolledText='input'):
 
@@ -92,6 +92,7 @@ conn = SpiDBSocketConnection()
 history = dict()
 
 root = Tk()
+root.resizable(width=FALSE, height=FALSE)
 root.title("SpiDB")
 
 topFrame = Frame(root)
@@ -214,37 +215,44 @@ def runQuery():
     uploads = list()
 
     #ms
-    totalDownloadTime = 0
-    totalUploadTime = 0
+    totalDownloadTimeSec = 0
+    totalUploadTimeSec = 0
+    totalTimeSec = 0
 
     packetsSent = 0
     packetsReceived = 0
 
-    #try:
-    if currentDbTypeStringVar.get() == 'SQL':
-        for stage in qText.split('.'):
-            statements = [s.strip() for s in stage.split(';')]
+    try:
+        if currentDbTypeStringVar.get() == 'SQL':
+            for stage in qText.split('.'):
+                statements = [s.strip() for s in stage.split(';')]
 
-            r = conn.run(statements, 'SQL')
+                r = conn.run(statements, 'SQL')
 
-            results.extend(r["results"])
-            downloads.extend(r["download"])
-            uploads.extend(r["upload"])
-            totalUploadTime += r["uploadTime"]
-            totalDownloadTime += r["downloadTime"]
-            packetsSent += r["packetsSent"]
-            packetsReceived += r["packetsReceived"]
-    else:
-        for stage in qText.split('.'):
-            r = conn.run(stage.split('\n'), 'Key-Value')
+                results.extend(r["results"])
+                downloads.extend(r["download"])
+                uploads.extend(r["upload"])
+                totalUploadTimeSec += r["uploadTimeSec"]
+                totalDownloadTimeSec += r["downloadTimeSec"]
+                packetsSent += r["packetsSent"]
+                packetsReceived += r["packetsReceived"]
+                totalTimeSec += r["totalTimeSec"]
+        else:
+            for stage in qText.split('.'):
+                r = conn.run(stage.split('\n'), 'Key-Value')
 
-            results.extend(r["results"])
-            downloads.extend(r["download"])
-            uploads.extend(r["upload"])
-            totalUploadTime += r["uploadTime"]
-            totalDownloadTime += r["downloadTime"]
-            packetsSent += r["packetsSent"]
-            packetsReceived += r["packetsReceived"]
+                results.extend(r["results"])
+                downloads.extend(r["download"])
+                uploads.extend(r["upload"])
+                totalUploadTimeSec += r["uploadTimeSec"]
+                totalDownloadTimeSec += r["downloadTimeSec"]
+                packetsSent += r["packetsSent"]
+                packetsReceived += r["packetsReceived"]
+                totalTimeSec += r["totalTimeSec"]
+    except Exception as e:
+        outputText.delete('1.0', END)
+        tkMessageBox.showinfo("Query failed", e)
+        return
 
     pausePing = False
     """except Exception as e:
@@ -281,19 +289,22 @@ def runQuery():
     bytes_rcv = sum([x[1] for x in downloads])
 
     s = "Statistics:\n\n" \
-        "  total upload time:       {:.3f} sec\n"\
-        "  total download time:     {:.3f} sec\n\n"\
-        "  average latency:         {:.3f} ms\n\n"\
-        "  packets sent:            {:>8} - {:.3f} Kbytes\n"\
-        "  packets received:        {:>8} - {:.3f} Kbytes\n"\
-        "  packets unreplied/lost:  {:>8} - {:.3f}%\n\n"\
-        .format(totalUploadTime/1000,
-                totalDownloadTime/1000,
-                totalResponseTimesAddedUp/packetsReceived,
-                "{:,}".format(packetsSent), bytes_snt/1000,
-                "{:,}".format(packetsReceived), bytes_rcv/1000,
+        "  performance:             {:,.1f} op/sec\n\n" \
+        "  total upload time:       {:.4f} sec\n"\
+        "  total download time:     {:.4f} sec\n\n"\
+        "  average latency:         {:.4f} ms\n\n"\
+        "  packets sent:            {:>8}       {:.3f} Kbytes\n"\
+        "  packets received:        {:>8}       {:.3f} Kbytes\n"\
+        "  packets unreplied/lost:  {:>8}       {:.2f}%\n\n" \
+        "########################################################\n\n"\
+        .format(0 if totalTimeSec is 0 else packetsReceived/totalTimeSec,
+                totalUploadTimeSec,
+                totalDownloadTimeSec,
+                0 if packetsReceived is 0 else totalResponseTimesAddedUp/packetsReceived,
+                "{:,}".format(packetsSent), bytes_snt/1000.0,
+                "{:,}".format(packetsReceived), bytes_rcv/1000.0,
                 "{:,}".format(packetsSent-packetsReceived),
-                (100.0*(packetsSent-packetsReceived))/packetsSent)
+                0 if packetsSent is 0 else (100.0*(packetsSent-packetsReceived))/packetsSent)
 
     for r in results:
         if r is None:
@@ -411,7 +422,7 @@ def runQuery():
         ax.set_yticks(y_pos)
         ax.set_yticklabels(chips)
         ax.set_xlabel('Bytes')
-        pylab.xlim([0, 120000000])
+        #pylab.xlim([0, 120000000])
 
         pylab.show()
     """

@@ -147,43 +147,23 @@ uint i = 0;
 void sdp_packet_callback(register uint mailbox, uint port) {
     use(port);
 
-    // disable interrupts to avoid concurrent triggering of user events
-    //uint cpsr = spin1_fiq_disable();
-
-    //uint cpsr = spin1_int_disable();
-
     i = (i+1)%QUEUE_SIZE;
     register sdp_msg_t* m = msg_cpies[i];
-
-    //log_info("i is %d > %08x", i, msg_cpies[i]);
-    //sdp_msg_t* msg_cpy = (sdp_msg_t*)sark_alloc(1,
-    //                      sizeof(sdp_hdr_t) + 64); //256?
-    //sark_word_cpy(msg_cpy, msg, sizeof(sdp_hdr_t) + 64);
-    sark_word_cpy(m, (sdp_msg_t*)mailbox, sizeof(sdp_hdr_t) + 256);
-
+    sark_word_cpy(m, (sdp_msg_t*)mailbox, sizeof(sdp_hdr_t)+256);
     spin1_msg_free((sdp_msg_t*)mailbox);
 
     // If there was space, add packet to the ring buffer
     if (circular_buffer_add(sdp_buffer, (uint32_t)m)) {
-
-        // disable interrupts to avoid concurrent triggering of user events
-        //uint cpsr = spin1_irq_disable();
-
         if (!processing_events) {
             processing_events = true;
             if(!spin1_trigger_user_event(0, 0)){
                 log_error("Unable to trigger user event.");
             }
         }
-
-        // enable interrupts again
-        //spin1_mode_restore (cpsr);
     }
     else{
         log_error("Unable to add SDP packet to circular buffer.");
     }
-
-    //spin1_mode_restore (cpsr);
 }
 
 //round robin
@@ -322,8 +302,7 @@ void process_requests(uint arg0, uint arg1){
             set_dest_xyp(msg, h_chipx, h_chipy, h_core);
 
             if(spin1_send_sdp_msg(msg, SDP_TIMEOUT)){
-                log_info("  Sent to (%d,%d,%d)",
-                         h_chipx, h_chipy, h_core);
+                log_info("  Sent to (%d,%d,%d)", h_chipx, h_chipy, h_core);
             }
             else {
                 log_error("  Unable to send query to (%d,%d,%d)",
