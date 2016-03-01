@@ -3,6 +3,7 @@ from spinn_storage_handlers.file_data_writer import FileDataWriter
 
 # front end common imports
 from spinn_front_end_common.utilities import exceptions
+from spinn_front_end_common.utilities import constants
 
 # general imports
 from abc import ABCMeta
@@ -172,10 +173,12 @@ class AbstractPartitionedDataSpecableVertex(object):
         # check for infinite runs and add data as required
         if self._no_machine_time_steps is None:
             spec.write_value(data=1)
-            spec.write_value(data=0)
         else:
             spec.write_value(data=0)
-            spec.write_value(data=self._no_machine_time_steps)
+
+        # add SDP port number for receiving synchronisations and new run times
+        spec.write_value(
+            data=constants.SDP_PORTS.RUNNING_COMMAND_SDP_PORT.value)
 
     @staticmethod
     def get_mem_write_base_address(processor_id):

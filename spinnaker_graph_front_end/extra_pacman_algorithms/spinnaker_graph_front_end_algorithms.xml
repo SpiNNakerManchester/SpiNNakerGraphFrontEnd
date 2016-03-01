@@ -133,9 +133,9 @@
             </parameter>
         </optional_inputs>
     </algorithm>
-    <algorithm name="GraphFrontEndCommonChipRuntimeUpdater">
-        <python_module>spinnaker_graph_front_end.extra_pacman_algorithms.graph_front_end_common_chip_runtime_updater</python_module>
-        <python_class>GraphFrontEndCommonChipRuntimeUpdater</python_class>
+    <algorithm name="GraphFrontEndCommonMachineRuntimeUpdater">
+        <python_module>spinnaker_graph_front_end.extra_pacman_algorithms.graph_front_end_common_machine_runtime_updater</python_module>
+        <python_class>GraphFrontEndCommonMachineRuntimeUpdater</python_class>
         <required_inputs>
             <parameter>
                 <param_name>placements</param_name>

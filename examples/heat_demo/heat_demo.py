@@ -85,7 +85,7 @@ for x_position in range(0, max_x_element_id):
              'post_subvertex': live_gatherer},
             label="gatherer edge from vertex {} to live packet gatherer"
                   .format(vertices[x_position][y_position].label),
-            partition_id="GATHERER")
+            partition_id="TRANSMISSION")
 
         # check for the likely hood for a N link (incoming to south)
         if (x_position + 1) < max_x_element_id:

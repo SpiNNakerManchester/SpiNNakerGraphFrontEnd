@@ -1,15 +1,22 @@
+# pacman imports
 from pacman.utilities.utility_objs.progress_bar import ProgressBar
+
+# SpiNNMan imports
 from spinnman.messages.sdp.sdp_flag import SDPFlag
 from spinnman.messages.sdp.sdp_header import SDPHeader
 from spinnman.messages.sdp.sdp_message import SDPMessage
 from spinnman.model.cpu_state import CPUState
+
+# spinn front end common imports
 from spinn_front_end_common.utilities import helpful_functions
 from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.utilities import exceptions
+
+# general imports
 import struct
 
 
-class GraphFrontEndCommonRuntimeUpdater(object):
+class GraphFrontEndCommonMachineRuntimeUpdater(object):
     """ Updates the runtime of an application running on a spinnaker machine
     """
 
