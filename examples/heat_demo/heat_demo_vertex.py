@@ -58,8 +58,9 @@ class HeatDemoVertexPartitioned(
                ('TRANSMISSIONS', 1),
                ('NEIGHBOUR_KEYS', 2),
                ('COMMAND_KEYS', 3),
-               ('TEMP_VALUE', 5),
-               ('RECORDED_VALUES', 6)])
+               ('TEMP_VALUE', 4),
+               ('RECORDED_VALUES', 5),
+               ('BUFFERING_OUT_STATE', 6)])
 
     # one key for each incoming edge.
     NEIGHBOUR_DATA_SIZE = 10 * 4
@@ -151,9 +152,13 @@ class HeatDemoVertexPartitioned(
         # Create the data regions for the spike source array:
         self._reserve_memory_regions(spec, setup_size)
         self._write_basic_setup_info(spec, self.DATA_REGIONS.SYSTEM.value)
+
+        # Write the additional recording information
         self.write_recording_data(
-            spec, ip_tags, [self._no_machine_time_steps * 4],
-            self._no_machine_time_steps * 4, self._time_between_requests)
+            spec, ip_tags, [constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP],
+            self._no_machine_time_steps * 4)
+
+        # application specific data items
         self._write_transmission_keys(spec, routing_info, sub_graph)
         self._write_key_data(spec, routing_info, sub_graph)
         self._write_temp_data(spec)
@@ -191,9 +196,10 @@ class HeatDemoVertexPartitioned(
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.TEMP_VALUE.value,
             size=self.TEMP_VALUE_SIZE, label="temp")
-        spec.reserve_memory_region(
-            region=self.DATA_REGIONS.RECORDED_VALUES.value,
-            size=self._no_machine_time_steps * 4, label="recorded_data")
+        self.reserve_buffer_regions(
+            spec, self.DATA_REGIONS.BUFFERING_OUT_STATE.value,
+            [self.DATA_REGIONS.RECORDED_VALUES.value],
+            [constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP])
 
     def _write_transmission_keys(self, spec, routing_info, subgraph):
         """

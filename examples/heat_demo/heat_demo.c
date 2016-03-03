@@ -86,10 +86,13 @@ volatile bool updating = true;
 //! control value, which says how many timer ticks to run for before exiting
 static uint32_t simulation_ticks = 0;
 static uint32_t infinite_run = 0;
-static uint32_t time;
+static uint32_t time = 0;
 
 //! int as a bool to represent if this simulation should run forever
 static uint32_t infinite_run;
+
+//! The recording flags
+static uint32_t recording_flags = 0;
 
 //! the unique identifier of this model, so that it can tell if the data its
 //! reading is for itself.
@@ -103,6 +106,7 @@ typedef enum regions_e {
     COMMAND_KEYS,
     TEMP_VALUE,
     RECORDED_DATA,
+    BUFFERING_OUT_STATE,
 } regions_e;
 
 //! values for the priority for each callback
@@ -292,14 +296,21 @@ void send_first_value() {
 void update(uint ticks, uint b) {
     use(b);
     use(ticks);
-    sark.vcpu->user0++;
 
-    log_info("on tick %d", ticks);
+    time++;
+
+    log_info("on tick %d", time);
+    log_info("sim ticks %d", simulation_ticks);
 
     // check that the run time hasn't already elapsed and thus needs to be
     // killed
     if ((infinite_run != TRUE) && (time >= simulation_ticks)) {
         log_info("Simulation complete.\n");
+
+        if (recording_flags > 0) {
+            log_info("updating recording regions");
+            recording_finalise();
+        }
 
         // falls into the pause resume mode of operating
         simulation_handle_pause_resume();
@@ -311,7 +322,7 @@ void update(uint ticks, uint b) {
 #ifdef DEBUG
         if (arrived[now] != ALL_ARRIVED)
         {
-            log_info("@\n");
+            log_debug("@\n");
             dbg_timeouts++;
         }
 #endif
@@ -320,26 +331,26 @@ void update(uint ticks, uint b) {
         // it uses it's own as an estimate for the neighbour's.
         if (arrived[now] != ALL_ARRIVED) {
             if (!(arrived[now] & NORTH_ARRIVED)) {
-                log_info("north temp has not arrived by time update "
-                        "has occurred\n");
+                log_debug("north temp has not arrived by time update "
+                          "has occurred\n");
                 neighbours_temp[now][NORTH] = my_temp;
             }
 
             if (!(arrived[now] & SOUTH_ARRIVED)) {
-                log_info("south temp has not arrived by time update "
-                        "has occurred\n");
+                log_debug("south temp has not arrived by time update "
+                          "has occurred\n");
                 neighbours_temp[now][SOUTH] = my_temp;
             }
 
             if (!(arrived[now] & EAST_ARRIVED)) {
-                log_info("east temp has not arrived by time update "
-                        "has occurred\n");
+                log_debug("east temp has not arrived by time update "
+                          "has occurred\n");
                 neighbours_temp[now][EAST] = my_temp;
             }
 
             if (!(arrived[now] & WEST_ARRIVED)) {
-                log_info("west temp has not arrived by time update "
-                        "has occurred\n");
+                log_debug("west temp has not arrived by time update "
+                          "has occurred\n");
                 neighbours_temp[now][WEST] = my_temp;
             }
         }
@@ -362,13 +373,16 @@ void update(uint ticks, uint b) {
         my_temp = (my_temp > 0) ? my_temp : 0;
 #endif
 
-        log_info("sending my temp of %d via multicast with key %d\n", my_temp,
-                my_key);
+        log_debug("sending my temp of %d via multicast with key %d\n",
+                  my_temp, my_key);
         /* send new data to neighbours */
         while (!spin1_send_mc_packet(my_key, my_temp, WITH_PAYLOAD)) {
             spin1_delay_us(1);
         }
         log_info("sent my temp via multicast");
+
+        // record the new temperature for extraction later on
+        recording_record(RECORDED_DATA, my_temp, 4);
 
         /* prepare for next iteration */
         arrived[now] = init_arrived;
@@ -410,9 +424,6 @@ static bool initialize(uint32_t *timer_period) {
         log_error("failed to read the system header");
         return false;
     }
-
-    // output message about length of time to run
-    log_info("i plan to run for %d timer ticks", simulation_ticks);
 
     // initialise transmission keys
     address_t transmission_region_address = data_specification_get_region(
@@ -515,7 +526,7 @@ static bool initialise_recording(){
     uint8_t n_regions_to_record = 1;
     uint32_t *recording_flags_from_system_conf =
         &system_region[SIMULATION_N_TIMING_DETAIL_WORDS];
-    regions_e state_region = BUFFERING_OUT_CONTROL_REGION;
+    regions_e state_region = BUFFERING_OUT_STATE;
 
     bool success = recording_initialize(
         n_regions_to_record, regions_to_record,
@@ -544,6 +555,12 @@ void c_main() {
     // initialise the model
     if (!initialize(&timer_period)) {
         rt_error(RTE_SWERR);
+    }
+
+    // initialise the recording section
+    // set up recording data structures
+    if(!initialise_recording()){
+         rt_error(RTE_SWERR);
     }
 
     // set timer tick value to configured value
@@ -578,5 +595,4 @@ void c_main() {
     time = UINT32_MAX;
 
     simulation_run(update, TIMER);
-    log_info("stopping heat_demo\n");
 }
