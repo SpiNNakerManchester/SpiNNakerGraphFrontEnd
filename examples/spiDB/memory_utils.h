@@ -36,6 +36,9 @@ bool arr_equals(uchar* a, uchar* b, uint32_t n){
     try(n > 0);
 
     for(uint32_t i = 0; i < n; i++){
+        if(a[i] == 0){
+            return true;
+        }
         if(a[i] != b[i]){
             return false;
         }

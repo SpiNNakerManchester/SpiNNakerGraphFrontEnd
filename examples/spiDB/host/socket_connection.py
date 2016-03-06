@@ -92,7 +92,7 @@ class SpiDBSocketConnection(UDPConnection):
 
         while True:
             try:
-                s = self.receive(0.5) #todo
+                s = self.receive(1) #todo
                 responseBuffer.append((time.time(), s))
                 #print s
             except SpinnmanTimeoutException:
@@ -168,7 +168,8 @@ class SpiDBSocketConnection(UDPConnection):
                                    packetsReceivedArr))
         t.start()
 
-        sleep_time = 0.00011
+        milliseconds_wait = 0.2
+        sleep_time = milliseconds_wait / 1000
         firstTimeSent = time.time()
 
         for i, queryStructs in queries:

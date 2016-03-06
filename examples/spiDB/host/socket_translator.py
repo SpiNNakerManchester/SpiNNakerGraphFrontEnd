@@ -233,7 +233,6 @@ def convertFromUnicode(u):
 def generateQueryStructs(id, queryString, type="SQL"):
     if type == "SQL":
         inst = StatementParser.parse(queryString)
-        print inst
 
         if isinstance(inst, CreateTable):
             return CREATE_TABLE(id, inst)

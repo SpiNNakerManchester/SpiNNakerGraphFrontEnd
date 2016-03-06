@@ -4,13 +4,16 @@
 
         #include "../db-typedefs.h"
         #include "../memory_utils.h"
+        #include <debug.h>
 
         pullValue* pull(address_t addr, uint32_t info, uchar* k){
+            try(info);
+            try(k);
 
             var_type k_type = k_type_from_info(info);
             size_t k_size   = k_size_from_info(info);
 
-            uint32_t curr_info = 0;
+            info_t curr_info = 0;
 
             /* Get 32 bit information for the database entry
                  4 bits key type,
@@ -25,6 +28,10 @@
 
                 var_type v_type      = v_type_from_info(curr_info);
                 size_t   v_size      = v_size_from_info(curr_info);
+
+                if(read_k_size == 0 || v_size == 0){
+                    continue;
+                }
 
                 size_t k_size_words = (read_k_size+3) >> 2;
                 size_t v_size_words = (v_size+3) >> 2;

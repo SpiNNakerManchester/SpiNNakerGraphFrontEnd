@@ -64,7 +64,7 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         self._machine_time_step = machine_time_step
         self._time_scale_factor = time_scale_factor
 
-        self._string_data_size = 500
+        self._string_data_size = 7000000
 
         self.placement = None
 
@@ -138,7 +138,7 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
                                    size=system_size, label='systemInfo')
         spec.reserve_memory_region(region=self.DATA_REGIONS.STRING_DATA.value,
                                    size=self._string_data_size,
-                                   label="inputs")
+                                   label="inputs", empty=True)
 
     def _write_setup_info(self, spec, core_app_identifier, region_id):
         """

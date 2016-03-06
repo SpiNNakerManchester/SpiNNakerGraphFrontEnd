@@ -24,10 +24,11 @@
 #include "scan.h"
 
 #define TIMER_PERIOD 100
-#define QUEUE_SIZE 128
+#define QUEUE_SIZE 100
 
 //Globals
 static circular_buffer sdp_buffer;
+static circular_buffer mc_buffer;
 
 extern uchar chipx, chipy, core;
 static bool processing_events = false;
@@ -112,13 +113,16 @@ sdp_msg_t* send_data_response_to_branch(void* data,
                                        data, data_size_bytes);
 }
 
+uint as = 0;
+
 #ifdef DB_TYPE_KEY_VALUE_STORE
-pullValue* pull_respond(pullQuery* pullQ){
+bool pull_respond(pullQuery* pullQ){
+    try(pullQ);
 
     pullValue* v = pull(data_region, pullQ->info, pullQ->k);
 
     if(v){
-        printPullValue(v);
+        //printPullValue(v);
         pullValueResponse* r = (pullValueResponse*)
                                sark_alloc(1, sizeof(pullValueResponse));
         r->id = pullQ->id;
@@ -131,6 +135,8 @@ pullValue* pull_respond(pullQuery* pullQ){
                                      sizeof(v->pad) + v->size + 3);
 
 /*
+                                     sizeof(pullValueResponse)
+
         send_xyp_data_response_to_host(pullQ,
                                        &r->v,
                                        sizeof(r->v.type)
@@ -142,10 +148,11 @@ pullValue* pull_respond(pullQuery* pullQ){
                                        core);
 */
         sark_free(r);
+        sark_free(v);
     }
     //else if not found, ignore
 
-    return v;
+    return true;
 }
 #endif
 
@@ -154,6 +161,7 @@ void process_requests(uint arg0, uint arg1){
     use(arg1);
 
     uint32_t mailbox;
+    uint32_t payload;
     do {
         if (circular_buffer_get_next(sdp_buffer, &mailbox)) {
             sdp_msg_t* msg = (sdp_msg_t*)mailbox;
@@ -170,7 +178,7 @@ void process_requests(uint arg0, uint arg1){
 
                 switch(header->cmd){
                     case PUT:;
-                        log_info("PUT");
+                        //log_info("PUT");
                         putQuery* putQ = (putQuery*) header;
                         //log_info("  |- %08x  k_v: %s", *addr, putQ->k_v);
 
@@ -188,7 +196,7 @@ void process_requests(uint arg0, uint arg1){
                         break;
                     #ifdef DB_SUBTYPE_HASH_TABLE
                     case PULL:;
-                        log_info("PULL");
+                        log_info("PULL %d", ++as);
                         pull_respond((pullQuery*)header);
                         break;
                     #endif
@@ -260,62 +268,63 @@ void process_requests(uint arg0, uint arg1){
             #endif
 
         }
+        else if(circular_buffer_get_next(mc_buffer, &payload)){
+            spiDBQueryHeader* header = (spiDBQueryHeader*)payload;
+
+            switch(header->cmd){
+                #ifdef DB_TYPE_RELATIONAL
+                case SELECT:
+                    log_info("SELECT");
+
+                    selectQuery* selQ = (selectQuery*)payload;
+
+                    uint32_t table_index = getTableIndex(tables, selQ->table_name);
+                    if(table_index == -1){
+                        log_error("  Unable to find table '%s'", selQ->table_name);
+                        return;
+                    }
+
+                    scan_ids(&tables[table_index],
+                             data_region+(uint32_t)table_base_addr[table_index],
+                             selQ,
+                             table_rows_in_this_core[table_index]);
+                    break;
+                #endif
+                #ifndef DB_SUBTYPE_HASH_TABLE
+                case PULL:
+                    log_info("PULL");
+                    pull_respond((pullQuery*)header);
+                    break;
+                #endif
+                default:
+                    log_error("Invalid MC command %d. Payload: %08x",
+                              header->cmd, payload);
+                    break;
+            }
+        }
         else {
             processing_events = false;
         }
     }while (processing_events);
 }
 
-uint a = 0;
-
 void receive_MC_data(uint key, uint payload)
 {
     use(key);
-    use(payload);
-    //log_info("Received MC packet with key=%d, payload=%08x", key, payload);
 
-    spiDBQueryHeader* header = (spiDBQueryHeader*)payload;
-
-    switch(header->cmd){
-        /*
-        case CLEAR:
-            log_info("CLEAR");
-
-            clear(data_region, CORE_DATABASE_SIZE_WORDS);
-            resetLeafGlobals();
-            *addr = data_region;
-
-            break;
-        */
-        #ifdef DB_TYPE_RELATIONAL
-        case SELECT:
-            log_info("SELECT");
-
-            selectQuery* selQ = (selectQuery*)payload;
-
-            uint32_t table_index = getTableIndex(tables, selQ->table_name);
-            if(table_index == -1){
-                log_error("  Unable to find table '%s'", selQ->table_name);
-                return;
+    // If there was space, add packet to the ring buffer
+    if (circular_buffer_add(mc_buffer, (uint32_t)payload)) {
+        if (!processing_events) {
+            processing_events = true;
+            if(!spin1_trigger_user_event(0, 0)){
+                log_error("Unable to trigger user event.");
             }
-
-            scan_ids(&tables[table_index],
-                     data_region+(uint32_t)table_base_addr[table_index],
-                     selQ,
-                     table_rows_in_this_core[table_index]);
-            break;
-        #endif
-        #ifndef DB_SUBTYPE_HASH_TABLE
-        case PULL:
-            log_info("PULL %d", ++a);
-            pull_respond((pullQuery*)header);
-            break;
-        #endif
-        default:
-            log_error("Invalid MC command %d. Payload: %08x",
-                      header->cmd, payload);
-            break;
+        }
     }
+    else{
+        log_error("Unable to add MC packet to circular buffer.");
+    }
+
 }
 
 void receive_MC_void (uint key, uint unknown){
@@ -377,10 +386,13 @@ void c_main()
     }
 
     sdp_buffer = circular_buffer_initialize(QUEUE_SIZE);
+    mc_buffer = circular_buffer_initialize(QUEUE_SIZE);
 
-    if(!sdp_buffer){
+    if(!sdp_buffer || !mc_buffer){
         rt_error(RTE_SWERR);
     }
+
+    log_info("Initialized sdp_buffer and mc_buffer");
 
     spin1_set_timer_tick(TIMER_PERIOD);
 

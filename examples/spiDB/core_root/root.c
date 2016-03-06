@@ -238,8 +238,8 @@ void process_requests(uint arg0, uint arg1){
         if(header->cmd == PUT || header->cmd == PULL){
             putPullQuery* p = (putPullQuery*)header;
 
-            //log_info("%s, id %d", p->cmd == PUT ? "PUT" : "PULL", p->id);
-            //log_info("  info: %08x, data: %s", p->info, p->data);
+            log_info("%s, id %d", p->cmd == PUT ? "PUT" : "PULL", p->id);
+            log_info("  info: %08x, data: %s", p->info, p->data);
 
             #ifdef DB_SUBTYPE_HASH_TABLE
                     uint32_t h = hash(p->data, k_size_from_info(p->info));
@@ -277,7 +277,8 @@ void process_requests(uint arg0, uint arg1){
 
                     //if we run out of root SDRAM, roll over
                     if(currentQueryAddr+sizeof(pullQuery) >=
-                        CORE_DATABASE_SIZE_WORDS){
+                        startQueryAddr+ROOT_SDRAM_SIZE_BYTES){
+                            log_info("Roll over...");
                             currentQueryAddr = startQueryAddr;
                     }
 
@@ -302,7 +303,7 @@ void process_requests(uint arg0, uint arg1){
             set_dest_xyp(msg, h_chipx, h_chipy, h_core);
 
             if(spin1_send_sdp_msg(msg, SDP_TIMEOUT)){
-                log_info("  Sent to (%d,%d,%d)", h_chipx, h_chipy, h_core);
+                //log_info("  Sent to (%d,%d,%d)", h_chipx, h_chipy, h_core);
             }
             else {
                 log_error("  Unable to send query to (%d,%d,%d)",

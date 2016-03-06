@@ -60,10 +60,9 @@ class MainMenu(Frame):
         sys.exit(0)
 
     def onOpen(self):
-        filespes = [('KV file', '*.kv'),
-                    ('SQL file', '*.sql'),
-                    ('CSV file', '*.csv'),
-                    ('All files', '*')]
+        filespes = [('All files', '*'),
+                    ('KV file', '*.kv'),
+                    ('SQL file', '*.sql')]
         dlg = tkFileDialog.Open(self, filetypes = filespes)
         fl = dlg.show()
 
@@ -288,6 +287,8 @@ def runQuery():
     bytes_snt = sum([x[1] for x in uploads])
     bytes_rcv = sum([x[1] for x in downloads])
 
+    unreplied = packetsSent-packetsReceived if packetsReceived < packetsSent else 0
+
     s = "Statistics:\n\n" \
         "  performance:             {:,.1f} op/sec\n\n" \
         "  total upload time:       {:.4f} sec\n"\
@@ -297,14 +298,14 @@ def runQuery():
         "  packets received:        {:>8}       {:.3f} Kbytes\n"\
         "  packets unreplied/lost:  {:>8}       {:.2f}%\n\n" \
         "########################################################\n\n"\
-        .format(0 if totalTimeSec is 0 else packetsReceived/totalTimeSec,
+        .format(0 if totalTimeSec is 0 else packetsReceived/totalUploadTimeSec,
                 totalUploadTimeSec,
                 totalDownloadTimeSec,
                 0 if packetsReceived is 0 else totalResponseTimesAddedUp/packetsReceived,
                 "{:,}".format(packetsSent), bytes_snt/1000.0,
                 "{:,}".format(packetsReceived), bytes_rcv/1000.0,
-                "{:,}".format(packetsSent-packetsReceived),
-                0 if packetsSent is 0 else (100.0*(packetsSent-packetsReceived))/packetsSent)
+                "{:,}".format(unreplied),
+                0 if packetsSent is 0 else (100.0*unreplied)/packetsSent)
 
     for r in results:
         if r is None:
@@ -338,8 +339,8 @@ def runQuery():
         pylab.figure()
         fig = pylab.gcf()
         fig.canvas.set_window_title('Network Traffic')
-        pylab.plot(xUpload, yUpload, label='upload')
-        pylab.plot(xDownload, yDownload, label='download')
+        pylab.plot(xUpload, np.poly1d(np.polyfit(xUpload, yUpload, 5))(xUpload), 'b', label='Upload')
+        pylab.plot(xDownload, np.poly1d(np.polyfit(xDownload, yDownload, 5))(xDownload), 'g', label='Download')
         pylab.legend(loc='upper left')
         pylab.xlabel('Query ID')
         pylab.ylabel('Bytes')
@@ -374,55 +375,56 @@ def runQuery():
 
         ####################################################################
 
-        chips = ('Chip (0,0)', 'Chip (0,1)', 'Chip (1,0)', 'Chip (1,1)')
-        r = len(chips)
+        if xyp_bytes:
+            chips = ('Chip (0,0)', 'Chip (0,1)', 'Chip (1,0)', 'Chip (1,1)')
+            r = len(chips)
 
-        colors ='rgbwmc'
+            colors ='rgbwmc'
 
-        patch_handles = []
+            patch_handles = []
 
-        fig = pylab.figure(figsize=(10,8))
-        ax = fig.add_subplot(111)
+            fig = pylab.figure(figsize=(10,8))
+            ax = fig.add_subplot(111)
 
-        left = np.zeros(r,)
-        row_counts = np.zeros(r,)
+            left = np.zeros(r,)
+            row_counts = np.zeros(r,)
 
-        def getID(x, y):
-            if x is 0 and y is 0:
-                return 0
-            if x is 0 and y is 1:
-                return 1
-            if x is 1 and y is 0:
-                return 2
-            if x is 1 and y is 1:
-                return 3
+            def getID(x, y):
+                if x is 0 and y is 0:
+                    return 0
+                if x is 0 and y is 1:
+                    return 1
+                if x is 1 and y is 0:
+                    return 2
+                if x is 1 and y is 1:
+                    return 3
 
-        #print xyp_bytes
-        for x, y, p in sorted(xyp_bytes):
-            r = getID(x,y)
-            bytes = xyp_bytes[x,y,p]
+            #print xyp_bytes
+            for x, y, p in sorted(xyp_bytes):
+                r = getID(x,y)
+                bytes = xyp_bytes[x,y,p]
 
-            patch_handles.append(
-                ax.barh(r, bytes, align='center', left=left[r],
-                        color=colors[int(row_counts[r]) % len(colors)],
-                        edgecolor='black')
-            )
-            left[r] += bytes
-            row_counts[r] += 1
+                patch_handles.append(
+                    ax.barh(r, bytes, align='center', left=left[r],
+                            color=colors[int(row_counts[r]) % len(colors)],
+                            edgecolor='black')
+                )
+                left[r] += bytes
+                row_counts[r] += 1
 
-            # we know there is only one patch but could enumerate if expanded
-            patch = patch_handles[-1][0]
-            bl = patch.get_xy()
+                # we know there is only one patch but could enumerate if expanded
+                patch = patch_handles[-1][0]
+                bl = patch.get_xy()
 
-            ax.text(0.5*patch.get_width() + bl[0],
-                    0.5*patch.get_height() + bl[1],
-                    bytes, ha='center',va='center')
+                ax.text(0.5*patch.get_width() + bl[0],
+                        0.5*patch.get_height() + bl[1],
+                        bytes, ha='center',va='center')
 
-        y_pos = np.arange(4)
-        ax.set_yticks(y_pos)
-        ax.set_yticklabels(chips)
-        ax.set_xlabel('Bytes')
-        #pylab.xlim([0, 120000000])
+            y_pos = np.arange(4)
+            ax.set_yticks(y_pos)
+            ax.set_yticklabels(chips)
+            ax.set_xlabel('Bytes')
+            #pylab.xlim([0, 120000000])
 
         pylab.show()
     """

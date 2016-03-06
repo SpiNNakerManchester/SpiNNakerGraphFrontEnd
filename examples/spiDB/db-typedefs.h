@@ -31,6 +31,7 @@
     #define MAX_COL_NAME_SIZE           16
 
     #define CORE_DATABASE_SIZE_WORDS    (120000000 >> 2) / CORE_SIZE
+    #define ROOT_SDRAM_SIZE_BYTES       2097152
 
     #define DEFAULT_TABLE_SIZE_WORDS    1024 //todo careful with overflow
 

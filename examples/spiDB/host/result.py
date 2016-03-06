@@ -158,8 +158,6 @@ class SelectResult(Result):
         n_rows = len(self.rowidToRow)
         metadata += "Number of rows: {}\n".format(n_rows)
 
-        metadata += self.responses.__repr__()
-
         if n_rows == 0:
             return metadata
 
@@ -196,13 +194,15 @@ class SelectResult(Result):
         for row_id, row in self.rowidToRow.iteritems():
             table += "|"
             for c in self.cols:
-                type, value = row.get(c)
-                if value is None:
-                    table += "  {}  ".format("".ljust(longest_str_for_col[c]))
-                else:
-                    found_entries += 1
-                    table += "  {}  "\
-                        .format(str(value).ljust(longest_str_for_col[c]))
+                r = row.get(c)
+                if r:
+                    type, value = r
+                    if value is None:
+                        table += "  {}  ".format("".ljust(longest_str_for_col[c]))
+                    else:
+                        found_entries += 1
+                        table += "  {}  "\
+                            .format(str(value).ljust(longest_str_for_col[c]))
 
             table += "|  {}\n".format(row.origin)
 
