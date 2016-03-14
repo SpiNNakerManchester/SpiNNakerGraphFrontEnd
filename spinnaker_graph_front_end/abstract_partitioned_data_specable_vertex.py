@@ -180,15 +180,6 @@ class AbstractPartitionedDataSpecableVertex(object):
         spec.write_value(
             data=constants.SDP_PORTS.RUNNING_COMMAND_SDP_PORT.value)
 
-    @staticmethod
-    def get_mem_write_base_address(processor_id):
-        """ Get the base address of the processors registers
-
-        :param processor_id:
-        :return:
-        """
-        return 0xe5007000 + 128 * processor_id + 112
-
     @abstractmethod
     def is_partitioned_data_specable(self):
         """ Helper method for isinstance

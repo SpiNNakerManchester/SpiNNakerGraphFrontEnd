@@ -140,55 +140,14 @@ def add_vertex(cellclass, cellparams, label=None, constraints=None):
     return vertex
 
 
-def add_edge(cell_type, cellparams, label=None, constraints=None,
-             partition_id=None):
+def add_vertex_instance(vertex_to_add):
     """
 
-    :param cell_type:
-    :param cellparams:
-    :param constraints:
-    :param label:
-    :param partition_id:
+    :param vertex_to_add:
     :return:
     """
     global _spinnaker
-
-    # correct label if needed
-    if label is None and 'label' not in cellparams:
-        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
-        _spinnaker.increment_none_labelled_edge_count()
-        cellparams['label'] = label
-    elif 'label' in cellparams and cellparams['label'] is None:
-        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
-        _spinnaker.increment_none_labelled_edge_count()
-        cellparams['label'] = label
-    elif label is not None:
-        cellparams['label'] = label
-
-    # add edge
-    edge = cell_type(**cellparams)
-    _spinnaker.add_partitionable_edge(edge, partition_id, constraints)
-    return edge
-
-
-def add_partitionable_edge_instance(edge, partition_id):
-    """
-
-    :param edge:
-    :param partition_id:
-    :return:
-    """
-    _spinnaker.add_partitionable_edge(edge, partition_id)
-
-
-def add_partitioned_edge_instance(edge, partition_id):
-    """
-
-    :param edge:
-    :param partition_id:
-    :return:
-    """
-    _spinnaker.add_partitioned_edge(edge, partition_id)
+    _spinnaker.add_partitionable_vertex(vertex_to_add)
 
 
 def add_partitioned_vertex(
@@ -220,6 +179,69 @@ def add_partitioned_vertex(
     vertex = cellclass(**cellparams)
     _spinnaker.add_partitioned_vertex(vertex)
     return vertex
+
+
+def add_partitioned_vertex_instance(vertex_to_add):
+    """
+
+    :param vertex_to_add:
+    :return:
+    """
+    global _spinnaker
+    _spinnaker.add_partitioned_vertex(vertex_to_add)
+
+
+def add_edge(cell_type, cellparams, label=None, constraints=None,
+             partition_id=None):
+    """
+
+    :param cell_type:
+    :param cellparams:
+    :param constraints:
+    :param label:
+    :param partition_id:
+    :return:
+    """
+    global _spinnaker
+
+    # correct label if needed
+    if label is None and 'label' not in cellparams:
+        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
+        _spinnaker.increment_none_labelled_edge_count()
+        cellparams['label'] = label
+    elif 'label' in cellparams and cellparams['label'] is None:
+        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
+        _spinnaker.increment_none_labelled_edge_count()
+        cellparams['label'] = label
+    elif label is not None:
+        cellparams['label'] = label
+
+    # add edge
+    edge = cell_type(**cellparams)
+    _spinnaker.add_partitionable_edge(edge, partition_id, constraints)
+    return edge
+
+
+def add_partitionable_edge_instance(edge, partition_id, constraints):
+    """
+
+    :param edge:
+    :param partition_id:
+    :param constraints:
+    :return:
+    """
+    _spinnaker.add_partitionable_edge(edge, partition_id, constraints)
+
+
+def add_partitioned_edge_instance(edge, partition_id, constraints):
+    """
+
+    :param edge:
+    :param partition_id:
+    :param constraints:
+    :return:
+    """
+    _spinnaker.add_partitioned_edge(edge, partition_id, constraints)
 
 
 def add_partitioned_edge(cellclass, cellparams, label=None, constraints=None,
