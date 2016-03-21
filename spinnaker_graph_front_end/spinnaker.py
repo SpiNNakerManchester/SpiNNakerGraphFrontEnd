@@ -6,7 +6,6 @@ from pacman.operations.pacman_algorithm_executor import PACMANAlgorithmExecutor
 from spinn_front_end_common.interface.spinnaker_main_interface import \
     SpinnakerMainInterface
 from spinn_front_end_common.interface import interface_functions
-from spinn_front_end_common.utilities import exceptions as common_exceptions
 
 # graph front end imports
 from spinnaker_graph_front_end.utilities.xml_interface import XMLInterface
@@ -29,26 +28,38 @@ class SpiNNaker(SpinnakerMainInterface):
 
     def __init__(
             self, executable_finder, host_name=None, graph_label=None,
-            database_socket_addresses=None,
-            extra_algorithms_for_auto_pause_and_resume=None):
+            database_socket_addresses=None):
 
         self._hostname = host_name
 
+        # create xml path for where to locate GFE related functions when
+        # using auto pause and resume
         extra_xml_path = list()
         extra_xml_path.append(
             os.path.join(os.path.dirname(extra_pacman_algorithms.__file__),
                          "spinnaker_graph_front_end_algorithms.xml"))
+
+        # create list of extra algorithms for auto pause and resume
+        extra_mapping_inputs = dict()
+        extra_mapping_algorithms = list()
+        extra_pre_run_algorithms = list()
+        extra_post_run_algorithms = list()
+
+        extra_mapping_inputs["ExecuteMapping"] = config.getboolean(
+            "Database", "create_routing_info_to_atom_id_mapping")
 
         SpinnakerMainInterface.__init__(
             self, config, _version, host_name=host_name,
             graph_label=graph_label, this_executable_finder=executable_finder,
             database_socket_addresses=database_socket_addresses,
             extra_algorithm_xml_paths=extra_xml_path,
-            extra_algorithms_for_auto_pause_and_resume=
-            extra_algorithms_for_auto_pause_and_resume)
+            extra_mapping_inputs=extra_mapping_inputs,
+            extra_mapping_algorithms=extra_mapping_algorithms,
+            extra_pre_run_algorithms=extra_pre_run_algorithms,
+            extra_post_run_algorithms=extra_post_run_algorithms)
 
         # set up machine targeted data
-        self._set_up_machine_specifics(host_name)
+        self.set_up_machine_specifics(host_name)
 
         self._time_scale_factor = 1
         logger.info("Setting time scale factor to {}."
@@ -59,82 +70,6 @@ class SpiNNaker(SpinnakerMainInterface):
         # get the machine time step
         logger.info("Setting machine time step to {} micro-seconds."
                     .format(self._machine_time_step))
-
-    def _set_up_machine_specifics(self, hostname):
-        self._machine_time_step = config.getint("Machine", "machineTimeStep")
-
-        if hostname is not None:
-            self._hostname = hostname
-            logger.warn("The machine name from PYNN setup is overriding the "
-                        "machine name defined in the spynnaker.cfg file")
-        elif config.has_option("Machine", "machineName"):
-            self._hostname = config.get("Machine", "machineName")
-        else:
-            raise Exception("A SpiNNaker machine must be specified in "
-                            "spynnaker.cfg.")
-        use_virtual_board = config.getboolean("Machine", "virtual_board")
-        if self._hostname == 'None' and not use_virtual_board:
-            raise Exception("A SpiNNaker machine must be specified in "
-                            "spynnaker.cfg.")
-
-    def _create_pacman_executor_inputs(self, this_run_time, is_resetting=False):
-        inputs, application_graph_changed, using_auto_pause_and_resume = \
-            SpinnakerMainInterface._create_pacman_executor_inputs(
-                self, this_run_time, is_resetting)
-        if application_graph_changed and not is_resetting:
-            inputs.append({
-                'type': "ExecuteMapping",
-                'value': config.getboolean(
-                    "Database", "create_routing_info_to_atom_id_mapping")})
-        return inputs, application_graph_changed, using_auto_pause_and_resume
-
-    def _create_algorithm_list(
-            self, in_debug_mode, application_graph_changed, executing_reset,
-            using_auto_pause_and_resume):
-
-        mapping_algorithms = list()
-
-        # get config mapping algorithms and convert as needed
-        algorithm_names = config.get("Mapping", "algorithms")
-        algorithm_strings = algorithm_names.split(",")
-        for algorithm_string in algorithm_strings:
-            split_string = algorithm_string.split(":")
-            if len(split_string) == 1:
-                mapping_algorithms.append(split_string[0])
-            else:
-                raise common_exceptions.ConfigurationException(
-                    "The tool chain expects config params of list of 1 "
-                    "element with ,. Where the elements are either: the "
-                    "algorithm_name:algorithm_config_file_path, or "
-                    "algorithm_name if its a internal to pacman algorithm."
-                    " Please rectify this and try again")
-
-        mapping_algorithms.append("SpiNNakerGraphFrontEndRuntimeUpdater")
-
-        if application_graph_changed and not executing_reset:
-            mapping_algorithms.append("FrontEndCommonEdgeToNKeysMapper")
-
-            if len(self._partitionable_graph.vertices) != 0:
-                mapping_algorithms.append("FrontEndCommonDatabaseWriter")
-            else:
-                mapping_algorithms.append(
-                    "SpiNNakerGraphFrontEndDatabaseWriter")
-        # if not in auto pause and resume mode, use front end common
-        # chip runtime updater
-        if (application_graph_changed and not executing_reset and
-                not using_auto_pause_and_resume):
-            mapping_algorithms.append(
-                "GraphFrontEndCommonMachineRuntimeUpdater")
-        if not application_graph_changed and not executing_reset:
-            mapping_algorithms.append(
-                "GraphFrontEndCommonMachineRuntimeUpdater")
-
-        algorithms, optional_algorithms = \
-            self._create_all_flows_algorithm_common(
-                in_debug_mode, application_graph_changed, executing_reset,
-                using_auto_pause_and_resume)
-        mapping_algorithms.extend(algorithms)
-        return mapping_algorithms, optional_algorithms
 
     def read_partitionable_graph_xml_file(self, file_path):
         """
