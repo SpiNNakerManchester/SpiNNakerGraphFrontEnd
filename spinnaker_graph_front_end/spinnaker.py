@@ -100,25 +100,12 @@ class SpiNNaker(SpinnakerMainInterface):
 
     def _run_algorithms_for_machine_gain(self):
         # get inputs
-        inputs = list()
-        application_graph_changed, self._no_sync_changes, \
-            no_machine_time_steps, json_folder, width, height, \
-            number_of_boards, scamp_socket_addresses, boot_port_num, \
-            using_auto_pause_and_resume, max_sdram_size = \
-            self._deduce_standard_input_params(False, 0)
-        inputs = self._add_mapping_inputs(
-            inputs, width, height, scamp_socket_addresses, boot_port_num,
-            json_folder, number_of_boards)
-        inputs = self._add_standard_basic_inputs(
-            inputs, no_machine_time_steps, False, max_sdram_size, 0)
-
-        # get algorithms
+        inputs = dict()
         algorithms = list()
-        if config.getboolean("Machine", "virtual_board"):
-            algorithms.append("FrontEndCommonVirtualMachineInterfacer")
 
-        else:
-            algorithms.append("FrontEndCommonMachineInterfacer")
+        SpinnakerMainInterface.\
+            _generate_inputs_and_algorithms_for_getting_machine(
+                self, algorithms, inputs)
 
         # get outputs
         required_outputs = list()
