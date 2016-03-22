@@ -75,13 +75,13 @@ class HeatDemoVertexPartitioned(
                  heat_temperature=0, constraints=None):
 
         # resources used by a heat element vertex
+        sdram = SDRAMResource(
+            23 + config.getint("Buffers", "minimum_buffer_sdram"))
         resources = ResourceContainer(cpu=CPUCyclesPerTickResource(45),
                                       dtcm=DTCMResource(34),
-                                      sdram=SDRAMResource(23))
+                                      sdram=sdram)
 
-        ReceiveBuffersToHostBasicImpl.__init__(
-            self, config.getint(
-                "Recording", "extra_recording_data_for_static_sdram_usage"))
+        ReceiveBuffersToHostBasicImpl.__init__(self)
         PartitionedVertex.__init__(
             self, label=label, resources_required=resources,
             constraints=constraints)

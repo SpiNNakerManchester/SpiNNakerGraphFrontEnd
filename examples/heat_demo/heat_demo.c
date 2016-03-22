@@ -167,6 +167,9 @@ uint * dbg_s_time;
  */
 void report_temp(uint ticks) {
     use(ticks);
+    // record the new temperature for extraction later on
+    recording_record(RECORDED_DATA, my_temp, 4);
+    recording_do_timestep_update(time);
     // need to look at recording regions and defining how much data to store
 }
 
@@ -284,6 +287,34 @@ void send_first_value() {
     log_info("Sent initial temp \n");
 }
 
+//! \brief Initialises the recording parts of the model
+//! \return True if recording initialisation is successful, false otherwise
+static bool initialise_recording(){
+    address_t address = data_specification_get_data_address();
+    address_t system_region = data_specification_get_region(
+        SYSTEM_REGION, address);
+    regions_e regions_to_record[] = {RECORDED_DATA};
+    uint8_t n_regions_to_record = 1;
+    uint32_t *recording_flags_from_system_conf =
+        &system_region[SIMULATION_N_TIMING_DETAIL_WORDS];
+    regions_e state_region = BUFFERING_OUT_STATE;
+
+    bool success = recording_initialize(
+        n_regions_to_record, regions_to_record,
+        recording_flags_from_system_conf, state_region, TIMER,
+        &recording_flags);
+    log_info("Recording flags = 0x%08x", recording_flags);
+    return success;
+}
+
+void resume_callback() {
+    // restart the recording status
+    if (!initialise_recording()) {
+        log_error("Error setting up recording");
+        rt_error(RTE_SWERR);
+    }
+}
+
 /****f* heat_demo.c/update
  *
  * SUMMARY
@@ -307,13 +338,13 @@ void update(uint ticks, uint b) {
     if ((infinite_run != TRUE) && (time >= simulation_ticks)) {
         log_info("Simulation complete.\n");
 
+        // falls into the pause resume mode of operating
+        simulation_handle_pause_resume(resume_callback);
+
         if (recording_flags > 0) {
             log_info("updating recording regions");
             recording_finalise();
         }
-
-        // falls into the pause resume mode of operating
-        simulation_handle_pause_resume();
     }
 
     if (updating) {
@@ -381,16 +412,13 @@ void update(uint ticks, uint b) {
         }
         log_info("sent my temp via multicast");
 
-        // record the new temperature for extraction later on
-        recording_record(RECORDED_DATA, my_temp, 4);
+        /* report current temp to end user*/
+        report_temp(time);
 
         /* prepare for next iteration */
         arrived[now] = init_arrived;
         now = 1 - now;
         next = 1 - next;
-
-        /* report current temp */
-        report_temp(time);
     }
 }
 
@@ -419,8 +447,7 @@ static bool initialize(uint32_t *timer_period) {
     address_t system_region = data_specification_get_region(
         SYSTEM_REGION, address);
     if (!simulation_read_timing_details(
-            system_region, APPLICATION_MAGIC_NUMBER,
-            timer_period, &simulation_ticks, &infinite_run)) {
+            system_region, APPLICATION_MAGIC_NUMBER, timer_period)) {
         log_error("failed to read the system header");
         return false;
     }
@@ -516,25 +543,6 @@ static bool initialize(uint32_t *timer_period) {
     return true;
 }
 
-//! \brief Initialises the recording parts of the model
-//! \return True if recording initialisation is successful, false otherwise
-static bool initialise_recording(){
-    address_t address = data_specification_get_data_address();
-    address_t system_region = data_specification_get_region(
-        SYSTEM_REGION, address);
-    regions_e regions_to_record[] = {RECORDED_DATA};
-    uint8_t n_regions_to_record = 1;
-    uint32_t *recording_flags_from_system_conf =
-        &system_region[SIMULATION_N_TIMING_DETAIL_WORDS];
-    regions_e state_region = BUFFERING_OUT_STATE;
-
-    bool success = recording_initialize(
-        n_regions_to_record, regions_to_record,
-        recording_flags_from_system_conf, state_region, 2, &recording_flags);
-    log_info("Recording flags = 0x%08x", recording_flags);
-    return success;
-}
-
 /****f* heat_demo.c/c_main
  *
  * SUMMARY
@@ -594,5 +602,5 @@ void c_main() {
     // Start the time at "-1" so that the first tick will be 0
     time = UINT32_MAX;
 
-    simulation_run(update, TIMER);
+    simulation_run();
 }
