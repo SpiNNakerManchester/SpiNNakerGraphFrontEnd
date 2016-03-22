@@ -29,7 +29,7 @@ from spinn_front_end_common.utility_models.live_packet_gather import \
     LivePacketGather
 from spinn_front_end_common.utility_models.\
     reverse_ip_tag_multi_cast_source import ReverseIpTagMultiCastSource
-from spinnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
+from spinn_front_end_common.abstract_models.abstract_partitioned_data_specable_vertex \
     import AbstractPartitionedDataSpecableVertex
 
 # front end common imports
@@ -85,10 +85,9 @@ class HeatDemoVertexPartitioned(
         PartitionedVertex.__init__(
             self, label=label, resources_required=resources,
             constraints=constraints)
-        AbstractPartitionedDataSpecableVertex.__init__(self)
+        AbstractPartitionedDataSpecableVertex.__init__(
+            self, machine_time_step, time_scale_factor)
         AbstractMappableInterface.__init__(self)
-        self._machine_time_step = machine_time_step
-        self._time_scale_factor = time_scale_factor
         self._heat_temperature = heat_temperature
         self._time_between_requests = config.getint(
             "Buffers", "time_between_requests")

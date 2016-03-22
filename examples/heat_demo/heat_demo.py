@@ -4,8 +4,9 @@ heat demo main entrance allows users to run the heat demo on the tool chain
 
 
 # spinn front end common imports
-from spinn_front_end_common.utility_models.live_packet_gather import \
-    LivePacketGather
+from spinn_front_end_common.utility_models.\
+    live_packet_gather_partitioned_vertex import \
+    LivePacketGatherPartitionedVertex
 
 # SpiNNMan imports
 from spinnman.messages.eieio.eieio_type import EIEIOType
@@ -51,7 +52,7 @@ vertices = [None] * (x_dimension * 4)
 
 live_gatherer = \
     front_end.add_partitioned_vertex(
-        LivePacketGather,
+        LivePacketGatherPartitionedVertex,
         {'machine_time_step': machine_time_step,
          'timescale_factor': time_scale_factor,
          'label': "gatherer from heat elements",

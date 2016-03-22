@@ -597,8 +597,6 @@ void c_main() {
     // start execution
     log_info("Starting\n");
 
-    spin1_schedule_callback(send_first_value, 0, 0, USER);
-
     // Start the time at "-1" so that the first tick will be 0
     time = UINT32_MAX;
 
