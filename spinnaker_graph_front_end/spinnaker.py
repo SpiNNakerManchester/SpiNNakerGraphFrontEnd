@@ -56,6 +56,7 @@ class SpiNNaker(SpinnakerMainInterface):
             extra_post_run_algorithms=extra_post_run_algorithms)
 
         # set up machine targeted data
+        self._machine_time_step = config.getint("Machine", "machineTimeStep")
         self.set_up_machine_specifics(host_name)
 
         self._time_scale_factor = 1
@@ -119,7 +120,7 @@ class SpiNNaker(SpinnakerMainInterface):
             algorithms=algorithms, inputs=inputs,
             xml_paths=xml_paths, required_outputs=required_outputs,
             optional_algorithms=list(),
-            do_timings=config.getboolean("Reports", "outputTimesForSections"))
+            do_timings=config.getboolean("Reports", "writeAlgorithmTimings"))
         pacman_executor.execute_mapping()
 
         # get machine object and transciever

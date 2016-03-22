@@ -27,7 +27,7 @@ _none_labelled_edge_count = None
 
 def setup(hostname=None, graph_label=None, model_binary_module=None,
           model_binary_folder=None, database_socket_addresses=None,
-          algorithms_for_auto_pause_and_resume=None):
+          user_dsg_algorithm=None):
     """ for builders with pynn attitude, allows end users to define wherever\
         their binaries are
 
@@ -36,7 +36,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
     :param model_binary_module:
     :param model_binary_folder:
     :param database_socket_addresses:
-    :param algorithms_for_auto_pause_and_resume:
+    :param user_dsg_algorithm:
 
     :return:
     """
@@ -70,8 +70,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         host_name=hostname, graph_label=graph_label,
         executable_finder=executable_finder,
         database_socket_addresses=database_socket_addresses,
-        extra_algorithms_for_auto_pause_and_resume=
-        algorithms_for_auto_pause_and_resume)
+        dsg_algorithm=user_dsg_algorithm)
 
 
 def run(duration=None):
