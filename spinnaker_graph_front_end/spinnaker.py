@@ -96,7 +96,40 @@ class SpiNNaker(SpinnakerMainInterface):
 
         return {'x': self._machine.max_chip_x, 'y': self._machine.max_chip_y}
 
-    def _run_algorithms_for_machine_gain(self):
+    def generate_file_machine(self):
+        """
+        supports user which need to know the machine for external usages
+        before running the main tools.
+        :return:
+        """
+        if self._machine is None:
+            self._run_algorithms_for_machine_gain(["FileMachine"])
+        else:
+            self._use_machine_to_generate_file_machine()
+
+    def _use_machine_to_generate_file_machine(self):
+        # generate the inputs for the algorithm
+        inputs = list()
+        inputs.append({"type": "MemoryMachine",
+                       "value": self._machine})
+        inputs.append({
+            "type": "FileMachineFilePath",
+            "value": os.path.join(self._report_default_directory,
+                                  "fileMachine")})
+
+        # ask for the file machine output
+        outputs = list()
+        outputs.append("FileMachine")
+
+        # run executor
+        pacman_executor = PACMANAlgorithmExecutor(
+            algorithms=[], inputs=inputs,
+            xml_paths=[], required_outputs=outputs,
+            optional_algorithms=list(),
+            do_timings=config.getboolean("Reports", "writeAlgorithmTimings"))
+        pacman_executor.execute_mapping()
+
+    def _run_algorithms_for_machine_gain(self, extra_outputs=None):
         # get inputs
         inputs = dict()
         algorithms = list()
@@ -108,6 +141,8 @@ class SpiNNaker(SpinnakerMainInterface):
         # get outputs
         required_outputs = list()
         required_outputs.append("MemoryMachine")
+        if extra_outputs is not None:
+            required_outputs += list(extra_outputs)
 
         # get xmls
         xml_paths = list()
