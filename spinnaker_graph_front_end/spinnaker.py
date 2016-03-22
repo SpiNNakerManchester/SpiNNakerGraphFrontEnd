@@ -10,7 +10,6 @@ from spinn_front_end_common.interface import interface_functions
 # graph front end imports
 from spinnaker_graph_front_end.utilities.xml_interface import XMLInterface
 from spinnaker_graph_front_end.utilities.conf import config
-from spinnaker_graph_front_end import extra_pacman_algorithms
 from spinnaker_graph_front_end import _version
 
 # general imports
@@ -28,16 +27,14 @@ class SpiNNaker(SpinnakerMainInterface):
 
     def __init__(
             self, executable_finder, host_name=None, graph_label=None,
-            database_socket_addresses=None):
+            database_socket_addresses=None, dsg_algorithm=None):
 
-        self._hostname = host_name
+        # dsg algorithm store for user defined algorithms
+        self._user_dsg_algorithm = dsg_algorithm
 
         # create xml path for where to locate GFE related functions when
         # using auto pause and resume
         extra_xml_path = list()
-        extra_xml_path.append(
-            os.path.join(os.path.dirname(extra_pacman_algorithms.__file__),
-                         "spinnaker_graph_front_end_algorithms.xml"))
 
         # create list of extra algorithms for auto pause and resume
         extra_mapping_inputs = dict()
@@ -129,6 +126,21 @@ class SpiNNaker(SpinnakerMainInterface):
         self._machine = pacman_executor.get_item("MemoryMachine")
         if not config.getboolean("Machine", "virtual_board"):
             self._txrx = pacman_executor.get_item("MemoryTransceiver")
+
+    def run(self, run_time):
+        # set up the correct dsg algorithm
+        if self._user_dsg_algorithm is None:
+            if len(self._partitioned_graph.subvertices) != 0:
+                self.dsg_algorithm = \
+                    "FrontEndCommonPartitionedGraphDataSpecificationWriter"
+            elif len(self._partitionable_graph.vertices) != 0:
+                self.dsg_algorithm = \
+                    "FrontEndCommonPartitionableGraphDataSpecificationWriter"
+        else:
+            self.dsg_algorithm = self._user_dsg_algorithm
+
+        # run normal procedure
+        SpinnakerMainInterface.run(self, run_time)
 
     def __repr__(self):
         return "SpiNNaker Graph Front End object for machine {}"\
