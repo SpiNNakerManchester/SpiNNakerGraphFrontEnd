@@ -290,3 +290,122 @@ def get_machine_dimensions():
     """
     global _spinnaker
     return _spinnaker.get_machine_dimensions()
+
+
+def get_number_of_cores_on_machine():
+    """
+    returns the number of cores on this machine
+    :return:
+    """
+    global _spinnaker
+    this_machine = _spinnaker.machine
+    cores, _ = this_machine.get_cores_and_link_count()
+    return cores
+
+
+def has_ran():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.has_ran
+
+
+def machine_time_step():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.machine_time_step
+
+
+def no_machine_time_steps():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.no_machine_time_steps
+
+
+def timescale_factor():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.time_scale_factor
+
+
+def partitioned_graph():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.partitioned_graph
+
+
+def partitionable_graph():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.partitionable_graph
+
+
+def routing_infos():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.routing_infos
+
+
+def placements():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.placements
+
+
+def transceiver():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.txrx
+
+
+def graph_mapper():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.graph_mapper
+
+
+def buffer_manager():
+    """
+    returns the buffer manager being used for loading/extracting buffers
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.buffer_manager
+
+
+def machine():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.machine
