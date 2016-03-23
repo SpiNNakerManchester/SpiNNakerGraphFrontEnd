@@ -178,6 +178,16 @@ class SpiNNaker(SpinnakerMainInterface):
         # run normal procedure
         SpinnakerMainInterface.run(self, run_time)
 
+    @property
+    def machine(self):
+        """
+        get machine object
+        :return:
+        """
+        if self._machine is None:
+            self._run_algorithms_for_machine_gain()
+        return self._machine
+
     def __repr__(self):
         return "SpiNNaker Graph Front End object for machine {}"\
             .format(self._hostname)
