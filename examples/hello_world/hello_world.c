@@ -17,10 +17,6 @@ static uint32_t infinite_run;
 //! The recording flags
 static uint32_t recording_flags = 0;
 
-//! the unique identifier of this model, so that it can tell if the data its
-//! reading is for itself.
-#define APPLICATION_MAGIC_NUMBER 0x99b1ff8f
-
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
     SYSTEM_REGION,
@@ -39,21 +35,7 @@ typedef enum transmission_region_elements {
 } transmission_region_elements;
 
 
-/****f* heat_demo.c/receive_data
- *
- * SUMMARY
- *  This function is used as a callback for packet received events.
- * receives data from 4 (NSEW) neighbours and updates the checklist
- *
- * SYNOPSIS
- *  void receive_data (uint key, uint payload)
- *
- * INPUTS
- *   uint key: packet routing key - provided by the RTS
- *   uint payload: packet payload - provided by the RTS
- *
- * SOURCE
- */
+
 void receive_data(uint key, uint payload) {
     use(key);
     use(payload);
@@ -119,7 +101,7 @@ void resume_callback() {
     time = UINT32_MAX;
 }
 
-/****f* heat_demo.c/update
+/****f*
  *
  * SUMMARY
  *
@@ -185,7 +167,7 @@ static bool initialize(uint32_t *timer_period) {
     address_t system_region = data_specification_get_region(
         SYSTEM_REGION, address);
     if (!simulation_read_timing_details(
-            system_region, APPLICATION_MAGIC_NUMBER, timer_period)) {
+            system_region, APPLICATION_NAME_HASH, timer_period)) {
         log_error("failed to read the system header");
         return false;
     }
@@ -193,7 +175,7 @@ static bool initialize(uint32_t *timer_period) {
     return true;
 }
 
-/****f* heat_demo.c/c_main
+/****f*
  *
  * SUMMARY
  *  This function is called at application start-up.
