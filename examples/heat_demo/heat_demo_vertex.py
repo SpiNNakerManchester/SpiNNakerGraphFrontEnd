@@ -20,8 +20,8 @@ from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.sdram_resource import SDRAMResource
 
 # graph front end imports
-from spinn_front_end_common.interface.abstract_mappable_interface import \
-    AbstractMappableInterface
+from spinn_front_end_common.abstract_models.abstract_changable_after_run import \
+    AbstractChangableAfterRun
 from spinn_front_end_common.interface.buffer_management.buffer_models.\
     receives_buffers_to_host_basic_impl import \
     ReceiveBuffersToHostBasicImpl
@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 class HeatDemoVertexPartitioned(
         PartitionedVertex, AbstractPartitionedDataSpecableVertex,
-        AbstractMappableInterface, ReceiveBuffersToHostBasicImpl):
+        AbstractChangableAfterRun, ReceiveBuffersToHostBasicImpl):
     """ A vertex partition for a heat demo; represents a heat element.
     """
 
@@ -87,7 +87,7 @@ class HeatDemoVertexPartitioned(
             constraints=constraints)
         AbstractPartitionedDataSpecableVertex.__init__(
             self, machine_time_step, time_scale_factor)
-        AbstractMappableInterface.__init__(self)
+        AbstractChangableAfterRun.__init__(self)
         self._heat_temperature = heat_temperature
         self._time_between_requests = config.getint(
             "Buffers", "time_between_requests")
