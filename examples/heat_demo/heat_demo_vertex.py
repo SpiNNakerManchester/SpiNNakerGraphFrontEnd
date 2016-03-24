@@ -29,6 +29,7 @@ from spinn_front_end_common.utility_models.live_packet_gather import \
     LivePacketGather
 from spinn_front_end_common.utility_models.\
     reverse_ip_tag_multi_cast_source import ReverseIpTagMultiCastSource
+from spinn_front_end_common.abstract_models.abstract_provides_n_keys_for_partition import AbstractProvidesNKeysForPartition
 from spinn_front_end_common.abstract_models.abstract_partitioned_data_specable_vertex \
     import AbstractPartitionedDataSpecableVertex
 
@@ -45,7 +46,8 @@ logger = logging.getLogger(__name__)
 
 class HeatDemoVertexPartitioned(
         PartitionedVertex, AbstractPartitionedDataSpecableVertex,
-        AbstractChangableAfterRun, ReceiveBuffersToHostBasicImpl):
+        AbstractChangableAfterRun, ReceiveBuffersToHostBasicImpl,
+        AbstractProvidesNKeysForPartition):
     """ A vertex partition for a heat demo; represents a heat element.
     """
 

@@ -1,16 +1,11 @@
 from enum import Enum
 
 # front end common imports
-from spinn_front_end_common.abstract_models.\
-    abstract_provides_n_keys_for_partition \
-    import AbstractProvidesNKeysForPartition
-from spinnaker_graph_front_end.models.\
-    mutli_cast_partitioned_edge_with_n_keys import \
-    MultiCastPartitionedEdgeWithNKeys
+from pacman.model.partitioned_graph.multi_cast_partitioned_edge \
+    import MultiCastPartitionedEdge
 
 
-class HeatDemoEdge(MultiCastPartitionedEdgeWithNKeys,
-                   AbstractProvidesNKeysForPartition):
+class HeatDemoEdge(MultiCastPartitionedEdge):
     """ Used in conjunction with a heat demo vertex to execute the heat demo
     """
 
@@ -22,9 +17,8 @@ class HeatDemoEdge(MultiCastPartitionedEdgeWithNKeys,
 
     def __init__(self, pre_subvertex, post_subvertex, direction, n_keys=1,
                  label=None):
-        MultiCastPartitionedEdgeWithNKeys.__init__(
-            self, pre_subvertex, post_subvertex, n_keys=n_keys, label=label)
-        AbstractProvidesNKeysForPartition.__init__(self)
+        MultiCastPartitionedEdge.__init__(
+            self, pre_subvertex, post_subvertex, label=label)
         self._direction = direction
 
     @property
@@ -34,15 +28,6 @@ class HeatDemoEdge(MultiCastPartitionedEdgeWithNKeys,
         :return:
         """
         return self._direction
-
-    def get_n_keys_for_partition(self, partition, graph_mapper):
-        """
-
-        :param partition:
-        :param graph_mapper:
-        :return:
-        """
-        return 1
 
     def is_partitioned_edge(self):
         return True
