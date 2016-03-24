@@ -562,6 +562,7 @@ void c_main() {
 
     // initialise the model
     if (!initialize(&timer_period)) {
+        log_error("Error in initialisation - exiting!");
         rt_error(RTE_SWERR);
     }
 
@@ -569,6 +570,7 @@ void c_main() {
     // set up recording data structures
     if(!initialise_recording()){
          rt_error(RTE_SWERR);
+        return;
     }
 
     // set timer tick value to configured value
