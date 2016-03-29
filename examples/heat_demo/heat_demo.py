@@ -69,7 +69,7 @@ for x_position in range(0, max_x_element_id):
             HeatDemoVertexPartitioned,
             {'machine_time_step': machine_time_step,
              'time_scale_factor': time_scale_factor},
-            label="heat_element at coords {}:{}".format(
+            label="heat_element at coordinates {}:{}".format(
                 x_position, y_position))
         if vertices[x_position] is None:
             vertices[x_position] = list()

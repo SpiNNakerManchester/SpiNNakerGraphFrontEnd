@@ -35,7 +35,7 @@ y_dimension = 2
 p_dimension = 16
 
 # calculate total number of 'free' cores for the given board
-# (ie. does not include those busy with sark or reinjection)
+# (i.e. does not include those busy with SARK or reinjection)
 total_number_of_cores = (p_dimension - 2) * x_dimension * y_dimension
 
 # fill all cores with a HelloWorldVertex each

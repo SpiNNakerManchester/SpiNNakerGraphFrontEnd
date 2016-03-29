@@ -16,6 +16,7 @@ static uint32_t infinite_run;
 
 //! The recording flags
 static uint32_t recording_flags = 0;
+static bool initialise_recording();
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
@@ -35,8 +36,7 @@ typedef enum transmission_region_elements {
     HAS_KEY, MY_KEY
 } transmission_region_elements;
 
-//=============================================================================
-// variables to set
+// TODO: Set the application name here
 app_name = ""
 
 
@@ -44,12 +44,15 @@ app_name = ""
 // packet interfaces
 
 
-//! \brief functionality to add when received a multicast packet without payload.
+//! \brief functionality to add when received a multicast packet without
+//         payload.
 //! \param[in] key is the key used in routing
 //! \param[in] payload is the payload of packet [none].
 //! \return None
 void receive_data_no_payload(uint key, uint payload) {
     use(payload);
+
+    // TODO: Handle a received multicast packet without a payload
 }
 
 //! \brief functionality to add when received a multicast packet with payload.
@@ -58,59 +61,62 @@ void receive_data_no_payload(uint key, uint payload) {
 //! \return None
 void receive_data_payload(uint key, uint payload) {
 
+    // TODO: Handle a received multicast packet with a payload
 }
 
 //=============================================================================
 // timer tick interface
 
 //! \brief functionality to execute within a timer tick callback.
-//! \param[in] ticks: the number of times the timer tick callback has been called.
-//! \param[in] time: the tracked timer.
+//! \param[in] ticks the number of times the timer tick callback has been
+//                    called.
+//! \param[in] time the tracked timer.
 //! \return None
-void do_update(uint ticks, uint32_t time){
+static void do_update(uint ticks, uint32_t time) {
+
+    // TODO: Handle a timer tick
 
 }
 
 //=============================================================================
-//Recording interfaces
+// Recording interfaces
 
-//! \brief returns the number fo recording regions used by this model
+//! \brief returns the number of recording regions used by this model
 //! \return the number of recorded regions to use.
-int number_of_recorded_regions(){
-  return 1;
+int number_of_recorded_regions() {
+
+    // TODO: Update with the number of regions to record
+    return 1;
 }
 
-//! \brief returns the ids in an array for recording to work
-//! \return the arrays of ints for each recorded region id
+//! \brief Returns the ids of regions that will be used in recording
+//! \return An array of the recording regions to use
 region_e * region_ids_for_recording(){
-  regions_e regions_ids_to_record[] = {RECORDED_DATA};
-  return regions_ids_to_record;
+
+    // TODO: Update with the recording region ids
+    regions_e regions_ids_to_record[] = {RECORDED_DATA};
+    return regions_ids_to_record;
 }
 
 //=============================================================================
 //resume interfaces
 
-//! \brief add functionality to do when your about to resume.
-//! \return None.
+//! \brief add functionality to do when you are about to resume.
 void resume_callback() {
 
+    // TODO: Perform any changes that need to be done before resume occurs
+    initialise_recording();
 }
 
-
 //==============================================================================
 //==============================================================================
+//========================= Boiler plate code below ============================
 //==============================================================================
 //==============================================================================
-//==============================Boiler plate code below=========================
-//==============================================================================
-//==============================================================================
-//==============================================================================
-//==============================================================================
-
 
 //! \brief Initialises the recording parts of the model
 //! \return True if recording initialisation is successful, false otherwise
-static bool initialise_recording(){
+static bool initialise_recording() {
     address_t address = data_specification_get_data_address();
     address_t system_region = data_specification_get_region(
         SYSTEM_REGION, address);
@@ -127,17 +133,14 @@ static bool initialise_recording(){
 }
 
 //! \brief timer tick callback functionality
-//! param[in] ticks: the number of times this has been called
-//! param[in] b: no idea
+//! param[in] ticks: the number of timer interrupts received
+//! param[in] unused: unused parameter - ignored
 //! \return None
-void update(uint ticks, uint b) {
-    use(b);
+void update(uint ticks, uint unused) {
+    use(unused);
     use(ticks);
 
-    time++;
-
-    log_info("on tick %d", time);
-    log_info("sim ticks %d", simulation_ticks);
+    log_debug("on tick %d of %d", time, simulation_ticks);
 
     // check that the run time hasn't already elapsed and thus needs to be
     // killed

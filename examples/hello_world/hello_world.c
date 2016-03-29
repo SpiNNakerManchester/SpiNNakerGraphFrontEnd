@@ -42,10 +42,7 @@ void receive_data(uint key, uint payload) {
 }
 
 void iobuf_data(){
-
-    log_info("getting app table address");
     address_t address = data_specification_get_data_address();
-    log_info("getting recorded region id");
     address_t hello_world_address =
         data_specification_get_region(RECORDED_DATA, address);
 
@@ -56,22 +53,20 @@ void iobuf_data(){
 }
 
 void record_data() {
-    log_info("Recording data...");
+    log_debug("Recording data...");
 
     uint chip = spin1_get_chip_id();
 
     uint core = spin1_get_core_id();
 
-    log_info("Issuing 'Hello World' from chip %d, core %d",
-             chip, core);
+    log_debug("Issuing 'Hello World' from chip %d, core %d", chip, core);
 
     bool recorded = recording_record(
         0, "Hello world", 11 * sizeof(char));
 
-    if(recorded){
-        log_info("Hello World recorded successfully!");
-    }
-    else{
+    if (recorded) {
+        log_debug("Hello World recorded successfully!");
+    } else {
         log_error("Hello World was not recorded...");
     }
 }
@@ -116,8 +111,7 @@ void update(uint ticks, uint b) {
 
     time++;
 
-    log_info("on tick %d", time);
-    log_info("sim ticks %d", simulation_ticks);
+    log_debug("on tick %d of %d", time, simulation_ticks);
 
     // check that the run time hasn't already elapsed and thus needs to be
     // killed
@@ -135,15 +129,15 @@ void update(uint ticks, uint b) {
         return;
 
     }
-    if(time == 1){
+
+    if (time == 1) {
         record_data();
-    }
-    else if(time ==  100){
+    } else if (time ==  100) {
         iobuf_data();
     }
 
     // trigger buffering_out_mechanism
-    log_info("reocrding flags is %d", recording_flags);
+    log_info("recording flags is %d", recording_flags);
     if (recording_flags > 0) {
         log_info("doing timer tick update\n");
         recording_do_timestep_update(time);

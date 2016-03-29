@@ -21,9 +21,6 @@ logger = logging.getLogger(__name__)
 
 
 class SpiNNaker(SpinnakerMainInterface):
-    """
-    Spinnaker
-    """
 
     def __init__(
             self, executable_finder, host_name=None, graph_label=None,
@@ -158,7 +155,7 @@ class SpiNNaker(SpinnakerMainInterface):
             do_timings=config.getboolean("Reports", "writeAlgorithmTimings"))
         pacman_executor.execute_mapping()
 
-        # get machine object and transciever
+        # get machine object and transceiver
         self._machine = pacman_executor.get_item("MemoryMachine")
         if not config.getboolean("Machine", "virtual_board"):
             self._txrx = pacman_executor.get_item("MemoryTransceiver")

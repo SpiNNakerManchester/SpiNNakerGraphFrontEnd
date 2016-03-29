@@ -129,7 +129,7 @@ typedef enum neighbour_region_elements {
     NORTH_FAKE_KEY,
     WEST_FAKE_KEY,
     SOUTH_FAKE_KEY
-}neighbour_region_elements;
+} neighbour_region_elements;
 
 //! human readable definitions of each element in the command keys region
 typedef enum command_region_elements {
@@ -167,10 +167,10 @@ uint * dbg_s_time;
  */
 void report_temp(uint ticks) {
     use(ticks);
+
     // record the new temperature for extraction later on
     recording_record(RECORDED_DATA, my_temp, 4);
     recording_do_timestep_update(time);
-    // need to look at recording regions and defining how much data to store
 }
 
 /****f* heat_demo.c/receive_data
@@ -330,8 +330,7 @@ void update(uint ticks, uint b) {
 
     time++;
 
-    log_info("on tick %d", time);
-    log_info("sim ticks %d", simulation_ticks);
+    log_debug("on tick %d of %d", time, simulation_ticks);
 
     // check that the run time hasn't already elapsed and thus needs to be
     // killed
@@ -410,7 +409,7 @@ void update(uint ticks, uint b) {
         while (!spin1_send_mc_packet(my_key, my_temp, WITH_PAYLOAD)) {
             spin1_delay_us(1);
         }
-        log_info("sent my temp via multicast");
+        log_debug("sent my temp via multicast");
 
         /* report current temp to end user*/
         report_temp(time);

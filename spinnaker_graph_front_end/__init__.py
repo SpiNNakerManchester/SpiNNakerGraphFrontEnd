@@ -57,7 +57,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
             __version__, __version_name__, __version_month__, __version_year__,
             parent_dir))
 
-    # add the directorates for where to locate the binaries
+    # add the directories where the binaries are located
     executable_finder = ExecutableFinder()
     if model_binary_module is not None:
         executable_finder.add_path(

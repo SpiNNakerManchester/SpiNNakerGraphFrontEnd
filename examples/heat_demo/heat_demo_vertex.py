@@ -2,7 +2,6 @@
 # heat demo imports
 from data_specification.enums.data_type import DataType
 
-from examples.heat_demo.heat_demo_command_edge import HeatDemoCommandEdge
 from examples.heat_demo.heat_demo_edge import HeatDemoEdge
 
 from spinnaker_graph_front_end.utilities.conf import config
@@ -20,8 +19,6 @@ from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.sdram_resource import SDRAMResource
 
 # graph front end imports
-from spinn_front_end_common.abstract_models.abstract_changable_after_run import \
-    AbstractChangableAfterRun
 from spinn_front_end_common.interface.buffer_management.buffer_models.\
     receives_buffers_to_host_basic_impl import \
     ReceiveBuffersToHostBasicImpl
@@ -29,8 +26,8 @@ from spinn_front_end_common.utility_models.live_packet_gather import \
     LivePacketGather
 from spinn_front_end_common.utility_models.\
     reverse_ip_tag_multi_cast_source import ReverseIpTagMultiCastSource
-from spinn_front_end_common.abstract_models.abstract_provides_n_keys_for_partition import AbstractProvidesNKeysForPartition
-from spinn_front_end_common.abstract_models.abstract_partitioned_data_specable_vertex \
+from spinn_front_end_common.abstract_models\
+    .abstract_partitioned_data_specable_vertex \
     import AbstractPartitionedDataSpecableVertex
 
 # front end common imports
@@ -46,8 +43,7 @@ logger = logging.getLogger(__name__)
 
 class HeatDemoVertexPartitioned(
         PartitionedVertex, AbstractPartitionedDataSpecableVertex,
-        AbstractChangableAfterRun, ReceiveBuffersToHostBasicImpl,
-        AbstractProvidesNKeysForPartition):
+        ReceiveBuffersToHostBasicImpl):
     """ A vertex partition for a heat demo; represents a heat element.
     """
 
@@ -89,14 +85,12 @@ class HeatDemoVertexPartitioned(
             constraints=constraints)
         AbstractPartitionedDataSpecableVertex.__init__(
             self, machine_time_step, time_scale_factor)
-        AbstractChangableAfterRun.__init__(self)
         self._heat_temperature = heat_temperature
         self._time_between_requests = config.getint(
             "Buffers", "time_between_requests")
 
         # used to support
         self._first_partitioned_edge = None
-        self._requires_mapping = True
 
     def add_constraint(self, constraint):
         self._constraints.add(constraint)
@@ -260,11 +254,6 @@ class HeatDemoVertexPartitioned(
                     isinstance(incoming_edge.pre_subvertex,
                                HeatDemoVertexPartitioned)):
                 direction_edges.append(incoming_edge)
-            elif isinstance(incoming_edge, HeatDemoCommandEdge):
-                if command_edge is not None:
-                    raise exceptions.ConfigurationException(
-                        "can't have more than one command edge. Error!")
-                command_edge = incoming_edge
 
         out_going_edges = sub_graph.outgoing_subedges_from_subvertex(self)
         for out_going_edge in out_going_edges:
@@ -385,9 +374,3 @@ class HeatDemoVertexPartitioned(
 
     def is_partitioned_data_specable(self):
         return True
-
-    def requires_mapping(self):
-        return self._requires_mapping
-
-    def mark_no_changes(self):
-        self._requires_mapping = False
