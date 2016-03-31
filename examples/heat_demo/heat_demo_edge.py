@@ -36,5 +36,4 @@ class HeatDemoEdge(MultiCastPartitionedEdge):
         return self.__repr__()
 
     def __repr__(self):
-        return "HeatDemoEdge:{}:{}:{}".format(self._label, self._direction,
-                                              self._n_keys)
+        return "HeatDemoEdge:{}:{}".format(self._label, self._direction)

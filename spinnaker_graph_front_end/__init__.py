@@ -28,8 +28,7 @@ _none_labelled_edge_count = None
 def setup(hostname=None, graph_label=None, model_binary_module=None,
           model_binary_folder=None, database_socket_addresses=None,
           user_dsg_algorithm=None):
-    """ for builders with pynn attitude, allows end users to define wherever\
-        their binaries are
+    """
 
     :param hostname:
     :param graph_label:

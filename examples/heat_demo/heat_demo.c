@@ -190,7 +190,7 @@ void report_temp(uint ticks) {
  */
 void receive_data(uint key, uint payload) {
     sark.vcpu->user1++;
-    log_info("the key i've received is %d\n", key);
+    log_debug("the key i've received is %d\n", key);
 
 #ifdef DEBUG
     dbg_keys_receive[dbg_packs_receive++] = key;
@@ -200,7 +200,7 @@ void receive_data(uint key, uint payload) {
 #endif
 
     if (key == north_key) {
-        log_info("received north neighbours temp\n");
+        log_debug("received north neighbours temp\n");
         if (arrived[now] & NORTH_ARRIVED) {
             neighbours_temp[next][NORTH] = payload;
             arrived[next] |= NORTH_ARRIVED;
@@ -209,7 +209,7 @@ void receive_data(uint key, uint payload) {
             arrived[now] |= NORTH_ARRIVED;
         }
     } else if (key == south_key) {
-        log_info("received south neighbours temp\n");
+        log_debug("received south neighbours temp\n");
         if (arrived[now] & SOUTH_ARRIVED) {
             neighbours_temp[next][SOUTH] = payload;
             arrived[next] |= SOUTH_ARRIVED;
@@ -218,7 +218,7 @@ void receive_data(uint key, uint payload) {
             arrived[now] |= SOUTH_ARRIVED;
         }
     } else if (key == east_key) {
-        log_info("received east neighbours temp\n");
+        log_debug("received east neighbours temp\n");
         if (arrived[now] & EAST_ARRIVED) {
             neighbours_temp[next][EAST] = payload;
             arrived[next] |= EAST_ARRIVED;
@@ -227,7 +227,7 @@ void receive_data(uint key, uint payload) {
             arrived[now] |= EAST_ARRIVED;
         }
     } else if (key == west_key) {
-        log_info("received west neighbours temp\n");
+        log_debug("received west neighbours temp\n");
         if (arrived[now] & WEST_ARRIVED) {
             neighbours_temp[next][WEST] = payload;
             arrived[next] |= WEST_ARRIVED;
@@ -236,34 +236,34 @@ void receive_data(uint key, uint payload) {
             arrived[now] |= WEST_ARRIVED;
         }
     } else if (key == fake_temp_north_key) {
-        log_info("received fake north neighbours temp\n");
+        log_debug("received fake north neighbours temp\n");
         neighbours_temp[now][NORTH] = payload;
         neighbours_temp[next][NORTH] = payload;
     } else if (key == fake_temp_east_key) {
-        log_info("received fake east neighbours temp\n");
+        log_debug("received fake east neighbours temp\n");
         neighbours_temp[now][EAST] = payload;
         neighbours_temp[next][EAST] = payload;
     } else if (key == fake_temp_south_key) {
-        log_info("received fake south neighbours temp\n");
+        log_debug("received fake south neighbours temp\n");
         neighbours_temp[now][SOUTH] = payload;
         neighbours_temp[next][SOUTH] = payload;
     } else if (key == fake_temp_west_key) {
-        log_info("received fake west neighbours temp\n");
+        log_debug("received fake west neighbours temp\n");
         neighbours_temp[now][WEST] = payload;
         neighbours_temp[next][WEST] = payload;
     } else if (key == command_stop_key) {
-        log_info("received stop command\n");
+        log_debug("received stop command\n");
         spin1_exit(0);
     } else if (key == command_pause_key) {
-        log_info("received pause command\n");
+        log_debug("received pause command\n");
         updating = false;
     } else if (key == command_resume_key) {
-        log_info("received resume command\n");
+        log_debug("received resume command\n");
         updating = true;
     } else {
 
         // unexpected packet!
-        log_info("!\n");
+        log_debug("!\n");
     }
 }
 

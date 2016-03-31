@@ -42,8 +42,7 @@ logger = logging.getLogger(__name__)
 
 
 class HeatDemoVertexPartitioned(
-        PartitionedVertex, AbstractPartitionedDataSpecableVertex,
-        ReceiveBuffersToHostBasicImpl):
+        PartitionedVertex, AbstractPartitionedDataSpecableVertex):
     """ A vertex partition for a heat demo; represents a heat element.
     """
 
