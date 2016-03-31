@@ -3,6 +3,7 @@
 #include "spin1_api.h"
 #include "common-typedefs.h"
 #include <data_specification.h>
+#include <recording.h>
 #include <simulation.h>
 #include <debug.h>
 
@@ -48,7 +49,7 @@ void iobuf_data(){
 
     log_info("Hello world address is %08x", hello_world_address);
 
-    char* my_string = &hello_world_address[1];
+    char* my_string = (char *) &hello_world_address[1];
     log_info("Data read is: %s", my_string);
 }
 

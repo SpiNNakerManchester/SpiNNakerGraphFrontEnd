@@ -91,9 +91,6 @@ static uint32_t time = 0;
 //! int as a bool to represent if this simulation should run forever
 static uint32_t infinite_run;
 
-//! The recording flags
-static uint32_t recording_flags = 0;
-
 //! the unique identifier of this model, so that it can tell if the data its
 //! reading is for itself.
 #define APPLICATION_MAGIC_NUMBER 0x863e6624
@@ -155,23 +152,6 @@ uint dbg_timeouts = 0;
 uint * dbg_s_time;
 #endif
 
-/****f* heat_demo.c/report_temp
- *
- * SUMMARY
- *  This function is used to report current temp
- *
- * SYNOPSIS
- *  void report_temp (uint ticks)
- *
- * SOURCE
- */
-void report_temp(uint ticks) {
-    use(ticks);
-
-    // record the new temperature for extraction later on
-    recording_record(RECORDED_DATA, my_temp, 4);
-    recording_do_timestep_update(time);
-}
 
 /****f* heat_demo.c/receive_data
  *
@@ -287,34 +267,6 @@ void send_first_value() {
     log_info("Sent initial temp \n");
 }
 
-//! \brief Initialises the recording parts of the model
-//! \return True if recording initialisation is successful, false otherwise
-static bool initialise_recording(){
-    address_t address = data_specification_get_data_address();
-    address_t system_region = data_specification_get_region(
-        SYSTEM_REGION, address);
-    regions_e regions_to_record[] = {RECORDED_DATA};
-    uint8_t n_regions_to_record = 1;
-    uint32_t *recording_flags_from_system_conf =
-        &system_region[SIMULATION_N_TIMING_DETAIL_WORDS];
-    regions_e state_region = BUFFERING_OUT_STATE;
-
-    bool success = recording_initialize(
-        n_regions_to_record, regions_to_record,
-        recording_flags_from_system_conf, state_region, TIMER,
-        &recording_flags);
-    log_info("Recording flags = 0x%08x", recording_flags);
-    return success;
-}
-
-void resume_callback() {
-    // restart the recording status
-    if (!initialise_recording()) {
-        log_error("Error setting up recording");
-        rt_error(RTE_SWERR);
-    }
-}
-
 /****f* heat_demo.c/update
  *
  * SUMMARY
@@ -338,12 +290,9 @@ void update(uint ticks, uint b) {
         log_info("Simulation complete.\n");
 
         // falls into the pause resume mode of operating
-        simulation_handle_pause_resume(resume_callback);
+        simulation_handle_pause_resume(NULL);
 
-        if (recording_flags > 0) {
-            log_info("updating recording regions");
-            recording_finalise();
-        }
+        return;
     }
 
     if (updating) {
@@ -411,9 +360,6 @@ void update(uint ticks, uint b) {
         }
         log_debug("sent my temp via multicast");
 
-        /* report current temp to end user*/
-        report_temp(time);
-
         /* prepare for next iteration */
         arrived[now] = init_arrived;
         now = 1 - now;
@@ -471,7 +417,7 @@ static bool initialize(uint32_t *timer_period) {
     // get east key
     east_key = neighbour_region_address[EAST_KEY];
     log_info("my east neighbours key is %d\n", east_key);
-    if (east_key == -1) {
+    if (east_key == 0xFFFFFFFF) {
         neighbours_temp[now][NORTH] = EAST_INIT;
         neighbours_temp[next][NORTH] = EAST_INIT;
         init_arrived |= EAST_ARRIVED;
@@ -480,7 +426,7 @@ static bool initialize(uint32_t *timer_period) {
     // get north key
     north_key = neighbour_region_address[NORTH_KEY];
     log_info("my north neighbours key is %d\n", north_key);
-    if (north_key == -1) {
+    if (north_key == 0xFFFFFFFF) {
         neighbours_temp[now][NORTH] = NORTH_INIT;
         neighbours_temp[next][NORTH] = NORTH_INIT;
         init_arrived |= NORTH_ARRIVED;
@@ -489,7 +435,7 @@ static bool initialize(uint32_t *timer_period) {
     // get west key
     west_key = neighbour_region_address[WEST_KEY];
     log_info("my west neighbours key is %d\n", west_key);
-    if (west_key == -1) {
+    if (west_key == 0xFFFFFFFF) {
         neighbours_temp[now][WEST] = WEST_INIT;
         neighbours_temp[next][WEST] = WEST_INIT;
         init_arrived |= WEST_ARRIVED;
@@ -498,7 +444,7 @@ static bool initialize(uint32_t *timer_period) {
     // get south key
     south_key = neighbour_region_address[SOUTH_KEY];
     log_info("my south neighbours key is %d\n", south_key);
-    if (south_key == -1) {
+    if (south_key == 0xFFFFFFFF) {
         neighbours_temp[now][SOUTH] = SOUTH_INIT;
         neighbours_temp[next][SOUTH] = SOUTH_INIT;
         init_arrived |= SOUTH_ARRIVED;
@@ -563,13 +509,6 @@ void c_main() {
     if (!initialize(&timer_period)) {
         log_error("Error in initialisation - exiting!");
         rt_error(RTE_SWERR);
-    }
-
-    // initialise the recording section
-    // set up recording data structures
-    if(!initialise_recording()){
-         rt_error(RTE_SWERR);
-        return;
     }
 
     // set timer tick value to configured value

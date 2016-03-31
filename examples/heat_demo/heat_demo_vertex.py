@@ -42,7 +42,8 @@ logger = logging.getLogger(__name__)
 
 
 class HeatDemoVertexPartitioned(
-        PartitionedVertex, AbstractPartitionedDataSpecableVertex):
+        PartitionedVertex, AbstractPartitionedDataSpecableVertex,
+        ReceiveBuffersToHostBasicImpl):
     """ A vertex partition for a heat demo; represents a heat element.
     """
 
@@ -55,9 +56,7 @@ class HeatDemoVertexPartitioned(
                ('TRANSMISSIONS', 1),
                ('NEIGHBOUR_KEYS', 2),
                ('COMMAND_KEYS', 3),
-               ('TEMP_VALUE', 4),
-               ('RECORDED_VALUES', 5),
-               ('BUFFERING_OUT_STATE', 6)])
+               ('TEMP_VALUE', 4)])
 
     # one key for each incoming edge.
     NEIGHBOUR_DATA_SIZE = 10 * 4
@@ -133,6 +132,7 @@ class HeatDemoVertexPartitioned(
                 write_text_specs, application_run_time_folder)
 
         spec = DataSpecificationGenerator(data_writer, report_writer)
+
         # Setup words + 1 for flags + 1 for recording size
         setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 8) * 4
 
@@ -146,11 +146,6 @@ class HeatDemoVertexPartitioned(
         # Create the data regions for the spike source array:
         self._reserve_memory_regions(spec, setup_size)
         self._write_basic_setup_info(spec, self.DATA_REGIONS.SYSTEM.value)
-
-        # Write the additional recording information
-        self.write_recording_data(
-            spec, ip_tags, [constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP],
-            self._no_machine_time_steps * 4)
 
         # application specific data items
         self._write_transmission_keys(spec, routing_info, sub_graph)
@@ -190,10 +185,6 @@ class HeatDemoVertexPartitioned(
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.TEMP_VALUE.value,
             size=self.TEMP_VALUE_SIZE, label="temp")
-        self.reserve_buffer_regions(
-            spec, self.DATA_REGIONS.BUFFERING_OUT_STATE.value,
-            [self.DATA_REGIONS.RECORDED_VALUES.value],
-            [constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP])
 
     def _write_transmission_keys(self, spec, routing_info, subgraph):
         """
@@ -340,36 +331,6 @@ class HeatDemoVertexPartitioned(
             logger.warn(
                 "Set up to not use commands. If commands are needed, "
                 "Please create a command sender and wire it to this vertex.")
-
-    def write_recording_data(
-            self, spec, ip_tags, region_sizes, buffer_size_before_receive,
-            time_between_requests=0):
-        """ Writes the recording data to the data specification
-
-        :param spec: The data specification to write to
-        :param ip_tags: The list of tags assigned to the partitioned vertex
-        :param region_sizes: An ordered list of the sizes of the regions in\
-                which buffered recording will take place
-        :param buffer_size_before_receive: The amount of data that can be\
-                stored in the buffer before a message is sent requesting the\
-                data be read
-        :param time_between_requests: The amount of time between requests for\
-                more data
-        """
-        if self._buffering_output:
-
-            # If buffering is enabled, write the tag for buffering
-            ip_tag = self.get_tag(ip_tags)
-            if ip_tag is None:
-                raise Exception(
-                    "No tag for output buffering was assigned to this vertex")
-            spec.write_value(data=ip_tag.tag)
-        else:
-            spec.write_value(data=0)
-        spec.write_value(data=buffer_size_before_receive)
-        spec.write_value(data=time_between_requests)
-        for region_size in region_sizes:
-            spec.write_value(data=region_size)
 
     def is_partitioned_data_specable(self):
         return True
