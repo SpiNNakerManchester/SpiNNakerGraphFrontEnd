@@ -1,23 +1,23 @@
-from spinn_front_end_common.interface.executable_finder import ExecutableFinder
-from utilities import conf
+# front end common imports
+from spinn_front_end_common.utilities.utility_objs.executable_finder \
+    import ExecutableFinder
 
-from ._version import __version__, __version_name__, __version_month__,\
-    __version_year__
-
+# graph front end imports
+from spinnaker_graph_front_end.utilities import conf
+from spinnaker_graph_front_end._version import \
+    __version__, __version_name__, __version_month__, __version_year__
+from spinnaker_graph_front_end.spinnaker import SpiNNaker
 
 # utility models for graph front ends
-from spinn_front_end_common.utility_models.\
-    reverse_ip_tag_multi_cast_source import ReverseIpTagMultiCastSource
-from spinn_front_end_common.utility_models.command_sender import CommandSender
 from spinn_front_end_common.utility_models.live_packet_gather \
-    import LivePacketGather
+    import LivePacketGather  # @IgnorePep8
+from spinn_front_end_common.utility_models.reverse_ip_tag_multi_cast_source \
+    import ReverseIpTagMultiCastSource  # @IgnorePep8
 from pacman.model.partitioned_graph.multi_cast_partitioned_edge \
     import MultiCastPartitionedEdge
-from pacman.model.partitionable_graph.multi_cast_partitionable_edge \
-    import MultiCastPartitionableEdge
+
 
 import logging
-
 logger = logging.getLogger(__name__)
 
 
@@ -28,40 +28,36 @@ _none_labelled_edge_count = None
 
 def setup(hostname=None, graph_label=None, model_binary_module=None,
           model_binary_folder=None, database_socket_addresses=None,
-          partitioner_algorithm=None, algorithms=None):
-    """ for builders with pynn attitude, allows end users to define wherever\
-        their binaries are
+          user_dsg_algorithm=None, n_chips_required=None):
+    """
 
     :param hostname:
     :param graph_label:
     :param model_binary_module:
     :param model_binary_folder:
     :param database_socket_addresses:
-    :param partitioner_algorithm:
-    :param algorithms:
+    :param user_dsg_algorithm:
 
     :return:
     """
-    from spinnaker_graph_front_end import \
-        SpiNNakerGraphFrontEnd
-    import spinnaker_graph_front_end
+    from spinnaker_graph_front_end import spinnaker
     import os
     global _spinnaker
     global _none_labelled_vertex_count
     global _none_labelled_edge_count
 
     logger.info(
-        "SpiNNaker graph front end (c) {} APT Group, University of Manchester"
-        .format(__version_year__))
+        "SpiNNaker graph front end (c) {}, Alan Stokes, "
+        "University of Manchester".format(__version_year__))
     parent_dir = os.path.split(os.path.split(
-        spinnaker_graph_front_end.__file__)[0])[0]
+        spinnaker.__file__)[0])[0]
     logger.info(
         "Release version {}({}) - {} {}. Installed in folder {}".format(
             __version__, __version_name__, __version_month__, __version_year__,
             parent_dir))
 
+    # add the directories where the binaries are located
     executable_finder = ExecutableFinder()
-    # add the directories for where to locate the binaries
     if model_binary_module is not None:
         executable_finder.add_path(
             os.path.dirname(model_binary_module.__file__))
@@ -69,15 +65,12 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         executable_finder.add_path(model_binary_folder)
 
     # set up the spinnaker object
-    _spinnaker = SpiNNakerGraphFrontEnd(
+    _spinnaker = SpiNNaker(
         host_name=hostname, graph_label=graph_label,
         executable_finder=executable_finder,
         database_socket_addresses=database_socket_addresses,
-        algorithms=algorithms, partitioner_algorithm=partitioner_algorithm)
-
-    # set up none label count params.
-    _none_labelled_edge_count = 0
-    _none_labelled_vertex_count = 0
+        dsg_algorithm=user_dsg_algorithm,
+        n_chips_required=n_chips_required)
 
 
 def run(duration=None):
@@ -126,16 +119,15 @@ def add_vertex(cellclass, cellparams, label=None, constraints=None):
     :return:
     """
     global _spinnaker
-    global _none_labelled_vertex_count
 
     # correct label if needed
     if label is None and 'label' not in cellparams:
-        label = "Vertex {}".format(_none_labelled_vertex_count)
-        _none_labelled_vertex_count += 1
+        label = "Vertex {}".format(_spinnaker.none_labelled_vertex_count)
+        _spinnaker.increment_none_labelled_vertex_count()
         cellparams['label'] = label
     elif 'label' in cellparams and cellparams['label'] is None:
-        label = "Vertex {}".format(_none_labelled_vertex_count)
-        _none_labelled_vertex_count += 1
+        label = "Vertex {}".format(_spinnaker.none_labelled_vertex_count)
+        _spinnaker.increment_none_labelled_vertex_count()
         cellparams['label'] = label
     elif label is not None:
         cellparams['label'] = label
@@ -145,6 +137,57 @@ def add_vertex(cellclass, cellparams, label=None, constraints=None):
     vertex = cellclass(**cellparams)
     _spinnaker.add_partitionable_vertex(vertex)
     return vertex
+
+
+def add_vertex_instance(vertex_to_add):
+    """
+
+    :param vertex_to_add:
+    :return:
+    """
+    global _spinnaker
+    _spinnaker.add_partitionable_vertex(vertex_to_add)
+
+
+def add_partitioned_vertex(
+        cellclass, cellparams, label=None, constraints=None):
+    """
+
+    :param cellclass:
+    :param cellparams:
+    :param label:
+    :param constraints:
+    :return:
+    """
+    global _spinnaker
+
+    # correct label if needed
+    if label is None and 'label' not in cellparams:
+        label = "Vertex {}".format(_spinnaker.none_labelled_vertex_count)
+        _spinnaker.increment_none_labelled_vertex_count()
+        cellparams['label'] = label
+    elif 'label' in cellparams and cellparams['label'] is None:
+        label = "Vertex {}".format(_spinnaker.none_labelled_vertex_count)
+        _spinnaker.increment_none_labelled_vertex_count()
+        cellparams['label'] = label
+    elif label is not None:
+        cellparams['label'] = label
+
+    # add partitioned vertex
+    cellparams['constraints'] = constraints
+    vertex = cellclass(**cellparams)
+    _spinnaker.add_partitioned_vertex(vertex)
+    return vertex
+
+
+def add_partitioned_vertex_instance(vertex_to_add):
+    """
+
+    :param vertex_to_add:
+    :return:
+    """
+    global _spinnaker
+    _spinnaker.add_partitioned_vertex(vertex_to_add)
 
 
 def add_edge(cell_type, cellparams, label=None, constraints=None,
@@ -159,77 +202,45 @@ def add_edge(cell_type, cellparams, label=None, constraints=None,
     :return:
     """
     global _spinnaker
-    global _none_labelled_edge_count
 
     # correct label if needed
     if label is None and 'label' not in cellparams:
-        label = "Vertex {}".format(_none_labelled_edge_count)
-        _none_labelled_edge_count += 1
+        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
+        _spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif 'label' in cellparams and cellparams['label'] is None:
-        label = "Vertex {}".format(_none_labelled_edge_count)
-        _none_labelled_edge_count += 1
+        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
+        _spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif label is not None:
         cellparams['label'] = label
 
     # add edge
-    cellparams['constraints'] = constraints
     edge = cell_type(**cellparams)
-    _spinnaker.add_partitionable_edge(edge, partition_id)
+    _spinnaker.add_partitionable_edge(edge, partition_id, constraints)
     return edge
 
 
-def add_partitionable_edge_instance(edge, partition_id):
+def add_partitionable_edge_instance(edge, partition_id, constraints):
     """
 
     :param edge:
     :param partition_id:
-    :return:
-    """
-    _spinnaker.add_partitionable_edge(edge, partition_id)
-
-
-def add_partitioned_edge_instance(edge, partition_id):
-    """
-
-    :param edge:
-    :param partition_id:
-    :return:
-    """
-    _spinnaker.add_partitioned_edge(edge, partition_id)
-
-
-def add_partitioned_vertex(
-        cellclass, cellparams, label=None, constraints=None):
-    """
-
-    :param cellclass:
-    :param cellparams:
-    :param label:
     :param constraints:
     :return:
     """
-    global _spinnaker
-    global _none_labelled_vertex_count
+    _spinnaker.add_partitionable_edge(edge, partition_id, constraints)
 
-    # correct label if needed
-    if label is None and 'label' not in cellparams:
-        label = "Vertex {}".format(_none_labelled_vertex_count)
-        _none_labelled_vertex_count += 1
-        cellparams['label'] = label
-    elif 'label' in cellparams and cellparams['label'] is None:
-        label = "Vertex {}".format(_none_labelled_vertex_count)
-        _none_labelled_vertex_count += 1
-        cellparams['label'] = label
-    elif label is not None:
-        cellparams['label'] = label
 
-    # add partitioned vertex
-    cellparams['constraints'] = constraints
-    vertex = cellclass(**cellparams)
-    _spinnaker.add_partitioned_vertex(vertex)
-    return vertex
+def add_partitioned_edge_instance(edge, partition_id, constraints):
+    """
+
+    :param edge:
+    :param partition_id:
+    :param constraints:
+    :return:
+    """
+    _spinnaker.add_partitioned_edge(edge, partition_id, constraints)
 
 
 def add_partitioned_edge(cellclass, cellparams, label=None, constraints=None,
@@ -244,36 +255,161 @@ def add_partitioned_edge(cellclass, cellparams, label=None, constraints=None,
     :return:
     """
     global _spinnaker
-    global _none_labelled_edge_count
 
     # correct label if needed
     if label is None and 'label' not in cellparams:
-        label = "Vertex {}".format(_none_labelled_edge_count)
-        _none_labelled_edge_count += 1
+        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
+        _spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif 'label' in cellparams and cellparams['label'] is None:
-        label = "Vertex {}".format(_none_labelled_edge_count)
-        _none_labelled_edge_count += 1
+        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
+        _spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif label is not None:
         cellparams['label'] = label
 
     # add partitioned edge
-    cellparams['constraints'] = constraints
     edge = cellclass(**cellparams)
-    _spinnaker.add_partitioned_edge(edge, partition_id)
+    _spinnaker.add_partitioned_edge(edge, partition_id, constraints)
     return edge
 
 
 def get_txrx():
+    """
+    returns the transceiver used by the tool chain
+    :return:
+    """
     global _spinnaker
     return _spinnaker.transceiver
 
 
 def get_machine_dimensions():
     """
-
+    returns the x and y dimension of the machine
     :return:
     """
     global _spinnaker
     return _spinnaker.get_machine_dimensions()
+
+
+def get_number_of_cores_on_machine():
+    """
+    returns the number of cores on this machine
+    :return:
+    """
+    global _spinnaker
+    this_machine = _spinnaker.machine
+    cores, _ = this_machine.get_cores_and_link_count()
+    return cores
+
+
+def has_ran():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.has_ran
+
+
+def machine_time_step():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.machine_time_step
+
+
+def no_machine_time_steps():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.no_machine_time_steps
+
+
+def timescale_factor():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.time_scale_factor
+
+
+def partitioned_graph():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.partitioned_graph
+
+
+def partitionable_graph():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.partitionable_graph
+
+
+def routing_infos():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.routing_infos
+
+
+def placements():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.placements
+
+
+def transceiver():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.txrx
+
+
+def graph_mapper():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.graph_mapper
+
+
+def buffer_manager():
+    """
+    returns the buffer manager being used for loading/extracting buffers
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.buffer_manager
+
+
+def machine():
+    """
+
+    :return:
+    """
+    global _spinnaker
+    return _spinnaker.machine
+
+
+def is_allocated_machine():
+    return SpiNNaker.is_allocated_machine

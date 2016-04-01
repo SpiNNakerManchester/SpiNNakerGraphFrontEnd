@@ -1,12 +1,3 @@
-/****a* heat_demo.c/heat_demo_summary
- *
- * COPYRIGHT
- *  Copyright (c) The University of Manchester, 2011. All rights reserved.
- *  SpiNNaker Project
- *  Advanced Processor Technologies Group
- *  School of Computer Science
- *
- *******/
 
 //! imports
 #include "spin1_api.h"
@@ -60,17 +51,12 @@ uint west_key;
 uint fake_temp_north_key;
 uint fake_temp_south_key;
 uint fake_temp_east_key;
-uint fake_temp_west_key
+uint fake_temp_west_key;
 
 /*! multicast routing keys receivable for commands*/
 uint command_pause_key;
-uint comamnd_stop_key;
+uint command_stop_key;
 uint command_resume_key;
-
-/*! multicast routing keys for sending temperature back to host for live
- * stream
- */
-uint host_data_key;
 
 /*! temperature values */
 // any initial value will do!
@@ -98,7 +84,9 @@ volatile uint next = 1;
 volatile bool updating = true;
 
 //! control value, which says how many timer ticks to run for before exiting
-static uint32_t simulation_ticks;
+static uint32_t simulation_ticks = 0;
+static uint32_t infinite_run = 0;
+static uint32_t time = 0;
 
 //! int as a bool to represent if this simulation should run forever
 static uint32_t infinite_run;
@@ -111,11 +99,17 @@ static uint32_t infinite_run;
 typedef enum regions_e {
     SYSTEM_REGION,
     TRANSMISSIONS,
-    NEIGBOUR_KEYS,
+    NEIGHBOUR_KEYS,
     COMMAND_KEYS,
-    OUTPUT_KEYS,
     TEMP_VALUE,
+    RECORDED_DATA,
+    BUFFERING_OUT_STATE,
 } regions_e;
+
+//! values for the priority for each callback
+typedef enum callback_priorities{
+    MC_PACKET = -1, SDP = 0, USER = 3, TIMER = 2
+} callback_priorities;
 
 //! human readable definitions of each element in the transmission region
 typedef enum transmission_region_elements {
@@ -123,7 +117,7 @@ typedef enum transmission_region_elements {
 } transmission_region_elements;
 
 //! human readable definitions of each element in the neighbour region
-typedef enum neigbour_region_elements {
+typedef enum neighbour_region_elements {
     EAST_KEY,
     NORTH_KEY,
     WEST_KEY,
@@ -132,7 +126,7 @@ typedef enum neigbour_region_elements {
     NORTH_FAKE_KEY,
     WEST_FAKE_KEY,
     SOUTH_FAKE_KEY
-} neigbour_region_elements;
+} neighbour_region_elements;
 
 //! human readable definitions of each element in the command keys region
 typedef enum command_region_elements {
@@ -152,42 +146,12 @@ typedef enum initial_temperature_region_elements {
 
 //! if in debug mode, store some tracers
 #ifdef DEBUG
-uint dbg_packs_recv = 0;
-uint * dbg_keys_recv;
+uint dbg_packs_receive = 0;
+uint * dbg_keys_receive;
 uint dbg_timeouts = 0;
-uint * dbg_stime;
+uint * dbg_s_time;
 #endif
 
-/*! heat_demo.c/send_temps_to_host
- *
- * SUMMARY
- * \brief This function is called at application exit.
- *  It's used to report the final temperatures to the host
- *
- * SYNOPSIS
- *  void send_temps_to_host ()
- *
- * SOURCE
- */
-void send_temps_to_host() {
-    /* send mc packet which should be received by host via gatherers */
-    spin1_send_mc_packet(host_data_key, my_temp, WITH_PAYLOAD);
-}
-
-/****f* heat_demo.c/report_temp
- *
- * SUMMARY
- *  This function is used to report current temp
- *
- * SYNOPSIS
- *  void report_temp (uint ticks)
- *
- * SOURCE
- */
-void report_temp(uint ticks) {
-    use(ticks);
-    // need to look at recording regions and defining how much data to store
-}
 
 /****f* heat_demo.c/receive_data
  *
@@ -209,9 +173,9 @@ void receive_data(uint key, uint payload) {
     log_debug("the key i've received is %d\n", key);
 
 #ifdef DEBUG
-    dbg_keys_recv[dbg_packs_recv++] = key;
-    if (dbg_packs_recv == DEBUG_KEYS) {
-        dbg_packs_recv = 0;
+    dbg_keys_receive[dbg_packs_receive++] = key;
+    if (dbg_packs_receive == DEBUG_KEYS) {
+        dbg_packs_receive = 0;
     }
 #endif
 
@@ -267,7 +231,7 @@ void receive_data(uint key, uint payload) {
         log_debug("received fake west neighbours temp\n");
         neighbours_temp[now][WEST] = payload;
         neighbours_temp[next][WEST] = payload;
-    } else if (key == comamnd_stop_key) {
+    } else if (key == command_stop_key) {
         log_debug("received stop command\n");
         spin1_exit(0);
     } else if (key == command_pause_key) {
@@ -292,15 +256,15 @@ void receive_data(uint key, uint payload) {
  *
  * SOURCE
  */
-void send_first_value(uint a, uint b) {
-    use(a);
-    use(b);
-    log_debug("sending out initial temp\n");
+void send_first_value() {
+    log_info("sending out initial temp\n");
 
     /* send data to neighbours */
     while (!spin1_send_mc_packet(my_key, my_temp, WITH_PAYLOAD)) {
         spin1_delay_us(1);
     }
+
+    log_info("Sent initial temp \n");
 }
 
 /****f* heat_demo.c/update
@@ -314,17 +278,21 @@ void send_first_value(uint a, uint b) {
  */
 void update(uint ticks, uint b) {
     use(b);
-    sark.vcpu->user0++;
+    use(ticks);
 
-    log_debug("on tick %d", ticks);
+    time++;
+
+    log_debug("on tick %d of %d", time, simulation_ticks);
 
     // check that the run time hasn't already elapsed and thus needs to be
     // killed
-    if ((infinite_run != TRUE) && (ticks >= simulation_ticks)) {
+    if ((infinite_run != TRUE) && (time >= simulation_ticks)) {
         log_info("Simulation complete.\n");
 
         // falls into the pause resume mode of operating
-        simulation_handle_pause_resume(update, 1);
+        simulation_handle_pause_resume(NULL);
+
+        return;
     }
 
     if (updating) {
@@ -339,29 +307,29 @@ void update(uint ticks, uint b) {
 #endif
 
         // if a core does not receive temperature from a neighbour
-        // it uses it's own as an estimate for the nieghbour's.
+        // it uses it's own as an estimate for the neighbour's.
         if (arrived[now] != ALL_ARRIVED) {
             if (!(arrived[now] & NORTH_ARRIVED)) {
                 log_debug("north temp has not arrived by time update "
-                        "has occurred\n");
+                          "has occurred\n");
                 neighbours_temp[now][NORTH] = my_temp;
             }
 
             if (!(arrived[now] & SOUTH_ARRIVED)) {
                 log_debug("south temp has not arrived by time update "
-                        "has occurred\n");
+                          "has occurred\n");
                 neighbours_temp[now][SOUTH] = my_temp;
             }
 
             if (!(arrived[now] & EAST_ARRIVED)) {
                 log_debug("east temp has not arrived by time update "
-                        "has occurred\n");
+                          "has occurred\n");
                 neighbours_temp[now][EAST] = my_temp;
             }
 
             if (!(arrived[now] & WEST_ARRIVED)) {
                 log_debug("west temp has not arrived by time update "
-                        "has occurred\n");
+                          "has occurred\n");
                 neighbours_temp[now][WEST] = my_temp;
             }
         }
@@ -384,8 +352,8 @@ void update(uint ticks, uint b) {
         my_temp = (my_temp > 0) ? my_temp : 0;
 #endif
 
-        log_debug("sending my temp of %d via multicast with key %d\n", my_temp,
-                my_key);
+        log_debug("sending my temp of %d via multicast with key %d\n",
+                  my_temp, my_key);
         /* send new data to neighbours */
         while (!spin1_send_mc_packet(my_key, my_temp, WITH_PAYLOAD)) {
             spin1_delay_us(1);
@@ -396,9 +364,6 @@ void update(uint ticks, uint b) {
         arrived[now] = init_arrived;
         now = 1 - now;
         next = 1 - next;
-
-        /* report current temp */
-        report_temp(ticks);
     }
 }
 
@@ -419,28 +384,25 @@ static bool initialize(uint32_t *timer_period) {
 
     // Read the header
     if (!data_specification_read_header(address)) {
-        log_error("failed to read the dataspec header");
+        log_error("failed to read the data spec header");
         return false;
     }
 
     // Get the timing details
-    address_t system_region = data_specification_get_region(SYSTEM_REGION,
-            address);
-    if (!simulation_read_timing_details(system_region, APPLICATION_MAGIC_NUMBER,
-            timer_period, &simulation_ticks, &infinite_run)) {
+    address_t system_region = data_specification_get_region(
+        SYSTEM_REGION, address);
+    if (!simulation_read_timing_details(
+            system_region, APPLICATION_MAGIC_NUMBER, timer_period)) {
         log_error("failed to read the system header");
         return false;
     }
-
-    // output message about length of time to run
-    log_info("i plan to run for %d timer ticks", simulation_ticks);
 
     // initialise transmission keys
     address_t transmission_region_address = data_specification_get_region(
             TRANSMISSIONS, address);
     if (transmission_region_address[HAS_KEY] == 1) {
         my_key = transmission_region_address[MY_KEY];
-        log_debug("my key is %d\n", my_key);
+        log_info("my key is %d\n", my_key);
     } else {
         log_error(
             "this heat element can't effect anything, deduced as an error,"
@@ -449,32 +411,40 @@ static bool initialize(uint32_t *timer_period) {
     }
 
     // initialise neighbour keys
-    address_t neigbour_region_address = data_specification_get_region(
-        NEIGBOUR_KEYS, address);
-    east_key = neigbour_region_address[EAST_KEY];
-    log_debug("my east neighbours key is %d\n", east_key);
-    if (east_key == -1) {
+    address_t neighbour_region_address = data_specification_get_region(
+        NEIGHBOUR_KEYS, address);
+
+    // get east key
+    east_key = neighbour_region_address[EAST_KEY];
+    log_info("my east neighbours key is %d\n", east_key);
+    if (east_key == 0xFFFFFFFF) {
         neighbours_temp[now][NORTH] = EAST_INIT;
         neighbours_temp[next][NORTH] = EAST_INIT;
         init_arrived |= EAST_ARRIVED;
     }
-    north_key = neigbour_region_address[NORTH_KEY];
-    log_debug("my north neighbours key is %d\n", north_key);
-    if (north_key == -1) {
+
+    // get north key
+    north_key = neighbour_region_address[NORTH_KEY];
+    log_info("my north neighbours key is %d\n", north_key);
+    if (north_key == 0xFFFFFFFF) {
         neighbours_temp[now][NORTH] = NORTH_INIT;
         neighbours_temp[next][NORTH] = NORTH_INIT;
         init_arrived |= NORTH_ARRIVED;
     }
-    west_key = neigbour_region_address[WEST_KEY];
-    log_debug("my west neighbours key is %d\n", west_key);
-    if (west_key == -1) {
+
+    // get west key
+    west_key = neighbour_region_address[WEST_KEY];
+    log_info("my west neighbours key is %d\n", west_key);
+    if (west_key == 0xFFFFFFFF) {
         neighbours_temp[now][WEST] = WEST_INIT;
         neighbours_temp[next][WEST] = WEST_INIT;
         init_arrived |= WEST_ARRIVED;
     }
-    south_key = neigbour_region_address[SOUTH_KEY];
-    log_debug("my south neighbours key is %d\n", south_key);
-    if (south_key == -1) {
+
+    // get south key
+    south_key = neighbour_region_address[SOUTH_KEY];
+    log_info("my south neighbours key is %d\n", south_key);
+    if (south_key == 0xFFFFFFFF) {
         neighbours_temp[now][SOUTH] = SOUTH_INIT;
         neighbours_temp[next][SOUTH] = SOUTH_INIT;
         init_arrived |= SOUTH_ARRIVED;
@@ -485,36 +455,36 @@ static bool initialize(uint32_t *timer_period) {
     arrived[next] = init_arrived;
 
     // locate fake injected temp keys
-    fake_temp_east_key = neigbour_region_address[EAST_FAKE_KEY];
-    log_debug("my fake east temp key is %d\n", fake_temp_east_key);
-    fake_temp_north_key = neigbour_region_address[NORTH_FAKE_KEY];
-    log_debug("my fake north temp key is %d\n", fake_temp_north_key);
-    fake_temp_west_key = neigbour_region_address[WEST_FAKE_KEY];
-    log_debug("my fake west temp key is %d\n", fake_temp_west_key);
-    fake_temp_south_key = neigbour_region_address[SOUTH_FAKE_KEY];
-    log_debug("my fake south temp key is %d\n", fake_temp_south_key);
+    fake_temp_east_key = neighbour_region_address[EAST_FAKE_KEY];
+    log_info("my fake east temp key is %d\n", fake_temp_east_key);
+    fake_temp_north_key = neighbour_region_address[NORTH_FAKE_KEY];
+    log_info("my fake north temp key is %d\n", fake_temp_north_key);
+    fake_temp_west_key = neighbour_region_address[WEST_FAKE_KEY];
+    log_info("my fake west temp key is %d\n", fake_temp_west_key);
+    fake_temp_south_key = neighbour_region_address[SOUTH_FAKE_KEY];
+    log_info("my fake south temp key is %d\n", fake_temp_south_key);
 
     // initialise command keys
     address_t command_region_address = data_specification_get_region(
             COMMAND_KEYS, address);
-    comamnd_stop_key = command_region_address[STOP_COMMAND_KEY];
-    log_debug("my stop command is %d\n", comamnd_stop_key);
+    command_stop_key = command_region_address[STOP_COMMAND_KEY];
+    log_info("my stop command is %d\n", command_stop_key);
     command_pause_key = command_region_address[PAUSE_COMMAND_KEY];
-    log_debug("my pause command is %d\n", command_pause_key);
+    log_info("my pause command is %d\n", command_pause_key);
     command_resume_key = command_region_address[RESUME_COMMAND_KEY];
-    log_debug("my resume command is %d\n", command_resume_key);
+    log_info("my resume command is %d\n", command_resume_key);
 
-    // initialise output key
-    address_t host_output_region_address = data_specification_get_region(
-        OUTPUT_KEYS, address);
-    host_data_key = host_output_region_address[HOST_TRANSMISSION_KEY];
-    log_debug("my to host key is %d\n", host_data_key);
+    // report if command keys are special values
+    if (command_pause_key == 0 && command_stop_key == 0
+            && command_resume_key == 0){
+        log_info("Currently running without commands set\n");
+    }
 
     // read my temperature
     address_t my_temp_region_address = data_specification_get_region(
         TEMP_VALUE, address);
     my_temp = my_temp_region_address[INITIAL_TEMPERATURE];
-    log_debug("my initial temp is %d\n", my_temp);
+    log_info("my initial temp is %d\n", my_temp);
     return true;
 }
 
@@ -538,38 +508,37 @@ void c_main() {
     // initialise the model
     if (!initialize(&timer_period)) {
         log_error("Error in initialisation - exiting!");
-        rt_error(RTE_API);
-        return;
+        rt_error(RTE_SWERR);
     }
 
-    // set timer tick value to 1ms (in microseconds)
-    // slow down simulation to allow users to appreciate changes
-    log_debug("setting timer to execute every %d microseconds", timer_period);
+    // set timer tick value to configured value
+    log_info("setting timer to execute every %d microseconds", timer_period);
     spin1_set_timer_tick(timer_period);
 
     // register callbacks
-    spin1_callback_on(MCPL_PACKET_RECEIVED, receive_data, 0);
-    spin1_callback_on(MC_PACKET_RECEIVED, receive_data_void, 0);
-    spin1_callback_on(TIMER_TICK, update, 1);
+    spin1_callback_on(MCPL_PACKET_RECEIVED, receive_data, MC_PACKET);
+    spin1_callback_on(MC_PACKET_RECEIVED, receive_data_void, MC_PACKET);
+    spin1_callback_on(TIMER_TICK, update, TIMER);
 
     // Set up callback listening to SDP messages
-    simulation_register_simulation_sdp_callback(&simulation_ticks, 0);
+    simulation_register_simulation_sdp_callback(
+        &simulation_ticks, &infinite_run, SDP);
 
 #ifdef DEBUG
 
     // initialise variables
-    dbg_keys_recv = spin1_malloc(DEBUG_KEYS * 4 * sizeof(uint));
+    dbg_keys_receive = spin1_malloc(DEBUG_KEYS * 4 * sizeof(uint));
 
     // record start time somewhere in SDRAM
-    dbg_stime = (uint *) (SPINN_SDRAM_BASE + 4 * spin1_get_core_id());
-    *dbg_stime = sv->clock_ms;
+    dbg_s_time = (uint *) (SPINN_SDRAM_BASE + 4 * spin1_get_core_id());
+    *dbg_s_time = sv->clock_ms;
 #endif
-
-    // kick-start the update process
-    spin1_schedule_callback(send_first_value, 0, 0, 3);
 
     // start execution
     log_info("Starting\n");
+
+    // Start the time at "-1" so that the first tick will be 0
+    time = UINT32_MAX;
+
     simulation_run();
-    log_info("stopping heat_demo\n");
 }
