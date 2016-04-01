@@ -18,7 +18,8 @@ class SpiNNaker(SpinnakerMainInterface):
 
     def __init__(
             self, executable_finder, host_name=None, graph_label=None,
-            database_socket_addresses=None, dsg_algorithm=None):
+            database_socket_addresses=None, dsg_algorithm=None,
+            n_chips_required=None):
 
         # dsg algorithm store for user defined algorithms
         self._user_dsg_algorithm = dsg_algorithm
@@ -36,7 +37,8 @@ class SpiNNaker(SpinnakerMainInterface):
             executable_finder=executable_finder,
             database_socket_addresses=database_socket_addresses,
             extra_algorithm_xml_paths=extra_xml_path,
-            extra_mapping_inputs=extra_mapping_inputs)
+            extra_mapping_inputs=extra_mapping_inputs,
+            n_chips_required=n_chips_required)
 
         # set up machine targeted data
         self._machine_time_step = config.getint("Machine", "machineTimeStep")
@@ -77,6 +79,14 @@ class SpiNNaker(SpinnakerMainInterface):
         machine = self.machine
 
         return {'x': machine.max_chip_x, 'y': machine.max_chip_y}
+
+    @staticmethod
+    @property
+    def is_allocated_machine():
+        return (
+            config.get("Machine", "spalloc_server") != "None" or
+            config.get("Machine", "remote_spinnaker_url") != "None"
+        )
 
     def run(self, run_time):
 

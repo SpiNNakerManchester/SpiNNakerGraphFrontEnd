@@ -6,6 +6,7 @@ from spinn_front_end_common.utilities.utility_objs.executable_finder \
 from spinnaker_graph_front_end.utilities import conf
 from spinnaker_graph_front_end._version import \
     __version__, __version_name__, __version_month__, __version_year__
+from spinnaker_graph_front_end.spinnaker import SpiNNaker
 
 # utility models for graph front ends
 from spinn_front_end_common.utility_models.live_packet_gather \
@@ -27,7 +28,7 @@ _none_labelled_edge_count = None
 
 def setup(hostname=None, graph_label=None, model_binary_module=None,
           model_binary_folder=None, database_socket_addresses=None,
-          user_dsg_algorithm=None):
+          user_dsg_algorithm=None, n_chips_required=None):
     """
 
     :param hostname:
@@ -39,7 +40,6 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
 
     :return:
     """
-    from spinnaker_graph_front_end.spinnaker import SpiNNaker
     from spinnaker_graph_front_end import spinnaker
     import os
     global _spinnaker
@@ -69,7 +69,8 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         host_name=hostname, graph_label=graph_label,
         executable_finder=executable_finder,
         database_socket_addresses=database_socket_addresses,
-        dsg_algorithm=user_dsg_algorithm)
+        dsg_algorithm=user_dsg_algorithm,
+        n_chips_required=n_chips_required)
 
 
 def run(duration=None):
@@ -408,3 +409,7 @@ def machine():
     """
     global _spinnaker
     return _spinnaker.machine
+
+
+def is_allocated_machine():
+    return SpiNNaker.is_allocated_machine
