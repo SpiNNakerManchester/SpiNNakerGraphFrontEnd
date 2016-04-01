@@ -38,12 +38,17 @@ live_gatherer_label = "LiveHeatGatherer"
 notify_port = 19999
 database_listen_port = 19998
 
+n_chips_required = None
+if front_end.is_allocated_machine():
+    n_chips_required = 2
+
 
 # set up the front end and ask for the detected machines dimensions
 front_end.setup(
     graph_label="heat_demo_graph", model_binary_module=model_binaries,
     database_socket_addresses={SocketAddress(
-        "127.0.0.1", notify_port, database_listen_port)})
+        "127.0.0.1", notify_port, database_listen_port)},
+    n_chips_required=n_chips_required)
 machine = front_end.machine()
 
 # Create a gatherer to read the heat values
