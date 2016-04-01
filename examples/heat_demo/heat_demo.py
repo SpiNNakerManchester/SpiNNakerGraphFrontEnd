@@ -185,5 +185,5 @@ def receive_heat(label, atom, value):
 for label in receive_labels:
     live_heat_connection.add_receive_callback(label, receive_heat)
 
-front_end.run(None)
+front_end.run(1000)
 front_end.stop()
