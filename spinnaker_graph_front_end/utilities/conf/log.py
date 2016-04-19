@@ -40,7 +40,9 @@ class ConfiguredFormatter(logging.Formatter):
 
     @staticmethod
     def construct_logging_parents(conf):
-        """Create a dictionary of module names and logging levels."""
+        """ Create a dictionary of module names and logging levels.
+        """
+
         # Construct the dictionary
         _levels = {}
 
@@ -60,7 +62,9 @@ class ConfiguredFormatter(logging.Formatter):
 
     @staticmethod
     def deepest_parent(parents, child):
-        """Greediest match between child and parent."""
+        """ Greediest match between child and parent.
+        """
+
         # TODO: this can almost certainly be neater!
         # Repeatedly strip elements off the child until we match an item in
         # parents
@@ -79,6 +83,7 @@ class ConfiguredFormatter(logging.Formatter):
     def level_of_deepest_parent(parents, child):
         """ The logging level of the greediest match between child and parent.
         """
+
         # child = re.sub( r'^pacman103\.', '', child )
         parent = ConfiguredFormatter.deepest_parent(parents.keys(), child)
 

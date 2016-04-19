@@ -1,2 +1,12 @@
-/.project
-/.pydevproject
+.pydevproject
+.project
+.idea/
+.settings/
+*.pyc
+doc/build
+build/
+dist/
+**/application_generated_data_files/
+**/reports/
+*.aplx
+/spynnaker_graph_front_end.egg-info/

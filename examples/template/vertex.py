@@ -27,24 +27,35 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class HelloWorldVertex(
+class Vertex(
         PartitionedVertex, AbstractPartitionedDataSpecableVertex,
         ReceiveBuffersToHostBasicImpl):
 
+    # The number of bytes for the has_key flag and the key
+    TRANSMISSION_REGION_N_BYTES = 2 * 4
+
+    # TODO: Update with the regions of the application
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
-               ('STRING_DATA', 1),
-               ('BUFFERED_STATE', 2)])
-
-    CORE_APP_IDENTIFIER = 0xBEEF
+               ('TRANSMISSION', 1)
+               ('RECORDED_DATA', 2),
+               ('BUFFERED_STATE', 3)])
 
     def __init__(self, label, machine_time_step, time_scale_factor,
                  constraints=None):
 
-        resources = ResourceContainer(cpu=CPUCyclesPerTickResource(45),
-                                      dtcm=DTCMResource(100),
-                                      sdram=SDRAMResource(100))
+        self._recording_size = 5000
+
+        # TODO: Update with the resources required by the vertex
+        resources = ResourceContainer(
+            cpu=CPUCyclesPerTickResource(45),
+            dtcm=DTCMResource(100),
+            sdram=SDRAMResource(
+                (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS * 4) +
+                self.TRANSMISSION_REGION_N_BYTES +
+                self.get_buffer_state_region_size(1) +
+                self.get_recording_data_size(1) + self._recording_size))
 
         PartitionedVertex.__init__(
             self, label=label, resources_required=resources,
@@ -59,21 +70,19 @@ class HelloWorldVertex(
         self._time_between_requests = config.getint(
             "Buffers", "time_between_requests")
 
-        self._string_data_size = 5000
-
         self.placement = None
 
     def get_binary_file_name(self):
-        return "hello_world.aplx"
+        return "c_code.aplx"
 
     def model_name(self):
-        return "Hello_World_Vertex"
+        return "Vertex"
 
     def generate_data_spec(
             self, placement, sub_graph, routing_info, hostname, report_folder,
             ip_tags, reverse_ip_tags, write_text_specs,
             application_run_time_folder):
-        """ Generate a data specification
+        """ Generate data
 
         :param placement: the placement object for the dsg
         :param sub_graph: the partitioned graph object for this dsg
@@ -96,17 +105,30 @@ class HelloWorldVertex(
                 write_text_specs, application_run_time_folder)
 
         spec = DataSpecificationGenerator(data_writer, report_writer)
-        # Setup words + 1 for flags + 1 for recording size
-        setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 3) * 4
 
-        # Reserve SDRAM space for memory areas:
-
-        # Create the data regions for hello world
-        self._reserve_memory_regions(spec, setup_size)
+        # Create the data regions
+        self._reserve_memory_regions(spec)
         self._write_basic_setup_info(spec, self.DATA_REGIONS.SYSTEM.value)
         self.write_recording_data(
-            spec, ip_tags, [self._string_data_size],
+            spec, ip_tags, [self._recording_size],
             self._buffer_size_before_receive, self._time_between_requests)
+
+        # Get the key, assuming all outgoing edges use the same key
+        key = 0
+        has_key = 0
+        edge_partitions = sub_graph.outgoing_edges_partitions_from_vertex(self)
+        if len(edge_partitions) > 0:
+
+            # Assumes all outgoing edges use the same key
+            keys_and_masks = routing_info.get_keys_and_masks_from_partition(
+                edge_partitions[0])
+            key = keys_and_masks[0].key
+            has_key = 1
+
+        # Write the transmission region
+        spec.switch_write_focus(self.DATA_REGIONS.TRANSMISSION.value)
+        spec.write_value(has_key)
+        spec.write_value(key)
 
         # End-of-Spec:
         spec.end_specification()
@@ -115,29 +137,33 @@ class HelloWorldVertex(
         # return file path for dsg targets
         return data_writer.filename
 
-    def _reserve_memory_regions(self, spec, system_size):
-        spec.reserve_memory_region(region=self.DATA_REGIONS.SYSTEM.value,
-                                   size=system_size, label='systemInfo')
+    def _reserve_memory_regions(self, spec):
+        spec.reserve_memory_region(
+            region=self.DATA_REGIONS.SYSTEM.value,
+            size=constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS * 4,
+            label='systemInfo')
+        spec.reserve_memory_region(
+            region=self.DATA_REGIONS.TRANSMISSION.value,
+            seiz=self.TRANSMISSION_REGION_N_BYTES, label="transmission")
         self.reserve_buffer_regions(
             spec, self.DATA_REGIONS.BUFFERED_STATE.value,
-            [self.DATA_REGIONS.STRING_DATA.value],
-            [self._string_data_size])
+            [self.DATA_REGIONS.RECORDED_DATA.value],
+            [self._recording_size])
 
     def read(self, placement, buffer_manager):
-        """ Get the data written into sdram
+        """ Get the recorded data
 
         :param placement: the location of this vertex
         :param buffer_manager: the buffer manager
-        :return: string output
+        :return: The data read
         """
-        data_pointer, missing_data = buffer_manager.get_data_for_vertex(
-            placement, self.DATA_REGIONS.STRING_DATA.value,
+        data_pointer, is_missing_data = buffer_manager.get_data_for_vertex(
+            placement, self.DATA_REGIONS.RECORDED_DATA.value,
             self.DATA_REGIONS.BUFFERED_STATE.value)
-        if missing_data:
-            raise Exception("missing data!")
+        if is_missing_data:
+            logger.warn("Some data was lost when recording")
         record_raw = data_pointer.read_all()
-        output = str(record_raw)
-        return output
+        return record_raw
 
     def is_partitioned_data_specable(self):
         return True

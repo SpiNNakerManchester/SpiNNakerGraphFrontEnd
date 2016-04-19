@@ -1,22 +1,12 @@
-"""
-HeatDemoEdge: used in conjunction with a heat demo vertex to execute the
-heat demo
-"""
 from enum import Enum
 
 # front end common imports
-from spinn_front_end_common.abstract_models.\
-    abstract_provides_n_keys_for_edge import AbstractProvidesNKeysForEdge
-from spynnaker_graph_front_end.models.\
-    mutli_cast_partitioned_edge_with_n_keys import \
-    MultiCastPartitionedEdgeWithNKeys
+from pacman.model.partitioned_graph.multi_cast_partitioned_edge \
+    import MultiCastPartitionedEdge
 
 
-class HeatDemoEdge(MultiCastPartitionedEdgeWithNKeys,
-                   AbstractProvidesNKeysForEdge):
-    """
-    HeatDemoEdge: used in conjunction with a heat demo vertex to execute the
-    heat demo
+class HeatDemoEdge(MultiCastPartitionedEdge):
+    """ Used in conjunction with a heat demo vertex to execute the heat demo
     """
 
     DIRECTIONS = Enum(value="EDGES",
@@ -26,11 +16,9 @@ class HeatDemoEdge(MultiCastPartitionedEdgeWithNKeys,
                              ("SOUTH", 3)])
 
     def __init__(self, pre_subvertex, post_subvertex, direction, n_keys=1,
-                 label=None, constraints=None):
-        MultiCastPartitionedEdgeWithNKeys.__init__(
-            self, pre_subvertex, post_subvertex, n_keys=n_keys, label=label,
-            constraints=constraints)
-        AbstractProvidesNKeysForEdge.__init__(self)
+                 label=None):
+        MultiCastPartitionedEdge.__init__(
+            self, pre_subvertex, post_subvertex, label=label)
         self._direction = direction
 
     @property
@@ -41,25 +29,11 @@ class HeatDemoEdge(MultiCastPartitionedEdgeWithNKeys,
         """
         return self._direction
 
-    def get_n_keys_for_partitioned_edge(self, partitioned_edge, graph_mapper):
-        """
-
-        :param partitioned_edge:
-        :param graph_mapper:
-        :return:
-        """
-        return 1
-
     def is_partitioned_edge(self):
-        """
-        helper emthod for isinstance
-        :return:
-        """
         return True
 
     def __str__(self):
         return self.__repr__()
 
     def __repr__(self):
-        return "HeatDemoedge:{}:{}:{}".format(self._label, self._direction,
-                                              self._n_keys)
+        return "HeatDemoEdge:{}:{}".format(self._label, self._direction)
