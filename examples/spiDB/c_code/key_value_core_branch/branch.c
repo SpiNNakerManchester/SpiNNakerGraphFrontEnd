@@ -15,8 +15,8 @@
 #include <data_specification.h>
 
 #include "common-typedefs.h"
-#include "../db-typedefs.h"
-#include "../sdp_utils.h"
+#include "../common/db-typedefs.h"
+#include "../coomon/sdp_utils.h"
 
 #define TIMER_PERIOD 100
 #define QUEUE_SIZE 128

@@ -7,22 +7,23 @@ from pacman.model.constraints.placer_constraints\
 from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.sdram_resource import SDRAMResource
-
-from spynnaker_graph_front_end.abstract_partitioned_data_specable_vertex \
-    import AbstractPartitionedDataSpecableVertex
-
-from spinn_front_end_common.utilities import constants
-
-from data_specification.data_specification_generator import \
-    DataSpecificationGenerator
-
 from pacman.model.constraints.tag_allocator_constraints \
     .tag_allocator_require_reverse_iptag_constraint \
     import TagAllocatorRequireReverseIptagConstraint
 
 from spinn_front_end_common.abstract_models.\
-    abstract_provides_outgoing_edge_constraints \
-    import AbstractProvidesOutgoingEdgeConstraints
+    abstract_partitioned_data_specable_vertex \
+    import AbstractPartitionedDataSpecableVertex
+from spinn_front_end_common.utilities import constants
+from spinn_front_end_common.abstract_models.\
+    abstract_provides_outgoing_partition_constraints \
+    import AbstractProvidesOutgoingPartitionConstraints
+from spinn_front_end_common.utilities import exceptions
+
+from spinnaker_graph_front_end.utilities.conf import config
+
+from data_specification.data_specification_generator import \
+    DataSpecificationGenerator
 
 from enum import Enum
 
@@ -30,7 +31,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
+
+class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex,
+                 AbstractProvidesOutgoingPartitionConstraints):
+    """
+    vertex that does the communication work for all stuff on a chip.
+    """
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
@@ -38,43 +44,69 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
                ('TRANSMISSIONS', 1),
                ('STRING_DATA', 3)])
 
-    CORE_APP_IDENTIFIER = 0xBEEF
+    STRING_DATA_SIZE = 7000000
 
-    def __init__(self, label, machine_time_step, time_scale_factor,
-                 port, placement,
-                 constraints=None, board_address=None, sdp_port=1, tag=None):
+    def __init__(self, label, port, placement,
+                 machine_time_step=None, time_scale_factor=None,
+                 constraints=None, board_address=None, sdp_port=4, tag=None):
 
-        x, y, p = placement
-
-        resoruces = ResourceContainer(cpu=CPUCyclesPerTickResource(45),
+        resources = ResourceContainer(cpu=CPUCyclesPerTickResource(45),
                                       dtcm=DTCMResource(100),
                                       sdram=SDRAMResource(100))
 
+        # sort out machine time step
+        if machine_time_step is None:
+            self._machine_time_step = config.get("Machine", "machineTimeStep")
+            if self._machine_time_step == "None":
+                raise exceptions.ConfigurationException(
+                    "Needs a machine time step that is not None, add to the "
+                    "initiation or to a .spiNNakerGraphFrontEnd.cfg")
+            else:
+                self._machine_time_step = int(self._machine_time_step)
+        else:
+            self._machine_time_step = machine_time_step
+
+        # sort out time scale factor
+        if time_scale_factor is None:
+            self._time_scale_factor = config.get("Machine", "timeScaleFactor")
+            if self._time_scale_factor == "None":
+                raise exceptions.ConfigurationException(
+                    "Needs a time scale factor that is not None, add to the "
+                    "initiation or to a .spiNNakerGraphFrontEnd.cfg")
+            else:
+                self._time_scale_factor = int(self._time_scale_factor)
+        else:
+            self._time_scale_factor = time_scale_factor
+
         PartitionedVertex.__init__(
-            self, label=label, resources_required=resoruces,
+            self, label=label, resources_required=resources,
             constraints=constraints)
-        AbstractPartitionedDataSpecableVertex.__init__(self)
-        AbstractProvidesOutgoingEdgeConstraints.__init__(self)
+        AbstractPartitionedDataSpecableVertex.__init__(
+            self, machine_time_step=self._machine_time_step,
+            timescale_factor=self._time_scale_factor)
+        AbstractProvidesOutgoingPartitionConstraints.__init__(self)
 
         if port is not None:
             self.add_constraint(
                 TagAllocatorRequireReverseIptagConstraint(
                     port, sdp_port, board_address, tag))
 
-        self._machine_time_step = machine_time_step
-        self._time_scale_factor = time_scale_factor
-
-        self._string_data_size = 7000000
-
-        self.placement = None
-
-        placement_constaint = PlacerChipAndCoreConstraint(x, y, p)
-        self.add_constraint(placement_constaint)
+        x, y, p = placement
+        self.add_constraint(PlacerChipAndCoreConstraint(x, y, p))
+        self._sdp_port = sdp_port
 
     def get_binary_file_name(self):
+        """
+        binary name
+        :return:
+        """
         return "root.aplx"
 
     def model_name(self):
+        """
+        human readable name
+        :return:
+        """
         return "RootVertex"
 
     def generate_data_spec(
@@ -88,15 +120,14 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         :param sub_graph: the partitioned graph object for this dsg
         :param routing_info: the routing info object for this dsg
         :param hostname: the machines hostname
-        :param ip_tags: the collection of iptags generated by the tag allcoator
-        :param reverse_ip_tags: the colelction of reverse iptags generated by
-        the tag allcoator
+        :param ip_tags: the collection of iptags generated by the tag allocator
+        :param reverse_ip_tags: the collection of reverse iptags generated by
+        the tag allocator
         :param report_folder: the folder to write reports to
         :param write_text_specs: bool which says if test specs should be written
         :param application_run_time_folder: the folder where application files
          are written
         """
-        self.placement = placement
 
         data_writer, report_writer = \
             self.get_data_spec_file_writers(
@@ -104,23 +135,27 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
                 write_text_specs, application_run_time_folder)
 
         spec = DataSpecificationGenerator(data_writer, report_writer)
+
         # Setup words + 1 for flags + 1 for recording size
-        setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 3) * 4 #4 for words
+        setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 3) * 4  # 4 for words
 
         # Reserve SDRAM space for memory areas:
-
         self._reserve_memory_regions(spec, setup_size)
-        self._write_setup_info(spec, self.CORE_APP_IDENTIFIER,
-                               self.DATA_REGIONS.SYSTEM.value)
 
+        # write basic setup data
+        self._write_setup_info(spec, self.DATA_REGIONS.SYSTEM.value)
+
+        # write multicast key
         self._write_MC_key(spec, routing_info, sub_graph,
                            self.DATA_REGIONS.SYSTEM.value)
 
         # End-of-Spec:
         spec.end_specification()
 
+        # close writer
         data_writer.close()
 
+        # return file path for writer
         return [data_writer.filename]
 
     def _reserve_memory_regions(self, spec, system_size):
@@ -137,22 +172,28 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         spec.reserve_memory_region(region=self.DATA_REGIONS.SYSTEM.value,
                                    size=system_size, label='systemInfo')
         spec.reserve_memory_region(region=self.DATA_REGIONS.STRING_DATA.value,
-                                   size=self._string_data_size,
+                                   size=self.STRING_DATA_SIZE,
                                    label="inputs", empty=True)
 
-    def _write_setup_info(self, spec, core_app_identifier, region_id):
+    def _write_setup_info(self, spec, region_id):
         """
          Write this to the system region (to be picked up by the simulation):
         :param spec:
-        :param core_app_identifier:
         :param region_id:
         :return:
         """
         self._write_basic_setup_info(spec, region_id)
-        spec.switch_write_focus(region=region_id)
-        spec.write_value(data=123) # todo this is not writing...
+        spec.write_value(data=self._sdp_port)
 
     def _write_MC_key(self, spec, routing_info, subgraph, region_id):
+        """
+        writes the multicast key used during transmissions
+        :param spec: dsg writer
+        :param routing_info: key info object
+        :param subgraph: partitioned graph
+        :param region_id: the region to put this data
+        :return: None
+        """
         # Every subedge should have the same key
 
         keys_and_masks = routing_info.get_keys_and_masks_from_subedge(

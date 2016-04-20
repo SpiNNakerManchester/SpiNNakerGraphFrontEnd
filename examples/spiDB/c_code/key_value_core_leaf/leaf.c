@@ -15,10 +15,10 @@
 #include <data_specification.h>
 
 #include "common-typedefs.h"
-#include "../db-typedefs.h"
-#include "../memory_utils.h"
-#include "../sdp_utils.h"
-#include "../timer2.h"
+#include "../common/db-typedefs.h"
+#include "../common/memory_utils.h"
+#include "../common/sdp_utils.h"
+#include "../common/timer2.h"
 #include "pull.h"
 #include "put.h"
 #include "scan.h"
