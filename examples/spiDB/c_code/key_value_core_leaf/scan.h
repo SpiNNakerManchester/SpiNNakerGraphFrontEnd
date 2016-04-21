@@ -3,8 +3,8 @@
     #ifndef __SCAN_H__
     #define __SCAN_H__
 
-    #include "../db-typedefs.h"
-    #include "../memory_utils.h"
+    #include "../common/db-typedefs.h"
+    #include "../common/memory_utils.h"
     #include <debug.h>
 
     extern uchar chipx, chipy, core;

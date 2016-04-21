@@ -2,8 +2,8 @@
     #ifndef __PULL_H__
         #define __PULL_H__
 
-        #include "../db-typedefs.h"
-        #include "../memory_utils.h"
+        #include "../common/db-typedefs.h"
+        #include "../common/memory_utils.h"
         #include <debug.h>
 
         pullValue* pull(address_t addr, uint32_t info, uchar* k){

@@ -32,8 +32,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex,
-                 AbstractProvidesOutgoingPartitionConstraints):
+class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
     """
     vertex that does the communication work for all stuff on a chip.
     """
@@ -42,17 +41,27 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex,
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
                ('TRANSMISSIONS', 1),
+               ('SDP_PORT', 2),
                ('STRING_DATA', 3)])
 
     STRING_DATA_SIZE = 7000000
+    SDP_REGION_SIZE = 4
+    TRANSMISSION_SIZE = 8
 
-    def __init__(self, label, port, placement,
-                 machine_time_step=None, time_scale_factor=None,
-                 constraints=None, board_address=None, sdp_port=4, tag=None):
+    def __init__(
+            self, label, port, placement, machine_time_step=None,
+            time_scale_factor=None, constraints=None, board_address=None,
+            sdp_port=4, tag=None):
+
+        system_region_size = \
+            (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 3) * 4
+        sdram_requirements = \
+            system_region_size + self.TRANSMISSION_SIZE + \
+            self.SDP_REGION_SIZE + self.STRING_DATA_SIZE
 
         resources = ResourceContainer(cpu=CPUCyclesPerTickResource(45),
                                       dtcm=DTCMResource(100),
-                                      sdram=SDRAMResource(100))
+                                      sdram=SDRAMResource(sdram_requirements))
 
         # sort out machine time step
         if machine_time_step is None:
@@ -143,11 +152,14 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex,
         self._reserve_memory_regions(spec, setup_size)
 
         # write basic setup data
-        self._write_setup_info(spec, self.DATA_REGIONS.SYSTEM.value)
+        self._write_basic_setup_info(spec, self.DATA_REGIONS.SYSTEM.value)
+
+        # write sdp port
+        self._write_sdp_port(spec)
 
         # write multicast key
-        self._write_MC_key(spec, routing_info, sub_graph,
-                           self.DATA_REGIONS.SYSTEM.value)
+        self._write_multi_cast_key(spec, routing_info, sub_graph,
+                           self.DATA_REGIONS.TRANSMISSIONS.value)
 
         # End-of-Spec:
         spec.end_specification()
@@ -171,21 +183,24 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex,
         """
         spec.reserve_memory_region(region=self.DATA_REGIONS.SYSTEM.value,
                                    size=system_size, label='systemInfo')
+        spec.reserve_memory_region(region=self.DATA_REGIONS.SDP_PORT.value,
+                                   size=self.SDP_REGION_SIZE, label="SDP_PORT")
+        spec.reserve_memory_region(region=self.DATA_REGIONS.TRANSMISSIONS.value,
+                                   size=self.TRANSMISSION_SIZE, label="MC_KEY")
         spec.reserve_memory_region(region=self.DATA_REGIONS.STRING_DATA.value,
                                    size=self.STRING_DATA_SIZE,
                                    label="inputs", empty=True)
 
-    def _write_setup_info(self, spec, region_id):
+    def _write_sdp_port(self, spec):
         """
-         Write this to the system region (to be picked up by the simulation):
-        :param spec:
-        :param region_id:
-        :return:
+        writes the sdp port number for c configuration
+        :param spec: the spec to write
+        :return: None
         """
-        self._write_basic_setup_info(spec, region_id)
-        spec.write_value(data=self._sdp_port)
+        spec.switch_write_focus(self.DATA_REGIONS.SDP_PORT.value)
+        spec.write_value(self._sdp_port)
 
-    def _write_MC_key(self, spec, routing_info, subgraph, region_id):
+    def _write_multi_cast_key(self, spec, routing_info, subgraph, region_id):
         """
         writes the multicast key used during transmissions
         :param spec: dsg writer
@@ -194,16 +209,19 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex,
         :param region_id: the region to put this data
         :return: None
         """
-        # Every subedge should have the same key
 
+        # Every subedge should have the same key
         keys_and_masks = routing_info.get_keys_and_masks_from_subedge(
             subgraph.outgoing_subedges_from_subvertex(self)[0])
         key = keys_and_masks[0].key
         spec.switch_write_focus(region=region_id)
+
         # Write Key info for this core:
         if key is None:
             spec.write_value(data=0)
+            spec.write_value(data=0)
         else:
+            spec.write_value(data=1)
             spec.write_value(data=key)
 
     def is_partitioned_data_specable(self):

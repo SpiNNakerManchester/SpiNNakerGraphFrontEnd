@@ -39,7 +39,6 @@
     #define try(cond) do { if (!cond) return false; } while (0)
 
     typedef enum var_type  { UINT32=0, STRING } var_type;
-    typedef enum regions_e { SYSTEM_REGION=0, DB_DATA_REGION} regions_e;
     typedef uint32_t id_t;
     typedef uint32_t info_t;
 

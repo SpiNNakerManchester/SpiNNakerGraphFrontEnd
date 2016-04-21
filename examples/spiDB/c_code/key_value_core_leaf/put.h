@@ -2,8 +2,8 @@
     #ifndef __PUT_H__
         #define __PUT_H__
 
-        #include "../memory_utils.h"
-        #include "../db-typedefs.h"
+        #include "../common/memory_utils.h"
+        #include "../common/db-typedefs.h"
 
         size_t put(address_t* addr, info_t info, void* k, void* v){
 
