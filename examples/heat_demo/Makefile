@@ -1,5 +1,5 @@
 APP = heat_demo
 BUILD_DIR = build/
-OBJECTS = heat_demo.o
+SOURCES = heat_demo.c
 
 include ../Makefile.common

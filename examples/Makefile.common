@@ -5,7 +5,8 @@ endif
 
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 CURRENT_DIR := $(dir $(MAKEFILE_PATH))
-SOURCE_DIRS := $(abspath $(CURRENT_DIR))
+SOURCE_DIR := $(abspath $(CURRENT_DIR))
+SOURCE_DIRS += $(SOURCE_DIR)
 APP_OUTPUT_DIR := $(abspath $(CURRENT_DIR)/model_binaries)/
 
 include $(SPINN_DIRS)/make_lib/Makefile.SpiNNFrontEndCommon
