@@ -1,5 +1,5 @@
 APP = c_code
 BUILD_DIR = build/
-OBJECTS = c_code.o
+SOURCES = c_code.c
 
 include ../Makefile.common

@@ -1,5 +1,5 @@
 APP = hello_world
 BUILD_DIR = build/
-OBJECTS = hello_world.o
+SOURCES = hello_world.c
 
 include ../Makefile.common
