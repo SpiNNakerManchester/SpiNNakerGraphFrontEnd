@@ -88,6 +88,16 @@ class SpiNNaker(SpinnakerMainInterface):
             config.get("Machine", "remote_spinnaker_url") != "None"
         )
 
+    def add_socket_address(self, socket_address):
+        """ Add a socket address to the list to be checked by the\
+            notification protocol
+
+        :param socket_address: the socket address
+        :type socket_address:
+        :return:
+        """
+        self._add_socket_address(socket_address)
+
     def run(self, run_time):
 
         # set up the correct dsg algorithm
