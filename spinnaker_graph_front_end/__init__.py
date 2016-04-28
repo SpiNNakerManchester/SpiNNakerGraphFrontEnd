@@ -1,4 +1,6 @@
 # front end common imports
+from spinn_front_end_common.utilities.notification_protocol.socket_address \
+    import SocketAddress
 from spinn_front_end_common.utilities.utility_objs.executable_finder \
     import ExecutableFinder
 
@@ -14,7 +16,7 @@ from spinn_front_end_common.utility_models.live_packet_gather \
 from spinn_front_end_common.utility_models.reverse_ip_tag_multi_cast_source \
     import ReverseIpTagMultiCastSource  # @IgnorePep8
 from pacman.model.partitioned_graph.multi_cast_partitioned_edge \
-    import MultiCastPartitionedEdge
+    import MultiCastPartitionedEdge  # @IgnorePep8
 
 
 import logging
@@ -47,7 +49,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
     global _none_labelled_edge_count
 
     logger.info(
-        "SpiNNaker graph front end (c) {}, Alan Stokes, "
+        "SpiNNaker graph front end (c) {}, "
         "University of Manchester".format(__version_year__))
     parent_dir = os.path.split(os.path.split(
         spinnaker.__file__)[0])[0]
@@ -79,11 +81,8 @@ def run(duration=None):
     :param duration: the number of microseconds the application should run for
     :type duration: int
     """
-    import sys
     global _spinnaker
 
-    if duration is None:
-        duration = sys.maxint
     _spinnaker.run(duration)
 
 
@@ -272,6 +271,25 @@ def add_partitioned_edge(cellclass, cellparams, label=None, constraints=None,
     edge = cellclass(**cellparams)
     _spinnaker.add_partitioned_edge(edge, partition_id, constraints)
     return edge
+
+
+def add_socket_address(
+        database_ack_port_num, database_notify_host, database_notify_port_num):
+    """
+    adds a socket address for the notification protocol
+    :param database_ack_port_num: port num to send acknowledgement to
+    :param database_notify_host: host ip to send notification to
+    :param database_notify_port_num: port that the external device will be
+    notified on.
+    """
+    global _spinnaker
+
+    database_socket = SocketAddress(
+        listen_port=database_ack_port_num,
+        notify_host_name=database_notify_host,
+        notify_port_no=database_notify_port_num)
+
+    _spinnaker.add_socket_address(database_socket)
 
 
 def get_txrx():

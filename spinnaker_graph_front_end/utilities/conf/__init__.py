@@ -39,22 +39,24 @@ def _install_cfg():
 
 # Create a config, read global defaults and then read in additional files
 config = ConfigParser.RawConfigParser()
-default = os.path.join(os.path.dirname(spinnaker_graph_front_end.__file__),
-                       "spiNNakerGraphFrontEnd.cfg")
-spynnaker_user = os.path.expanduser("~/.spiNNakerGraphFrontEnd.cfg")
-spynnaker_others = (spynnaker_user, "spiNNakerGraphFrontEnd.cfg")
-located_spynnaker = list()
+default = os.path.join(
+    os.path.dirname(spinnaker_graph_front_end.__file__),
+    "spiNNakerGraphFrontEnd.cfg")
+user_config = os.path.expanduser(os.path.join(
+    "~", ".spiNNakerGraphFrontEnd.cfg"))
+other_configs = (user_config, "spiNNakerGraphFrontEnd.cfg")
+located_configs = list()
 
-found_spynnakers = False
-for possible_spynnaker_file in spynnaker_others:
-    if os.path.isfile(possible_spynnaker_file):
-        found_spynnakers = True
-        located_spynnaker.append(os.path.abspath(possible_spynnaker_file))
+found_config = False
+for possible_config in other_configs:
+    if os.path.isfile(possible_config):
+        found_config = True
+        located_configs.append(os.path.abspath(possible_config))
 
 with open(default) as f:
     config.readfp(f)
-if found_spynnakers:
-    read = config.read(spynnaker_others)
+if found_config:
+    read = config.read(other_configs)
 else:
     # Create a default pacman.cfg in the user home directory and get them
     # to update it.
