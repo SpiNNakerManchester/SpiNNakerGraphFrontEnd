@@ -4,6 +4,7 @@
 #include "common-typedefs.h"
 #include <data_specification.h>
 #include <simulation.h>
+#include <recording.h>
 #include <debug.h>
 
 //! control value, which says how many timer ticks to run for before exiting
@@ -36,8 +37,17 @@ typedef enum transmission_region_elements {
     HAS_KEY, MY_KEY
 } transmission_region_elements;
 
+// TODO: Update with the number of recorded regions
+#define N_REGIONS_TO_RECORD 1
+
+// TODO: Update with the recording region ids
+static regions_e regions_ids_to_record[] = {RECORDED_DATA};
+
 // TODO: Set the application name here
-app_name = ""
+static char *app_name = "";
+
+// The Key
+static uint32_t my_key;
 
 
 //=============================================================================
@@ -79,26 +89,6 @@ static void do_update(uint ticks, uint32_t time) {
 }
 
 //=============================================================================
-// Recording interfaces
-
-//! \brief returns the number of recording regions used by this model
-//! \return the number of recorded regions to use.
-int number_of_recorded_regions() {
-
-    // TODO: Update with the number of regions to record
-    return 1;
-}
-
-//! \brief Returns the ids of regions that will be used in recording
-//! \return An array of the recording regions to use
-region_e * region_ids_for_recording(){
-
-    // TODO: Update with the recording region ids
-    regions_e regions_ids_to_record[] = {RECORDED_DATA};
-    return regions_ids_to_record;
-}
-
-//=============================================================================
 //resume interfaces
 
 //! \brief add functionality to do when you are about to resume.
@@ -125,7 +115,7 @@ static bool initialise_recording() {
     regions_e state_region = BUFFERING_OUT_STATE;
 
     bool success = recording_initialize(
-        number_of_recorded_regions(), region_ids_for_recording(),
+        N_REGIONS_TO_RECORD, regions_ids_to_record,
         recording_flags_from_system_conf, state_region, TIMER,
         &recording_flags);
     log_info("Recording flags = 0x%08x", recording_flags);
@@ -158,7 +148,7 @@ void update(uint ticks, uint unused) {
         return;
     }
 
-    do_update(ticks, time)
+    do_update(ticks, time);
 
 }
 

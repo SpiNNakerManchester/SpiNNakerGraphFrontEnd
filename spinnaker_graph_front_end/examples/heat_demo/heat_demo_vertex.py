@@ -2,7 +2,7 @@
 # heat demo imports
 from data_specification.enums.data_type import DataType
 
-from examples.heat_demo.heat_demo_edge import HeatDemoEdge
+from .heat_demo_edge import HeatDemoEdge
 
 from spinnaker_graph_front_end.utilities.conf import config
 

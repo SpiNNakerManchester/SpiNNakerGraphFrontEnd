@@ -23,11 +23,12 @@ import spinnaker_graph_front_end as front_end
 from spinnaker_graph_front_end import MultiCastPartitionedEdge
 
 # example imports
-from examples.heat_demo.heat_demo_vertex import HeatDemoVertexPartitioned
-from examples.heat_demo.heat_demo_edge import HeatDemoEdge
+from spinnaker_graph_front_end.examples.heat_demo.heat_demo_vertex\
+    import HeatDemoVertexPartitioned
+from spinnaker_graph_front_end.examples.heat_demo.heat_demo_edge\
+    import HeatDemoEdge
 
-# import the folder where all graph front end binaries are located
-from examples import model_binaries
+import sys
 
 machine_time_step = 1000
 time_scale_factor = 1
@@ -45,7 +46,7 @@ if front_end.is_allocated_machine():
 
 # set up the front end and ask for the detected machines dimensions
 front_end.setup(
-    graph_label="heat_demo_graph", model_binary_module=model_binaries,
+    graph_label="heat_demo_graph", model_binary_module=sys.modules[__name__],
     database_socket_addresses={SocketAddress(
         "127.0.0.1", notify_port, database_listen_port)},
     n_chips_required=n_chips_required)

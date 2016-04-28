@@ -3,10 +3,18 @@ ifndef SPINN_DIRS
     $(error SPINN_DIRS is not set.  Please define SPINN_DIRS (possibly by running "source setup" in the spinnaker package folder))
 endif
 
+# TODO: Rename to suit your application 
+APP = c_code
+
+BUILD_DIR = build/
+
+# TODO: Replace with your source code files
+SOURCES = c_code.c
+
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 CURRENT_DIR := $(dir $(MAKEFILE_PATH))
 SOURCE_DIR := $(abspath $(CURRENT_DIR))
 SOURCE_DIRS += $(SOURCE_DIR)
-APP_OUTPUT_DIR := $(abspath $(CURRENT_DIR)/model_binaries)/
+APP_OUTPUT_DIR := $(abspath $(CURRENT_DIR))/
 
 include $(SPINN_DIRS)/make_lib/Makefile.SpiNNFrontEndCommon
