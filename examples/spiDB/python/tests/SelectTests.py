@@ -1,9 +1,9 @@
 __author__ = 'gmtuca'
 
-import unittest
 import random
+import unittest
 
-from socket_connection import SpiDBSocketConnection
+from examples.spiDB.python.python_common.socket_connection import SpiDBSocketConnection
 
 conn = SpiDBSocketConnection()
 

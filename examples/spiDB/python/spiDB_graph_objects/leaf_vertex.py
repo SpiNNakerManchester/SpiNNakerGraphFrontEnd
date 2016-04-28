@@ -1,4 +1,3 @@
-
 # pacman imports
 from pacman.model.partitioned_graph.partitioned_vertex import PartitionedVertex
 from pacman.model.resources.cpu_cycles_per_tick_resource import \
@@ -9,47 +8,50 @@ from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.sdram_resource import SDRAMResource
 
-# GFE imports
-from spinnaker_graph_front_end.utilities.conf import config
-
-# fec imports
-from spinn_front_end_common.utilities import constants
+# front end common imports
 from spinn_front_end_common.abstract_models.\
     abstract_partitioned_data_specable_vertex \
     import AbstractPartitionedDataSpecableVertex
+from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.utilities import exceptions
+
+# gfe imports
+from spinnaker_graph_front_end.utilities.conf import config
 
 # dsg imports
 from data_specification.data_specification_generator import \
     DataSpecificationGenerator
 
-# general imports
 from enum import Enum
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-class BranchVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
+class LeafVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
     """
-    for handling a MST for communications.
+    does database processing
     """
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
-               ('DATABASE', 1)])
+               ("SDP_PORT", 1),
+               ('DATABASE', 2)])
 
     DATABASE_SIZE = 7000000
+    SDP_PORT_MEMORY = 4
 
-    CORE_APP_IDENTIFIER = 0xBEEF
-
-    def __init__(self, label, machine_time_step, time_scale_factor, placement,
+    def __init__(self, label, placement,
+                 machine_time_step=None, time_scale_factor=None,
                  constraints=None):
+
+        sdram = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS * 4) + \
+                self.DATABASE_SIZE + self.SDP_PORT_MEMORY
 
         resources = ResourceContainer(cpu=CPUCyclesPerTickResource(45),
                                       dtcm=DTCMResource(100),
-                                      sdram=SDRAMResource(100))
+                                      sdram=SDRAMResource(sdram))
 
         # sort out machine time step
         if machine_time_step is None:
@@ -87,17 +89,17 @@ class BranchVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
 
     def get_binary_file_name(self):
         """
-        binary name
+        binary file name
         :return:
         """
-        return "branch.aplx"
+        return "leaf.aplx"
 
     def model_name(self):
         """
         human readable name
         :return:
         """
-        return "BranchVertex"
+        return "LeafVertex"
 
     def generate_data_spec(
             self, placement, sub_graph, routing_info, hostname, report_folder,
@@ -134,14 +136,32 @@ class BranchVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
 
         # Create the data regions for hello world
         self._reserve_memory_regions(spec, setup_size)
+
+        # write basic setup data
         self._write_basic_setup_info(spec, self.DATA_REGIONS.SYSTEM.value)
+
+
+
+        # write database_size
+        self._write_database_size(spec)
 
         # End-of-Spec:
         spec.end_specification()
 
+        # close writer
         data_writer.close()
 
-        return [data_writer.filename]
+        # return file path for writer
+        return data_writer.filename
+
+    def _write_database_size(self, spec):
+        """
+        adds the size of the database region into the region for c configuration
+        :param spec: the dsg writer
+        :return:
+        """
+        spec.switch_write_focus(region=self.DATA_REGIONS.DATABASE.value)
+        spec.write_value(data=self.DATABASE_SIZE)
 
     def _reserve_memory_regions(self, spec, system_size):
         """
@@ -156,9 +176,19 @@ class BranchVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         """
         spec.reserve_memory_region(region=self.DATA_REGIONS.SYSTEM.value,
                                    size=system_size, label='systemInfo')
+        spec.reserve_memory_region(region=self.DATA_REGIONS.SDP_PORT.value,
+                                   size=self.SDP_PORT_MEMORY, label="SDP_PORT")
         spec.reserve_memory_region(region=self.DATA_REGIONS.DATABASE.value,
-                                   size=self._database_size,
-                                   label="inputs", empty=True)
+                                   size=self.DATABASE_SIZE, label="inputs")
+
+    def _write_sdp_port(self, spec):
+        """
+        writes the sdp port number for c configuration
+        :param spec: the spec to write
+        :return: None
+        """
+        spec.switch_write_focus(self.DATA_REGIONS.SDP_PORT.value)
+        spec.write_value(self._sdp_port)
 
     def is_partitioned_data_specable(self):
         """

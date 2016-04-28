@@ -1,5 +1,5 @@
-APP = branch
+APP = both_root
 BUILD_DIR = build/
-OBJECTS = branch.o
+OBJECTS = both_root.o
 
 include ../../Makefile.common

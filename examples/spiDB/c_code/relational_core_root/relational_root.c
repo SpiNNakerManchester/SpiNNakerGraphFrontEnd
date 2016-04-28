@@ -34,6 +34,11 @@ typedef enum sdp_port_region_elements_e {
     SDP_PORT_POSITION=0
 } sdp_port_region_elements_e;
 
+//! \data region elements
+typedef enum string_region_elements_e {
+    DATA_REGION_SIZE=0
+} string_region_elements_e;
+
 
 //! buffer holding sdp packets received
 static circular_buffer sdp_buffer;
@@ -46,11 +51,9 @@ static uint32_t core_identifier;
 //! bool to stop processing events
 static bool processing_events = false;
 
-//! if doing relational,
-#ifdef DB_TYPE_RELATIONAL
-    Table* tables = NULL;
-    uint n_tables = 0;
-#endif
+//! tables stored on the system
+Table* tables = NULL;
+uint n_tables = 0;
 
 //! memory stores
 address_t currentQueryAddress;
@@ -83,45 +86,6 @@ uint32_t sdp_port_num = 0;
 static uint32_t infinite_run;
 
 static uint32_t QUEUE_SIZE = 128;
-
-//! different functions used by different modes
-#ifdef DB_TYPE_KEY_VALUE_STORE
-    #ifdef DB_SUBTYPE_HASH_TABLE
-
-        uint32_t hash(uchar* bytes, size_t size){
-            #ifdef HASH_FUNCTION_DFJB
-                uint32_t h = 5381;
-
-                uint i = 0;
-                for(uint i = 0; i < size; i++)
-                    h = ((h << 5) + h) + bytes[i];
-                return h;
-            #endif
-            #ifdef HASH_FUNCTION_XOR
-                uint32_t h = 0x55555555;
-
-                for(uint i = 0; i < size; i++){
-                    h ^= bytes[i];
-                    h = h << 5;
-                }
-                return h;
-            #endif
-            #ifdef HASH_FUNCTION_JENKINGS
-                uint32_t hash, i;
-                for(hash = i = 0; i < size; ++i)
-                {
-                    hash += bytes[i];
-                    hash += (hash << 10);
-                    hash ^= (hash >> 6);
-                }
-                hash += (hash << 3);
-                hash ^= (hash >> 11);
-                hash += (hash << 15);
-                return hash;
-            #endif
-        }
-    #endif
-#endif
 
 //! timer tick callback function
 void update (uint ticks, uint b){
@@ -180,86 +144,6 @@ void process_requests(uint arg0, uint arg1){
                 //sark_free(msg);
                 continue;
             }
-
-        #ifdef DB_TYPE_KEY_VALUE_STORE
-
-        if(header->cmd == PUT || header->cmd == PULL){
-            putPullQuery* p = (putPullQuery*)header;
-
-            log_info("%s, id %d", p->cmd == PUT ? "PUT" : "PULL", p->id);
-            log_info("  info: %08x, data: %s", p->info, p->data);
-
-            #ifdef DB_SUBTYPE_HASH_TABLE
-                    uint32_t h = hash(p->data, k_size_from_info(p->info));
-
-                    h_chip_x =((h & 0x00FF0000) >> 16) % CHIP_X_SIZE;
-                    h_chip_y =((h & 0x0000FF00) >> 8)  % CHIP_Y_SIZE;
-                    h_core  =((h & 0x000000FF) % NUMBER_OF_LEAVES) + FIRST_LEAF;
-            #else
-                if(header->cmd == PUT){
-                    if(++h_core > LAST_LEAF){
-                        h_core = FIRST_LEAF;
-                        if(++h_chip_x >= CHIP_X_SIZE){
-                            h_chip_x = 0;
-                            if(++h_chip_y >= CHIP_Y_SIZE){
-                                h_chip_y = 0;
-                            }
-                        }
-                    }
-                }
-                else{ //PULL
-
-                    if(msg->srce_port == PORT_ETH){ //msg came from host
-                        //tell the other root cores to scan
-                        set_srce_as_self(msg);
-
-                        set_dest_xyp(msg, 0, 1, 1);
-                        spin1_send_sdp_msg(msg, SDP_TIMEOUT);
-
-                        set_dest_xyp(msg, 1, 0, 1);
-                        spin1_send_sdp_msg(msg, SDP_TIMEOUT);
-
-                        set_dest_xyp(msg, 1, 1, 1);
-                        spin1_send_sdp_msg(msg, SDP_TIMEOUT);
-                    }
-
-                    //if we run out of root SDRAM, roll over
-                    if(currentQueryAddress+sizeof(pullQuery) >=
-                        startQueryAddress+ROOT_SDRAM_SIZE_BYTES){
-                            log_info("Roll over...");
-                            currentQueryAddress = startQueryAddress;
-                    }
-
-                    address_t a = append(&currentQueryAddress,
-                                         p, sizeof(pullQuery));
-                    if(!a){
-                        log_error("Error storing pullQuery to SDRAM.");
-                        continue;
-                    }
-
-                    //broadcast pointer to message over Multicast
-                    while(!spin1_send_mc_packet(key, (uint)a, WITH_PAYLOAD)){
-                        log_info("Attempting to send PULL MC packet again.");
-                        spin1_delay_us(1);
-                    }
-
-                    //spin1_msg_free(msg);
-                    continue;
-                }
-            #endif
-
-            set_dest_xyp(msg, h_chip_x, h_chip_y, h_core);
-
-            if(spin1_send_sdp_msg(msg, SDP_TIMEOUT)){
-                //log_info("  Sent to (%d,%d,%d)", h_chip_x, h_chip_y, h_core);
-            }
-            else {
-                log_error("  Unable to send query to (%d,%d,%d)",
-                          p->data, h_chip_x, h_chip_y, h_core);
-            }
-        }
-        #endif
-        #ifdef DB_TYPE_RELATIONAL
 
         switch(header->cmd){
             case CREATE_TABLE:;
@@ -363,7 +247,6 @@ void process_requests(uint arg0, uint arg1){
                 //         header->cmd, header->id);
                 break;
         }
-        #endif
 
         // free the message to stop overload
         //spin1_msg_free(msg);
@@ -390,7 +273,6 @@ static bool initialize(uint32_t *timer_period) {
     }
 
     system_region = data_specification_get_region(SYSTEM_REGION, address);
-    check_sdram(system_region);
 
     if (!simulation_read_timing_details(
             system_region, APPLICATION_NAME_HASH, timer_period)) {
@@ -399,12 +281,13 @@ static bool initialize(uint32_t *timer_period) {
     }
 
     data_region = data_specification_get_region(DB_DATA_REGION, address);
-    check_sdram(data_region);
 
     log_info("System region: %08x", system_region);
     log_info("Data region: %08x", data_region);
 
-    clear(data_region, CORE_DATABASE_SIZE_WORDS);
+    // clear the data region of any data
+    uint32_t data_region_size = data_region[DATA_REGION_SIZE] / 4; // bytes to ints
+    memory_utils_clear(data_region, data_region_size);
 
     address_t sdp_port_region =
         data_specification_get_region(SDP_PORT_REGION, address);
@@ -463,15 +346,10 @@ void c_main(){
         rt_error(RTE_SWERR);
     }
 
-    #ifdef DB_TYPE_KEY_VALUE_STORE
-        startQueryAddress = data_region;
-    #endif
-    #ifdef DB_TYPE_RELATIONAL
-        tables = (Table*) data_region;
+    tables = (Table*) data_region;
 
-        startQueryAddress =
-               data_region + sizeof(Table) * DEFAULT_NUMBER_OF_TABLES;
-    #endif
+    startQueryAddress =
+           data_region + sizeof(Table) * DEFAULT_NUMBER_OF_TABLES;
 
     currentQueryAddress = startQueryAddress;
 

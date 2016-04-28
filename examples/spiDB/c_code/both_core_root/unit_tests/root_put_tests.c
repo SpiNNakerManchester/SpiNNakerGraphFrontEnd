@@ -237,7 +237,8 @@ bool test_receive_sdp_msg(sdp_msg_t* reply_msg){
                 size_t k_size = k_size_from_info(q->msg->arg1);
 
                 //find from the pull that we sent, what the key was
-                if(k_size == put_query->k_size && arr_equals(put_query->k_v, q->msg->data, k_size)){
+                if(k_size == put_query->k_size && memory_utils_arr_equals(
+                        put_query->k_v, q->msg->data, k_size)){
                     log_debug("===== Testing PULL %s =====", put_query->k_v);
 
                     test_id = put_query->id;
@@ -264,9 +265,10 @@ bool test_receive_sdp_msg(sdp_msg_t* reply_msg){
             assert_t(reply_v_size == expected_v_size, &passed,
                                   "reply_v_size (%d) is different than expected (%d)", reply_v_size, expected_v_size);
 
-            assert_t(arr_equals(reply_msg->data, expected_v, reply_v_size), &passed,
-                                  "reply_msg->data (s: %s - on %d chars) is different than expected (s: %s)",
-                                  reply_msg->data, reply_v_size, expected_v);
+            assert_t(memory_utils_arr_equals(
+                reply_msg->data, expected_v, reply_v_size), &passed,
+                "reply_msg->data (s: %s - on %d chars) is different than "
+                "expected (s: %s)", reply_msg->data, reply_v_size, expected_v);
 
             break;
         default:

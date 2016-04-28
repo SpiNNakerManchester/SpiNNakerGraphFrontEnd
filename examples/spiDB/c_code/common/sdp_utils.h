@@ -127,12 +127,9 @@ sdp_msg_t* send_internal_data_response(uchar x, uchar y, uchar p,
 
 #define UNDEF 255
 
-sdp_msg_t* send_xyp_data_response_to_host(spiDBQueryHeader* q,
-                                          void* data,
-                                          size_t data_size_bytes,
-                                          uchar x_origin,
-                                          uchar y_origin,
-                                          uchar p_origin){
+sdp_msg_t* send_xyp_data_response_to_host(
+    spiDBQueryHeader* q, void* data, size_t data_size_bytes,
+    uchar x_origin, uchar y_origin, uchar p_origin){
 
     sdp_msg_t* msg = create_sdp_header_to_host_alloc_extra(
                         data_size_bytes + sizeof(Response_hdr));
@@ -141,9 +138,9 @@ sdp_msg_t* send_xyp_data_response_to_host(spiDBQueryHeader* q,
     r->id  = q->id;
     r->cmd = q->cmd;
     r->success = true;
-    r->x = x_origin == UNDEF ? chipx : x_origin;
-    r->y = y_origin == UNDEF ? chipy : y_origin;
-    r->p = p_origin == UNDEF ? core  : p_origin;
+    r->x = x_origin;
+    r->y = y_origin;
+    r->p = p_origin;
 
     sark_mem_cpy(&r->data, data, data_size_bytes);
 
@@ -158,45 +155,41 @@ sdp_msg_t* send_xyp_data_response_to_host(spiDBQueryHeader* q,
 }
 
 
-sdp_msg_t* send_data_response_to_host(spiDBQueryHeader* q,
-                                      void* data,
-                                      size_t data_size_bytes){
-    return send_xyp_data_response_to_host(q, data, data_size_bytes,
-                                          UNDEF, UNDEF, UNDEF);
-}
-
-sdp_msg_t* send_empty_response_to_host(spiDBQueryHeader* q){
-    return send_data_response_to_host(q, NULL, 0);
+sdp_msg_t* send_data_response_to_host(
+    spiDBQueryHeader* q, void* data, size_t data_size_bytes,
+    uchar chip_x, uchar chip_y, uchar core){
+    return send_xyp_data_response_to_host(
+        q, data, data_size_bytes, chip_x, chip_y, core);
 }
 
 void print_msg_header(sdp_msg_t* msg){
-  log_info("=============================================");
-  log_info("================= SDP INFO ==================");
-  log_info("  length:    %04x", msg->length);
-  log_info("=============================================");
-  log_info("================ SDP HEADER =================");
-  log_info("  flags:     %02x", msg->flags);
-  log_info("  tag:       %02x", msg->tag);
-  log_info("  dest_addr: %04x - chip (%d,%d)",
+    log_info("=============================================");
+    log_info("================= SDP INFO ==================");
+    log_info("  length:    %04x", msg->length);
+    log_info("=============================================");
+    log_info("================ SDP HEADER =================");
+    log_info("  flags:     %02x", msg->flags);
+    log_info("  tag:       %02x", msg->tag);
+    log_info("  dest_addr: %04x - chip (%d,%d)",
            msg->dest_addr, get_dest_chip_x(msg), get_dest_chip_y(msg));
-  log_info("  dest_port: %02x   - core (%d)",
+    log_info("  dest_port: %02x   - core (%d)",
            msg->dest_port, get_dest_core(msg));
-  log_info("  srce_addr: %04x - chip (%d,%d)",
+    log_info("  srce_addr: %04x - chip (%d,%d)",
            msg->srce_addr, get_srce_chip_x(msg), get_srce_chip_y(msg));
-  log_info("  srce_port: %02x   - core (%d)",
+    log_info("  srce_port: %02x   - core (%d)",
            msg->srce_port, get_srce_core(msg));
 }
 
 void print_msg(sdp_msg_t* msg){
-  print_msg_header(msg);
-  log_info("=============================================");
-  log_info("============== SDP DATASPACE ================");
-  log_info("  cmd_rc:    %04x", msg->cmd_rc);
-  log_info("  seq:       %04x", msg->seq);
-  log_info("  arg1:      %08x", msg->arg1);
-  log_info("  arg2:      %08x", msg->arg2);
-  log_info("  arg3:      %08x", msg->arg3);
-  log_info("  data:      %08x (str:%s) (int:%d)",
+    print_msg_header(msg);
+    log_info("=============================================");
+    log_info("============== SDP DATASPACE ================");
+    log_info("  cmd_rc:    %04x", msg->cmd_rc);
+    log_info("  seq:       %04x", msg->seq);
+    log_info("  arg1:      %08x", msg->arg1);
+    log_info("  arg2:      %08x", msg->arg2);
+    log_info("  arg3:      %08x", msg->arg3);
+    log_info("  data:      %08x (str:%s) (int:%d)",
            msg->data, msg->data, *((uint32_t*)msg->data));
-  log_info("=============================================");
+    log_info("=============================================");
 }

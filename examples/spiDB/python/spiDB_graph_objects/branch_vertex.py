@@ -1,4 +1,5 @@
 
+# pacman imports
 from pacman.model.partitioned_graph.partitioned_vertex import PartitionedVertex
 from pacman.model.resources.cpu_cycles_per_tick_resource import \
     CPUCyclesPerTickResource
@@ -7,61 +8,48 @@ from pacman.model.constraints.placer_constraints\
 from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.sdram_resource import SDRAMResource
-from pacman.model.constraints.tag_allocator_constraints \
-    .tag_allocator_require_reverse_iptag_constraint \
-    import TagAllocatorRequireReverseIptagConstraint
 
+# GFE imports
+from spinnaker_graph_front_end.utilities.conf import config
+
+# fec imports
+from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.abstract_models.\
     abstract_partitioned_data_specable_vertex \
     import AbstractPartitionedDataSpecableVertex
-from spinn_front_end_common.utilities import constants
-from spinn_front_end_common.abstract_models.\
-    abstract_provides_outgoing_partition_constraints \
-    import AbstractProvidesOutgoingPartitionConstraints
 from spinn_front_end_common.utilities import exceptions
 
-from spinnaker_graph_front_end.utilities.conf import config
-
+# dsg imports
 from data_specification.data_specification_generator import \
     DataSpecificationGenerator
 
+# general imports
 from enum import Enum
-
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
+class BranchVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
     """
-    vertex that does the communication work for all stuff on a chip.
+    for handling a MST for communications.
     """
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
-               ('TRANSMISSIONS', 1),
-               ('SDP_PORT', 2),
-               ('STRING_DATA', 3)])
+               ('SDP_PORT', 1)])
 
-    STRING_DATA_SIZE = 7000000
-    SDP_REGION_SIZE = 4
-    TRANSMISSION_SIZE = 8
+    SDP_PORT_MEMORY = 4
 
-    def __init__(
-            self, label, port, placement, machine_time_step=None,
-            time_scale_factor=None, constraints=None, board_address=None,
-            sdp_port=4, tag=None):
+    def __init__(self, label, placement, sdp_port=4, machine_time_step=None,
+                 time_scale_factor=None, constraints=None):
 
-        system_region_size = \
-            (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 3) * 4
-        sdram_requirements = \
-            system_region_size + self.TRANSMISSION_SIZE + \
-            self.SDP_REGION_SIZE + self.STRING_DATA_SIZE
-
+        sdram = ((constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 3) * 4) \
+                + self.SDP_PORT_MEMORY
         resources = ResourceContainer(cpu=CPUCyclesPerTickResource(45),
                                       dtcm=DTCMResource(100),
-                                      sdram=SDRAMResource(sdram_requirements))
+                                      sdram=SDRAMResource(sdram))
 
         # sort out machine time step
         if machine_time_step is None:
@@ -93,30 +81,24 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         AbstractPartitionedDataSpecableVertex.__init__(
             self, machine_time_step=self._machine_time_step,
             timescale_factor=self._time_scale_factor)
-        AbstractProvidesOutgoingPartitionConstraints.__init__(self)
-
-        if port is not None:
-            self.add_constraint(
-                TagAllocatorRequireReverseIptagConstraint(
-                    port, sdp_port, board_address, tag))
 
         x, y, p = placement
-        self.add_constraint(PlacerChipAndCoreConstraint(x, y, p))
         self._sdp_port = sdp_port
+        self.add_constraint(PlacerChipAndCoreConstraint(x, y, p))
 
     def get_binary_file_name(self):
         """
         binary name
         :return:
         """
-        return "root.aplx"
+        return "branch.aplx"
 
     def model_name(self):
         """
         human readable name
         :return:
         """
-        return "RootVertex"
+        return "BranchVertex"
 
     def generate_data_spec(
             self, placement, sub_graph, routing_info, hostname, report_folder,
@@ -125,6 +107,7 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         """
         method to determine how to generate their data spec for a non neural
         application
+
         :param placement: the placement object for the dsg
         :param sub_graph: the partitioned graph object for this dsg
         :param routing_info: the routing info object for this dsg
@@ -146,20 +129,16 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         spec = DataSpecificationGenerator(data_writer, report_writer)
 
         # Setup words + 1 for flags + 1 for recording size
-        setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 3) * 4  # 4 for words
+        setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 3) * 4
 
         # Reserve SDRAM space for memory areas:
-        self._reserve_memory_regions(spec, setup_size)
 
-        # write basic setup data
+        # Create the data regions for hello world
+        self._reserve_memory_regions(spec, setup_size)
         self._write_basic_setup_info(spec, self.DATA_REGIONS.SYSTEM.value)
 
         # write sdp port
         self._write_sdp_port(spec)
-
-        # write multicast key
-        self._write_multi_cast_key(spec, routing_info, sub_graph,
-                           self.DATA_REGIONS.TRANSMISSIONS.value)
 
         # End-of-Spec:
         spec.end_specification()
@@ -167,8 +146,8 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         # close writer
         data_writer.close()
 
-        # return file path for writer
-        return [data_writer.filename]
+        # return file path for data
+        return data_writer.filename
 
     def _reserve_memory_regions(self, spec, system_size):
         """
@@ -184,12 +163,7 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         spec.reserve_memory_region(region=self.DATA_REGIONS.SYSTEM.value,
                                    size=system_size, label='systemInfo')
         spec.reserve_memory_region(region=self.DATA_REGIONS.SDP_PORT.value,
-                                   size=self.SDP_REGION_SIZE, label="SDP_PORT")
-        spec.reserve_memory_region(region=self.DATA_REGIONS.TRANSMISSIONS.value,
-                                   size=self.TRANSMISSION_SIZE, label="MC_KEY")
-        spec.reserve_memory_region(region=self.DATA_REGIONS.STRING_DATA.value,
-                                   size=self.STRING_DATA_SIZE,
-                                   label="inputs", empty=True)
+                                   size=self.SDP_PORT_MEMORY, label="SDP_PORT")
 
     def _write_sdp_port(self, spec):
         """
@@ -199,30 +173,6 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         """
         spec.switch_write_focus(self.DATA_REGIONS.SDP_PORT.value)
         spec.write_value(self._sdp_port)
-
-    def _write_multi_cast_key(self, spec, routing_info, subgraph, region_id):
-        """
-        writes the multicast key used during transmissions
-        :param spec: dsg writer
-        :param routing_info: key info object
-        :param subgraph: partitioned graph
-        :param region_id: the region to put this data
-        :return: None
-        """
-
-        # Every subedge should have the same key
-        keys_and_masks = routing_info.get_keys_and_masks_from_subedge(
-            subgraph.outgoing_subedges_from_subvertex(self)[0])
-        key = keys_and_masks[0].key
-        spec.switch_write_focus(region=region_id)
-
-        # Write Key info for this core:
-        if key is None:
-            spec.write_value(data=0)
-            spec.write_value(data=0)
-        else:
-            spec.write_value(data=1)
-            spec.write_value(data=key)
 
     def is_partitioned_data_specable(self):
         """

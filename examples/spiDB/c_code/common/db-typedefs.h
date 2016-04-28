@@ -19,7 +19,6 @@
 
     #define CHIP_X_SIZE                 2
     #define CHIP_Y_SIZE                 2
-    #define CORE_SIZE                   17
 
     #define ROOT_CORE                   1
     #define FIRST_LEAF                  5
@@ -30,7 +29,6 @@
     #define MAX_NUMBER_OF_COLS          6
     #define MAX_COL_NAME_SIZE           16
 
-    #define CORE_DATABASE_SIZE_WORDS    (120000000 >> 2) / CORE_SIZE
     #define ROOT_SDRAM_SIZE_BYTES       2097152
 
     #define DEFAULT_TABLE_SIZE_WORDS    1024 //todo careful with overflow
@@ -41,8 +39,6 @@
     typedef enum var_type  { UINT32=0, STRING } var_type;
     typedef uint32_t id_t;
     typedef uint32_t info_t;
-
-    uchar chipx, chipy, core;
 
     typedef enum spiDBcommand {
         PUT = 0,

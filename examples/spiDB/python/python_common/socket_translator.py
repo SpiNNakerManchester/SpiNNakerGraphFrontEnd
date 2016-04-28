@@ -1,15 +1,16 @@
-__author__ = 'gmtuca'
-
-import struct
-from result import SelectEntry
-from result import Entry
-from enum import Enum
-from statement_parser import StatementParser
-from statement_parser import Select
-from statement_parser import InsertInto
-from statement_parser import CreateTable
-from result import Response
 import re
+import struct
+
+from enum import Enum
+
+from examples.spiDB.python.python_common.statement_parser import CreateTable
+from examples.spiDB.python.python_common.statement_parser import InsertInto
+from examples.spiDB.python.python_common.statement_parser import Select
+from examples.spiDB.python.python_common.statement_parser import StatementParser
+from examples.spiDB.python.tests.result import Entry
+from examples.spiDB.python.tests.result import Response
+from examples.spiDB.python.tests.result import SelectEntry
+
 
 class ConditionOp(Enum):
     EQ = 0

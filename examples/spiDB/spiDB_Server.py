@@ -6,11 +6,13 @@ import spinnaker_graph_front_end as front_end
 from examples import model_binaries
 
 # import db objects
-from spiDB_graph.leaf_vertex import LeafVertex
-from spiDB_graph.branch_vertex import BranchVertex
-from spiDB_graph.root_vertex import RootVertex
-from spiDB_graph.tree_edge import TreeEdge
+from examples.spiDB.python.spiDB_graph_objects.leaf_vertex import LeafVertex
+from examples.spiDB.python.spiDB_graph_objects.branch_vertex import BranchVertex
+from examples.spiDB.python.spiDB_graph_objects.root_vertex import RootVertex
+from examples.spiDB.python.spiDB_graph_objects.tree_edge import TreeEdge
 
+# import server gui
+from examples.spiDB.python.python_common import spiDB_Server_GUI
 # import logging
 import logging
 
@@ -30,10 +32,8 @@ root_core = 1
 # number of branches
 first_branch = 2
 n_branches = 3
-
-
 first_leaf = 5
-n_leaves = 13
+n_leaves = 10
 
 machine_port = 11111
 machine_receive_port = 22222
@@ -86,5 +86,11 @@ for x in range(chip_x_dimension):
                 label="edge_{}_to_{}"
                       .format(roots[x][y].label, root_leaves[x][y][p].label),
                 partition_id="TREE_EDGE_{}".format(roots[x][y].label))
+
+gui = spiDB_Server_GUI.GUIBuilder(front_end)
+
+front_end.add_socket_address(
+    database_ack_port_num=12098, database_notify_host="localhost",
+    database_notify_port_num=12387)
 
 front_end.run()

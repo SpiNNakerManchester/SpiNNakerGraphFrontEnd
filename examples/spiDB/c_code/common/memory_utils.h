@@ -26,13 +26,14 @@ bool write(address_t address, void* data, size_t size_bytes){
     return true;
 }
 
-void clear(address_t address, size_t words){
-    for(size_t i = 0; i < words; i++){
+void memory_utils_clear(address_t address, size_t ints){
+    log_info("clearing out %d elements", ints);
+    for(size_t i = 0; i < ints; i++){
         address[i] = 0;
     }
 }
 
-bool arr_equals(uchar* a, uchar* b, uint32_t n){
+bool memory_utils_arr_equals(uchar* a, uchar* b, uint32_t n){
     try(n > 0);
 
     for(uint32_t i = 0; i < n; i++){
