@@ -3,7 +3,7 @@
 #include "timer2.h"
 #include "db-typedefs.h"
 
-#define SDP_PORT        3
+#define SDP_PORT        4
 #define SDP_TIMEOUT     10 //milliseconds
 #define MAX_RETRIES     3
 

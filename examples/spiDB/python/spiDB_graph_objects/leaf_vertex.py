@@ -37,17 +37,21 @@ class LeafVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
                ("SDP_PORT", 1),
-               ('DATABASE', 2)])
+               ("BRANCH_REGION", 2),
+               ('DATABASE', 3)])
 
     DATABASE_SIZE = 7000000
     SDP_PORT_MEMORY = 4
+    BRANCH_REGION_SIZE = 4
+    SDP_MESSAGE_PORT_NUM = 4
 
-    def __init__(self, label, placement,
+    def __init__(self, label, placement, branch_processor,
                  machine_time_step=None, time_scale_factor=None,
                  constraints=None):
 
         sdram = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS * 4) + \
-                self.DATABASE_SIZE + self.SDP_PORT_MEMORY
+                self.DATABASE_SIZE + self.SDP_PORT_MEMORY +\
+                self.BRANCH_REGION_SIZE
 
         resources = ResourceContainer(cpu=CPUCyclesPerTickResource(45),
                                       dtcm=DTCMResource(100),
@@ -85,6 +89,7 @@ class LeafVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
             timescale_factor=self._time_scale_factor)
 
         x, y, p = placement
+        self._branch_processor = branch_processor
         self.add_constraint(PlacerChipAndCoreConstraint(x, y, p))
 
     def get_binary_file_name(self):
@@ -140,7 +145,11 @@ class LeafVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         # write basic setup data
         self._write_basic_setup_info(spec, self.DATA_REGIONS.SYSTEM.value)
 
+        # write branch region data
+        self._write_branch_region_data(spec)
 
+        # write sdp port num data
+        self._write_sdp_port(spec)
 
         # write database_size
         self._write_database_size(spec)
@@ -153,6 +162,16 @@ class LeafVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
 
         # return file path for writer
         return data_writer.filename
+
+    def _write_branch_region_data(self, spec):
+        """
+        adds the brnach processor needed for sdp stuff
+        :param spec:  the dsg writer
+        :return:
+        """
+        spec.switch_write_focus(region=self.DATA_REGIONS.BRANCH_REGION.value)
+        spec.write_value(data=self._branch_processor)
+
 
     def _write_database_size(self, spec):
         """
@@ -178,8 +197,10 @@ class LeafVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
                                    size=system_size, label='systemInfo')
         spec.reserve_memory_region(region=self.DATA_REGIONS.SDP_PORT.value,
                                    size=self.SDP_PORT_MEMORY, label="SDP_PORT")
+        spec.reserve_memory_region(region=self.DATA_REGIONS.BRANCH_REGION.value,
+                                   size=self.BRANCH_REGION_SIZE, label="branch")
         spec.reserve_memory_region(region=self.DATA_REGIONS.DATABASE.value,
-                                   size=self.DATABASE_SIZE, label="inputs")
+                                   size=self.DATABASE_SIZE, label="db")
 
     def _write_sdp_port(self, spec):
         """
@@ -188,7 +209,7 @@ class LeafVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
         :return: None
         """
         spec.switch_write_focus(self.DATA_REGIONS.SDP_PORT.value)
-        spec.write_value(self._sdp_port)
+        spec.write_value(self.SDP_MESSAGE_PORT_NUM)
 
     def is_partitioned_data_specable(self):
         """

@@ -41,9 +41,11 @@ class BranchVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
                ('SDP_PORT', 1)])
 
     SDP_PORT_MEMORY = 4
+    SDP_MESSAGE_PORT_NUM = 4
 
-    def __init__(self, label, placement, sdp_port=4, machine_time_step=None,
-                 time_scale_factor=None, constraints=None):
+    def __init__(
+            self, label, placement, sdp_port=SDP_MESSAGE_PORT_NUM,
+            machine_time_step=None, time_scale_factor=None, constraints=None):
 
         sdram = ((constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 3) * 4) \
                 + self.SDP_PORT_MEMORY

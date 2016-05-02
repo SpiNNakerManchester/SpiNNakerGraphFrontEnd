@@ -53,11 +53,13 @@ class RootVertex(PartitionedVertex, AbstractPartitionedDataSpecableVertex):
     STRING_DATA_SIZE = 7000000
     SDP_REGION_SIZE = 4
     TRANSMISSION_SIZE = 8
+    SDP_MESSAGE_PORT_NUM = 4
 
     def __init__(
             self, label, port, placement, machine_time_step=None,
             time_scale_factor=None, constraints=None, board_address=None,
-            sdp_port=4, tag=None, mode=MODES.KEY_VALUE.value):
+            sdp_port=SDP_MESSAGE_PORT_NUM, tag=None,
+            mode=MODES.KEY_VALUE.value):
 
         system_region_size = \
             (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 3) * 4

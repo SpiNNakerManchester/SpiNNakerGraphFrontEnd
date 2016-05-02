@@ -41,7 +41,7 @@ class MainMenu(Frame):
         file_spes = [('All files', '*'),
                     ('KV file', '*.kv'),
                     ('SQL file', '*.sql')]
-        dlg = tkFileDialog.Open(self, filetypes = file_spes)
+        dlg = tkFileDialog.Open(self, filetypes=file_spes)
         fl = dlg.show()
 
         rf = self.read_file(fl)
