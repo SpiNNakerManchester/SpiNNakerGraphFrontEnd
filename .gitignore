@@ -11,3 +11,4 @@ dist/
 *.aplx
 /spynnaker_graph_front_end.egg-info/
 /SpiNNakerGraphFrontEnd.egg-info/
+/spinnaker_graph_front_end.egg-info/
