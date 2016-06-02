@@ -376,7 +376,7 @@ void receive_data_void(uint key, uint unknown) {
     log_error("this should never ever be done\n");
 }
 
-static bool initialize(uint32_t *timer_period) {
+static bool initialize(uint32_t *timer_period, uint32_t *simulation_sdp_port) {
     log_info("Initialise: started\n");
 
     // Get the address this core's DTCM data starts at from SRAM
@@ -392,7 +392,8 @@ static bool initialize(uint32_t *timer_period) {
     address_t system_region = data_specification_get_region(
         SYSTEM_REGION, address);
     if (!simulation_read_timing_details(
-            system_region, APPLICATION_MAGIC_NUMBER, timer_period)) {
+            system_region, APPLICATION_MAGIC_NUMBER, timer_period,
+            simulation_sdp_port)) {
         log_error("failed to read the system header");
         return false;
     }
@@ -504,9 +505,10 @@ void c_main() {
 
     // Load DTCM data
     uint32_t timer_period;
+    uint32_t simulation_sdp_port;
 
     // initialise the model
-    if (!initialize(&timer_period)) {
+    if (!initialize(&timer_period, &simulation_sdp_port)) {
         log_error("Error in initialisation - exiting!");
         rt_error(RTE_SWERR);
     }
@@ -522,7 +524,7 @@ void c_main() {
 
     // Set up callback listening to SDP messages
     simulation_register_simulation_sdp_callback(
-        &simulation_ticks, &infinite_run, SDP);
+        &simulation_ticks, &infinite_run, SDP, simulation_sdp_port);
 
 #ifdef DEBUG
 

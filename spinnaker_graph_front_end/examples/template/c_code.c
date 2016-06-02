@@ -155,7 +155,7 @@ void update(uint ticks, uint unused) {
 //! \brief sets up state variables for the system
 //! \param[in] timer_period: pointer to the time between timer tick callbacks
 //! \return: bool which states if it succeed or not
-static bool initialize(uint32_t *timer_period) {
+static bool initialize(uint32_t *timer_period, uint32_t *simulation_sdp_port)) {
     log_info("Initialise: started\n");
 
     // Get the address this core's DTCM data starts at from SRAM
@@ -171,7 +171,8 @@ static bool initialize(uint32_t *timer_period) {
     address_t system_region = data_specification_get_region(
         SYSTEM_REGION, address);
     if (!simulation_read_timing_details(
-            system_region, APPLICATION_NAME_HASH, timer_period)) {
+            system_region, APPLICATION_NAME_HASH, timer_period,
+            simulation_sdp_port)) {
         log_error("failed to read the system header");
         return false;
     }
@@ -194,9 +195,10 @@ void c_main() {
 
     // Load DTCM data
     uint32_t timer_period;
+    uint32_t simulation_sdp_port;
 
     // initialise the model
-    if (!initialize(&timer_period)) {
+    if (!initialize(&timer_period, &simulation_sdp_port)) {
         rt_error(RTE_SWERR);
     }
 
@@ -217,7 +219,7 @@ void c_main() {
 
     // Set up callback listening to SDP messages
     simulation_register_simulation_sdp_callback(
-        &simulation_ticks, &infinite_run, SDP);
+        &simulation_ticks, &infinite_run, SDP, simulation_sdp_port);
 
     // start execution
     log_info("Starting\n");
