@@ -1,5 +1,5 @@
 
-from pacman.model.partitioned_graph.partitioned_vertex import PartitionedVertex
+from pacman.model.graph.simple_partitioned_vertex import SimplePartitionedVertex
 from pacman.model.resources.cpu_cycles_per_tick_resource import \
     CPUCyclesPerTickResource
 from pacman.model.resources.dtcm_resource import DTCMResource
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 class HelloWorldVertex(
-        PartitionedVertex, AbstractPartitionedDataSpecableVertex,
+        SimplePartitionedVertex, AbstractPartitionedDataSpecableVertex,
         ReceiveBuffersToHostBasicImpl):
 
     DATA_REGIONS = Enum(
@@ -46,7 +46,7 @@ class HelloWorldVertex(
                                       dtcm=DTCMResource(100),
                                       sdram=SDRAMResource(100))
 
-        PartitionedVertex.__init__(
+        SimplePartitionedVertex.__init__(
             self, label=label, resources_required=resources,
             constraints=constraints)
         AbstractPartitionedDataSpecableVertex.__init__(

@@ -11,7 +11,7 @@ from data_specification.data_specification_generator import \
     DataSpecificationGenerator
 
 # pacman imports
-from pacman.model.partitioned_graph.partitioned_vertex import PartitionedVertex
+from pacman.model.graph.simple_partitioned_vertex import SimplePartitionedVertex
 from pacman.model.resources.cpu_cycles_per_tick_resource import \
     CPUCyclesPerTickResource
 from pacman.model.resources.dtcm_resource import DTCMResource
@@ -42,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 
 class HeatDemoVertexPartitioned(
-        PartitionedVertex, AbstractPartitionedDataSpecableVertex,
+        SimplePartitionedVertex, AbstractPartitionedDataSpecableVertex,
         ReceiveBuffersToHostBasicImpl):
     """ A vertex partition for a heat demo; represents a heat element.
     """
@@ -78,7 +78,7 @@ class HeatDemoVertexPartitioned(
                                       sdram=sdram)
 
         ReceiveBuffersToHostBasicImpl.__init__(self)
-        PartitionedVertex.__init__(
+        SimplePartitionedVertex.__init__(
             self, label=label, resources_required=resources,
             constraints=constraints)
         AbstractPartitionedDataSpecableVertex.__init__(

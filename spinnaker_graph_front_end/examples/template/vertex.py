@@ -1,5 +1,5 @@
 
-from pacman.model.partitioned_graph.partitioned_vertex import PartitionedVertex
+from pacman.model.graph.simple_partitioned_vertex import SimplePartitionedVertex
 from pacman.model.resources.cpu_cycles_per_tick_resource import \
     CPUCyclesPerTickResource
 from pacman.model.resources.dtcm_resource import DTCMResource
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 class Vertex(
-        PartitionedVertex, AbstractPartitionedDataSpecableVertex,
+        SimplePartitionedVertex, AbstractPartitionedDataSpecableVertex,
         ReceiveBuffersToHostBasicImpl):
 
     # The number of bytes for the has_key flag and the key
@@ -57,7 +57,7 @@ class Vertex(
                 self.get_buffer_state_region_size(1) +
                 self.get_recording_data_size(1) + self._recording_size))
 
-        PartitionedVertex.__init__(
+        SimplePartitionedVertex.__init__(
             self, label=label, resources_required=resources,
             constraints=constraints)
         AbstractPartitionedDataSpecableVertex.__init__(
