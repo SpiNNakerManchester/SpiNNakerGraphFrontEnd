@@ -13,4 +13,4 @@ SOURCE_DIR := $(abspath $(CURRENT_DIR))
 SOURCE_DIRS += $(SOURCE_DIR)
 APP_OUTPUT_DIR := $(abspath $(CURRENT_DIR))/
 
-include $(SPINN_DIRS)/make_lib/Makefile.SpiNNFrontEndCommon
+include $(SPINN_DIRS)/make/Makefile.SpiNNFrontEndCommon

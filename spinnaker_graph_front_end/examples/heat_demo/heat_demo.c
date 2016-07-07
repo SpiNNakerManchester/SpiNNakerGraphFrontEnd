@@ -388,12 +388,11 @@ static bool initialize(uint32_t *timer_period) {
         return false;
     }
 
-    // Get the timing details
-    address_t system_region = data_specification_get_region(
-        SYSTEM_REGION, address);
-    if (!simulation_read_timing_details(
-            system_region, APPLICATION_MAGIC_NUMBER, timer_period)) {
-        log_error("failed to read the system header");
+    // Get the timing details and set up the simulation interface
+    if (!simulation_initialise(
+            data_specification_get_region(SYSTEM_REGION, address),
+            APPLICATION_NAME_HASH, timer_period, &simulation_ticks,
+            &infinite_run, SDP, NULL, NULL)) {
         return false;
     }
 
@@ -519,10 +518,6 @@ void c_main() {
     spin1_callback_on(MCPL_PACKET_RECEIVED, receive_data, MC_PACKET);
     spin1_callback_on(MC_PACKET_RECEIVED, receive_data_void, MC_PACKET);
     spin1_callback_on(TIMER_TICK, update, TIMER);
-
-    // Set up callback listening to SDP messages
-    simulation_register_simulation_sdp_callback(
-        &simulation_ticks, &infinite_run, SDP);
 
 #ifdef DEBUG
 
