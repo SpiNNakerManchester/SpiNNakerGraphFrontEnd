@@ -5,7 +5,6 @@ from spinn_front_end_common.utilities.utility_objs.executable_finder \
     import ExecutableFinder
 
 # graph front end imports
-from spinnaker_graph_front_end.utilities import conf
 from spinnaker_graph_front_end._version import \
     __version__, __version_name__, __version_month__, __version_year__
 from spinnaker_graph_front_end.spinnaker import SpiNNaker
@@ -30,17 +29,47 @@ _none_labelled_edge_count = None
 
 def setup(hostname=None, graph_label=None, model_binary_module=None,
           model_binary_folder=None, database_socket_addresses=None,
-          user_dsg_algorithm=None, n_chips_required=None):
+          user_dsg_algorithm=None, n_chips_required=None,
+          extra_pre_run_algorithms=None, extra_post_run_algorithms=None):
     """
 
-    :param hostname:
-    :param graph_label:
-    :param model_binary_module:
-    :param model_binary_folder:
-    :param database_socket_addresses:
-    :param user_dsg_algorithm:
-
-    :return:
+    :param hostname: the hostname of the SpiNNaker machine to operate on
+    (over rides the machine_name from the cfg file).
+    :param graph_label: a human readable label for the graph (used mainly in
+    reports)
+    :param model_binary_module: the module where the binary files can be found
+    for the c code that is being used in this application mutally exclusive with
+    the model_binary_folder.
+    :param model_binary_folder: the folder where the binary files can be found
+    for the c code that is being used in this application mutally exclusive with
+    the model_binary_module.
+    :param database_socket_addresses: set of SocketAddresses that need to be
+    added for the database functionality. This are over and above the ones used
+    by the liveEventConnection
+    :param user_dsg_algorithm: a algorithm used for generating the application
+    data which is loaded onto the machine. if not set, will use the
+    data specification language algorithm required for the type of graph being
+    used.
+    :param n_chips_required: if you need to be allocated a machine (for spalloc)
+    before building your graph, then fill this in with a general idea of the
+    number of chips you need so that the spalloc system can allocate you a
+    machine big enough for your needs.
+    :param extra_pre_run_algorithms: algorithms which need to be ran after
+    mapping and loading has occured but before the system has ran. These are
+    plugged directly into the work flow management.
+    :param extra_post_run_algorithms: algorithms which need to be ran after the
+    simulation has ran. These could be post processing of generated data on the
+    machine for example.
+    :type hostname: str
+    :type graph_label: str
+    :type model_binary_folder: str
+    :type model_binary_module: python module
+    :type database_socket_addresses: list of SocketAddresses
+    :type user_dsg_algorithm: str
+    :type n_chips_required: int
+    :type extra_post_run_algorithms: list of str
+    :type extra_pre_run_algorithms: list of str
+    :return: None
     """
     from spinnaker_graph_front_end import spinnaker
     import os
@@ -72,7 +101,10 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         executable_finder=executable_finder,
         database_socket_addresses=database_socket_addresses,
         dsg_algorithm=user_dsg_algorithm,
-        n_chips_required=n_chips_required)
+        n_chips_required=n_chips_required,
+        extra_pre_run_algorithms=extra_pre_run_algorithms,
+        extra_post_run_algorithms=extra_post_run_algorithms
+    )
 
 
 def run(duration=None):
@@ -105,17 +137,22 @@ def read_xml_file(file_path):
     :return: None
     """
     global _spinnaker
+    logger.warn("This functionality is not yet supported")
     _spinnaker.read_xml_file(file_path)
 
 
 def add_vertex(cellclass, cellparams, label=None, constraints=None):
     """
 
-    :param cellclass:
-    :param cellparams:
-    :param constraints:
-    :param label:
-    :return:
+    :param cellclass: the class object for creating the vertex
+    :param cellparams: the input params for the class object
+    :param constraints: any constraints to be applied to the vertex once built
+    :param label: the label for this vertex
+    :type cellclass: python object
+    :type cellparams: dictoanry of name and value
+    :type constraints: list of AbstractConstraint
+    :type label: str
+    :return: the vertex instance object
     """
     global _spinnaker
 
@@ -140,9 +177,9 @@ def add_vertex(cellclass, cellparams, label=None, constraints=None):
 
 def add_vertex_instance(vertex_to_add):
     """
-
-    :param vertex_to_add:
-    :return:
+    :param vertex_to_add: vertex instance to add to the graph
+    :type vertex_to_add: instance of AbstractPartitionabelVertex
+    :return: None
     """
     global _spinnaker
     _spinnaker.add_partitionable_vertex(vertex_to_add)
@@ -152,11 +189,15 @@ def add_partitioned_vertex(
         cellclass, cellparams, label=None, constraints=None):
     """
 
-    :param cellclass:
-    :param cellparams:
-    :param label:
-    :param constraints:
-    :return:
+    :param cellclass: the class object for creating the vertex
+    :param cellparams: the input params for the class object
+    :param constraints: any constraints to be applied to the vertex once built
+    :param label: the label for this vertex
+    :type cellclass: python object
+    :type cellparams: dictoanry of name and value
+    :type constraints: list of AbstractConstraint
+    :type label: str
+    :return: the vertex instance object
     """
     global _spinnaker
 
@@ -182,8 +223,8 @@ def add_partitioned_vertex(
 def add_partitioned_vertex_instance(vertex_to_add):
     """
 
-    :param vertex_to_add:
-    :return:
+    :param vertex_to_add: the vertex to add to the partitioned graph
+    :return: None
     """
     global _spinnaker
     _spinnaker.add_partitioned_vertex(vertex_to_add)

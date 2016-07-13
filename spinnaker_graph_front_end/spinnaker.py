@@ -19,7 +19,8 @@ class SpiNNaker(SpinnakerMainInterface):
     def __init__(
             self, executable_finder, host_name=None, graph_label=None,
             database_socket_addresses=None, dsg_algorithm=None,
-            n_chips_required=None):
+            n_chips_required=None, extra_pre_run_algorithms=None,
+            extra_post_run_algorithms=None):
 
         # dsg algorithm store for user defined algorithms
         self._user_dsg_algorithm = dsg_algorithm
@@ -38,7 +39,9 @@ class SpiNNaker(SpinnakerMainInterface):
             database_socket_addresses=database_socket_addresses,
             extra_algorithm_xml_paths=extra_xml_path,
             extra_mapping_inputs=extra_mapping_inputs,
-            n_chips_required=n_chips_required)
+            n_chips_required=n_chips_required,
+            extra_pre_run_algorithms=extra_pre_run_algorithms,
+            extra_post_run_algorithms=extra_post_run_algorithms)
 
         # set up machine targeted data
         self._machine_time_step = config.getint("Machine", "machineTimeStep")
