@@ -8,5 +8,5 @@ class XMLInterface(object):
     def read_in_file(self):
         pass
 
-    def write_out_file(self, partitionable_graph):
+    def write_out_file(self, application_graph):
         pass

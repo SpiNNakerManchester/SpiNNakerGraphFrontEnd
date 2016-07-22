@@ -54,23 +54,23 @@ class SpiNNaker(SpinnakerMainInterface):
         logger.info("Setting machine time step to {} micro-seconds."
                     .format(self._machine_time_step))
 
-    def read_partitionable_graph_xml_file(self, file_path):
+    def read_application_graph_xml_file(self, file_path):
         """
 
         :param file_path:
         :return:
         """
         xml_interface = XMLInterface(file_path)
-        self._partitionable_graph = xml_interface.read_in_file()
+        self._application_graph = xml_interface.read_in_file()
 
-    def read_partitioned_graph_xml_file(self, file_path):
+    def read_machine_graph_xml_file(self, file_path):
         """
 
         :param file_path:
         :return:
         """
         xml_interface = XMLInterface(file_path)
-        self._partitioned_graph = xml_interface.read_in_file()
+        self._machine_graph = xml_interface.read_in_file()
 
     def get_machine_dimensions(self):
         """ Get the machine dimensions
@@ -102,12 +102,12 @@ class SpiNNaker(SpinnakerMainInterface):
 
         # set up the correct dsg algorithm
         if self._user_dsg_algorithm is None:
-            if len(self._partitioned_graph.subvertices) != 0:
+            if len(self._machine_graph.vertices) != 0:
                 self.dsg_algorithm = \
-                    "FrontEndCommonPartitionedGraphDataSpecificationWriter"
-            elif len(self._partitionable_graph.vertices) != 0:
+                    "FrontEndCommonMachineGraphDataSpecificationWriter"
+            elif len(self._application_graph.vertices) != 0:
                 self.dsg_algorithm = \
-                    "FrontEndCommonPartitionableGraphDataSpecificationWriter"
+                    "FrontEndCommonApplicationGraphDataSpecificationWriter"
         else:
             self.dsg_algorithm = self._user_dsg_algorithm
 

@@ -1,11 +1,11 @@
 from enum import Enum
 
 # front end common imports
-from pacman.model.partitioned_graph.multi_cast_partitioned_edge \
-    import MultiCastPartitionedEdge
+from pacman.model.graph.machine.simple_machine_edge \
+    import SimpleMachineEdge
 
 
-class HeatDemoEdge(MultiCastPartitionedEdge):
+class HeatDemoEdge(SimpleMachineEdge):
     """ Used in conjunction with a heat demo vertex to execute the heat demo
     """
 
@@ -15,10 +15,10 @@ class HeatDemoEdge(MultiCastPartitionedEdge):
                              ("WEST", 2),
                              ("SOUTH", 3)])
 
-    def __init__(self, pre_subvertex, post_subvertex, direction, n_keys=1,
+    def __init__(self, pre_vertex, post_vertex, direction, n_keys=1,
                  label=None):
-        MultiCastPartitionedEdge.__init__(
-            self, pre_subvertex, post_subvertex, label=label)
+        SimpleMachineEdge.__init__(
+            self, pre_vertex, post_vertex, label=label)
         self._direction = direction
 
     @property
@@ -28,9 +28,6 @@ class HeatDemoEdge(MultiCastPartitionedEdge):
         :return:
         """
         return self._direction
-
-    def is_partitioned_edge(self):
-        return True
 
     def __str__(self):
         return self.__repr__()

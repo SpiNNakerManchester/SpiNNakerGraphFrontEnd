@@ -7,8 +7,8 @@ from pacman.model.constraints.placer_constraints\
 
 # spinn front end common imports
 from spinn_front_end_common.utility_models.\
-    live_packet_gather_partitioned_vertex import \
-    LivePacketGatherPartitionedVertex
+    live_packet_gather_machine_vertex import \
+    LivePacketGatherMachineVertex
 from threading import Condition
 from spinn_front_end_common.utilities.notification_protocol.socket_address \
     import SocketAddress
@@ -20,11 +20,11 @@ from spinnman.messages.eieio.eieio_type import EIEIOType
 
 # graph front end imports
 import spinnaker_graph_front_end as front_end
-from spinnaker_graph_front_end import MultiCastPartitionedEdge
+from spinnaker_graph_front_end import SimpleMachineEdge
 
 # example imports
 from spinnaker_graph_front_end.examples.heat_demo.heat_demo_vertex\
-    import HeatDemoVertexPartitioned
+    import HeatDemoVertex
 from spinnaker_graph_front_end.examples.heat_demo.heat_demo_edge\
     import HeatDemoEdge
 
@@ -53,8 +53,8 @@ front_end.setup(
 machine = front_end.machine()
 
 # Create a gatherer to read the heat values
-live_gatherer = front_end.add_partitioned_vertex(
-    LivePacketGatherPartitionedVertex,
+live_gatherer = front_end.add_machine_vertex(
+    LivePacketGatherMachineVertex,
     {
         'machine_time_step': machine_time_step,
         'timescale_factor': time_scale_factor,
@@ -92,8 +92,8 @@ for x in range(0, max_x_element_id):
             core = chip.get_processor_with_id(core_p)
             if (core is not None and not core.is_monitor and
                     not (chip_x == 0 and chip_y == 0 and core_p == 1)):
-                element = front_end.add_partitioned_vertex(
-                    HeatDemoVertexPartitioned,
+                element = front_end.add_machine_vertex(
+                    HeatDemoVertex,
                     {
                         'machine_time_step': machine_time_step,
                         'time_scale_factor': time_scale_factor
@@ -112,19 +112,19 @@ for x in range(0, max_x_element_id):
         if vertices[x][y] is not None:
 
             # add a link from the heat element to the live packet gatherer
-            front_end.add_partitioned_edge(
-                MultiCastPartitionedEdge,
+            front_end.add_machine_edge(
+                SimpleMachineEdge,
                 {
                     'pre_subvertex': vertices[x][y],
                     'post_subvertex': live_gatherer
                 },
                 label="Live output from {}, {}".format(x, y),
-                partition_id="TRANSMISSION")
+                semantic_label="TRANSMISSION")
             receive_labels.append(vertices[x][y].label)
 
             # Add a north link if not at the top
             if (y + 1) < max_y_element_id and vertices[x][y + 1] is not None:
-                front_end.add_partitioned_edge(
+                front_end.add_machine_edge(
                     HeatDemoEdge,
                     {
                         'pre_subvertex': vertices[x][y],
@@ -133,11 +133,11 @@ for x in range(0, max_x_element_id):
                     },
                     label="North Edge from {}, {} to {}, {}".format(
                         x, y, x + 1, y),
-                    partition_id="TRANSMISSION")
+                    semantic_label="TRANSMISSION")
 
             # Add an east link if not at the right
             if (x + 1) < max_y_element_id and vertices[x + 1][y] is not None:
-                front_end.add_partitioned_edge(
+                front_end.add_machine_edge(
                     HeatDemoEdge,
                     {
                         'pre_subvertex': vertices[x][y],
@@ -146,11 +146,11 @@ for x in range(0, max_x_element_id):
                     },
                     label="East Edge from {}, {} to {}, {}".format(
                         x, y, x + 1, y),
-                    partition_id="TRANSMISSION")
+                    semantic_label="TRANSMISSION")
 
             # Add a south link if not at the bottom
             if (y - 1) >= 0 and vertices[x][y - 1] is not None:
-                front_end.add_partitioned_edge(
+                front_end.add_machine_edge(
                     HeatDemoEdge,
                     {
                         'pre_subvertex': vertices[x][y],
@@ -159,11 +159,11 @@ for x in range(0, max_x_element_id):
                     },
                     label="South Edge from {}, {} to {}, {}".format(
                         x, y, x, y - 1),
-                    partition_id="TRANSMISSION")
+                    semantic_label="TRANSMISSION")
 
             # check for the likely hood for a W link
             if (x - 1) >= 0 and vertices[x - 1][y] is not None:
-                front_end.add_partitioned_edge(
+                front_end.add_machine_edge(
                     HeatDemoEdge,
                     {
                         'pre_subvertex': vertices[x][y],
@@ -172,13 +172,13 @@ for x in range(0, max_x_element_id):
                     },
                     label="West Edge from {}, {} to {}, {}".format(
                         x, y, x - 1, y),
-                    partition_id="TRANSMISSION")
+                    semantic_label="TRANSMISSION")
 
 
 # Set up the live connection for receiving heat elements
 live_heat_connection = LiveEventConnection(
     live_gatherer_label, receive_labels=receive_labels, local_port=notify_port,
-    partitioned_vertices=True)
+    machine_vertices=True)
 condition = Condition()
 
 

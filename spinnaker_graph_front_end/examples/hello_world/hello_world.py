@@ -37,7 +37,7 @@ total_number_of_cores = len([
 
 # fill all cores with a HelloWorldVertex each
 for x in range(0, total_number_of_cores):
-    front_end.add_partitioned_vertex(
+    front_end.add_machine_vertex(
         HelloWorldVertex,
         {
             'machine_time_step': machine_time_step,
@@ -51,7 +51,7 @@ placements = front_end.placements()
 buffer_manager = front_end.buffer_manager()
 
 for placement in sorted(placements.placements, key=lambda p: (p.x, p.y, p.p)):
-    hello_world = placement.subvertex.read(placement, buffer_manager)
+    hello_world = placement.vertex.read(placement, buffer_manager)
     logger.info("{}, {}, {} > {}".format(
         placement.x, placement.y, placement.p, hello_world))
 

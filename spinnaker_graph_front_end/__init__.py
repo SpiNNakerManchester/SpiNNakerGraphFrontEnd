@@ -15,8 +15,8 @@ from spinn_front_end_common.utility_models.live_packet_gather \
     import LivePacketGather  # @IgnorePep8
 from spinn_front_end_common.utility_models.reverse_ip_tag_multi_cast_source \
     import ReverseIpTagMultiCastSource  # @IgnorePep8
-from pacman.model.partitioned_graph.multi_cast_partitioned_edge \
-    import MultiCastPartitionedEdge  # @IgnorePep8
+from pacman.model.graph.machine.simple_machine_edge \
+    import SimpleMachineEdge  # @IgnorePep8
 
 
 import logging
@@ -98,8 +98,8 @@ def stop():
 
 
 def read_xml_file(file_path):
-    """ Reads a xml file and translates it into a graph and partitioned graph\
-        (if required)
+    """ Reads a xml file and translates it into an application graph and \
+        machine graph (if required)
 
     :param file_path: the file path in absolute form
     :return: None
@@ -134,7 +134,7 @@ def add_vertex(cellclass, cellparams, label=None, constraints=None):
     # add vertex
     cellparams['constraints'] = constraints
     vertex = cellclass(**cellparams)
-    _spinnaker.add_partitionable_vertex(vertex)
+    _spinnaker.add_application_vertex(vertex)
     return vertex
 
 
@@ -145,10 +145,10 @@ def add_vertex_instance(vertex_to_add):
     :return:
     """
     global _spinnaker
-    _spinnaker.add_partitionable_vertex(vertex_to_add)
+    _spinnaker.add_application_vertex(vertex_to_add)
 
 
-def add_partitioned_vertex(
+def add_machine_vertex(
         cellclass, cellparams, label=None, constraints=None):
     """
 
@@ -172,43 +172,42 @@ def add_partitioned_vertex(
     elif label is not None:
         cellparams['label'] = label
 
-    # add partitioned vertex
+    # add vertex
     cellparams['constraints'] = constraints
     vertex = cellclass(**cellparams)
-    _spinnaker.add_partitioned_vertex(vertex)
+    _spinnaker.add_machine_vertex(vertex)
     return vertex
 
 
-def add_partitioned_vertex_instance(vertex_to_add):
+def add_machine_vertex_instance(vertex_to_add):
     """
 
     :param vertex_to_add:
     :return:
     """
     global _spinnaker
-    _spinnaker.add_partitioned_vertex(vertex_to_add)
+    _spinnaker.add_machine_vertex(vertex_to_add)
 
 
-def add_edge(cell_type, cellparams, label=None, constraints=None,
-             partition_id=None):
+def add_edge(cell_type, cellparams, semantic_label, label=None):
     """
 
     :param cell_type:
     :param cellparams:
+    :param semantic_label:
     :param constraints:
     :param label:
-    :param partition_id:
     :return:
     """
     global _spinnaker
 
     # correct label if needed
     if label is None and 'label' not in cellparams:
-        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
+        label = "Edge {}".format(_spinnaker.none_labelled_edge_count)
         _spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif 'label' in cellparams and cellparams['label'] is None:
-        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
+        label = "Edge {}".format(_spinnaker.none_labelled_edge_count)
         _spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif label is not None:
@@ -216,60 +215,56 @@ def add_edge(cell_type, cellparams, label=None, constraints=None,
 
     # add edge
     edge = cell_type(**cellparams)
-    _spinnaker.add_partitionable_edge(edge, partition_id, constraints)
+    _spinnaker.add_application_edge(edge, semantic_label)
     return edge
 
 
-def add_partitionable_edge_instance(edge, partition_id, constraints):
+def add_application_edge_instance(edge, partition_id):
     """
 
     :param edge:
     :param partition_id:
-    :param constraints:
     :return:
     """
-    _spinnaker.add_partitionable_edge(edge, partition_id, constraints)
+    _spinnaker.add_application_edge(edge, partition_id)
 
 
-def add_partitioned_edge_instance(edge, partition_id, constraints):
+def add_machine_edge_instance(edge, partition_id):
     """
 
     :param edge:
     :param partition_id:
-    :param constraints:
     :return:
     """
-    _spinnaker.add_partitioned_edge(edge, partition_id, constraints)
+    _spinnaker.add_machine_edge(edge, partition_id)
 
 
-def add_partitioned_edge(cellclass, cellparams, label=None, constraints=None,
-                         partition_id=None):
+def add_machine_edge(cellclass, cellparams, semantic_label, label=None):
     """
 
     :param cellclass:
     :param cellparams:
-    :param constraints:
+    :param semantic_label:
     :param label:
-    :param partition_id:
     :return:
     """
     global _spinnaker
 
     # correct label if needed
     if label is None and 'label' not in cellparams:
-        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
+        label = "Edge {}".format(_spinnaker.none_labelled_edge_count)
         _spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif 'label' in cellparams and cellparams['label'] is None:
-        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
+        label = "Edge {}".format(_spinnaker.none_labelled_edge_count)
         _spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif label is not None:
         cellparams['label'] = label
 
-    # add partitioned edge
+    # add edge
     edge = cellclass(**cellparams)
-    _spinnaker.add_partitioned_edge(edge, partition_id, constraints)
+    _spinnaker.add_machine_edge(edge, semantic_label)
     return edge
 
 
@@ -357,22 +352,22 @@ def timescale_factor():
     return _spinnaker.time_scale_factor
 
 
-def partitioned_graph():
+def machine_graph():
     """
 
     :return:
     """
     global _spinnaker
-    return _spinnaker.partitioned_graph
+    return _spinnaker.machine_graph
 
 
-def partitionable_graph():
+def application_graph():
     """
 
     :return:
     """
     global _spinnaker
-    return _spinnaker.partitionable_graph
+    return _spinnaker.application_graph
 
 
 def routing_infos():
