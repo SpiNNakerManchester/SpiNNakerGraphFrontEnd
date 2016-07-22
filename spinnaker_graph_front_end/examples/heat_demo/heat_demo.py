@@ -115,8 +115,8 @@ for x in range(0, max_x_element_id):
             front_end.add_machine_edge(
                 SimpleMachineEdge,
                 {
-                    'pre_subvertex': vertices[x][y],
-                    'post_subvertex': live_gatherer
+                    'pre_vertex': vertices[x][y],
+                    'post_vertex': live_gatherer
                 },
                 label="Live output from {}, {}".format(x, y),
                 semantic_label="TRANSMISSION")
@@ -127,8 +127,8 @@ for x in range(0, max_x_element_id):
                 front_end.add_machine_edge(
                     HeatDemoEdge,
                     {
-                        'pre_subvertex': vertices[x][y],
-                        'post_subvertex': vertices[x][y + 1],
+                        'pre_vertex': vertices[x][y],
+                        'post_vertex': vertices[x][y + 1],
                         'direction': HeatDemoEdge.DIRECTIONS.SOUTH
                     },
                     label="North Edge from {}, {} to {}, {}".format(
@@ -140,8 +140,8 @@ for x in range(0, max_x_element_id):
                 front_end.add_machine_edge(
                     HeatDemoEdge,
                     {
-                        'pre_subvertex': vertices[x][y],
-                        'post_subvertex': vertices[x + 1][y],
+                        'pre_vertex': vertices[x][y],
+                        'post_vertex': vertices[x + 1][y],
                         'direction': HeatDemoEdge.DIRECTIONS.WEST
                     },
                     label="East Edge from {}, {} to {}, {}".format(
@@ -153,8 +153,8 @@ for x in range(0, max_x_element_id):
                 front_end.add_machine_edge(
                     HeatDemoEdge,
                     {
-                        'pre_subvertex': vertices[x][y],
-                        'post_subvertex': vertices[x][y - 1],
+                        'pre_vertex': vertices[x][y],
+                        'post_vertex': vertices[x][y - 1],
                         'direction': HeatDemoEdge.DIRECTIONS.NORTH
                     },
                     label="South Edge from {}, {} to {}, {}".format(
@@ -166,8 +166,8 @@ for x in range(0, max_x_element_id):
                 front_end.add_machine_edge(
                     HeatDemoEdge,
                     {
-                        'pre_subvertex': vertices[x][y],
-                        'post_subvertex': vertices[x - 1][y],
+                        'pre_vertex': vertices[x][y],
+                        'post_vertex': vertices[x - 1][y],
                         'direction': HeatDemoEdge.DIRECTIONS.EAST
                     },
                     label="West Edge from {}, {} to {}, {}".format(
