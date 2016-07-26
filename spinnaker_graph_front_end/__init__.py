@@ -30,7 +30,8 @@ _none_labelled_edge_count = None
 def setup(hostname=None, graph_label=None, model_binary_module=None,
           model_binary_folder=None, database_socket_addresses=None,
           user_dsg_algorithm=None, n_chips_required=None,
-          extra_pre_run_algorithms=None, extra_post_run_algorithms=None):
+          extra_pre_run_algorithms=None, extra_post_run_algorithms=None,
+          time_scale_factor=None, machine_time_step=None):
     """
 
     :param hostname: the hostname of the SpiNNaker machine to operate on
@@ -103,8 +104,9 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         dsg_algorithm=user_dsg_algorithm,
         n_chips_required=n_chips_required,
         extra_pre_run_algorithms=extra_pre_run_algorithms,
-        extra_post_run_algorithms=extra_post_run_algorithms
-    )
+        extra_post_run_algorithms=extra_post_run_algorithms,
+        machine_time_step=machine_time_step,
+        time_scale_factor=time_scale_factor)
 
 
 def run(duration=None):
@@ -440,7 +442,7 @@ def transceiver():
     :return:
     """
     global _spinnaker
-    return _spinnaker.txrx
+    return _spinnaker.transceiver
 
 
 def graph_mapper():

@@ -20,7 +20,8 @@ class SpiNNaker(SpinnakerMainInterface):
             self, executable_finder, host_name=None, graph_label=None,
             database_socket_addresses=None, dsg_algorithm=None,
             n_chips_required=None, extra_pre_run_algorithms=None,
-            extra_post_run_algorithms=None):
+            extra_post_run_algorithms=None, time_scale_factor=None,
+            machine_time_step=None):
 
         # dsg algorithm store for user defined algorithms
         self._user_dsg_algorithm = dsg_algorithm
@@ -44,10 +45,20 @@ class SpiNNaker(SpinnakerMainInterface):
             extra_post_run_algorithms=extra_post_run_algorithms)
 
         # set up machine targeted data
-        self._machine_time_step = config.getint("Machine", "machineTimeStep")
+        if machine_time_step is None:
+            self._machine_time_step = \
+                config.getint("Machine", "machineTimeStep")
+        else:
+            self._machine_time_step = machine_time_step
+
         self.set_up_machine_specifics(host_name)
 
-        self._time_scale_factor = 1
+        if time_scale_factor is None:
+            self._time_scale_factor = \
+                config.getint("Machine", "timeScaleFactor")
+        else:
+            self._time_scale_factor = time_scale_factor
+
         logger.info("Setting time scale factor to {}."
                     .format(self._time_scale_factor))
 
