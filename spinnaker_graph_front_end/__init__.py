@@ -14,8 +14,8 @@ from spinn_front_end_common.utility_models.live_packet_gather \
     import LivePacketGather  # @IgnorePep8
 from spinn_front_end_common.utility_models.reverse_ip_tag_multi_cast_source \
     import ReverseIpTagMultiCastSource  # @IgnorePep8
-from pacman.model.graph.machine.simple_machine_edge \
-    import SimpleMachineEdge  # @IgnorePep8
+from pacman.model.graphs.machine.impl.machine_edge \
+    import MachineEdge  # @IgnorePep8
 
 
 import logging
