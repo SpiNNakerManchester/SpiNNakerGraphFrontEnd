@@ -105,12 +105,7 @@ class SpiNNaker(SpinnakerMainInterface):
 
         # set up the correct dsg algorithm
         if self._user_dsg_algorithm is None:
-            if len(self._machine_graph.vertices) != 0:
-                self.dsg_algorithm = \
-                    "FrontEndCommonMachineGraphDataSpecificationWriter"
-            elif len(self._application_graph.vertices) != 0:
-                self.dsg_algorithm = \
-                    "FrontEndCommonApplicationGraphDataSpecificationWriter"
+            self.dsg_algorithm = "FrontEndCommonGraphDataSpecificationWriter"
         else:
             self.dsg_algorithm = self._user_dsg_algorithm
 
