@@ -91,8 +91,13 @@ class HelloWorldVertex(
         # Create the data regions for hello world
         self._reserve_memory_regions(spec, setup_size)
 
-        spec.switch_write_focus()
-        self._write_basic_setup_info(spec, self.DATA_REGIONS.SYSTEM.value)
+        # write data for the simulation data item
+        spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
+        data = self.data_for_simulation_data(
+            self._machine_time_step, self._time_scale_factor)
+        spec.write_array(data)
+
+        # recording data region
         self.write_recording_data(
             spec, iptags, [self._string_data_size],
             self._buffer_size_before_receive, self._time_between_requests)
