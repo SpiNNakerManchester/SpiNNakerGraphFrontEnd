@@ -1,5 +1,6 @@
 # pacman imports
-from pacman.model.partitioned_graph.partitioned_vertex import PartitionedVertex
+from pacman.model.decorators.overrides import overrides
+from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.cpu_cycles_per_tick_resource import \
     CPUCyclesPerTickResource
@@ -7,18 +8,15 @@ from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.sdram_resource import SDRAMResource
 
 # spinn front end commom imports
-from spinn_front_end_common.abstract_models.\
-    abstract_partitioned_data_specable_vertex import \
-    AbstractPartitionedDataSpecableVertex
+from spinn_front_end_common.abstract_models.impl.\
+    machine_data_specable_vertex import MachineDataSpecableVertex
 from spinn_front_end_common.interface.buffer_management.buffer_models.\
     receives_buffers_to_host_basic_impl import \
     ReceiveBuffersToHostBasicImpl
 from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.utilities import exceptions
-
-# dsg imports
-from data_specification.data_specification_generator import \
-    DataSpecificationGenerator
+from spinn_front_end_common.interface.simulation.impl.\
+    uses_simulation_impl import UsesSimulationImpl
 
 # gfe imports
 from spinnaker_graph_front_end.utilities.conf import config
@@ -29,8 +27,8 @@ import struct
 
 
 class ConwayBasicCell(
-        PartitionedVertex, AbstractPartitionedDataSpecableVertex,
-        ReceiveBuffersToHostBasicImpl):
+        MachineVertex, MachineDataSpecableVertex,
+        ReceiveBuffersToHostBasicImpl, UsesSimulationImpl):
     """
     cell which represents a cell within the 2 d fabric
     """
@@ -54,29 +52,36 @@ class ConwayBasicCell(
         # resources used by the system.
         resources = ResourceContainer(
             sdram=SDRAMResource(0), dtcm=DTCMResource(0),
-            cpu=CPUCyclesPerTickResource(0))
+            cpu_cycles=CPUCyclesPerTickResource(0))
 
-        PartitionedVertex.__init__(self, resources, label)
+        MachineVertex .__init__(self, resources, label)
         ReceiveBuffersToHostBasicImpl.__init__(self)
-        AbstractPartitionedDataSpecableVertex.__init__(
-            self, machine_time_step=machine_time_step,
-            timescale_factor=time_scale_factor)
+        MachineDataSpecableVertex.__init__(self)
+        UsesSimulationImpl.__init__(self)
+
+        # simulation data items
+        self._machine_time_step = machine_time_step
+        self._time_scale_factor = time_scale_factor
+
+        # storage objects
+        self._no_machine_time_steps = None
+
+        # app specific data items
         self._state = state
 
+    @overrides(MachineDataSpecableVertex.get_binary_file_name)
     def get_binary_file_name(self):
         return "conways_cell.aplx"
 
-    def generate_data_spec(
-            self, placement, sub_graph, routing_info,  hostname,
-            report_folder, ip_tags, reverse_ip_tags,
-            write_text_specs, application_run_time_folder):
+    @property
+    @overrides(MachineVertex.model_name)
+    def model_name(self):
+        return "ConwayBasicCell"
 
-        data_writer, report_writer = \
-            self.get_data_spec_file_writers(
-                placement.x, placement.y, placement.p, hostname, report_folder,
-                write_text_specs, application_run_time_folder)
-
-        spec = DataSpecificationGenerator(data_writer, report_writer)
+    @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
+    def generate_machine_data_specification(
+            self, spec, placement, machine_graph, routing_info, iptags,
+            reverse_iptags):
 
         # Setup words + 1 for flags + 1 for recording size
         setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 8) * 4
@@ -97,10 +102,13 @@ class ConwayBasicCell(
         self.reserve_buffer_regions(
             spec, self.DATA_REGIONS.BUFFERED_STATE_REGION.value,
             [self.DATA_REGIONS.RESULTS.value],
-            [(self.no_machine_time_steps * 4) + 4])
+            [constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP])
 
         # simulation .c requriements
-        self._write_basic_setup_info(spec, self.DATA_REGIONS.SYSTEM.value)
+        spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
+        data = self.data_for_simulation_data(
+            self._machine_time_step, self._time_scale_factor)
+        spec.write_array(data)
 
         # get recorded buffered regions sorted
         buffer_size_before_receive = config.getint(
@@ -108,44 +116,43 @@ class ConwayBasicCell(
         time_between_requests = config.getint(
             "Buffers", "time_between_requests")
         self.write_recording_data(
-            spec, ip_tags, [(self.no_machine_time_steps * 4) + 4],
+            spec, iptags, [constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP],
             buffer_size_before_receive, time_between_requests)
 
         # check got right number of keys and edges going into me
-        partitions = sub_graph.outgoing_edges_partitions_from_vertex(self)
+        partitions = \
+            machine_graph.get_outgoing_edge_partitions_starting_at_vertex(self)
         if len(partitions) != 1:
             raise exceptions.ConfigurationException(
                 "Can only handle one type of partition. ")
 
         # check for duplicates
-        edges = sub_graph.incoming_subedges_from_subvertex(self)
+        edges = machine_graph.get_edges_ending_at_vertex(self)
         empty_list = set()
         for edge in edges:
-            empty_list.add(edge.pre_subvertex.label)
+            empty_list.add(edge.pre_vertex.label)
         if len(empty_list) != 8:
             output = ""
             for edge in edges:
-                output += edge.pre_subvertex.label + " : "
+                output += edge.pre_vertex.label + " : "
             raise exceptions.ConfigurationException(
                 "I've got duplicate edges. This is a error. The edges are "
                 "connected to these vertices \n {}".format(output))
 
-        if len(sub_graph.incoming_subedges_from_subvertex(self)) != 8:
+        if len(machine_graph.get_edges_ending_at_vertex(self)) != 8:
             raise exceptions.ConfigurationException(
                 "I've not got the right number of connections. I have {} "
                 "instead of 9".format(
-                    len(sub_graph.incoming_subedges_from_subvertex(self))))
+                    len(machine_graph.incoming_subedges_from_vertex(self))))
 
         for edge in edges:
-            if edge.pre_subvertex == self:
+            if edge.pre_vertex == self:
                 raise exceptions.ConfigurationException(
                     "I'm connected to myself, this is deemed an error"
                     " please fix.")
 
         # write key needed to transmit with
-        keys_and_masks = routing_info. \
-            get_keys_and_masks_from_partition(partitions["STATE"])
-        key = keys_and_masks[0].key
+        key = routing_info.get_first_key_from_partition(partitions[0])
 
         spec.switch_write_focus(
             region=self.DATA_REGIONS.TRANSMISSIONS.value)
@@ -170,8 +177,8 @@ class ConwayBasicCell(
             region=self.DATA_REGIONS.NEIGHBOUR_INITIAL_STATES.value)
         alive = 0
         dead = 0
-        for edge in sub_graph.incoming_subedges_from_subvertex(self):
-            state = edge.pre_subvertex.state
+        for edge in machine_graph.get_edges_ending_at_vertex(self):
+            state = edge.pre_vertex.state
             if state:
                 alive += 1
             else:
@@ -182,9 +189,6 @@ class ConwayBasicCell(
 
         # End-of-Spec:
         spec.end_specification()
-        data_writer.close()
-
-        return data_writer.filename
 
     def get_data(self, buffer_manager, placement):
         data = list()
@@ -203,9 +207,8 @@ class ConwayBasicCell(
         # get raw data
         raw_data = reader.read_all()
 
-        # convert to ints
         elements = struct.unpack(
-            "<{}I".format(self.no_machine_time_steps), str(raw_data))
+            "<{}I".format(len(raw_data) / 4), str(raw_data))
         for element in elements:
             if element == 0:
                 data.append(False)
@@ -216,12 +219,13 @@ class ConwayBasicCell(
         return data
 
     @property
+    @overrides(MachineVertex.resources_required)
     def resources_required(self):
         return ResourceContainer(
             sdram=SDRAMResource(
                 self._calculate_sdram_requirement()),
             dtcm=DTCMResource(0),
-            cpu=CPUCyclesPerTickResource(0))
+            cpu_cycles=CPUCyclesPerTickResource(0))
 
     @property
     def state(self):
@@ -231,11 +235,8 @@ class ConwayBasicCell(
         return (((constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 8) * 4) +
                 self.TRANSMISSION_DATA_SIZE + self.STATE_DATA_SIZE +
                 self.NEIGHBOUR_INITIAL_STATES_SIZE +
-                ReceiveBuffersToHostBasicImpl.get_buffer_state_region_size(1) +
-                (self.no_machine_time_steps * 1) + 4)
-
-    def is_partitioned_data_specable(self):
-        return True
+                constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP +
+                ReceiveBuffersToHostBasicImpl.get_buffer_state_region_size(1))
 
     def __repr__(self):
         return self._label

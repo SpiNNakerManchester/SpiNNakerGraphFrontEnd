@@ -8,8 +8,7 @@ from pacman.model.constraints.placer_constraints.\
 from spinnaker_graph_front_end.examples.Conways.\
     partitioned_example_b_no_vis_buffer.conways_basic_cell \
     import ConwayBasicCell
-from pacman.model.partitioned_graph.multi_cast_partitioned_edge \
-    import MultiCastPartitionedEdge
+from pacman.model.graphs.machine.impl.machine_edge import MachineEdge
 
 n_chips_required = 48
 runtime = 50
@@ -42,7 +41,7 @@ for x in range(0, MAX_X_SIZE_OF_FABRIC):
             "cell{}".format((x * MAX_X_SIZE_OF_FABRIC) + y), machine_time_step,
             time_scale_factor, (x, y) in active_states)
         vertices[x][y] = vert
-        front_end.add_partitioned_vertex_instance(vert)
+        front_end.add_machine_vertex_instance(vert)
 
 # verify the initial state
 output = ""
@@ -75,10 +74,10 @@ for x in range(0, MAX_X_SIZE_OF_FABRIC):
                 (y + 1) % MAX_Y_SIZE_OF_FABRIC, "NW")]
 
         for (dest_x, dest_y, compass) in positions:
-            front_end.add_partitioned_edge_instance(
-                MultiCastPartitionedEdge(
-                    vertices[x][y], vertices[dest_x][dest_y], compass),
-                "STATE", None)
+            front_end.add_machine_edge_instance(
+                MachineEdge(
+                    vertices[x][y], vertices[dest_x][dest_y], label=compass),
+                "STATE",)
 
 # run the simulation
 front_end.run(runtime)
@@ -91,7 +90,7 @@ for x in range(0, MAX_X_SIZE_OF_FABRIC):
     for y in range(0, MAX_Y_SIZE_OF_FABRIC):
         recorded_data[(x, y)] = vertices[x][y].get_data(
             front_end.buffer_manager(),
-            front_end.placements().get_placement_of_subvertex(vertices[x][y]))
+            front_end.placements().get_placement_of_vertex(vertices[x][y]))
 
 # visualise it in text form (bad but no vis this time)
 for time in range(0, runtime):
