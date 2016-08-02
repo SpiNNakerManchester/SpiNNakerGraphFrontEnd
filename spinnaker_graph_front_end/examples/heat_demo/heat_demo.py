@@ -20,7 +20,7 @@ from spinnman.messages.eieio.eieio_type import EIEIOType
 
 # graph front end imports
 import spinnaker_graph_front_end as front_end
-from spinnaker_graph_front_end import SimpleMachineEdge
+from spinnaker_graph_front_end import MachineEdge
 
 # example imports
 from spinnaker_graph_front_end.examples.heat_demo.heat_demo_vertex\
@@ -113,7 +113,7 @@ for x in range(0, max_x_element_id):
 
             # add a link from the heat element to the live packet gatherer
             front_end.add_machine_edge(
-                SimpleMachineEdge,
+                MachineEdge,
                 {
                     'pre_vertex': vertices[x][y],
                     'post_vertex': live_gatherer

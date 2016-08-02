@@ -1,11 +1,11 @@
 from enum import Enum
 
 # front end common imports
-from pacman.model.graph.machine.simple_machine_edge \
-    import SimpleMachineEdge
+from pacman.model.decorators.overrides import overrides
+from pacman.model.graphs.machine.impl.machine_edge import MachineEdge
 
 
-class HeatDemoEdge(SimpleMachineEdge):
+class HeatDemoEdge(MachineEdge):
     """ Used in conjunction with a heat demo vertex to execute the heat demo
     """
 
@@ -17,7 +17,7 @@ class HeatDemoEdge(SimpleMachineEdge):
 
     def __init__(self, pre_vertex, post_vertex, direction, n_keys=1,
                  label=None):
-        SimpleMachineEdge.__init__(
+        MachineEdge.__init__(
             self, pre_vertex, post_vertex, label=label)
         self._direction = direction
 
@@ -28,6 +28,10 @@ class HeatDemoEdge(SimpleMachineEdge):
         :return:
         """
         return self._direction
+
+    @overrides(MachineEdge.model_name)
+    def model_name(self):
+        return "HeatDemoEdge"
 
     def __str__(self):
         return self.__repr__()
