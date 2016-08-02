@@ -2,6 +2,7 @@
 # common front end imports
 from spinn_front_end_common.interface.spinnaker_main_interface import \
     SpinnakerMainInterface
+from spinn_front_end_common.utilities import exceptions
 
 # graph front end imports
 from spinnaker_graph_front_end.utilities.xml_interface import XMLInterface
@@ -55,7 +56,12 @@ class SpiNNaker(SpinnakerMainInterface):
 
         if time_scale_factor is None:
             self._time_scale_factor = \
-                config.getint("Machine", "timeScaleFactor")
+                config.get("Machine", "timeScaleFactor")
+            if self._time_scale_factor == "None":
+                raise exceptions.ConfigurationException(
+                    "the time scale factor must be set somewhere")
+            else:
+                self._time_scale_factor = int(self._time_scale_factor)
         else:
             self._time_scale_factor = time_scale_factor
 
