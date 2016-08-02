@@ -2,9 +2,6 @@
 import spinnaker_graph_front_end as front_end
 import sys
 
-from pacman.model.constraints.placer_constraints.\
-    placer_chip_and_core_constraint import \
-    PlacerChipAndCoreConstraint
 from spinnaker_graph_front_end.examples.Conways.\
     partitioned_example_b_no_vis_buffer.conways_basic_cell \
     import ConwayBasicCell

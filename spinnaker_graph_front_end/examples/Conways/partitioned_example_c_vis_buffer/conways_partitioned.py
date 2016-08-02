@@ -8,8 +8,7 @@ from pacman.model.constraints.placer_constraints.\
 from spinnaker_graph_front_end.examples.Conways.\
     partitioned_example_c_vis_buffer.conways_basic_cell \
     import ConwayBasicCell
-from pacman.model.partitioned_graph.multi_cast_partitioned_edge \
-    import MultiCastPartitionedEdge
+from pacman.model.graphs.machine.impl.machine_edge import MachineEdge
 
 n_chips_required = 48
 runtime = 500
@@ -104,7 +103,7 @@ for x in range(0, MAX_X_SIZE_OF_FABRIC):
             placement_to_make_tubogrid_work_correctly[(x, y)][1],
             placement_to_make_tubogrid_work_correctly[(x, y)][2]))
         vertices[x][y] = vert
-        front_end.add_partitioned_vertex_instance(vert)
+        front_end.add_machine_vertex_instance(vert)
 
 # verify the initial state
 output = ""
@@ -137,10 +136,10 @@ for x in range(0, MAX_X_SIZE_OF_FABRIC):
                 (y + 1) % MAX_Y_SIZE_OF_FABRIC, "NW")]
 
         for (dest_x, dest_y, compass) in positions:
-            front_end.add_partitioned_edge_instance(
-                MultiCastPartitionedEdge(
-                    vertices[x][y], vertices[dest_x][dest_y], compass),
-                "STATE", None)
+            front_end.add_machine_edge_instance(
+                MachineEdge(
+                    vertices[x][y], vertices[dest_x][dest_y], label=compass),
+                "STATE")
 
 # set up vis
 #inputs = ["/home/alan/spinnaker/alpha_package_103_git/spinnaker_tools/tools/tubogrid"]
