@@ -7,8 +7,9 @@ from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.sdram_resource import SDRAMResource
 
-from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
-    import MachineDataSpecableVertex
+from spinn_front_end_common.abstract_models.impl.\
+    machine_uses_simulation_data_specable_vertex import \
+    MachineUsesSimulationDataSpecableVertex
 from spinn_front_end_common.interface.buffer_management.\
     buffer_models.receives_buffers_to_host_basic_impl import \
     ReceiveBuffersToHostBasicImpl
@@ -28,7 +29,7 @@ PARTITION_ID = "DATA"
 
 
 class Vertex(
-        MachineVertex, MachineDataSpecableVertex,
+        MachineVertex, MachineUsesSimulationDataSpecableVertex,
         ReceiveBuffersToHostBasicImpl, UsesSimulationImpl):
 
     # The number of bytes for the has_key flag and the key
@@ -60,13 +61,9 @@ class Vertex(
         MachineVertex.__init__(
             self, label=label, resources_required=resources,
             constraints=constraints)
-        MachineDataSpecableVertex.__init__(self)
+        MachineUsesSimulationDataSpecableVertex.__init__(
+            self, machine_time_step, time_scale_factor)
         ReceiveBuffersToHostBasicImpl.__init__(self)
-        UsesSimulationImpl.__init__(self)
-
-        #simulcation data items
-        self._machine_time_step = machine_time_step
-        self._time_scale_factor = time_scale_factor
 
         self._buffer_size_before_receive = config.getint(
             "Buffers", "buffer_size_before_receive")
@@ -76,7 +73,7 @@ class Vertex(
 
         self.placement = None
 
-    @overrides(MachineDataSpecableVertex.get_binary_file_name)
+    @overrides(MachineUsesSimulationDataSpecableVertex.get_binary_file_name)
     def get_binary_file_name(self):
         return "c_code.aplx"
 
@@ -84,7 +81,8 @@ class Vertex(
     def model_name(self):
         return "Vertex"
 
-    @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
+    @overrides(MachineUsesSimulationDataSpecableVertex.
+               generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
             reverse_iptags):
@@ -104,8 +102,7 @@ class Vertex(
 
         # write sim interface data
         spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
-        spec.write_array(self.data_for_simulation_data(
-            self._machine_time_step, self._timescale_factor))
+        spec.write_array(self.data_for_simulation_data())
 
         # write recording data interface
         self.write_recording_data(

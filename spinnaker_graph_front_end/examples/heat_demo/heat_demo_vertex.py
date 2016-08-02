@@ -17,8 +17,6 @@ from .heat_demo_edge import HeatDemoEdge
 from spinnaker_graph_front_end.utilities.conf import config
 
 # fec imports
-from spinn_front_end_common.interface.simulation.impl.\
-    uses_simulation_impl import UsesSimulationImpl
 from spinn_front_end_common.interface.buffer_management.buffer_models.\
     receives_buffers_to_host_basic_impl import \
     ReceiveBuffersToHostBasicImpl
@@ -26,10 +24,11 @@ from spinn_front_end_common.utility_models.live_packet_gather import \
     LivePacketGather
 from spinn_front_end_common.utility_models.\
     reverse_ip_tag_multi_cast_source import ReverseIpTagMultiCastSource
-from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
-    import MachineDataSpecableVertex
 from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.utilities import exceptions
+from spinn_front_end_common.abstract_models.impl.\
+    machine_uses_simulation_data_specable_vertex import \
+    MachineUsesSimulationDataSpecableVertex
 
 # general imports
 from enum import Enum
@@ -39,8 +38,8 @@ logger = logging.getLogger(__name__)
 
 
 class HeatDemoVertex(
-        MachineVertex, MachineDataSpecableVertex,
-        ReceiveBuffersToHostBasicImpl, UsesSimulationImpl):
+        MachineVertex, MachineUsesSimulationDataSpecableVertex,
+        ReceiveBuffersToHostBasicImpl):
     """ A vertex partition for a heat demo; represents a heat element.
     """
 
@@ -78,18 +77,15 @@ class HeatDemoVertex(
         MachineVertex.__init__(
             self, label=label, resources_required=resources,
             constraints=constraints)
-        MachineDataSpecableVertex.__init__(self,)
-
-        # simulation values
-        self._machine_time_step = machine_time_step
-        self._time_scale_factor = time_scale_factor
+        MachineUsesSimulationDataSpecableVertex.__init__(
+            self, machine_time_step, time_scale_factor)
 
         # app speific data items
         self._heat_temperature = heat_temperature
         self._time_between_requests = config.getint(
             "Buffers", "time_between_requests")
 
-    @overrides(MachineDataSpecableVertex.get_binary_file_name)
+    @overrides(MachineUsesSimulationDataSpecableVertex.get_binary_file_name)
     def get_binary_file_name(self):
         """
 
@@ -105,7 +101,8 @@ class HeatDemoVertex(
         """
         return "Heat_Demo_Vertex"
 
-    @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
+    @overrides(MachineUsesSimulationDataSpecableVertex.
+               generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
             reverse_iptags):
@@ -135,9 +132,7 @@ class HeatDemoVertex(
 
         # handle sim items
         spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
-        data = self.data_for_simulation_data(
-            self._machine_time_step, self._time_scale_factor)
-        spec.write_array(data)
+        spec.write_array(self.data_for_simulation_data())
 
         # application specific data items
         self._write_transmission_keys(spec, routing_info, machine_graph)

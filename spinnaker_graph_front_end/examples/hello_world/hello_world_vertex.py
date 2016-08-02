@@ -7,18 +7,13 @@ from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.sdram_resource import SDRAMResource
 
-from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
-    import MachineDataSpecableVertex
+from spinn_front_end_common.abstract_models.impl.\
+    machine_uses_simulation_data_specable_vertex import \
+    MachineUsesSimulationDataSpecableVertex
 from spinn_front_end_common.interface.buffer_management.\
     buffer_models.receives_buffers_to_host_basic_impl import \
     ReceiveBuffersToHostBasicImpl
-
 from spinn_front_end_common.utilities import constants
-
-from data_specification.data_specification_generator import \
-    DataSpecificationGenerator
-from spinn_front_end_common.interface.simulation.impl.\
-    uses_simulation_impl import UsesSimulationImpl
 
 from spinnaker_graph_front_end.utilities.conf import config
 
@@ -30,8 +25,8 @@ logger = logging.getLogger(__name__)
 
 
 class HelloWorldVertex(
-        MachineVertex, MachineDataSpecableVertex,
-        ReceiveBuffersToHostBasicImpl, UsesSimulationImpl):
+        MachineVertex, MachineUsesSimulationDataSpecableVertex,
+        ReceiveBuffersToHostBasicImpl):
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
@@ -51,8 +46,8 @@ class HelloWorldVertex(
         MachineVertex.__init__(
             self, label=label, resources_required=resources,
             constraints=constraints)
-        UsesSimulationImpl.__init__(self)
-        MachineDataSpecableVertex.__init__(self)
+        MachineUsesSimulationDataSpecableVertex.__init__(
+            self, machine_time_step, time_scale_factor)
         ReceiveBuffersToHostBasicImpl.__init__(self)
 
         self._buffer_size_before_receive = config.getint(
@@ -61,15 +56,11 @@ class HelloWorldVertex(
         self._time_between_requests = config.getint(
             "Buffers", "time_between_requests")
 
-        # simulation items
-        self._machine_time_step = machine_time_step
-        self._time_scale_factor = time_scale_factor
-
         self._string_data_size = 5000
 
         self.placement = None
 
-    @overrides(MachineDataSpecableVertex.get_binary_file_name)
+    @overrides(MachineUsesSimulationDataSpecableVertex.get_binary_file_name)
     def get_binary_file_name(self):
         return "hello_world.aplx"
 
@@ -77,7 +68,8 @@ class HelloWorldVertex(
     def model_name(self):
         return "Hello_World_Vertex"
 
-    @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
+    @overrides(MachineUsesSimulationDataSpecableVertex.
+               generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
             reverse_iptags):
@@ -93,8 +85,7 @@ class HelloWorldVertex(
 
         # write data for the simulation data item
         spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
-        data = self.data_for_simulation_data(
-            self._machine_time_step, self._time_scale_factor)
+        data = self.data_for_simulation_data()
         spec.write_array(data)
 
         # recording data region

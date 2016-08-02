@@ -9,14 +9,13 @@ from pacman.model.resources.sdram_resource import SDRAMResource
 
 # spinn front end commom imports
 from spinn_front_end_common.abstract_models.impl.\
-    machine_data_specable_vertex import MachineDataSpecableVertex
+    machine_uses_simulation_data_specable_vertex import \
+    MachineUsesSimulationDataSpecableVertex
 from spinn_front_end_common.interface.buffer_management.buffer_models.\
     receives_buffers_to_host_basic_impl import \
     ReceiveBuffersToHostBasicImpl
 from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.utilities import exceptions
-from spinn_front_end_common.interface.simulation.impl.\
-    uses_simulation_impl import UsesSimulationImpl
 
 # gfe imports
 from spinnaker_graph_front_end.utilities.conf import config
@@ -27,8 +26,8 @@ import struct
 
 
 class ConwayBasicCell(
-        MachineVertex, MachineDataSpecableVertex,
-        ReceiveBuffersToHostBasicImpl, UsesSimulationImpl):
+        MachineVertex, MachineUsesSimulationDataSpecableVertex,
+        ReceiveBuffersToHostBasicImpl):
     """
     cell which represents a cell within the 2 d fabric
     """
@@ -56,20 +55,13 @@ class ConwayBasicCell(
 
         MachineVertex .__init__(self, resources, label)
         ReceiveBuffersToHostBasicImpl.__init__(self)
-        MachineDataSpecableVertex.__init__(self)
-        UsesSimulationImpl.__init__(self)
-
-        # simulation data items
-        self._machine_time_step = machine_time_step
-        self._time_scale_factor = time_scale_factor
-
-        # storage objects
-        self._no_machine_time_steps = None
+        MachineUsesSimulationDataSpecableVertex.__init__(
+            self, machine_time_step, time_scale_factor)
 
         # app specific data items
         self._state = state
 
-    @overrides(MachineDataSpecableVertex.get_binary_file_name)
+    @overrides(MachineUsesSimulationDataSpecableVertex.get_binary_file_name)
     def get_binary_file_name(self):
         return "conways_cell.aplx"
 
@@ -78,7 +70,8 @@ class ConwayBasicCell(
     def model_name(self):
         return "ConwayBasicCell"
 
-    @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
+    @overrides(MachineUsesSimulationDataSpecableVertex.
+               generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
             reverse_iptags):
@@ -106,9 +99,7 @@ class ConwayBasicCell(
 
         # simulation .c requriements
         spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
-        data = self.data_for_simulation_data(
-            self._machine_time_step, self._time_scale_factor)
-        spec.write_array(data)
+        spec.write_array(self.data_for_simulation_data())
 
         # get recorded buffered regions sorted
         buffer_size_before_receive = config.getint(

@@ -1,7 +1,7 @@
 # pacman imports
 from pacman.model.decorators.overrides import overrides
 
-from pacman.executor.injection_decorator import inject, requires_injection, \
+from pacman.executor.injection_decorator import requires_injection, \
     supports_injection
 from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
 from pacman.model.resources.resource_container import ResourceContainer
@@ -11,21 +11,22 @@ from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.sdram_resource import SDRAMResource
 
 # spinn front end commom imports
-from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
-    import MachineDataSpecableVertex
 from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.utilities import exceptions
 from spinn_front_end_common.utilities import helpful_functions
-from spinn_front_end_common.interface.simulation.\
-    impl.uses_simulation_impl import UsesSimulationImpl
+from spinn_front_end_common.abstract_models.impl.\
+    machine_uses_simulation_needs_totoal_runtime_data_specable_vertex import \
+    MachineUsesSimulationDataNeedsTotalRuntimeSpecableVertex
 
 # general imports
 from enum import Enum
 import struct
 
+
+
 @supports_injection
-class ConwayBasicCell(MachineVertex, MachineDataSpecableVertex,
-                      UsesSimulationImpl):
+class ConwayBasicCell(MachineVertex,
+                      MachineUsesSimulationDataNeedsTotalRuntimeSpecableVertex):
     """
     cell which represents a cell within the 2 d fabric
     """
@@ -51,17 +52,14 @@ class ConwayBasicCell(MachineVertex, MachineDataSpecableVertex,
             cpu_cycles=CPUCyclesPerTickResource(0))
 
         MachineVertex.__init__(self, resources, label)
-        MachineDataSpecableVertex.__init__(self)\
-
-        # simulation elements
-        self._machine_time_step = machine_time_step
-        self._time_scale_factor = time_scale_factor
-        self._no_machine_time_steps = None
+        MachineUsesSimulationDataNeedsTotalRuntimeSpecableVertex.__init__(
+            self, machine_time_step, time_scale_factor)
 
         # app secific elements
         self._state = state
 
-    @overrides(MachineDataSpecableVertex.get_binary_file_name)
+    @overrides(MachineUsesSimulationDataNeedsTotalRuntimeSpecableVertex.
+               get_binary_file_name)
     def get_binary_file_name(self):
         return "conways_cell.aplx"
 
@@ -71,7 +69,8 @@ class ConwayBasicCell(MachineVertex, MachineDataSpecableVertex,
     def model_name(self):
         return "ConwayBasicCell"
 
-    @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
+    @overrides(MachineUsesSimulationDataNeedsTotalRuntimeSpecableVertex.
+               generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
             reverse_iptags):
@@ -98,9 +97,7 @@ class ConwayBasicCell(MachineVertex, MachineDataSpecableVertex,
 
         # simulation .c requriements
         spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
-        data = self.data_for_simulation_data(
-            self._machine_time_step, self._time_scale_factor)
-        spec.write_array(data)
+        spec.write_array(self.data_for_simulation_data())
 
         # check got right number of keys and edges going into me
         partitions = \
@@ -227,10 +224,6 @@ class ConwayBasicCell(MachineVertex, MachineDataSpecableVertex,
                 self.TRANSMISSION_DATA_SIZE + self.STATE_DATA_SIZE +
                 self.NEIGHBOUR_INITIAL_STATES_SIZE +
                 (self._no_machine_time_steps * 1) + 4)
-
-    @inject("MemoryNoMachineTimeSteps")
-    def set_no_machine_time_steps(self, new_no_machine_time_steps):
-        self._no_machine_time_steps = new_no_machine_time_steps
 
     def __repr__(self):
         return self._label
