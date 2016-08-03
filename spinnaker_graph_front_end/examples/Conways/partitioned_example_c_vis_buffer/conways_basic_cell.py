@@ -51,13 +51,23 @@ class ConwayBasicCell(
 
     def __init__(self, label, machine_time_step, time_scale_factor, state):
 
+        ReceiveBuffersToHostBasicImpl.__init__(self)
+
+        # activate the buffer out functionality
+        self.activate_buffering_output(
+            minimum_sdram_for_buffering=
+            config.getint("Buffers", "minimum_buffer_sdram"),
+            buffered_sdram_per_timestep=4)
+
         # resources used by the system.
         resources = ResourceContainer(
             sdram=SDRAMResource(0), dtcm=DTCMResource(0),
             cpu_cycles=CPUCyclesPerTickResource(0))
+        resources = resources.extend(self.get_extra_resources(
+            config.get("Buffers", "receive_buffer_host"),
+            config.getint("Buffers", "receive_buffer_port")))
 
         MachineVertex .__init__(self, resources, label)
-        ReceiveBuffersToHostBasicImpl.__init__(self)
         MachineUsesSimulationDataSpecableVertex.__init__(
             self, machine_time_step, time_scale_factor)
 
