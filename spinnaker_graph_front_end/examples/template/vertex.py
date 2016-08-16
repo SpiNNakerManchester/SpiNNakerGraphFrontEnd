@@ -39,7 +39,7 @@ class Vertex(
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
-               ('TRANSMISSION', 1)
+               ('TRANSMISSION', 1),
                ('RECORDED_DATA', 2),
                ('BUFFERED_STATE', 3)])
 
@@ -53,7 +53,7 @@ class Vertex(
             cpu_cycles=CPUCyclesPerTickResource(45),
             dtcm=DTCMResource(100),
             sdram=SDRAMResource(
-                (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS * 4) +
+                constants.SYSTEM_BYTES_REQUIREMENT +
                 self.TRANSMISSION_REGION_N_BYTES +
                 self.get_buffer_state_region_size(1) +
                 self.get_recording_data_size(1) + self._recording_size))
@@ -128,7 +128,7 @@ class Vertex(
     def _reserve_memory_regions(self, spec):
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.SYSTEM.value,
-            size=constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS * 4,
+            size=constants.SYSTEM_BYTES_REQUIREMENT,
             label='systemInfo')
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.TRANSMISSION.value,

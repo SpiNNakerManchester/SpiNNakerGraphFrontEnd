@@ -76,7 +76,7 @@ class ConwayBasicCell(MachineVertex,
             reverse_iptags):
 
         # Setup words + 1 for flags + 1 for recording size
-        setup_size = (constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 8) * 4
+        setup_size = constants.SYSTEM_BYTES_REQUIREMENT
 
         # reserve memory regions
         spec.reserve_memory_region(
@@ -220,10 +220,10 @@ class ConwayBasicCell(MachineVertex,
 
     @requires_injection(["MemoryNoMachineTimeSteps"])
     def _calculate_sdram_requirement(self):
-        return (((constants.DATA_SPECABLE_BASIC_SETUP_INFO_N_WORDS + 8) * 4) +
+        return (constants.SYSTEM_BYTES_REQUIREMENT +
                 self.TRANSMISSION_DATA_SIZE + self.STATE_DATA_SIZE +
                 self.NEIGHBOUR_INITIAL_STATES_SIZE +
-                (self._no_machine_time_steps * 1) + 4)
+                self._no_machine_time_steps + 4)
 
     def __repr__(self):
         return self._label
