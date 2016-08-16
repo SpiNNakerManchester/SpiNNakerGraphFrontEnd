@@ -247,17 +247,19 @@ static bool initialise_recording(){
     address_t address = data_specification_get_data_address();
     address_t system_region = data_specification_get_region(
         SYSTEM_REGION, address);
-    regions_e regions_to_record[] = {
-        RECORDED_DATA
+    address_t regions_to_record[] = {
+        data_specification_get_region(RECORDED_DATA, address)
     };
     uint8_t n_regions_to_record = 1;
     uint32_t *recording_flags_from_system_conf =
         &system_region[SIMULATION_N_TIMING_DETAIL_WORDS];
-    regions_e state_region = RECORDING_STATE_REGION;
+    address_t state_region_address =
+        data_specification_get_region(RECORDING_STATE_REGION, address);
 
     bool success = recording_initialize(
         n_regions_to_record, regions_to_record,
-        recording_flags_from_system_conf, state_region, &recording_flags);
+        recording_flags_from_system_conf, state_region_address,
+        &recording_flags);
     log_info("Recording flags = 0x%08x", recording_flags);
     return success;
 }

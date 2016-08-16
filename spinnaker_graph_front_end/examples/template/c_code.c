@@ -40,9 +40,6 @@ typedef enum transmission_region_elements {
 // TODO: Update with the number of recorded regions
 #define N_REGIONS_TO_RECORD 1
 
-// TODO: Update with the recording region ids
-static regions_e regions_ids_to_record[] = {RECORDED_DATA};
-
 // TODO: Set the application name here
 static char *app_name = "";
 
@@ -112,11 +109,16 @@ static bool initialise_recording() {
         SYSTEM_REGION, address);
     uint32_t *recording_flags_from_system_conf =
         &system_region[SIMULATION_N_TIMING_DETAIL_WORDS];
-    regions_e state_region = BUFFERING_OUT_STATE;
+    address_t state_region_address =
+        data_specification_get_region(BUFFERING_OUT_STATE, address);
+
+    // TODO: Update with the recording region ids
+    address_t regions_addresses_to_record[] = {
+        data_specification_get_region(RECORDED_DATA, address)};
 
     bool success = recording_initialize(
-        N_REGIONS_TO_RECORD, regions_ids_to_record,
-        recording_flags_from_system_conf, state_region, TIMER,
+        N_REGIONS_TO_RECORD, regions_addresses_to_record,
+        recording_flags_from_system_conf, state_region_address, TIMER,
         &recording_flags);
     log_info("Recording flags = 0x%08x", recording_flags);
     return success;
