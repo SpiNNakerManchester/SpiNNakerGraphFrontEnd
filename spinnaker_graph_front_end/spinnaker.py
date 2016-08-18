@@ -58,8 +58,7 @@ class SpiNNaker(SpinnakerMainInterface):
             self._time_scale_factor = \
                 config.get("Machine", "timeScaleFactor")
             if self._time_scale_factor == "None":
-                raise exceptions.ConfigurationException(
-                    "the time scale factor must be set somewhere")
+                self._time_scale_factor = 1
             else:
                 self._time_scale_factor = int(self._time_scale_factor)
         else:

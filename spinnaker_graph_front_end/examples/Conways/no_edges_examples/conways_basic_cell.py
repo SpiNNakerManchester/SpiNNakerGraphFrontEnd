@@ -1,4 +1,3 @@
-from pacman.model.decorators.overrides import overrides
 from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.cpu_cycles_per_tick_resource import \
@@ -18,9 +17,3 @@ class ConwayBasicCell(MachineVertex):
                                       dtcm=DTCMResource(0),
                                       cpu_cycles=CPUCyclesPerTickResource(0))
         MachineVertex.__init__(self, resources, label)
-
-
-    @property
-    @overrides(MachineVertex.model_name)
-    def model_name(self):
-        return "ConwayBasicCell"

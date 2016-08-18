@@ -10,30 +10,34 @@ from pacman.model.resources.cpu_cycles_per_tick_resource import \
 from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.sdram_resource import SDRAMResource
 
-# spinn front end commom imports
+# spinn front end common imports
 from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.utilities import exceptions
 from spinn_front_end_common.utilities import helpful_functions
-from spinn_front_end_common.abstract_models.impl.\
-    machine_uses_simulation_needs_totoal_runtime_data_specable_vertex import \
-    MachineUsesSimulationDataNeedsTotalRuntimeSpecableVertex
+from spinn_front_end_common.interface.simulation import simulation_utilities
+from spinn_front_end_common.abstract_models.impl.needs_n_machine_time_steps\
+    import NeedsNMachineTimeSteps
+from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
+    import MachineDataSpecableVertex
+from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
+    import AbstractHasAssociatedBinary
 
 # general imports
 from enum import Enum
 import struct
 
 
-
 @supports_injection
-class ConwayBasicCell(MachineVertex,
-                      MachineUsesSimulationDataNeedsTotalRuntimeSpecableVertex):
+class ConwayBasicCell(
+        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
+        NeedsNMachineTimeSteps):
     """
     cell which represents a cell within the 2 d fabric
     """
 
-    TRANSMISSION_DATA_SIZE = 2 * 4 # has key and key
-    STATE_DATA_SIZE = 1 * 4 # 1 or 2 based off dead or alive
-    NEIGHBOUR_INITIAL_STATES_SIZE = 2 * 4 # alive states, dead states
+    TRANSMISSION_DATA_SIZE = 2 * 4  # has key and key
+    STATE_DATA_SIZE = 1 * 4  # 1 or 2 based off dead or alive
+    NEIGHBOUR_INITIAL_STATES_SIZE = 2 * 4  # alive states, dead states
 
     # Regions for populations
     DATA_REGIONS = Enum(
@@ -44,7 +48,7 @@ class ConwayBasicCell(MachineVertex,
                ('NEIGHBOUR_INITIAL_STATES', 3),
                ('RESULTS', 4)])
 
-    def __init__(self, label, machine_time_step, time_scale_factor, state):
+    def __init__(self, label, state):
 
         # resources used by the system.
         resources = ResourceContainer(
@@ -52,28 +56,19 @@ class ConwayBasicCell(MachineVertex,
             cpu_cycles=CPUCyclesPerTickResource(0))
 
         MachineVertex.__init__(self, resources, label)
-        MachineUsesSimulationDataNeedsTotalRuntimeSpecableVertex.__init__(
-            self, machine_time_step, time_scale_factor)
+        NeedsNMachineTimeSteps.__init__(self)
 
-        # app secific elements
+        # app specific elements
         self._state = state
 
-    @overrides(MachineUsesSimulationDataNeedsTotalRuntimeSpecableVertex.
-               get_binary_file_name)
+    @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
         return "conways_cell.aplx"
 
-
-    @property
-    @overrides(MachineVertex.model_name)
-    def model_name(self):
-        return "ConwayBasicCell"
-
-    @overrides(MachineUsesSimulationDataNeedsTotalRuntimeSpecableVertex.
-               generate_machine_data_specification)
+    @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
-            reverse_iptags):
+            reverse_iptags, machine_time_step, time_scale_factor):
 
         # Setup words + 1 for flags + 1 for recording size
         setup_size = constants.SYSTEM_BYTES_REQUIREMENT
@@ -93,11 +88,13 @@ class ConwayBasicCell(MachineVertex,
             size=8, label="neighour_states")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.RESULTS.value,
-            size=(self._no_machine_time_steps * 4) + 4, label="results")
+            size=(self._n_machine_time_steps * 4) + 4, label="results")
 
-        # simulation .c requriements
+        # simulation .c requirements
         spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
-        spec.write_array(self.data_for_simulation_data())
+        spec.write_array(simulation_utilities.get_simulation_header_array(
+            self.get_binary_file_name(), machine_time_step,
+            time_scale_factor))
 
         # check got right number of keys and edges going into me
         partitions = \
@@ -173,7 +170,8 @@ class ConwayBasicCell(MachineVertex,
     def get_data(self, transceiver, placement):
         data = list()
 
-        # Get the data region base address where results are stored for the core
+        # Get the data region base address where results are stored for the
+        # core
         record_region_base_address = \
             helpful_functions.locate_memory_region_for_placement(
                 placement, self.DATA_REGIONS.RESULTS.value, transceiver)
@@ -185,7 +183,7 @@ class ConwayBasicCell(MachineVertex,
             struct.unpack("<I", number_of_bytes_to_read)[0]
 
         # read the bytes
-        if number_of_bytes_to_read != (self._no_machine_time_steps * 4):
+        if number_of_bytes_to_read != (self._n_machine_time_steps * 4):
             raise exceptions.ConfigurationException(
                 "number of bytes seems wrong")
         else:
@@ -195,7 +193,7 @@ class ConwayBasicCell(MachineVertex,
 
         # convert to ints
         elements = struct.unpack(
-            "<{}I".format(self._no_machine_time_steps), raw_data)
+            "<{}I".format(self._n_machine_time_steps), raw_data)
         for element in elements:
             if element == 0:
                 data.append(False)
@@ -218,12 +216,12 @@ class ConwayBasicCell(MachineVertex,
     def state(self):
         return self._state
 
-    @requires_injection(["MemoryNoMachineTimeSteps"])
+    @requires_injection(["TotalMachineTimeSteps"])
     def _calculate_sdram_requirement(self):
         return (constants.SYSTEM_BYTES_REQUIREMENT +
                 self.TRANSMISSION_DATA_SIZE + self.STATE_DATA_SIZE +
                 self.NEIGHBOUR_INITIAL_STATES_SIZE +
-                self._no_machine_time_steps + 4)
+                self._n_machine_time_steps + 4)
 
     def __repr__(self):
         return self._label

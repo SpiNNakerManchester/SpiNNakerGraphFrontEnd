@@ -35,8 +35,8 @@ active_states = [(2,2), (3, 2), (3, 3), (4, 3), (2, 4)]
 for x in range(0, MAX_X_SIZE_OF_FABRIC):
     for y in range(0, MAX_Y_SIZE_OF_FABRIC):
         vert = ConwayBasicCell(
-            "cell{}".format((x * MAX_X_SIZE_OF_FABRIC) + y), machine_time_step,
-            time_scale_factor, (x, y) in active_states)
+            "cell{}".format((x * MAX_X_SIZE_OF_FABRIC) + y),
+            (x, y) in active_states)
         vertices[x][y] = vert
         front_end.add_machine_vertex_instance(vert)
 

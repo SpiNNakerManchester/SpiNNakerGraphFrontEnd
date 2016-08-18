@@ -96,8 +96,8 @@ placement_to_make_tubogrid_work_correctly[(0, 0)] = (1, 1, 11)
 for x in range(0, MAX_X_SIZE_OF_FABRIC):
     for y in range(0, MAX_Y_SIZE_OF_FABRIC):
         vert = ConwayBasicCell(
-            "cell{}".format((x * MAX_X_SIZE_OF_FABRIC) + y), machine_time_step,
-            time_scale_factor, (x, y) in active_states)
+            "cell{}".format((x * MAX_X_SIZE_OF_FABRIC) + y),
+            (x, y) in active_states)
         vert.add_constraint(PlacerChipAndCoreConstraint(
             placement_to_make_tubogrid_work_correctly[(x, y)][0],
             placement_to_make_tubogrid_work_correctly[(x, y)][1],

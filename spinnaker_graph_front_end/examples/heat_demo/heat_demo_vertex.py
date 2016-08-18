@@ -16,19 +16,21 @@ from pacman.model.resources.sdram_resource import SDRAMResource
 from .heat_demo_edge import HeatDemoEdge
 from spinnaker_graph_front_end.utilities.conf import config
 
-# fec imports
+# FEC imports
 from spinn_front_end_common.interface.buffer_management.buffer_models.\
     receives_buffers_to_host_basic_impl import \
     ReceiveBuffersToHostBasicImpl
+from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utility_models.live_packet_gather import \
     LivePacketGather
 from spinn_front_end_common.utility_models.\
     reverse_ip_tag_multi_cast_source import ReverseIpTagMultiCastSource
 from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.utilities import exceptions
-from spinn_front_end_common.abstract_models.impl.\
-    machine_uses_simulation_data_specable_vertex import \
-    MachineUsesSimulationDataSpecableVertex
+from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
+    import MachineDataSpecableVertex
+from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
+    import AbstractHasAssociatedBinary
 
 # general imports
 from enum import Enum
@@ -38,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 class HeatDemoVertex(
-        MachineVertex, MachineUsesSimulationDataSpecableVertex,
+        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
         ReceiveBuffersToHostBasicImpl):
     """ A vertex partition for a heat demo; represents a heat element.
     """
@@ -77,15 +79,13 @@ class HeatDemoVertex(
         MachineVertex.__init__(
             self, label=label, resources_required=resources,
             constraints=constraints)
-        MachineUsesSimulationDataSpecableVertex.__init__(
-            self, machine_time_step, time_scale_factor)
 
-        # app speific data items
+        # app specific data items
         self._heat_temperature = heat_temperature
         self._time_between_requests = config.getint(
             "Buffers", "time_between_requests")
 
-    @overrides(MachineUsesSimulationDataSpecableVertex.get_binary_file_name)
+    @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
         """
 
@@ -93,19 +93,10 @@ class HeatDemoVertex(
         """
         return "heat_demo.aplx"
 
-    @overrides(MachineVertex.model_name)
-    def model_name(self):
-        """
-
-        :return:
-        """
-        return "Heat_Demo_Vertex"
-
-    @overrides(MachineUsesSimulationDataSpecableVertex.
-               generate_machine_data_specification)
+    @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
-            reverse_iptags):
+            reverse_iptags, machine_time_step, time_scale_factor):
         """
 
         :param placement: the placement object for the dsg
@@ -130,9 +121,11 @@ class HeatDemoVertex(
         # Create the data regions for the spike source array:
         self._reserve_memory_regions(spec, setup_size)
 
-        # handle sim items
+        # handle simulation.c items
         spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
-        spec.write_array(self.data_for_simulation_data())
+        spec.write_array(simulation_utilities.get_simulation_header_array(
+            self.get_binary_file_name(), machine_time_step,
+            time_scale_factor))
 
         # application specific data items
         self._write_transmission_keys(spec, routing_info, machine_graph)

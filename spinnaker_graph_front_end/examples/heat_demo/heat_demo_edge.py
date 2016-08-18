@@ -29,10 +29,6 @@ class HeatDemoEdge(MachineEdge):
         """
         return self._direction
 
-    @overrides(MachineEdge.model_name)
-    def model_name(self):
-        return "HeatDemoEdge"
-
     def __str__(self):
         return self.__repr__()
 
