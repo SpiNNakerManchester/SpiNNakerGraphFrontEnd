@@ -30,8 +30,7 @@ import struct
 class ConwayBasicCell(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
         ReceiveBuffersToHostBasicImpl):
-    """
-    cell which represents a cell within the 2 d fabric
+    """ Cell which represents a cell within the 2d fabric
     """
 
     TRANSMISSION_DATA_SIZE = 2 * 4  # has key and key
@@ -51,6 +50,7 @@ class ConwayBasicCell(
     def __init__(self, label, state):
 
         ReceiveBuffersToHostBasicImpl.__init__(self)
+
         # activate the buffer out functionality
         self.activate_buffering_output(
             minimum_sdram_for_buffering=(

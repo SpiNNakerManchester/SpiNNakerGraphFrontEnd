@@ -2,7 +2,6 @@
 # common front end imports
 from spinn_front_end_common.interface.spinnaker_main_interface import \
     SpinnakerMainInterface
-from spinn_front_end_common.utilities import exceptions
 
 # graph front end imports
 from spinnaker_graph_front_end.utilities.xml_interface import XMLInterface

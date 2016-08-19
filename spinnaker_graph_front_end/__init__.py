@@ -19,6 +19,8 @@ from pacman.model.graphs.machine.impl.machine_edge \
 
 
 import logging
+import inspect
+import sys
 logger = logging.getLogger(__name__)
 
 
@@ -34,43 +36,48 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
           time_scale_factor=None, machine_time_step=None):
     """
 
-    :param hostname: the hostname of the SpiNNaker machine to operate on
-    (over rides the machine_name from the cfg file).
-    :param graph_label: a human readable label for the graph (used mainly in
-    reports)
-    :param model_binary_module: the module where the binary files can be found
-    for the c code that is being used in this application mutally exclusive with
-    the model_binary_folder.
-    :param model_binary_folder: the folder where the binary files can be found
-    for the c code that is being used in this application mutally exclusive with
-    the model_binary_module.
-    :param database_socket_addresses: set of SocketAddresses that need to be
-    added for the database functionality. This are over and above the ones used
-    by the liveEventConnection
-    :param user_dsg_algorithm: a algorithm used for generating the application
-    data which is loaded onto the machine. if not set, will use the
-    data specification language algorithm required for the type of graph being
-    used.
-    :param n_chips_required: if you need to be allocated a machine (for spalloc)
-    before building your graph, then fill this in with a general idea of the
-    number of chips you need so that the spalloc system can allocate you a
-    machine big enough for your needs.
-    :param extra_pre_run_algorithms: algorithms which need to be ran after
-    mapping and loading has occured but before the system has ran. These are
-    plugged directly into the work flow management.
-    :param extra_post_run_algorithms: algorithms which need to be ran after the
-    simulation has ran. These could be post processing of generated data on the
-    machine for example.
+    :param hostname:\
+        the hostname of the SpiNNaker machine to operate on\
+        (over rides the machine_name from the cfg file).
     :type hostname: str
+    :param graph_label:\
+        a human readable label for the graph (used mainly in reports)
     :type graph_label: str
-    :type model_binary_folder: str
+    :param model_binary_module:\
+        the module where the binary files can be found for the c code that is \
+        being used in this application; mutually exclusive with the \
+        model_binary_folder.
     :type model_binary_module: python module
+    :param model_binary_folder:\
+        the folder where the binary files can be found for the c code that is\
+        being used in this application; mutually exclusive with the\
+        model_binary_module.
+    :type model_binary_folder: str
+    :param database_socket_addresses:\
+        set of SocketAddresses that need to be added for the database\
+        notification functionality. This are over and above the ones used by\
+        the LiveEventConnection
     :type database_socket_addresses: list of SocketAddresses
+    :param user_dsg_algorithm:\
+        an algorithm used for generating the application data which is loaded\
+        onto the machine. if not set, will use the data specification language\
+        algorithm required for the type of graph being used.
     :type user_dsg_algorithm: str
+    :param n_chips_required:\
+        if you need to be allocated a machine (for spalloc) before building\
+        your graph, then fill this in with a general idea of the number of\
+        chips you need so that the spalloc system can allocate you a machine\
+        big enough for your needs.
     :type n_chips_required: int
+    :param extra_pre_run_algorithms:\
+        algorithms which need to be ran after mapping and loading has occurred\
+        but before the system has ran. These are plugged directly into the\
+        work flow management.
     :type extra_post_run_algorithms: list of str
+    :param extra_post_run_algorithms:\
+        algorithms which need to be ran after the simulation has ran. These\
+        could be post processing of generated data on the machine for example.
     :type extra_pre_run_algorithms: list of str
-    :return: None
     """
     from spinnaker_graph_front_end import spinnaker
     import os
@@ -95,6 +102,9 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
             os.path.dirname(model_binary_module.__file__))
     elif model_binary_folder is not None:
         executable_finder.add_path(model_binary_folder)
+    else:
+        file_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+        executable_finder.add_path(file_dir)
 
     # set up the spinnaker object
     _spinnaker = SpiNNaker(
@@ -151,7 +161,7 @@ def add_vertex(cellclass, cellparams, label=None, constraints=None):
     :param constraints: any constraints to be applied to the vertex once built
     :param label: the label for this vertex
     :type cellclass: python object
-    :type cellparams: dictoanry of name and value
+    :type cellparams: dictionary of name and value
     :type constraints: list of AbstractConstraint
     :type label: str
     :return: the vertex instance object
@@ -196,7 +206,7 @@ def add_machine_vertex(
     :param constraints: any constraints to be applied to the vertex once built
     :param label: the label for this vertex
     :type cellclass: python object
-    :type cellparams: dictoanry of name and value
+    :type cellparams: dictionary of name and value
     :type constraints: list of AbstractConstraint
     :type label: str
     :return: the vertex instance object

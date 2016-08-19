@@ -1,7 +1,6 @@
 from enum import Enum
 
 # front end common imports
-from pacman.model.decorators.overrides import overrides
 from pacman.model.graphs.machine.impl.machine_edge import MachineEdge
 
 

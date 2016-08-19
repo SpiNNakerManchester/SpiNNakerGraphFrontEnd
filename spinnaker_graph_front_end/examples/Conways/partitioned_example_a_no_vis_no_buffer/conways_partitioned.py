@@ -1,37 +1,31 @@
-
 import spinnaker_graph_front_end as front_end
-import sys
 
 from spinnaker_graph_front_end.examples.Conways.\
     partitioned_example_a_no_vis_no_buffer.conways_basic_cell \
     import ConwayBasicCell
 from pacman.model.graphs.machine.impl.machine_edge import MachineEdge
 
-n_chips_required = 48
 runtime = 50
 machine_time_step = 100
-time_scale_factor = 2
 MAX_X_SIZE_OF_FABRIC = 7
 MAX_Y_SIZE_OF_FABRIC = 7
 
 # set up the front end and ask for the detected machines dimensions
-front_end.setup(
-    graph_label="conway_graph", model_binary_module=sys.modules[__name__],
-    n_chips_required=n_chips_required)
+front_end.setup()
 
 # figure out if machine can handle simulation
 cores = front_end.get_number_of_cores_on_machine()
 if cores <= (MAX_X_SIZE_OF_FABRIC * MAX_Y_SIZE_OF_FABRIC):
-    raise KeyError("Dont have enough cores to run simulation")
+    raise KeyError("Don't have enough cores to run simulation")
 
-# contain the verts for the connection aspect
+# contain the vertices for the connection aspect
 vertices = [
     [None for _ in range(MAX_X_SIZE_OF_FABRIC)]
     for _ in range(MAX_Y_SIZE_OF_FABRIC)]
 
-active_states = [(2,2), (3, 2), (3, 3), (4, 3), (2, 4)]
+active_states = [(2, 2), (3, 2), (3, 3), (4, 3), (2, 4)]
 
-# build verts
+# build vertices
 for x in range(0, MAX_X_SIZE_OF_FABRIC):
     for y in range(0, MAX_Y_SIZE_OF_FABRIC):
         vert = ConwayBasicCell(

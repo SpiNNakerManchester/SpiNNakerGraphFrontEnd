@@ -1,6 +1,4 @@
-
 import spinnaker_graph_front_end as front_end
-import sys
 
 from pacman.model.constraints.placer_constraints.\
     placer_chip_and_core_constraint import \
@@ -10,7 +8,6 @@ from spinnaker_graph_front_end.examples.Conways.\
     import ConwayBasicCell
 from pacman.model.graphs.machine.impl.machine_edge import MachineEdge
 
-n_chips_required = 48
 runtime = 500
 machine_time_step = 1000
 time_scale_factor = 1000
@@ -18,22 +15,19 @@ MAX_X_SIZE_OF_FABRIC = 7
 MAX_Y_SIZE_OF_FABRIC = 7
 
 # set up the front end and ask for the detected machines dimensions
-front_end.setup(
-    graph_label="conway_graph", model_binary_module=sys.modules[__name__],
-    n_chips_required=n_chips_required, machine_time_step=machine_time_step,
-    time_scale_factor=time_scale_factor)
+front_end.setup(time_scale_factor=time_scale_factor)
 
 # figure out if machine can handle simulation
 cores = front_end.get_number_of_cores_on_machine()
 if cores <= (MAX_X_SIZE_OF_FABRIC * MAX_Y_SIZE_OF_FABRIC):
-    raise KeyError("Dont have enough cores to run simulation")
+    raise KeyError("Don't have enough cores to run simulation")
 
-# contain the verts for the connection aspect
+# contain the vertices for the connection aspect
 vertices = [
     [None for _ in range(MAX_X_SIZE_OF_FABRIC)]
     for _ in range(MAX_Y_SIZE_OF_FABRIC)]
 
-active_states = [(2,2), (3, 2), (3, 3), (4, 3), (2, 4)]
+active_states = [(2, 2), (3, 2), (3, 3), (4, 3), (2, 4)]
 
 placement_to_make_tubogrid_work_correctly = dict()
 placement_to_make_tubogrid_work_correctly[(6, 6)] = (0, 0, 1)
@@ -92,7 +86,7 @@ placement_to_make_tubogrid_work_correctly[(0, 2)] = (1, 1, 9)
 placement_to_make_tubogrid_work_correctly[(0, 1)] = (1, 1, 10)
 placement_to_make_tubogrid_work_correctly[(0, 0)] = (1, 1, 11)
 
-# build verts
+# build vertices
 for x in range(0, MAX_X_SIZE_OF_FABRIC):
     for y in range(0, MAX_Y_SIZE_OF_FABRIC):
         vert = ConwayBasicCell(
@@ -142,8 +136,11 @@ for x in range(0, MAX_X_SIZE_OF_FABRIC):
                 "STATE")
 
 # set up vis
-#inputs = ["/home/alan/spinnaker/alpha_package_103_git/spinnaker_tools/tools/tubogrid"]
-#child = subprocess.Popen(
+# inputs = [
+#    "/home/alan/spinnaker/alpha_package_103_git/spinnaker_tools/"
+#    "tools/tubogrid"
+# ]
+# child = subprocess.Popen(
 #    inputs, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
 #    stdin=subprocess.PIPE)
 
@@ -177,4 +174,4 @@ for time in range(0, runtime):
 front_end.stop()
 
 # wait till vis is stopped
-#child.wait()
+# child.wait()

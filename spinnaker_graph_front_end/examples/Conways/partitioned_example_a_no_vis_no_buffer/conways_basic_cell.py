@@ -31,8 +31,7 @@ import struct
 class ConwayBasicCell(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
         NeedsNMachineTimeSteps):
-    """
-    cell which represents a cell within the 2 d fabric
+    """ Cell which represents a cell within the 2d fabric
     """
 
     TRANSMISSION_DATA_SIZE = 2 * 4  # has key and key

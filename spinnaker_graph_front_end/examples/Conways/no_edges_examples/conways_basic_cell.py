@@ -7,8 +7,7 @@ from pacman.model.resources.sdram_resource import SDRAMResource
 
 
 class ConwayBasicCell(MachineVertex):
-    """
-    cell which represents a cell within the 2 d fabric
+    """ Cell which represents a cell within the 2d fabric
     """
 
     def __init__(self, label):
