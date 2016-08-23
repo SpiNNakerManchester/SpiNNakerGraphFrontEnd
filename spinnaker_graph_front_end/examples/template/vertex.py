@@ -3,6 +3,8 @@ from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex\
     import MachineDataSpecableVertex
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary\
     import AbstractHasAssociatedBinary
+from spinn_front_end_common.abstract_models.abstract_chip_runtime_updatable\
+    import AbstractChipRuntimeUpdatable
 from pacman.model.graphs.machine.impl.machine_vertex \
     import MachineVertex
 from pacman.model.resources.cpu_cycles_per_tick_resource import \
@@ -29,7 +31,7 @@ PARTITION_ID = "DATA"
 
 class Vertex(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-        ReceiveBuffersToHostBasicImpl):
+        ReceiveBuffersToHostBasicImpl, AbstractChipRuntimeUpdatable):
 
     # The number of bytes for the has_key flag and the key
     TRANSMISSION_REGION_N_BYTES = 2 * 4
