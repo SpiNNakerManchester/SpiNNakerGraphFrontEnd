@@ -20,7 +20,7 @@ class SpiNNaker(SpinnakerMainInterface):
             database_socket_addresses=None, dsg_algorithm=None,
             n_chips_required=None, extra_pre_run_algorithms=None,
             extra_post_run_algorithms=None, time_scale_factor=None,
-            machine_time_step=None):
+            machine_time_step=None, extra_load_algorithms=None):
 
         # dsg algorithm store for user defined algorithms
         self._user_dsg_algorithm = dsg_algorithm
@@ -33,6 +33,12 @@ class SpiNNaker(SpinnakerMainInterface):
         extra_mapping_inputs["CreateAtomToEventIdMapping"] = config.getboolean(
             "Database", "create_routing_info_to_atom_id_mapping")
 
+        if config.getboolean("Reports", "ReportsEnabled"):
+            if config.getboolean("Reports", "writeSynapticReport"):
+                if extra_load_algorithms is None:
+                    extra_load_algorithms = list()
+                    extra_load_algorithms.append("SynapticMatrixReport")
+
         SpinnakerMainInterface.__init__(
             self, config, graph_label=graph_label,
             executable_finder=executable_finder,
@@ -41,7 +47,8 @@ class SpiNNaker(SpinnakerMainInterface):
             extra_mapping_inputs=extra_mapping_inputs,
             n_chips_required=n_chips_required,
             extra_pre_run_algorithms=extra_pre_run_algorithms,
-            extra_post_run_algorithms=extra_post_run_algorithms)
+            extra_post_run_algorithms=extra_post_run_algorithms,
+            extra_load_algorithms=extra_load_algorithms)
 
         # set up machine targeted data
         if machine_time_step is None:

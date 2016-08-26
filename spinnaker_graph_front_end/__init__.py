@@ -33,7 +33,8 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
           model_binary_folder=None, database_socket_addresses=None,
           user_dsg_algorithm=None, n_chips_required=None,
           extra_pre_run_algorithms=None, extra_post_run_algorithms=None,
-          time_scale_factor=None, machine_time_step=None):
+          time_scale_factor=None, machine_time_step=None,
+          extra_load_algorithms=None):
     """
 
     :param hostname:\
@@ -116,7 +117,8 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         extra_pre_run_algorithms=extra_pre_run_algorithms,
         extra_post_run_algorithms=extra_post_run_algorithms,
         machine_time_step=machine_time_step,
-        time_scale_factor=time_scale_factor)
+        time_scale_factor=time_scale_factor,
+        extra_load_algorithms=extra_load_algorithms)
 
 
 def run(duration=None):
