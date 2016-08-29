@@ -9,17 +9,21 @@
 #include <circular_buffer.h>
 
 /*! multicast routing keys to communicate with neighbours */
-uint my_base_key;
+static uint32_t my_base_key;
+
+/*! the number of cells being simulated on this core */
+static uint32_t n_cells = 0;
 
 /*! buffer used to store spikes */
 static circular_buffer input_buffer;
 static uint32_t current_payload;
 
-//! conways specific data items
-uint32_t *my_state = 0;
+//! Array of cell states
+static neuron_pointer_t cell_array;
 
-int alive_states_recieved_this_tick = 0;
-int dead_states_recieved_this_tick = 0;
+//! neighbour states for next iteration
+uint32_t *alive_states_recieved_this_tick;
+uint32_t *dead_states_recieved_this_tick;
 
 //! recorded data items
 uint32_t size_written = 0;
@@ -60,7 +64,7 @@ typedef enum states_values{
 
 //! human readable definitions of each element in the transmission region
 typedef enum transmission_region_elements {
-    HAS_KEY, MY_BASE_KEY
+    HAS_KEY, MY_BASE_KEY, N_CELLS
 } transmission_region_elements;
 
 //! human readable definitions of each element in the initial state
@@ -89,8 +93,11 @@ void receive_data(uint key, uint payload) {
     //log_info("the key i've received is %d\n", key);
     //log_info("the payload i've received is %d\n", payload);
     // If there was space to add spike to incoming spike queue
+    if (!circular_buffer_add(input_buffer, key)) {
+        log_info("Could not add key");
+    }
     if (!circular_buffer_add(input_buffer, payload)) {
-        log_info("Could not add state");
+        log_info("Could not add payload");
     }
 }
 
@@ -131,43 +138,58 @@ void update(uint ticks, uint b) {
     }
 
     if (time == 0){
-        next_state();
-        send_state();
-        recording_record(0, &my_state, 4);
-        log_debug("Send my first state!");
+        for (uint32_t cell=0; cell < n_cells; cell++){
+            // find the cell's next state
+            next_state(cell);
+
+            // send the cell's state to its neighbours
+            send_state(cell);
+
+            // record the new state for the host
+            recording_record(0, &cell_array[cell], 4);
+            log_debug(
+                "Send cell %d's first state %d!", cell, &cell_array[cell]);
+        }
     }
     else{
 
+        // translate recieved packets into the neighbouring states array
         read_input_buffer();
 
-        // find my next state
-        next_state();
+        for (uint32_t cell=0; cell < n_cells; cell++){
+            // find my next state
+            next_state(cell);
 
-        // do a safety check on number of states. Not like we can fix it
-        // if we've missed events
-        do_safety_check();
+            // do a safety check on number of states. Not like we can fix it
+            // if we've missed events
+            do_safety_check(cell);
 
-        send_state();
+            // send the cell's state to its neighbours
+            send_state(cell);
+            log_debug(
+                "Send cell %d's first state %d!", cell, &cell_array[cell]);
 
-        recording_record(0, &my_state, 4);
-        recording_do_timestep_update(time);
+            // record the new state for the host
+            recording_record(0, &cell_array[cell], 4);
+            recording_do_timestep_update(time);
+        }
     }
 }
 
-void do_safety_check(){
+void do_safety_check(uint32_t cell_id){
     // do a safety check on number of states. Not like we can fix it
     // if we've missed events
     cpsr = spin1_int_disable();
-    int total = alive_states_recieved_this_tick +
-        dead_states_recieved_this_tick;
+    int total = alive_states_recieved_this_tick[cell_id] +
+        dead_states_recieved_this_tick[cell_id];
     if (total != 8){
          log_error("didn't receive the correct number of states");
          log_error("only received %d states", total);
     }
     log_debug("only received %d alive states",
-             alive_states_recieved_this_tick);
+             alive_states_recieved_this_tick[cell_id]);
     log_debug("only received %d dead states",
-             dead_states_recieved_this_tick);
+             dead_states_recieved_this_tick[cell_id]);
     spin1_mode_restore(cpsr);
 }
 
@@ -199,38 +221,39 @@ void read_input_buffer(){
     spin1_mode_restore(cpsr);
 }
 
-void send_state(){
+void send_state(uint32_t cell_id){
     // reset for next iteration
-    alive_states_recieved_this_tick = 0;
-    dead_states_recieved_this_tick = 0;
+    alive_states_recieved_this_tick[cell_id] = 0;
+    dead_states_recieved_this_tick[cell_id] = 0;
 
     // send my new state to the simulation neighbours
-    log_debug("sending my state of %d via multicast with key %d",
-              my_state, my_key);
-    while (!spin1_send_mc_packet(my_key, my_state, WITH_PAYLOAD)) {
+    log_debug("sending cell %d state of %d via multicast with key %d",
+              cell_id, cell_array[cell_id], my_base_key + cell_id);
+    while (!spin1_send_mc_packet(
+            my_base_key + cell_id, cell_array[cell_id], WITH_PAYLOAD)) {
         spin1_delay_us(1);
     }
 
-    log_debug("sent my state via multicast");
+    log_debug("sent cell %d state via multicast", cell_id);
 }
 
-void next_state(){
+void next_state(uint32_t cell_id){
 
     // calculate new state from the total received so far
-    if (my_state == 1){
-        if(alive_states_recieved_this_tick <= 1){
-            my_state = DEAD;
+    if (cell_array[cell_id].state == ALIVE){
+        if(alive_states_recieved_this_tick[cell_id] <= 1){
+            cell_array[cell_id].state = DEAD;
         }
-        if (alive_states_recieved_this_tick == 2 |
-                alive_states_recieved_this_tick == 3){
-            my_state = ALIVE;
+        if ((alive_states_recieved_this_tick[cell_id] == 2) ||
+                (alive_states_recieved_this_tick[cell_id] == 3)){
+            cell_array[cell_id].state = ALIVE;
         }
-        if (alive_states_recieved_this_tick >= 4){
-            my_state = DEAD;
+        if (alive_states_recieved_this_tick[cell_id] >= 4){
+            cell_array[cell_id].state = DEAD;
         }
     }
-    else if (alive_states_recieved_this_tick == 3){
-        my_state = ALIVE;
+    else if (alive_states_recieved_this_tick[cell_id] == 3){
+        cell_array[cell_id].state = ALIVE;
     }
 }
 
@@ -286,8 +309,10 @@ static bool initialize(uint32_t *timer_period) {
     address_t transmission_region_address = data_specification_get_region(
             TRANSMISSIONS, address);
     if (transmission_region_address[HAS_KEY] == 1) {
-        my_key = transmission_region_address[MY_KEY];
-        log_info("my key is %d\n", my_key);
+        my_base_key = transmission_region_address[MY_BASE_KEY];
+        n_cells = transmission_region_address[N_CELLS];
+        log_info("my key is %d\n", my_base_key);
+        log_info("i'm simulating %d cells\n", n_cells);
     } else {
         log_error(
             "this conways cell can't effect anything, deduced as an error,"
@@ -295,32 +320,41 @@ static bool initialize(uint32_t *timer_period) {
         return false;
     }
 
-    // read my state
-    address_t my_state_region_address = data_specification_get_region(
-        STATE, address);
-    my_state = my_state_region_address[INITIAL_STATE];
-    log_info("my initial state is %d\n", my_state);
-
     // read neighbour states for initial tick
-    address_t my_neigbhour_state_region_address = data_specification_get_region(
-        NEIGHBOUR_INITIAL_STATES, address);
-    alive_states_recieved_this_tick = my_neigbhour_state_region_address[0];
-    dead_states_recieved_this_tick = my_neigbhour_state_region_address[1];
+    address_t my_neigbhour_state_region_address =
+        data_specification_get_region(NEIGHBOUR_INITIAL_STATES, address);
+
+    // create arrays for neigbuours of each cell within this core.
+    alive_states_recieved_this_tick =
+        sark_alloc(n_cells, sizeof(uint32_t));
+    dead_states_recieved_this_tick =
+        sark_alloc(n_cells, sizeof(uint32_t));
 
     // initialise my input_buffer for receiving packets
-    input_buffer = circular_buffer_initialize(256);
+    input_buffer = circular_buffer_initialize(8 * 2 * n_cells);
+
     if (input_buffer == 0){
         return false;
     }
     log_info("input_buffer initialised");
 
+    // set up buffered recording region
     if (!initialise_recording()){
         return false;
     }
 
+    // setup edge manager
+    // Allocate DTCM for neuron array and copy block of data
+    if (sizeof(neuron_t) != 0) {
+        cell_array = (neuron_t *) spin1_malloc(n_cells * sizeof(neuron_t));
+        if (cell_array == NULL) {
+            log_error("Unable to allocate cell array - Out of DTCM");
+            return false;
+        }
+        memcpy(cell_array, &address[next], n_cells * sizeof(neuron_t));
+    }
+
     return true;
-
-
 }
 
 /****f* conways.c/c_main

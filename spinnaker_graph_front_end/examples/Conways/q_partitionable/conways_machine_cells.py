@@ -145,9 +145,11 @@ class ConwaysMachineCells(
         if key is None:
             spec.write_value(0)
             spec.write_value(0)
+            spec.write_value(0)
         else:
             spec.write_value(1)
             spec.write_value(key)
+            spec.write_value(self._vertex_slice.n_atoms)
 
         # write neighbours data state
         spec.switch_write_focus(
