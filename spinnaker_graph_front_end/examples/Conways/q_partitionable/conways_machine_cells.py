@@ -23,7 +23,8 @@ from spinn_front_end_common.utilities import exceptions
 from spinn_front_end_common.interface.simulation import simulation_utilities
 
 # GFE imports
-from spinnaker_graph_front_end.examples.Conways.q_partitionable.conways_input_type import \
+from spinnaker_graph_front_end.examples.Conways.q_partitionable.\
+    conways_input_type import \
     CnwaysInputType
 from spinnaker_graph_front_end.utilities.conf import config
 
@@ -47,10 +48,10 @@ class ConwaysMachineCells(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
                ('TRANSMISSIONS', 1),
-               ("CELL_STATES", 6),
-               ('NEIGHBOUR_INITIAL_STATES', 7),
-               ('RESULTS', 8),
-               ('BUFFERED_STATE_REGION', 9)])
+               ("CELL_STATES", 5),
+               ('NEIGHBOUR_INITIAL_STATES', 6),
+               ('RESULTS', 7),
+               ('BUFFERED_STATE_REGION', 8)])
 
     def __init__(self, vertex_slice, resources_required, synaptic_manager,
                  label):
@@ -180,11 +181,13 @@ class ConwaysMachineCells(
                         else:
                             dead_neighbour_cells[atom_here] += 1
 
+        # write the blocks of alvie then dead for easier read from c code
         for index in range(1, self._vertex_slice.n_atoms + 1):
             if index not in alive_neighbour_cells:
                 spec.write_value(0)
             else:
                 spec.write_value(alive_neighbour_cells[index])
+        for index in range(1, self._vertex_slice.n_atoms + 1):
             if index not in dead_neighbour_cells:
                 spec.write_value(0)
             else:
