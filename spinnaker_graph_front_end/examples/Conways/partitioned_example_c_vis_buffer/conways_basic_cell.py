@@ -15,8 +15,8 @@ from spinn_front_end_common.interface.buffer_management.buffer_models.\
 from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.utilities import exceptions
 from spinn_front_end_common.interface.simulation import simulation_utilities
-from spinn_front_end_common.abstract_models.abstract_chip_runtime_updatable \
-    import AbstractChipRuntimeUpdatable
+from spinn_front_end_common.abstract_models.abstract_binary_uses_simulation_run \
+    import AbstractBinaryUsesSimulationRun
 from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
     import MachineDataSpecableVertex
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
@@ -32,7 +32,7 @@ import struct
 
 class ConwayBasicCell(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-        ReceiveBuffersToHostBasicImpl, AbstractChipRuntimeUpdatable):
+        ReceiveBuffersToHostBasicImpl, AbstractBinaryUsesSimulationRun):
     """ Cell which represents a cell within the 2d fabric
     """
 

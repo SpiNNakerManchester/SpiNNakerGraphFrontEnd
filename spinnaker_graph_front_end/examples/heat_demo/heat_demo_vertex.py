@@ -17,8 +17,8 @@ from .heat_demo_edge import HeatDemoEdge
 from spinnaker_graph_front_end.utilities.conf import config
 
 # FEC imports
-from spinn_front_end_common.abstract_models.abstract_chip_runtime_updatable \
-    import AbstractChipRuntimeUpdatable
+from spinn_front_end_common.abstract_models.abstract_binary_uses_simulation_run \
+    import AbstractBinaryUsesSimulationRun
 from spinn_front_end_common.interface.buffer_management.buffer_models.\
     receives_buffers_to_host_basic_impl import \
     ReceiveBuffersToHostBasicImpl
@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 class HeatDemoVertex(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-        ReceiveBuffersToHostBasicImpl, AbstractChipRuntimeUpdatable):
+        ReceiveBuffersToHostBasicImpl, AbstractBinaryUsesSimulationRun):
     """ A vertex partition for a heat demo; represents a heat element.
     """
 
