@@ -40,7 +40,7 @@ class ConwaysApplicationGrid(
     """ Cell which represents a cell within the 2d fabric
     """
 
-    BASIC_MALLOC_USAGE = 4
+    BASIC_MALLOC_USAGE = 5
 
     def __init__(self, grid_size_x, grid_size_y, active_states, label):
 
@@ -141,12 +141,19 @@ class ConwaysApplicationGrid(
         for sub_state in range(vertex_slice.lo_atom, vertex_slice.hi_atom):
             sub_states.append(self._states_by_index[sub_state])
 
+        # create mapping between app space and atoms id
+        coords = list()
+        for atom_id in range(vertex_slice.lo_atom, vertex_slice.hi_atom):
+            coords.append(int(atom_id % self._grid_size_y))
+        for atom_id in range(vertex_slice.lo_atom, vertex_slice.hi_atom):
+            coords.append(int(atom_id / self._grid_size_y))
+
         # build machine vertex
         return ConwaysMachineCells(
             vertex_slice, resources_required,
             label="Cells {} to {}".format(
                 vertex_slice.lo_atom, vertex_slice.hi_atom),
-            synaptic_manager=self._mapping_data)
+            synaptic_manager=self._mapping_data, coords=coords)
 
     @inject_items({
         "graph": "MemoryApplicationGraph",
@@ -183,7 +190,8 @@ class ConwaysApplicationGrid(
              constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP +
              ReceiveBuffersToHostBasicImpl.get_buffer_state_region_size(1) +
              (self._get_number_of_mallocs_used_by_dsg() *
-              constants.SARK_PER_MALLOC_SDRAM_USAGE))
+              constants.SARK_PER_MALLOC_SDRAM_USAGE) +
+             (ConwaysMachineCells.COORDS_PER_CELL_COST * vertex_slice.n_atoms))
 
     def _get_number_of_mallocs_used_by_dsg(self):
         return (

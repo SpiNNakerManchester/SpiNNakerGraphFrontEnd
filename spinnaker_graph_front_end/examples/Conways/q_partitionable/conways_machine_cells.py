@@ -42,6 +42,7 @@ class ConwaysMachineCells(
     TRANSMISSION_DATA_SIZE = 3 * 4  # has key and key, and n_cells
     STATE_DATA_SIZE = 1 * 4  # 1 or 2 based off dead or alive
     NEIGHBOUR_INITIAL_STATES_SIZE = 2 * 4  # alive states, dead states
+    COORDS_PER_CELL_COST = 2 * 4  # x and y
 
     # Regions for populations
     DATA_REGIONS = Enum(
@@ -51,10 +52,11 @@ class ConwaysMachineCells(
                ("CELL_STATES", 5),
                ('NEIGHBOUR_INITIAL_STATES', 6),
                ('RESULTS', 7),
-               ('BUFFERED_STATE_REGION', 8)])
+               ('BUFFERED_STATE_REGION', 8),
+               ("CELL_COORDS", 9)])
 
     def __init__(self, vertex_slice, resources_required, synaptic_manager,
-                 label):
+                 label, coords):
 
         ReceiveBuffersToHostBasicImpl.__init__(self)
         AbstractBinaryUsesSimulationRun.__init__(self)
@@ -82,6 +84,7 @@ class ConwaysMachineCells(
         # mapping data
         self._resources_required = resources_required
         self._vertex_slice = vertex_slice
+        self._coords = coords
 
         # Set up synapse handling
         self._mapping_data = synaptic_manager
@@ -114,6 +117,12 @@ class ConwaysMachineCells(
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.NEIGHBOUR_INITIAL_STATES.value,
             size=(8 * self._vertex_slice.n_atoms), label="neighour_states")
+
+        spec.reserve_memory_region(
+            region=self.DATA_REGIONS.CELL_COORDS.value,
+            size=(8 * self._vertex_slice.n_atoms),
+            label="cell_coords in app space")
+
         self.reserve_buffer_regions(
             spec, self.DATA_REGIONS.BUFFERED_STATE_REGION.value,
             [self.DATA_REGIONS.RESULTS.value],
@@ -185,16 +194,20 @@ class ConwaysMachineCells(
                             dead_neighbour_cells[atom_here] += 1
 
         # write the blocks of alvie then dead for easier read from c code
-        for index in range(1, self._vertex_slice.n_atoms + 1):
+        for index in range(0, self._vertex_slice.n_atoms):
             if index not in alive_neighbour_cells:
                 spec.write_value(0)
             else:
                 spec.write_value(alive_neighbour_cells[index])
-        for index in range(1, self._vertex_slice.n_atoms + 1):
+        for index in range(0, self._vertex_slice.n_atoms):
             if index not in dead_neighbour_cells:
                 spec.write_value(0)
             else:
                 spec.write_value(dead_neighbour_cells[index])
+
+        spec.switch_write_focus(region=self.DATA_REGIONS.CELL_COORDS.value)
+        for index in range(0, len(self._coords)):
+            spec.write_value(self._coords[index])
 
         # allow the synaptic matrix to write its data spec-able data
         self._mapping_data.write_data_spec(

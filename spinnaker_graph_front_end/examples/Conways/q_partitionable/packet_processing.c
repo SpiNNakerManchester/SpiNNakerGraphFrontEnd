@@ -193,6 +193,7 @@ void _dma_complete_callback(uint unused, uint tag) {
         spin1_mode_restore(cpsr);
 
         log_debug("payload is %d", payload);
+        log_info("the spike id is %d", current_buffer->originating_spike);
 
         // Start the next DMA transfer, so it is complete when we are finished
         log_debug("setting up next read");

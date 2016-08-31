@@ -9,19 +9,20 @@ from spinnaker_graph_front_end.examples.Conways.q_partitionable.\
 
 runtime = 50
 machine_time_step = 1000
-time_scale_factor = 20
+time_scale_factor = 100
 MAX_X_SIZE_OF_FABRIC = 7
 MAX_Y_SIZE_OF_FABRIC = 7
 
 # set up the front end and ask for the detected machines dimensions
-front_end.setup()
+front_end.setup(machine_time_step=machine_time_step,
+                time_scale_factor=time_scale_factor)
 
 # figure out if machine can handle simulation
 cores = front_end.get_number_of_cores_on_machine()
 if cores <= (MAX_X_SIZE_OF_FABRIC * MAX_Y_SIZE_OF_FABRIC):
     raise KeyError("Don't have enough cores to run simulation")
 
-active_states = [(2, 2), (3, 2), (3, 3), (4, 3), (2, 4)]
+active_states = [(3, 2), (3, 3), (4, 3), (4, 4), (5, 2)]
 
 # build grid
 grid = ConwaysApplicationGrid(MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC,
@@ -62,8 +63,8 @@ for x in range(0, MAX_X_SIZE_OF_FABRIC):
 for time in range(0, runtime):
     print "at time {}".format(time)
     output = ""
-    for y in range(MAX_X_SIZE_OF_FABRIC - 1, 0, -1):
-        for x in range(0, MAX_Y_SIZE_OF_FABRIC):
+    for y in range(MAX_Y_SIZE_OF_FABRIC - 1, -1, -1):
+        for x in range(0, MAX_X_SIZE_OF_FABRIC):
             if recorded_data[time][(x, y)]:
                 output += "X"
             else:
