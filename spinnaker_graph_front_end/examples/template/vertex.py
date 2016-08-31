@@ -3,8 +3,8 @@ from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex\
     import MachineDataSpecableVertex
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary\
     import AbstractHasAssociatedBinary
-from spinn_front_end_common.abstract_models.abstract_binary_uses_simulation_run\
-    import AbstractBinaryUsesSimulationRun
+from spinn_front_end_common.abstract_models\
+    .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
 from pacman.model.graphs.machine.impl.machine_vertex \
     import MachineVertex
 from pacman.model.resources.cpu_cycles_per_tick_resource import \
