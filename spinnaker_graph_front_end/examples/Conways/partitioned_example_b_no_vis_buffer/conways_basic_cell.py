@@ -6,8 +6,8 @@ from pacman.model.resources.cpu_cycles_per_tick_resource import \
     CPUCyclesPerTickResource
 from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.sdram_resource import SDRAMResource
-from spinn_front_end_common.abstract_models.abstract_chip_runtime_updatable\
-    import AbstractChipRuntimeUpdatable
+from spinn_front_end_common.abstract_models.abstract_binary_uses_simulation_run\
+    import AbstractBinaryUsesSimulationRun
 
 # spinn front end common imports
 from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
@@ -31,7 +31,7 @@ import struct
 
 class ConwayBasicCell(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-        ReceiveBuffersToHostBasicImpl, AbstractChipRuntimeUpdatable):
+        ReceiveBuffersToHostBasicImpl, AbstractBinaryUsesSimulationRun):
     """ Cell which represents a cell within the 2d fabric
     """
 
