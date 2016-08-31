@@ -1,4 +1,5 @@
 # pacman imports
+from collections import OrderedDict
 from pacman.executor.injection_decorator import inject_items
 from pacman.model.decorators.overrides import overrides
 from pacman.model.graphs.application.impl.application_vertex import \
@@ -82,8 +83,8 @@ class ConwaysApplicationGrid(
     def get_state_by_index(self, index):
         return self._states_by_index[index]
 
-    def get_data(self, buffer_manager, machine_graph, placements):
-        data = list()
+    def get_data(self, buffer_manager, machine_graph, placements, graph_mapper):
+        data = OrderedDict()
 
         # extract for every conways basic cell
         for machine_vertex in machine_graph.vertices:
@@ -107,11 +108,27 @@ class ConwaysApplicationGrid(
 
             elements = struct.unpack(
                 "<{}I".format(len(raw_data) / 4), str(raw_data))
+
+            time = 0
+            vertex_slice = graph_mapper.get_slice(machine_vertex)
+            current_cell = vertex_slice.lo_atom
             for element in elements:
+                # if first cell, make new time slow
+                if current_cell == 0 and time not in data:
+                    data[time] = dict()
+                x = current_cell % self._grid_size_y
+                y = current_cell / self._grid_size_y
                 if element == 0:
-                    data.append(False)
+                    data[time][(x, y)] = False
                 else:
-                    data.append(True)
+                    data[time][(x, y)] = True
+
+                # if last cell, reset for new time set
+                if current_cell == vertex_slice.hi_atom:
+                    time += 1
+                    current_cell = vertex_slice.lo_atom
+                else:
+                    current_cell += 1
 
         # return the data
         return data

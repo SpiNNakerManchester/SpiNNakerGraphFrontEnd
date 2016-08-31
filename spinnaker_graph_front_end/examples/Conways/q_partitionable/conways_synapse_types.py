@@ -18,9 +18,9 @@ class ConwaysSynapseTypes(AbstractSynapseType):
         self._states = list()
         for state in states:
             if state:
-                self._states.append(0)
-            else:
                 self._states.append(1)
+            else:
+                self._states.append(0)
 
     @overrides(AbstractSynapseType.get_n_synapse_types)
     def get_n_synapse_types(self):

@@ -7,8 +7,8 @@ from pacman.model.resources.cpu_cycles_per_tick_resource import \
     CPUCyclesPerTickResource
 from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.sdram_resource import SDRAMResource
-from spinn_front_end_common.abstract_models.abstract_chip_runtime_updatable\
-    import AbstractChipRuntimeUpdatable
+from spinn_front_end_common.abstract_models.abstract_binary_uses_simulation_run\
+    import AbstractBinaryUsesSimulationRun
 
 # spinn front end common imports
 from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
@@ -35,11 +35,11 @@ import struct
 
 class ConwaysMachineCells(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-        ReceiveBuffersToHostBasicImpl, AbstractChipRuntimeUpdatable):
+        ReceiveBuffersToHostBasicImpl, AbstractBinaryUsesSimulationRun):
     """ Cell which represents a cell within the 2d fabric
     """
 
-    TRANSMISSION_DATA_SIZE = 2 * 4  # has key and key
+    TRANSMISSION_DATA_SIZE = 3 * 4  # has key and key, and n_cells
     STATE_DATA_SIZE = 1 * 4  # 1 or 2 based off dead or alive
     NEIGHBOUR_INITIAL_STATES_SIZE = 2 * 4  # alive states, dead states
 
@@ -57,6 +57,9 @@ class ConwaysMachineCells(
                  label):
 
         ReceiveBuffersToHostBasicImpl.__init__(self)
+        AbstractBinaryUsesSimulationRun.__init__(self)
+        AbstractHasAssociatedBinary.__init__(self)
+        MachineDataSpecableVertex.__init__(self)
 
         # activate the buffer out functionality
         self.activate_buffering_output(

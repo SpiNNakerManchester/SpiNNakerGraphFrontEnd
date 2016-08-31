@@ -146,10 +146,10 @@ void _multicast_packet_received_callback(uint key, uint payload) {
     log_debug("Received packet %x : %x at %d, DMA Busy = %d",
               key, payload, time, dma_busy);
     if (!circular_buffer_add(input_buffer, key)) {
-        log_info("Could not add key");
+        log_debug("Could not add key");
     }
     if (!circular_buffer_add(input_buffer, payload)) {
-        log_info("Could not add payload");
+        log_debug("Could not add payload");
     }
 
     // If we're not already processing synaptic DMAs,
@@ -180,7 +180,7 @@ void _dma_complete_callback(uint unused, uint tag) {
 
     // If this DMA is the result of a read
     if (tag == DMA_TAG_READ_SYNAPTIC_ROW) {
-
+        log_debug("residing in DMA_TAG_READ_SYNAPTIC_ROW");
         // Get pointer to current buffer
         uint32_t current_buffer_index = buffer_being_read;
         dma_buffer *current_buffer = &dma_buffers[current_buffer_index];
@@ -192,11 +192,15 @@ void _dma_complete_callback(uint unused, uint tag) {
         circular_buffer_get_next(input_buffer, &payload);
         spin1_mode_restore(cpsr);
 
+        log_debug("payload is %d", payload);
+
         // Start the next DMA transfer, so it is complete when we are finished
+        log_debug("setting up next read");
         _setup_synaptic_dma_read();
 
         // Process synaptic row, writing it back if it's the last time
         // it's going to be processed
+        log_debug("calling stored callback");
         if (!stored_callback(
                 time, current_buffer->row, payload, current_buffer_index)) {
             log_error(
@@ -216,7 +220,7 @@ void _dma_complete_callback(uint unused, uint tag) {
         }
 
     } else if (tag == DMA_TAG_WRITE_PLASTIC_REGION) {
-
+        log_debug("in DMA_TAG_WRITE_PLASTIC_REGION");
         // Do Nothing
 
     } else {
@@ -248,7 +252,7 @@ bool packet_processing_initialise(
             log_error("Could not initialise DMA buffers");
             return false;
         }
-        log_info(
+        log_debug(
             "DMA buffer %u allocated at 0x%08x", i, dma_buffers[i].row);
     }
     dma_busy = false;

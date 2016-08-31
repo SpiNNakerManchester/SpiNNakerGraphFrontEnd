@@ -109,13 +109,13 @@ void update(uint ticks, uint b) {
 
     time++;
 
-    log_info("on tick %d of %d", time, simulation_ticks);
+    log_debug("on tick %d of %d", time, simulation_ticks);
 
     // check that the run time hasn't already elapsed and thus needs to be
     // killed
     if ((infinite_run != TRUE) && (time >= simulation_ticks)) {
 
-        log_info("Simulation complete.\n");
+        log_debug("Simulation complete.\n");
 
         // falls into the pause resume mode of operating
         simulation_handle_pause_resume(NULL);
@@ -123,11 +123,18 @@ void update(uint ticks, uint b) {
         // Finalise any recordings that are in progress, writing back the final
         // amounts of samples recorded to SDRAM
         if (recording_flags > 0) {
-            log_info("updating recording regions");
+            log_debug("updating recording regions");
             recording_finalise();
         }
 
         return;
+    }
+
+    if(time ==0){
+        for (uint32_t cell=0; cell < n_cells; cell++){
+            // record the new state for the host
+            recording_record(0, &cell_array[cell].state, 4);
+        }
     }
 
     for (uint32_t cell=0; cell < n_cells; cell++){
@@ -137,17 +144,17 @@ void update(uint ticks, uint b) {
         // send the cell's state to its neighbours
         send_state(cell);
 
-        // record the new state for the host
-        recording_record(0, &cell_array[cell], 4);
-
         if (time == 0){
-            log_debug(
-                "Send cell %d's first state %d!", cell, &cell_array[cell]);
+            log_info(
+                "Send cell %d's first state %d!", cell, cell_array[cell].state);
         }
         else{
-            log_debug(
-                "Send cell %d's state %d!", cell, &cell_array[cell]);
+            log_info(
+                "Send cell %d's state %d!", cell, cell_array[cell].state);
         }
+
+        // record the new state for the host
+        recording_record(0, &cell_array[cell].state, 4);
     }
 }
 
@@ -173,13 +180,25 @@ bool read_cell_row(uint32_t n_time, synaptic_row_t row, uint32_t payload,
     use(n_time);
     use(process_id);
 
-    uint32_t cell_id = ((uint32_t)row) & 0xFF;
-    if (payload == ALIVE){
-        alive_states_received_this_tick[cell_id] ++;
+    log_debug("residing in read cell row");
+
+    uint32_t n_cells_affected = ((size_t) (row[1]));
+
+    log_debug("am dealing with %d cells to affect from this row", n_cells_affected);
+    for (uint32_t affected_cell =0; affected_cell < n_cells_affected;
+         affected_cell++){
+        uint32_t cell_id =  row[affected_cell + 2]& 0xFF;
+        log_debug("dealing with cell %d", affected_cell);
+        if (payload == ALIVE){
+            alive_states_received_this_tick[cell_id] ++;
+            log_debug("adding to alive states for cell %d", cell_id);
+        }
+        else{
+            dead_states_received_this_tick[cell_id] ++;
+            log_debug("adding to dead states for cell %d", cell_id);
+        }
     }
-    else{
-        dead_states_received_this_tick[cell_id] ++;
-    }
+    log_debug("finished rows");
     return true;
 }
 
@@ -205,17 +224,21 @@ void next_state(uint32_t cell_id){
     if (cell_array[cell_id].state == ALIVE){
         if(alive_states_received_this_tick[cell_id] <= 1){
             cell_array[cell_id].state = DEAD;
+            log_debug("changing cell %d to state DEAD", cell_id);
         }
         if ((alive_states_received_this_tick[cell_id] == 2) ||
                 (alive_states_received_this_tick[cell_id] == 3)){
             cell_array[cell_id].state = ALIVE;
+            log_debug("changing cell %d to state ALIVE", cell_id);
         }
         if (alive_states_received_this_tick[cell_id] >= 4){
             cell_array[cell_id].state = DEAD;
+            log_debug("changing cell %d to state DEAD", cell_id);
         }
     }
     else if (alive_states_received_this_tick[cell_id] == 3){
         cell_array[cell_id].state = ALIVE;
+        log_debug("changing cell %d to state ALIVE", cell_id);
     }
 }
 
@@ -243,12 +266,18 @@ static bool initialise_recording(){
     bool success = recording_initialize(
         n_regions_to_record, regions_to_record,
         recording_flags_from_system_conf, state_region, &recording_flags);
-    log_info("Recording flags = 0x%08x", recording_flags);
+    log_debug("Recording flags = 0x%08x", recording_flags);
     return success;
 }
 
+void print_states(){
+    for(uint32_t cell_id=0; cell_id < n_cells; cell_id++){
+        log_debug("cell %d has state %d", cell_id, cell_array[cell_id]);
+    }
+}
+
 static bool initialize(uint32_t *timer_period) {
-    log_info("Initialise: started\n");
+    log_debug("Initialise: started\n");
 
     // Get the address this core's DTCM data starts at from SRAM
     address = data_specification_get_data_address();
@@ -273,8 +302,8 @@ static bool initialize(uint32_t *timer_period) {
     if (transmission_region_address[HAS_KEY] == 1) {
         my_base_key = transmission_region_address[MY_BASE_KEY];
         n_cells = transmission_region_address[N_CELLS];
-        log_info("my key is %d\n", my_base_key);
-        log_info("i'm simulating %d cells\n", n_cells);
+        log_debug("my key is %d\n", my_base_key);
+        log_debug("i'm simulating %d cells\n", n_cells);
     } else {
         log_error(
             "this conways cell can't effect anything, deduced as an error,"
@@ -287,6 +316,7 @@ static bool initialize(uint32_t *timer_period) {
         sark_alloc(n_cells, sizeof(uint32_t));
     dead_states_received_this_tick =
         sark_alloc(n_cells, sizeof(uint32_t));
+    log_debug("allocated the two sets of state trackers.\n");
 
     // read neighbour states for initial tick
     address_t my_neighbour_state_region_address =
@@ -297,6 +327,7 @@ static bool initialize(uint32_t *timer_period) {
     for (uint32_t cell_id = 0; cell_id < n_cells; cell_id++){
         alive_states_received_this_tick[cell_id] =
             my_neighbour_state_region_address[position];
+        log_debug("alive niegbouring states for cell %d are %d", cell_id, my_neighbour_state_region_address[position]);
         position += 1;
     }
 
@@ -304,16 +335,20 @@ static bool initialize(uint32_t *timer_period) {
     for (uint32_t cell_id = 0; cell_id < n_cells; cell_id++){
         dead_states_received_this_tick[cell_id] =
             my_neighbour_state_region_address[position];
+        log_debug("dead niegbouring states for cell %d are %d", cell_id, my_neighbour_state_region_address[position]);
         position += 1;
     }
+    log_debug("written the blocks of data for the initial iteration");
 
     // initialise my input_buffer for receiving packets
     input_buffer = circular_buffer_initialize(8 * 2 * n_cells);
+    log_debug("created the input buffer");
 
     if (input_buffer == 0){
+        log_debug("failed to allocate input buffer");
         return false;
     }
-    log_info("input_buffer initialised");
+    log_debug("input_buffer initialised");
 
     // set up buffered recording region
     if (!initialise_recording()){
@@ -323,7 +358,9 @@ static bool initialize(uint32_t *timer_period) {
     // Allocate block of memory for this synapse type'synapse_index
     // pre-calculated per-neuron decay
     cell_array = (synapse_param_t *) spin1_malloc(
-            sizeof(synapse_param_t) * n_cells);
+            (sizeof(synapse_param_t) * n_cells));
+    log_debug("allocated %d bytes for the synpase params",
+             sizeof(synapse_param_t) * n_cells);
 
     // Check for success
     if (cell_array == NULL) {
@@ -337,28 +374,36 @@ static bool initialize(uint32_t *timer_period) {
     log_debug(
         "\tCopying %u bytes from %u", n_cells * sizeof(synapse_param_t),
         cell_data_address + ((n_cells * sizeof(synapse_param_t)) / 4));
-    memcpy(cell_array, cell_data_address, n_cells * sizeof(synapse_param_t));
+    memcpy(cell_array, cell_data_address, (n_cells * sizeof(synapse_param_t)));
+
+    print_states();
 
     // Work out the positions of the direct and indirect synaptic matrices
     // and copy the direct matrix to DTCM
     address_t synaptic_matrix_address =
         data_specification_get_region(SYNAPTIC_MATRIX_REGION, address);
     uint32_t direct_matrix_offset = (synaptic_matrix_address[0] >> 2) + 1;
-    log_info("Indirect matrix is %u words in size", direct_matrix_offset - 1);
+    log_debug("Indirect matrix is %u words in size", direct_matrix_offset - 1);
     uint32_t direct_matrix_size = synaptic_matrix_address[direct_matrix_offset];
-    address_t direct_synapses_address =
-        (address_t) spin1_malloc(direct_matrix_size);
-    if (direct_synapses_address == NULL) {
-        log_error("Not enough memory to allocate direct matrix");
-        return false;
+    log_debug("Direct matrix malloc size is %d", direct_matrix_size);
+    address_t direct_synapses_address = NULL;
+
+    // if there is a direct matrix, read it in
+    if (direct_matrix_size != 0) {
+        address_t direct_synapses_address =
+            (address_t) spin1_malloc(direct_matrix_size);
+        if (direct_synapses_address == NULL) {
+            log_error("Not enough memory to allocate direct matrix");
+            return false;
+        }
+        log_debug(
+            "Copying %u bytes of direct synapses to 0x%08x",
+            direct_matrix_size, *direct_synapses_address);
+        spin1_memcpy(
+            *direct_synapses_address,
+            &(synaptic_matrix_address[direct_matrix_offset + 1]),
+            direct_matrix_size);
     }
-    log_info(
-        "Copying %u bytes of direct synapses to 0x%08x",
-        direct_matrix_size, *direct_synapses_address);
-    spin1_memcpy(
-        *direct_synapses_address,
-        &(synaptic_matrix_address[direct_matrix_offset + 1]),
-        direct_matrix_size);
     address_t indirect_synapses_address = &(synaptic_matrix_address[1]);
 
     // Set up the population table
@@ -377,7 +422,7 @@ static bool initialize(uint32_t *timer_period) {
             input_buffer, read_cell_row)) {
         return false;
     }
-    log_info("Initialise: finished");
+    log_debug("Initialise: finished");
 
     return true;
 }
@@ -394,7 +439,7 @@ static bool initialize(uint32_t *timer_period) {
  * SOURCE
  */
 void c_main() {
-    log_info("starting conway_cell\n");
+    log_debug("starting conway_cell\n");
 
     // Load DTCM data
     uint32_t timer_period;
@@ -406,14 +451,14 @@ void c_main() {
     }
 
     // set timer tick value to configured value
-    log_info("setting timer to execute every %d microseconds", timer_period);
+    log_debug("setting timer to execute every %d microseconds", timer_period);
     spin1_set_timer_tick(timer_period);
 
     // register callbacks
     spin1_callback_on(TIMER_TICK, update, TIMER);
 
     // start execution
-    log_info("Starting\n");
+    log_debug("Starting\n");
 
     // Start the time at "-1" so that the first tick will be 0
     time = UINT32_MAX;

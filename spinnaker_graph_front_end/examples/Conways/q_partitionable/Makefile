@@ -5,7 +5,7 @@ endif
 
 APP = conways_cell
 BUILD_DIR = build/
-SOURCES = conways_cell.c
+SOURCES = conways_cell.c population_table/population_table_binary_search_impl.c
 
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 CURRENT_DIR := $(dir $(MAKEFILE_PATH))
