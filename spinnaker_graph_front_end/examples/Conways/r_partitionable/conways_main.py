@@ -7,9 +7,9 @@ from spinnaker_graph_front_end.examples.Conways.r_partitionable.\
 from spinnaker_graph_front_end.examples.Conways.r_partitionable.\
     conways_application_cell import ConwaysApplicationGrid
 
-runtime = 5
+runtime = 50
 machine_time_step = 1000
-time_scale_factor = 100
+time_scale_factor = 10
 MAX_X_SIZE_OF_FABRIC = 28
 MAX_Y_SIZE_OF_FABRIC = 28
 
