@@ -23,9 +23,8 @@ from spinn_front_end_common.utilities import exceptions
 from spinn_front_end_common.interface.simulation import simulation_utilities
 
 # GFE imports
-from spinnaker_graph_front_end.examples.Conways.q_partitionable.\
-    conways_input_type import \
-    CnwaysInputType
+from spinnaker_graph_front_end.examples.Conways.r_partitionable.\
+    conways_input_type import CnwaysInputType
 from spinnaker_graph_front_end.utilities.conf import config
 
 # general imports
@@ -173,10 +172,16 @@ class ConwaysMachineCells(
 
         dead_neighbour_cells = dict()
         for edge in machine_graph.get_edges_ending_at_vertex(self):
-            conn_list = edge.mapping_info.connector.conn_list
+            conn_list = edge.mapping_info.connector.create_synaptic_block(
+                pre_slices=None, pre_slice_index=None, post_slices=None,
+                post_slice_index=None,
+                pre_vertex_slice=graph_mapper.get_slice(edge.pre_vertex),
+                post_vertex_slice=self._vertex_slice,
+                synapse_type=0)
+
             low_atom = self._vertex_slice.lo_atom
             hi_atom = self._vertex_slice.hi_atom
-            for (source, dest) in conn_list:
+            for (source, dest, _, _, _) in conn_list:
                 if (dest < hi_atom) and (dest > low_atom):
                     atom_here = dest - low_atom
                     source_vertex = \

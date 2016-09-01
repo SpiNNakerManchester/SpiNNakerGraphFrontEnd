@@ -9,14 +9,14 @@ from pacman.model.resources.cpu_cycles_per_tick_resource import \
     CPUCyclesPerTickResource
 from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.sdram_resource import SDRAMResource
+from spinn_front_end_common.abstract_models.abstract_binary_uses_simulation_run import \
+    AbstractBinaryUsesSimulationRun
 from spinn_front_end_common.utilities import constants
 
 # spinn front end common imports
 from spinn_front_end_common.interface.buffer_management.buffer_models.\
     receives_buffers_to_host_basic_impl import \
     ReceiveBuffersToHostBasicImpl
-from spinn_front_end_common.abstract_models.abstract_chip_runtime_updatable\
-    import AbstractChipRuntimeUpdatable
 
 # GFE imports
 from spinnaker_graph_front_end.examples.Conways.q_partitionable.\
@@ -36,7 +36,7 @@ from spynnaker.pyNN.models.neuron.synaptic_manager import SynapticManager
 
 class ConwaysApplicationGrid(
         ApplicationVertex, ReceiveBuffersToHostBasicImpl,
-        AbstractChipRuntimeUpdatable):
+        AbstractBinaryUsesSimulationRun):
     """ Cell which represents a cell within the 2d fabric
     """
 
@@ -45,7 +45,7 @@ class ConwaysApplicationGrid(
     def __init__(self, grid_size_x, grid_size_y, active_states, label):
 
         ReceiveBuffersToHostBasicImpl.__init__(self)
-        AbstractChipRuntimeUpdatable.__init__(self)
+        AbstractBinaryUsesSimulationRun.__init__(self)
 
         self._grid_size_x = grid_size_x
         self._grid_size_y = grid_size_y

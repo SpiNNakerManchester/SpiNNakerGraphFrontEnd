@@ -141,7 +141,7 @@ void update(uint ticks, uint b) {
     }
     spin1_mode_restore(cpsr);
 
-    print_alive_deads_copys();
+    //print_alive_deads_copys();
 
     // check that the run time hasn't already elapsed and thus needs to be
     // killed
@@ -261,7 +261,7 @@ void next_state(uint32_t cell_id){
             log_debug("changing cell %d to state DEAD\n", cell_id);
         }
         else{
-           log_debug("weird");
+           log_error("weird");
         }
     }
     else if (alive_states_received_this_tick_copy[cell_id] == 3){
