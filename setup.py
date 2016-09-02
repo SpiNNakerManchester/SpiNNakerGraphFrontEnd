@@ -17,11 +17,6 @@ setup(
                   'spinnaker_graph_front_end': ['spiNNakerGraphFrontEnd.cfg'],
                   'spinnaker_graph_front_end.utilities.conf':
                       ['spiNNakerGraphFrontEnd.cfg.template']},
-    install_requires=['SpiNNMachine == 2016.001',
-                      'SpiNNMan == 2016.001',
-                      'SpiNNaker_PACMAN == 2016.001',
-                      'SpiNNaker_DataSpecification == 2016.001',
-                      'SpiNNFrontEndCommon == 2016.001',
-                      'SpiNNStorageHandlers == 2016.001',
+    install_requires=['SpiNNFrontEndCommon >= 3.0.0, < 4.0.0',
                       'numpy', 'lxml', 'six']
 )
