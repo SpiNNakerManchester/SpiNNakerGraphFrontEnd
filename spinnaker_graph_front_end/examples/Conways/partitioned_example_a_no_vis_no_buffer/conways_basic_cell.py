@@ -17,8 +17,8 @@ from spinn_front_end_common.utilities import helpful_functions
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.abstract_models.impl.needs_n_machine_time_steps\
     import NeedsNMachineTimeSteps
-from spinn_front_end_common.abstract_models.abstract_binary_uses_simulation_run \
-    import AbstractBinaryUsesSimulationRun
+from spinn_front_end_common.abstract_models\
+    .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
 from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
     import MachineDataSpecableVertex
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
