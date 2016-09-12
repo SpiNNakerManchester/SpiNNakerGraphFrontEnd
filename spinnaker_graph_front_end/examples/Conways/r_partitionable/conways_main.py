@@ -42,7 +42,7 @@ active_states = [
 
 # build grid
 grid = ConwaysApplicationGrid(MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC,
-                              active_states, "conway  fabric")
+                              active_states, "conway_fabric")
 front_end.add_vertex_instance(grid)
 
 # verify the initial state
