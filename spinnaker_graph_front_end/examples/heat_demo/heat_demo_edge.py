@@ -1,7 +1,6 @@
 from enum import Enum
 
 # front end common imports
-from pacman.model.decorators.overrides import overrides
 from pacman.model.graphs.machine.impl.machine_edge import MachineEdge
 
 
@@ -28,10 +27,6 @@ class HeatDemoEdge(MachineEdge):
         :return:
         """
         return self._direction
-
-    @overrides(MachineEdge.model_name)
-    def model_name(self):
-        return "HeatDemoEdge"
 
     def __str__(self):
         return self.__repr__()

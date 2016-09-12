@@ -12,7 +12,6 @@ import spinnaker_graph_front_end as front_end
 from spinnaker_graph_front_end.examples.hello_world.hello_world_vertex\
     import HelloWorldVertex
 
-import sys
 import logging
 
 logger = logging.getLogger(__name__)
@@ -20,9 +19,7 @@ logger = logging.getLogger(__name__)
 n_chips_required = None
 if front_end.is_allocated_machine():
     n_chips_required = 2
-front_end.setup(graph_label="hello_world",
-                model_binary_module=sys.modules[__name__],
-                n_chips_required=n_chips_required)
+front_end.setup(n_chips_required=n_chips_required)
 
 machine = front_end.machine()
 

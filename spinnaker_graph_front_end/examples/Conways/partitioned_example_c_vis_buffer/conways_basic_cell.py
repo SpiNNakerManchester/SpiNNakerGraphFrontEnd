@@ -8,17 +8,21 @@ from pacman.model.resources.cpu_cycles_per_tick_resource import \
 from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.sdram_resource import SDRAMResource
 
-# spinn front end commom imports
-from spinn_front_end_common.abstract_models.impl.\
-    machine_uses_simulation_data_specable_vertex import \
-    MachineUsesSimulationDataSpecableVertex
+# spinn front end common imports
 from spinn_front_end_common.interface.buffer_management.buffer_models.\
     receives_buffers_to_host_basic_impl import \
     ReceiveBuffersToHostBasicImpl
 from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.utilities import exceptions
+from spinn_front_end_common.interface.simulation import simulation_utilities
+from spinn_front_end_common.abstract_models\
+    .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
+from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
+    import MachineDataSpecableVertex
+from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
+    import AbstractHasAssociatedBinary
 
-# gfe imports
+# GFE imports
 from spinnaker_graph_front_end.utilities.conf import config
 
 # general imports
@@ -27,15 +31,14 @@ import struct
 
 
 class ConwayBasicCell(
-        MachineVertex, MachineUsesSimulationDataSpecableVertex,
-        ReceiveBuffersToHostBasicImpl):
-    """
-    cell which represents a cell within the 2 d fabric
+        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
+        ReceiveBuffersToHostBasicImpl, AbstractBinaryUsesSimulationRun):
+    """ Cell which represents a cell within the 2d fabric
     """
 
-    TRANSMISSION_DATA_SIZE = 2 * 4 # has key and key
-    STATE_DATA_SIZE = 1 * 4 # 1 or 2 based off dead or alive
-    NEIGHBOUR_INITIAL_STATES_SIZE = 2 * 4 # alive states, dead states
+    TRANSMISSION_DATA_SIZE = 2 * 4  # has key and key
+    STATE_DATA_SIZE = 1 * 4  # 1 or 2 based off dead or alive
+    NEIGHBOUR_INITIAL_STATES_SIZE = 2 * 4  # alive states, dead states
 
     VIS_PORT_NUM = 17892  # port number use
 
@@ -49,14 +52,15 @@ class ConwayBasicCell(
                ('RESULTS', 4),
                ('BUFFERED_STATE_REGION', 5)])
 
-    def __init__(self, label, machine_time_step, time_scale_factor, state):
+    def __init__(self, label, state):
 
         ReceiveBuffersToHostBasicImpl.__init__(self)
 
         # activate the buffer out functionality
         self.activate_buffering_output(
-            minimum_sdram_for_buffering=
-            config.getint("Buffers", "minimum_buffer_sdram"),
+            minimum_sdram_for_buffering=(
+                config.getint("Buffers", "minimum_buffer_sdram")
+            ),
             buffered_sdram_per_timestep=4)
 
         # resources used by the system.
@@ -68,29 +72,21 @@ class ConwayBasicCell(
             config.getint("Buffers", "receive_buffer_port")))
 
         MachineVertex .__init__(self, resources, label)
-        MachineUsesSimulationDataSpecableVertex.__init__(
-            self, machine_time_step, time_scale_factor)
 
         # app specific data items
         self._state = state
 
-    @overrides(MachineUsesSimulationDataSpecableVertex.get_binary_file_name)
+    @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
         return "conways_cell.aplx"
 
-    @property
-    @overrides(MachineVertex.model_name)
-    def model_name(self):
-        return "ConwayBasicCell"
-
-    @overrides(MachineUsesSimulationDataSpecableVertex.
-               generate_machine_data_specification)
+    @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
-            reverse_iptags):
+            reverse_iptags, machine_time_step, time_scale_factor):
 
         # Setup words + 1 for flags + 1 for recording size
-        setup_size = constants.SYSTEM_BYTES_REQUIREMENT
+        setup_size = constants.SYSTEM_BYTES_REQUIREMENT + 8
 
         # reserve memory regions
         spec.reserve_memory_region(
@@ -110,9 +106,11 @@ class ConwayBasicCell(
             [self.DATA_REGIONS.RESULTS.value],
             [constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP])
 
-        # simulation .c requriements
+        # simulation.c requirements
         spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
-        spec.write_array(self.data_for_simulation_data())
+        spec.write_array(simulation_utilities.get_simulation_header_array(
+            self.get_binary_file_name(), machine_time_step,
+            time_scale_factor))
 
         # get recorded buffered regions sorted
         buffer_size_before_receive = config.getint(

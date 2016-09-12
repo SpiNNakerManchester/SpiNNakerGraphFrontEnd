@@ -6,6 +6,7 @@
 #include <simulation.h>
 #include <debug.h>
 #include <circular_buffer.h>
+
 /*! multicast routing keys to communicate with neighbours */
 uint my_key;
 
@@ -32,7 +33,7 @@ static uint32_t recording_flags = 0;
 //! int as a bool to represent if this simulation should run forever
 static uint32_t infinite_run;
 
-// value for turning on and off inturupts
+// value for turning on and off interrupts
 uint cpsr = 0;
 
 //! human readable definitions of each region in SDRAM
@@ -158,12 +159,12 @@ void do_safety_check(){
     int total = alive_states_recieved_this_tick +
         dead_states_recieved_this_tick;
     if (total != 8){
-         log_error("didnt receive the correct number of states");
-         log_error("only recieved %d states", total);
+         log_error("didn't receive the correct number of states");
+         log_error("only received %d states", total);
     }
-    log_debug("only recieved %d alive states",
+    log_debug("only received %d alive states",
              alive_states_recieved_this_tick);
-    log_debug("only recieved %d dead states",
+    log_debug("only received %d dead states",
              dead_states_recieved_this_tick);
     spin1_mode_restore(cpsr);
 }
@@ -172,6 +173,7 @@ void read_input_buffer(){
 
     cpsr = spin1_int_disable();
     circular_buffer_print_buffer(input_buffer);
+
     // pull payloads from input_buffer. Filter for alive and dead states
     for (uint32_t counter = 0; counter < 8;
              counter ++){
@@ -184,11 +186,11 @@ void read_input_buffer(){
                  alive_states_recieved_this_tick += 1;
             }
             else{
-                 log_error("Not recoinfised payload");
+                 log_error("Not recognised payload");
             }
         }
         else{
-            log_debug("couldnt read state from my neigbhours.");
+            log_debug("couldn't read state from my neighbours.");
         }
 
     }
@@ -200,7 +202,7 @@ void send_state(){
     alive_states_recieved_this_tick = 0;
     dead_states_recieved_this_tick = 0;
 
-    // send my new state to the simualtion neighbours
+    // send my new state to the simulation neighbours
     log_debug("sending my state of %d via multicast with key %d",
               my_state, my_key);
     while (!spin1_send_mc_packet(my_key, my_state, WITH_PAYLOAD)) {
@@ -211,7 +213,8 @@ void send_state(){
 }
 
 void next_state(){
-    // calcualte new state from the total recieved so far
+
+    // calculate new state from the total received so far
     if (my_state == 1){
         if(alive_states_recieved_this_tick <= 1){
             my_state = DEAD;
@@ -305,7 +308,7 @@ static bool initialize(uint32_t *timer_period) {
     alive_states_recieved_this_tick = my_neigbhour_state_region_address[0];
     dead_states_recieved_this_tick = my_neigbhour_state_region_address[1];
 
-    // init my input_buffer for recieving packets
+    // initialise my input_buffer for receiving packets
     input_buffer = circular_buffer_initialize(256);
     if (input_buffer == 0){
         return false;

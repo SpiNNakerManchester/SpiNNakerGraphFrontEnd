@@ -56,8 +56,6 @@ machine = front_end.machine()
 live_gatherer = front_end.add_machine_vertex(
     LivePacketGatherMachineVertex,
     {
-        'machine_time_step': machine_time_step,
-        'timescale_factor': time_scale_factor,
         'label': live_gatherer_label,
         'ip_address': machine_host,
         'port': machine_receive_port,

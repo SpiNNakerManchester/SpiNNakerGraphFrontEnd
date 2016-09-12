@@ -1,4 +1,10 @@
 from pacman.model.decorators.overrides import overrides
+from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex\
+    import MachineDataSpecableVertex
+from spinn_front_end_common.abstract_models.abstract_has_associated_binary\
+    import AbstractHasAssociatedBinary
+from spinn_front_end_common.abstract_models\
+    .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
 from pacman.model.graphs.machine.impl.machine_vertex \
     import MachineVertex
 from pacman.model.resources.cpu_cycles_per_tick_resource import \
@@ -7,16 +13,11 @@ from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.sdram_resource import SDRAMResource
 
-from spinn_front_end_common.abstract_models.impl.\
-    machine_uses_simulation_data_specable_vertex import \
-    MachineUsesSimulationDataSpecableVertex
 from spinn_front_end_common.interface.buffer_management.\
     buffer_models.receives_buffers_to_host_basic_impl import \
     ReceiveBuffersToHostBasicImpl
 from spinn_front_end_common.utilities import constants
-
-from spinn_front_end_common.interface.simulation.impl.\
-    uses_simulation_impl import UsesSimulationImpl
+from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinnaker_graph_front_end.utilities.conf import config
 
 from enum import Enum
@@ -29,8 +30,8 @@ PARTITION_ID = "DATA"
 
 
 class Vertex(
-        MachineVertex, MachineUsesSimulationDataSpecableVertex,
-        ReceiveBuffersToHostBasicImpl, UsesSimulationImpl):
+        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
+        ReceiveBuffersToHostBasicImpl, AbstractBinaryUsesSimulationRun):
 
     # The number of bytes for the has_key flag and the key
     TRANSMISSION_REGION_N_BYTES = 2 * 4
@@ -61,8 +62,6 @@ class Vertex(
         MachineVertex.__init__(
             self, label=label, resources_required=resources,
             constraints=constraints)
-        MachineUsesSimulationDataSpecableVertex.__init__(
-            self, machine_time_step, time_scale_factor)
         ReceiveBuffersToHostBasicImpl.__init__(self)
 
         self._buffer_size_before_receive = config.getint(
@@ -73,19 +72,14 @@ class Vertex(
 
         self.placement = None
 
-    @overrides(MachineUsesSimulationDataSpecableVertex.get_binary_file_name)
+    @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
         return "c_code.aplx"
 
-    @overrides(MachineVertex.model_name)
-    def model_name(self):
-        return "Vertex"
-
-    @overrides(MachineUsesSimulationDataSpecableVertex.
-               generate_machine_data_specification)
+    @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
-            reverse_iptags):
+            reverse_iptags, machine_time_step, time_scale_factor):
         """ Generate data
 
         :param placement: the placement object for the dsg
@@ -100,9 +94,11 @@ class Vertex(
         # Create the data regions
         self._reserve_memory_regions(spec)
 
-        # write sim interface data
+        # write simulation interface data
         spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
-        spec.write_array(self.data_for_simulation_data())
+        spec.write_array(simulation_utilities.get_simulation_header_array(
+            self.get_binary_file_name(), machine_time_step,
+            time_scale_factor))
 
         # write recording data interface
         self.write_recording_data(

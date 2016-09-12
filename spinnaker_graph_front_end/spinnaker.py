@@ -2,10 +2,8 @@
 # common front end imports
 from spinn_front_end_common.interface.spinnaker_main_interface import \
     SpinnakerMainInterface
-from spinn_front_end_common.utilities import exceptions
 
 # graph front end imports
-from spinnaker_graph_front_end.utilities.xml_interface import XMLInterface
 from spinnaker_graph_front_end.utilities.conf import config
 
 # general imports
@@ -58,8 +56,7 @@ class SpiNNaker(SpinnakerMainInterface):
             self._time_scale_factor = \
                 config.get("Machine", "timeScaleFactor")
             if self._time_scale_factor == "None":
-                raise exceptions.ConfigurationException(
-                    "the time scale factor must be set somewhere")
+                self._time_scale_factor = 1
             else:
                 self._time_scale_factor = int(self._time_scale_factor)
         else:
@@ -73,24 +70,6 @@ class SpiNNaker(SpinnakerMainInterface):
         # get the machine time step
         logger.info("Setting machine time step to {} micro-seconds."
                     .format(self._machine_time_step))
-
-    def read_application_graph_xml_file(self, file_path):
-        """
-
-        :param file_path:
-        :return:
-        """
-        xml_interface = XMLInterface(file_path)
-        self._application_graph = xml_interface.read_in_file()
-
-    def read_machine_graph_xml_file(self, file_path):
-        """
-
-        :param file_path:
-        :return:
-        """
-        xml_interface = XMLInterface(file_path)
-        self._machine_graph = xml_interface.read_in_file()
 
     def get_machine_dimensions(self):
         """ Get the machine dimensions
