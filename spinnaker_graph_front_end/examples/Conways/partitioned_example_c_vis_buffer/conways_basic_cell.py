@@ -198,8 +198,8 @@ class ConwayBasicCell(
         # for buffering output info is taken form the buffer manager
         reader, data_missing = \
             buffer_manager.get_data_for_vertex(
-                placement, self.DATA_REGIONS.RESULTS.value,
-                self.DATA_REGIONS.BUFFERED_STATE_REGION.value)
+                placement, self.recording_region_id_from_dsg_region(
+                    self.DATA_REGIONS.RESULTS.value))
 
         # do check for missing data
         if data_missing:
