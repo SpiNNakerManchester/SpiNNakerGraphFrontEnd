@@ -61,15 +61,7 @@ class ConwayBasicCell(
             buffering_port=config.getint("Buffers", "receive_buffer_port"),
             buffered_sdram_per_timestep=4)
 
-        # resources used by the system.
-        resources = ResourceContainer(
-            sdram=SDRAMResource(0), dtcm=DTCMResource(0),
-            cpu_cycles=CPUCyclesPerTickResource(0))
-        resources = resources.extend(self.get_extra_resources(
-            config.get("Buffers", "receive_buffer_host"),
-            config.getint("Buffers", "receive_buffer_port")))
-
-        MachineVertex .__init__(self, resources, label)
+        MachineVertex .__init__(self, label)
 
         # app specific data items
         self._state = state
@@ -221,11 +213,15 @@ class ConwayBasicCell(
     @property
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
-        return ResourceContainer(
+        resources = ResourceContainer(
             sdram=SDRAMResource(
                 self._calculate_sdram_requirement()),
             dtcm=DTCMResource(0),
             cpu_cycles=CPUCyclesPerTickResource(0))
+        resources.extend(self.get_extra_resources(
+            config.get("Buffers", "receive_buffer_host"),
+            config.getint("Buffers", "receive_buffer_port")))
+        return resources
 
     @property
     def state(self):

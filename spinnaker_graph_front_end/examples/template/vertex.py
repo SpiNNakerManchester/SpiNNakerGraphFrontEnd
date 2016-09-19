@@ -49,20 +49,10 @@ class Vertex(
 
         self._recording_size = 5000
 
-        # TODO: Update with the resources required by the vertex
-        resources = ResourceContainer(
-            cpu_cycles=CPUCyclesPerTickResource(45),
-            dtcm=DTCMResource(100),
-            sdram=SDRAMResource(
-                constants.SYSTEM_BYTES_REQUIREMENT +
-                self.TRANSMISSION_REGION_N_BYTES +
-                self.get_buffer_state_region_size(1) +
-                self.get_recording_data_size(1) + self._recording_size))
-
-        MachineVertex.__init__(
-            self, label=label, resources_required=resources,
-            constraints=constraints)
+        MachineVertex.__init__(self, label=label, constraints=constraints)
         ReceiveBuffersToHostBasicImpl.__init__(self)
+
+        self.activate_buffering_output()
 
         self._buffer_size_before_receive = config.getint(
             "Buffers", "buffer_size_before_receive")
@@ -71,6 +61,20 @@ class Vertex(
             "Buffers", "time_between_requests")
 
         self.placement = None
+
+    @overrides(MachineVertex.resources_required)
+    def resources_required(self):
+        resources = ResourceContainer(
+            cpu_cycles=CPUCyclesPerTickResource(45),
+            dtcm=DTCMResource(100),
+            sdram=SDRAMResource(
+                constants.SYSTEM_BYTES_REQUIREMENT +
+                self.TRANSMISSION_REGION_N_BYTES +
+                self.get_buffer_state_region_size(1) +
+                self.get_recording_data_size(1) + self._recording_size))
+        resources.extend(self.get_extra_resources(
+            config.get("Buffers", "receive_buffer_host"),
+            config.getint("Buffers", "receive_buffer_port")))
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):

@@ -46,18 +46,7 @@ class HelloWorldVertex(
 
         ReceiveBuffersToHostBasicImpl.__init__(self)
         self.activate_buffering_output()
-
-        resources = ResourceContainer(cpu_cycles=CPUCyclesPerTickResource(45),
-                                      dtcm=DTCMResource(100),
-                                      sdram=SDRAMResource(100))
-
-        resources.extend(self.get_extra_resources(
-            config.get("Buffers", "receive_buffer_host"),
-            config.getint("Buffers", "receive_buffer_port")))
-
-        MachineVertex.__init__(
-            self, label=label, resources_required=resources,
-            constraints=constraints)
+        MachineVertex.__init__(self, label=label, constraints=constraints)
 
         self._buffer_size_before_receive = config.getint(
             "Buffers", "buffer_size_before_receive")
@@ -68,6 +57,18 @@ class HelloWorldVertex(
         self._string_data_size = 5000
 
         self.placement = None
+
+    @overrides(MachineVertex.resources_required)
+    def resources_required(self):
+        resources = ResourceContainer(cpu_cycles=CPUCyclesPerTickResource(45),
+                                      dtcm=DTCMResource(100),
+                                      sdram=SDRAMResource(100))
+
+        resources.extend(self.get_extra_resources(
+            config.get("Buffers", "receive_buffer_host"),
+            config.getint("Buffers", "receive_buffer_port")))
+
+        return resources
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):

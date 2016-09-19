@@ -73,18 +73,20 @@ class HeatDemoVertex(
         # resources used by a heat element vertex
         sdram = SDRAMResource(
             23 + config.getint("Buffers", "minimum_buffer_sdram"))
-        resources = ResourceContainer(cpu_cycles=CPUCyclesPerTickResource(45),
-                                      dtcm=DTCMResource(34),
-                                      sdram=sdram)
+        self._resources = \
+            ResourceContainer(cpu_cycles=CPUCyclesPerTickResource(45),
+                              dtcm=DTCMResource(34), sdram=sdram)
 
-        MachineVertex.__init__(
-            self, label=label, resources_required=resources,
-            constraints=constraints)
+        MachineVertex.__init__(self, label=label, constraints=constraints)
 
         # app specific data items
         self._heat_temperature = heat_temperature
         self._time_between_requests = config.getint(
             "Buffers", "time_between_requests")
+
+    @overrides(MachineVertex.resources_required)
+    def resources_required(self):
+        return self._resources
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
