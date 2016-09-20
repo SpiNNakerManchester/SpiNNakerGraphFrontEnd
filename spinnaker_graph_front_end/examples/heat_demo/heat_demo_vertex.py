@@ -84,6 +84,7 @@ class HeatDemoVertex(
         self._time_between_requests = config.getint(
             "Buffers", "time_between_requests")
 
+    @property
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
         return self._resources

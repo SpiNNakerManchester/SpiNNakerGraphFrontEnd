@@ -41,8 +41,7 @@ class Vertex(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
                ('TRANSMISSION', 1),
-               ('RECORDED_DATA', 2),
-               ('BUFFERED_STATE', 3)])
+               ('RECORDED_DATA', 2)])
 
     def __init__(self, label, machine_time_step, time_scale_factor,
                  constraints=None):
@@ -63,6 +62,7 @@ class Vertex(
         self.placement = None
 
     @overrides(MachineVertex.resources_required)
+    @property
     def resources_required(self):
         resources = ResourceContainer(
             cpu_cycles=CPUCyclesPerTickResource(45),
@@ -75,6 +75,7 @@ class Vertex(
         resources.extend(self.get_extra_resources(
             config.get("Buffers", "receive_buffer_host"),
             config.getint("Buffers", "receive_buffer_port")))
+        return resources
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
@@ -134,8 +135,7 @@ class Vertex(
             region=self.DATA_REGIONS.TRANSMISSION.value,
             seiz=self.TRANSMISSION_REGION_N_BYTES, label="transmission")
         self.reserve_buffer_regions(
-            spec, self.DATA_REGIONS.BUFFERED_STATE.value,
-            [self.DATA_REGIONS.RECORDED_DATA.value],
+            spec, [self.DATA_REGIONS.RECORDED_DATA.value],
             [self._recording_size])
 
     def read(self, placement, buffer_manager):
@@ -146,8 +146,7 @@ class Vertex(
         :return: The data read
         """
         data_pointer, is_missing_data = buffer_manager.get_data_for_vertex(
-            placement, self.DATA_REGIONS.RECORDED_DATA.value,
-            self.DATA_REGIONS.BUFFERED_STATE.value)
+            placement, self.DATA_REGIONS.RECORDED_DATA.value)
         if is_missing_data:
             logger.warn("Some data was lost when recording")
         record_raw = data_pointer.read_all()

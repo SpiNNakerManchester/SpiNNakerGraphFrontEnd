@@ -23,8 +23,7 @@ static bool initialise_recording();
 typedef enum regions_e {
     SYSTEM_REGION,
     TRANSMISSIONS,
-    RECORDED_DATA,
-    BUFFERING_OUT_STATE,
+    RECORDED_DATA
 } regions_e;
 
 //! values for the priority for each callback
@@ -109,8 +108,6 @@ static bool initialise_recording() {
         SYSTEM_REGION, address);
     uint32_t *recording_flags_from_system_conf =
         &system_region[SIMULATION_N_TIMING_DETAIL_WORDS];
-    address_t state_region_address =
-        data_specification_get_region(BUFFERING_OUT_STATE, address);
 
     // TODO: Update with the recording region ids
     address_t regions_addresses_to_record[] = {
@@ -118,8 +115,7 @@ static bool initialise_recording() {
 
     bool success = recording_initialize(
         N_REGIONS_TO_RECORD, regions_addresses_to_record,
-        recording_flags_from_system_conf, state_region_address, TIMER,
-        &recording_flags);
+        recording_flags_from_system_conf, &recording_flags);
     log_info("Recording flags = 0x%08x", recording_flags);
     return success;
 }

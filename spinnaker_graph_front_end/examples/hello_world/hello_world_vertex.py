@@ -35,8 +35,7 @@ class HelloWorldVertex(
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
-               ('STRING_DATA', 1),
-               ('BUFFERED_STATE', 2)])
+               ('STRING_DATA', 1)])
 
 
 
@@ -58,6 +57,7 @@ class HelloWorldVertex(
 
         self.placement = None
 
+    @property
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
         resources = ResourceContainer(cpu_cycles=CPUCyclesPerTickResource(45),
@@ -106,8 +106,7 @@ class HelloWorldVertex(
         spec.reserve_memory_region(region=self.DATA_REGIONS.SYSTEM.value,
                                    size=system_size, label='systemInfo')
         self.reserve_buffer_regions(
-            spec, self.DATA_REGIONS.BUFFERED_STATE.value,
-            [self.DATA_REGIONS.STRING_DATA.value],
+            spec, [self.DATA_REGIONS.STRING_DATA.value],
             [self._string_data_size])
 
     def read(self, placement, buffer_manager):

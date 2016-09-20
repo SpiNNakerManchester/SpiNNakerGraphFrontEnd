@@ -42,8 +42,7 @@ typedef enum regions_e {
     TRANSMISSIONS,
     STATE,
     NEIGHBOUR_INITIAL_STATES,
-    RECORDED_DATA,
-    RECORDING_STATE_REGION
+    RECORDED_DATA
 } regions_e;
 
 //! values for the priority for each callback
@@ -251,13 +250,10 @@ static bool initialise_recording(){
     uint8_t n_regions_to_record = 1;
     uint32_t *recording_flags_from_system_conf =
         &system_region[SIMULATION_N_TIMING_DETAIL_WORDS];
-    address_t state_region_address =
-        data_specification_get_region(RECORDING_STATE_REGION, address);
 
     bool success = recording_initialize(
         n_regions_to_record, region_addresses_to_record,
-        recording_flags_from_system_conf, state_region_address,
-        &recording_flags);
+        recording_flags_from_system_conf, &recording_flags);
     log_info("Recording flags = 0x%08x", recording_flags);
     return success;
 }

@@ -47,8 +47,7 @@ class ConwayBasicCell(
                ('TRANSMISSIONS', 1),
                ('STATE', 2),
                ('NEIGHBOUR_INITIAL_STATES', 3),
-               ('RESULTS', 4),
-               ('BUFFERED_STATE_REGION', 5)])
+               ('RESULTS', 4)])
 
     def __init__(self, label, state):
 
@@ -92,8 +91,7 @@ class ConwayBasicCell(
             region=self.DATA_REGIONS.NEIGHBOUR_INITIAL_STATES.value,
             size=8, label="neighour_states")
         self.reserve_buffer_regions(
-            spec, self.DATA_REGIONS.BUFFERED_STATE_REGION.value,
-            [self.DATA_REGIONS.RESULTS.value],
+            spec, [self.DATA_REGIONS.RESULTS.value],
             [constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP])
 
         # simulation.c requirements
