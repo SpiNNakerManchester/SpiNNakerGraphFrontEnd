@@ -1,7 +1,6 @@
 # pacman imports
 from pacman.model.decorators.overrides import overrides
 from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
-from pacman.model.resources.iptag_resource import IPtagResource
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.cpu_cycles_per_tick_resource import \
     CPUCyclesPerTickResource
@@ -229,8 +228,7 @@ class ConwayBasicCell(
         return (constants.SYSTEM_BYTES_REQUIREMENT +
                 self.TRANSMISSION_DATA_SIZE + self.STATE_DATA_SIZE +
                 self.NEIGHBOUR_INITIAL_STATES_SIZE +
-                constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP +
-                ReceiveBuffersToHostBasicImpl.get_buffer_state_region_size(1))
+                constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP)
 
     def __repr__(self):
         return self._label

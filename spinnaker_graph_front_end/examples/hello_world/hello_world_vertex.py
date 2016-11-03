@@ -37,8 +37,6 @@ class HelloWorldVertex(
         names=[('SYSTEM', 0),
                ('STRING_DATA', 1)])
 
-
-
     CORE_APP_IDENTIFIER = 0xBEEF
 
     def __init__(self, label, constraints=None):

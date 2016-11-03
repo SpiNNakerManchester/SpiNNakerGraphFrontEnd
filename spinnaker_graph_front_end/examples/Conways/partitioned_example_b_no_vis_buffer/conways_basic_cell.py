@@ -141,7 +141,6 @@ class ConwayBasicCell(
                     "I'm connected to myself, this is deemed an error"
                     " please fix.")
 
-
         # write key needed to transmit with
         key = routing_info.get_first_key_from_partition(partitions[0])
 
