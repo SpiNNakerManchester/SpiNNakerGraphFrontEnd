@@ -38,19 +38,26 @@ class HelloWorldVertex(
                ('STRING_DATA', 1),
                ('BUFFERED_STATE', 2)])
 
+
+
     CORE_APP_IDENTIFIER = 0xBEEF
 
-    def __init__(self, label, machine_time_step, time_scale_factor,
-                 constraints=None):
+    def __init__(self, label, constraints=None):
+
+        ReceiveBuffersToHostBasicImpl.__init__(self)
+        self.activate_buffering_output()
 
         resources = ResourceContainer(cpu_cycles=CPUCyclesPerTickResource(45),
                                       dtcm=DTCMResource(100),
                                       sdram=SDRAMResource(100))
 
+        resources.extend(self.get_extra_resources(
+            config.get("Buffers", "receive_buffer_host"),
+            config.getint("Buffers", "receive_buffer_port")))
+
         MachineVertex.__init__(
             self, label=label, resources_required=resources,
             constraints=constraints)
-        ReceiveBuffersToHostBasicImpl.__init__(self)
 
         self._buffer_size_before_receive = config.getint(
             "Buffers", "buffer_size_before_receive")
@@ -110,8 +117,8 @@ class HelloWorldVertex(
         :return: string output
         """
         data_pointer, missing_data = buffer_manager.get_data_for_vertex(
-            placement, self.DATA_REGIONS.STRING_DATA.value,
-            self.DATA_REGIONS.BUFFERED_STATE.value)
+            placement, self.recording_region_id_from_dsg_region(
+                self.DATA_REGIONS.STRING_DATA.value))
         if missing_data:
             raise Exception("missing data!")
         record_raw = data_pointer.read_all()

@@ -1,7 +1,6 @@
 # pacman imports
 from pacman.model.decorators.overrides import overrides
 from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
-from pacman.model.resources.iptag_resource import IPtagResource
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.cpu_cycles_per_tick_resource import \
     CPUCyclesPerTickResource
@@ -40,8 +39,6 @@ class ConwayBasicCell(
     STATE_DATA_SIZE = 1 * 4  # 1 or 2 based off dead or alive
     NEIGHBOUR_INITIAL_STATES_SIZE = 2 * 4  # alive states, dead states
 
-    VIS_PORT_NUM = 17892  # port number use
-
     # Regions for populations
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
@@ -59,8 +56,8 @@ class ConwayBasicCell(
         # activate the buffer out functionality
         self.activate_buffering_output(
             minimum_sdram_for_buffering=(
-                config.getint("Buffers", "minimum_buffer_sdram")
-            ),
+                config.getint("Buffers", "minimum_buffer_sdram")),
+            buffering_port=config.getint("Buffers", "receive_buffer_port"),
             buffered_sdram_per_timestep=4)
 
         # resources used by the system.
@@ -198,8 +195,8 @@ class ConwayBasicCell(
         # for buffering output info is taken form the buffer manager
         reader, data_missing = \
             buffer_manager.get_data_for_vertex(
-                placement, self.DATA_REGIONS.RESULTS.value,
-                self.DATA_REGIONS.BUFFERED_STATE_REGION.value)
+                placement, self.recording_region_id_from_dsg_region(
+                    self.DATA_REGIONS.RESULTS.value))
 
         # do check for missing data
         if data_missing:
@@ -227,10 +224,7 @@ class ConwayBasicCell(
             sdram=SDRAMResource(
                 self._calculate_sdram_requirement()),
             dtcm=DTCMResource(0),
-            cpu_cycles=CPUCyclesPerTickResource(0),
-            iptags=[IPtagResource(
-                config.get("Recording", "live_spike_host"),
-                self.VIS_PORT_NUM, strip_sdp=False)])
+            cpu_cycles=CPUCyclesPerTickResource(0))
 
     @property
     def state(self):

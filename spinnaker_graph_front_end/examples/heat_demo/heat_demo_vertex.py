@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 class HeatDemoVertex(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-        ReceiveBuffersToHostBasicImpl, AbstractBinaryUsesSimulationRun):
+        AbstractBinaryUsesSimulationRun):
     """ A vertex partition for a heat demo; represents a heat element.
     """
 
@@ -77,7 +77,6 @@ class HeatDemoVertex(
                                       dtcm=DTCMResource(34),
                                       sdram=sdram)
 
-        ReceiveBuffersToHostBasicImpl.__init__(self)
         MachineVertex.__init__(
             self, label=label, resources_required=resources,
             constraints=constraints)
