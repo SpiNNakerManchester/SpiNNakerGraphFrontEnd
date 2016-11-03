@@ -1,7 +1,6 @@
 # pacman imports
 from pacman.model.decorators.overrides import overrides
 from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
-from pacman.model.resources.iptag_resource import IPtagResource
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.cpu_cycles_per_tick_resource import \
     CPUCyclesPerTickResource
