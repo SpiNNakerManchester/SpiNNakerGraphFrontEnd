@@ -71,7 +71,8 @@ typedef enum initial_state_region_elements {
     TDT = 28, DX = 30, DY = 32, FSDX = 34, FSDY = 36, ALPHA = 38
 } initial_state_region_elements;
 
-//! human readable
+//! human readable for the key allocation
+
 
 
 /****f* conways.c/receive_data
