@@ -11,10 +11,15 @@ class WeatherDemoEdge(MachineEdge, AbstractProvidesNKeysForPartition):
     """ Used in conjunction with a heat demo vertex to execute the heat demo
     """
 
-    def __init__(self, pre_vertex, post_vertex, label=None):
+    def __init__(self, pre_vertex, post_vertex, compass, label=None):
         MachineEdge.__init__(
             self, pre_vertex, post_vertex, label=label)
         AbstractProvidesNKeysForPartition.__init__(self)
+        self._compass = compass
+
+    @property
+    def compass(self):
+        return self._compass
 
     def get_n_keys_for_partition(self, partition, graph_mapper):
         return 14

@@ -82,13 +82,8 @@ class WeatherVertex(
     _model_n_atoms = 1
 
     def __init__(
-            self, label, u, v, p, psi, at_edge_east,
-            hard_coded_east_u, hard_coded_east_p, hard_coded_east_v,
-            at_edge_north_east, hard_coded_north_east_u,
-            hard_coded_north_east_p, hard_coded_north_east_v,
-            at_edge_north, hard_coded_north_u, hard_coded_north_p,
-            hard_coded_north_v, tdt, dx, dy, fsdx, fsdy, alpha,
-            constraints=None):
+            self, label, u, v, p, psi, tdt, dx,
+            dy, fsdx, fsdy, alpha, constraints=None):
 
         # resources used by a weather element vertex
         sdram = SDRAMResource(
@@ -105,9 +100,6 @@ class WeatherVertex(
         self._v = v
         self._p = p
         self._psi = psi
-        self._at_edge_east = at_edge_east
-        self._at_edge_north_east = at_edge_north_east
-        self._at_edge_north = at_edge_north
 
         # constants to move down
         self._tdt = tdt
@@ -117,16 +109,17 @@ class WeatherVertex(
         self._fsdy = fsdy
         self._alpha = alpha
 
-        # hard coded values
-        self._hard_coded_east_u = hard_coded_east_u
-        self._hard_coded_east_p = hard_coded_east_p
-        self._hard_coded_east_v = hard_coded_east_v
-        self._hard_coded_north_east_u = hard_coded_north_east_u
-        self._hard_coded_north_east_p = hard_coded_north_east_p
-        self._hard_coded_north_east_v = hard_coded_north_east_v
-        self._hard_coded_north_u = hard_coded_north_u
-        self._hard_coded_north_p = hard_coded_north_p
-        self._hard_coded_north_v = hard_coded_north_v
+        # values from other places
+        self._east_u = None
+        self._east_p = None
+        self._east_v = None
+        self._north_east_u = None
+        self._north_east_p = None
+        self._north_east_v = None
+        self._north_u = None
+        self._north_p = None
+        self._north_v = None
+
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
@@ -170,6 +163,9 @@ class WeatherVertex(
             self.get_binary_file_name(), machine_time_step,
             time_scale_factor))
 
+        # update the values needed for the writing down for the first timer tick
+        self._update_states(machine_graph)
+
         # application specific data items
         self._write_transmission_keys(spec, routing_info, machine_graph)
         self._write_key_data(spec, routing_info, machine_graph)
@@ -177,6 +173,33 @@ class WeatherVertex(
 
         # End-of-Spec:
         spec.end_specification()
+
+    def _update_states(self, machine_graph):
+        """
+
+        :param machine_graph:
+        :return:
+        """
+        edges = machine_graph.get_edges_ending_at_vertex(self)
+        for edge in edges:
+            if isinstance(edge, WeatherDemoEdge):
+                if edge.compass == "N":
+                    self._north_u = edge.pre_vertex.u
+                    self._north_v = edge.pre_vertex.v
+                    self._north_p = edge.pre_vertex.p
+                if edge.compass == "NE":
+                    self._north_east_u = edge.pre_vertex.u
+                    self._north_east_p = edge.pre_vertex.p
+                    self._north_east_v = edge.pre_vertex.v
+                if edge.compass == "E":
+                    self._east_u = edge.pre_vertex.u
+                    self._east_p = edge.pre_vertex.p
+                    self._east_v = edge.pre_vertex.v
+                if edge.compass == "SE":
+
+            else:
+                raise exceptions.ConfigurationException(
+                    "Should only have WeatherDemoEdge's coming to me")
 
     def _write_state_data(self, spec):
         """
@@ -194,52 +217,26 @@ class WeatherVertex(
         spec.write_value(data=self._p, data_type=DataType.S3231)
         spec.write_value(data=self._psi, data_type=DataType.S3231)
 
-        # if at a edge, add hard coded ones (to remove excess cores)
-        if self._at_edge_east:
-            spec.write_value(self.TRUE)
-            spec.write_value(self._hard_coded_east_u, data_type=DataType.S3231)
-            spec.write_value(self._hard_coded_east_v, data_type=DataType.S3231)
-            spec.write_value(self._hard_coded_east_p, data_type=DataType.S3231)
-        else:
-            spec.write_value(self.FALSE)
-            spec.write_value(-1, data_type=DataType.INT32)
-            spec.write_value(-1, data_type=DataType.INT32)
-            spec.write_value(-1, data_type=DataType.INT32)
-            spec.write_value(-1, data_type=DataType.INT32)
-            spec.write_value(-1, data_type=DataType.INT32)
-            spec.write_value(-1, data_type=DataType.INT32)
-        if self._at_edge_north_east:
-            spec.write_value(self.TRUE)
-            spec.write_value(
-                self._hard_coded_north_east_u, data_type=DataType.S3231)
-            spec.write_value(
-                self._hard_coded_north_east_v, data_type=DataType.S3231)
-            spec.write_value(
-                self._hard_coded_north_east_p, data_type=DataType.S3231)
-        else:
-            spec.write_value(self.FALSE)
-            spec.write_value(-1, data_type=DataType.INT32)
-            spec.write_value(-1, data_type=DataType.INT32)
-            spec.write_value(-1, data_type=DataType.INT32)
-            spec.write_value(-1, data_type=DataType.INT32)
-            spec.write_value(-1, data_type=DataType.INT32)
-            spec.write_value(-1, data_type=DataType.INT32)
-        if self._at_edge_north:
-            spec.write_value(self.TRUE)
-            spec.write_value(
-                self._hard_coded_north_u, data_type=DataType.S3231)
-            spec.write_value(
-                self._hard_coded_north_v, data_type=DataType.S3231)
-            spec.write_value(
-                self._hard_coded_north_p, data_type=DataType.S3231)
-        else:
-            spec.write_value(self.FALSE)
-            spec.write_value(-1, data_type=DataType.INT32)
-            spec.write_value(-1, data_type=DataType.INT32)
-            spec.write_value(-1, data_type=DataType.INT32)
-            spec.write_value(-1, data_type=DataType.INT32)
-            spec.write_value(-1, data_type=DataType.INT32)
-            spec.write_value(-1, data_type=DataType.INT32)
+        # east elements
+        spec.write_value(self._east_u, data_type=DataType.S3231)
+        spec.write_value(self._east_v, data_type=DataType.S3231)
+        spec.write_value(self._east_p, data_type=DataType.S3231)
+
+        # ne elements
+        spec.write_value(self._north_east_u, data_type=DataType.S3231)
+        spec.write_value(self._north_east_v, data_type=DataType.S3231)
+        spec.write_value(self._north_east_p, data_type=DataType.S3231)
+
+        # n elements
+        spec.write_value(self._north_u, data_type=DataType.S3231)
+        spec.write_value(self._north_v, data_type=DataType.S3231)
+        spec.write_value(self._north_p, data_type=DataType.S3231)
+
+        # w elements
+
+
+
+        # constant elements
         spec.write_value(self._tdt, data_type=DataType.S3231)
         spec.write_value(self._dx, data_type=DataType.S3231)
         spec.write_value(self._dy, data_type = DataType.S3231)
@@ -291,13 +288,13 @@ class WeatherVertex(
             if key is None:
 
                 # if there's no key, then two false's will cover it.
-                spec.write_value(data=0)
+                spec.write_value(data=self.FALSE)
                 spec.write_value(data=0)
 
             else:
 
                 # has a key, thus set has key to 1 and then add key
-                spec.write_value(data=1)
+                spec.write_value(data=self.TRUE)
                 spec.write_value(data=key)
 
     def _write_key_data(self, spec, routing_info, graph):
@@ -311,18 +308,22 @@ class WeatherVertex(
         spec.switch_write_focus(region=self.DATA_REGIONS.NEIGHBOUR_KEYS.value)
 
         # get incoming edges
-        edge_partitions = ["DATA_S", "DATA_SW", "DATA_W"]
-        for edge_partition in edge_partitions:
-            incoming_edges = \
-                graph.get_edges_ending_at_vertex_with_partition_name(
-                    self, edge_partition)
+        incoming_edges = \
+            graph.get_edges_ending_at_vertex_with_partition_name(
+                self, "DATA")
 
-            if len(incoming_edges) > 1:
-                raise exceptions.ConfigurationException(
-                    "Should only have 1 edge")
+        if len(incoming_edges) > 3:
+            raise exceptions.ConfigurationException(
+                "Should only have 1 edge")
 
-            if len(incoming_edges) == 1:
-                incoming_edge = incoming_edges[0]
+        compass_order = ["S", "SW", "W"]
+        position = 0
+        for position in range(0, 3):
+            found_edge = None
+            for edge in incoming_edges:
+                if edge.compass == compass_order[position]:
+                    found_edge = edge
+            if found_edge is not None:
                 key = routing_info.get_first_key_for_edge(incoming_edge)
                 spec.write_value(data=key)
             else:
@@ -378,12 +379,12 @@ class WeatherVertex(
 
         # convert to float
         elements = struct.unpack(
-            "<{}III".format(self._n_machine_time_steps), raw_data)
+            "<{}qqq".format(self._n_machine_time_steps), raw_data)
 
         # convert into keyed data
         data = dict()
-        data['p'] = elements[0] / 32767.0
-        data['u'] = elements[1] / 32767.0
-        data['v'] = elements[2] / 32767.0
+        data['p'] = elements[0] / 2147483647.0
+        data['u'] = elements[1] / 2147483647.0
+        data['v'] = elements[2] / 2147483647.0
 
         return data
