@@ -70,8 +70,8 @@ class Vertex(
 
         self.placement = None
 
-    @overrides(MachineVertex.resources_required)
     @property
+    @overrides(MachineVertex.resources_required)
     def resources_required(self):
         resources = ResourceContainer(
             cpu_cycles=CPUCyclesPerTickResource(45),
