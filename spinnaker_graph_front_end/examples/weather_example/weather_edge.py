@@ -28,4 +28,4 @@ class WeatherDemoEdge(MachineEdge, AbstractProvidesNKeysForPartition):
         return self.__repr__()
 
     def __repr__(self):
-        return "WeatherDemoEdge:{}".format(self._label)
+        return "WeatherDemoEdge:{}:{}".format(self._compass, self._label)

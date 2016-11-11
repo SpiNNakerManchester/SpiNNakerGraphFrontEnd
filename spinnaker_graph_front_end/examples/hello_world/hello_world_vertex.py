@@ -73,7 +73,9 @@ class HelloWorldVertex(
         self.placement = placement
 
         # Setup words + 1 for flags + 1 for recording size
-        setup_size = constants.SYSTEM_BYTES_REQUIREMENT + 8
+        setup_size = \
+            constants.SYSTEM_BYTES_REQUIREMENT + \
+            self.get_recording_data_size(1)
 
         # Reserve SDRAM space for memory areas:
 

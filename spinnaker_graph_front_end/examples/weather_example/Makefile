@@ -3,7 +3,7 @@ ifndef SPINN_DIRS
     $(error SPINN_DIRS is not set.  Please define SPINN_DIRS (possibly by running "source setup" in the spinnaker package folder))
 endif
 
-APP = weather_vertex
+APP = weather
 BUILD_DIR = build/
 SOURCES = weather_vertex.c
 

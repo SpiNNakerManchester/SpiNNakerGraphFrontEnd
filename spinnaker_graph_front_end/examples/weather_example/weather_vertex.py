@@ -54,35 +54,32 @@ class WeatherVertex(
                ('INIT_STATE_VALUES', 4),
                ('FINAL_STATES', 5)])
 
-    # 3 int for EAST, NORTH_EAST, NORTH for u
-    # 3 int for EAST, NORTH_EAST, NORTH for v
-    # 3 int for EAST, NORTH_EAST, NORTH for p
-    # 3 int for EAST, NORTH_EAST, NORTH for z
-    # 3 int for EAST, NORTH_EAST, NORTH for h
-    # 3 int for EAST, NORTH_EAST, NORTH for cv
-    # 3 int for EAST, NORTH_EAST, NORTH for cu
-    NEIGHBOUR_DATA_REGION_SIZE = 21 * 4
+    # 1 for has key, 1 for key for the 8 directions
+    NEIGHBOUR_DATA_REGION_SIZE = 16 * 4
     
     # 1 int for has key, 1 int for the key
     TRANSMISSION_DATA_REGION_SIZE = 2 * 4
     
     # each state variable needs 4 bytes for their s15:16 data item.
-    # u,v,p,psi,at_edge_east, hceu,dcep,hcev,at_edge_ne,at_edge_n, tdtd,
-    # dx, dy, fsdx, fsdy, alpha
-    INIT_STATE_REGION_SIZE = 22 * 8
+    INIT_STATE_REGION_SIZE = 68 * 4
 
     # each state variable needs 4 bytes for the their s15:16 data item.
     # u,v,p
     FINAL_STATE_REGION_SIZE = 3 * 4
 
-    TRUE = 0
-    FALSE = 1
+    # bool flags
+    TRUE = 1
+    FALSE = 0
 
+    # the order of which directions are written to sdram
+    ORDER_OF_DIRECTIONS = ["N", "NE", "E", "NW", "W", "SW", "S", "SE"]
+
+    # model specific stuff
     _model_based_max_atoms_per_core = 1
     _model_n_atoms = 1
 
     def __init__(
-            self, label, u, v, p, psi, tdt, dx,
+            self, label, u, v, p, tdt, dx,
             dy, fsdx, fsdy, alpha, constraints=None):
 
         # resources used by a weather element vertex
@@ -94,12 +91,12 @@ class WeatherVertex(
         MachineVertex.__init__(
             self, label=label, resources_required=resources,
             constraints=constraints)
+        ReceiveBuffersToHostBasicImpl.__init__(self)
 
         # app specific data items
         self._u = u
         self._v = v
         self._p = p
-        self._psi = psi
 
         # constants to move down
         self._tdt = tdt
@@ -119,7 +116,6 @@ class WeatherVertex(
         self._north_u = None
         self._north_p = None
         self._north_v = None
-
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
@@ -163,45 +159,15 @@ class WeatherVertex(
             self.get_binary_file_name(), machine_time_step,
             time_scale_factor))
 
-        # update the values needed for the writing down for the first timer tick
-        self._update_states(machine_graph)
-
         # application specific data items
         self._write_transmission_keys(spec, routing_info, machine_graph)
         self._write_key_data(spec, routing_info, machine_graph)
-        self._write_state_data(spec)
+        self._write_state_data(spec, machine_graph)
 
         # End-of-Spec:
         spec.end_specification()
 
-    def _update_states(self, machine_graph):
-        """
-
-        :param machine_graph:
-        :return:
-        """
-        edges = machine_graph.get_edges_ending_at_vertex(self)
-        for edge in edges:
-            if isinstance(edge, WeatherDemoEdge):
-                if edge.compass == "N":
-                    self._north_u = edge.pre_vertex.u
-                    self._north_v = edge.pre_vertex.v
-                    self._north_p = edge.pre_vertex.p
-                if edge.compass == "NE":
-                    self._north_east_u = edge.pre_vertex.u
-                    self._north_east_p = edge.pre_vertex.p
-                    self._north_east_v = edge.pre_vertex.v
-                if edge.compass == "E":
-                    self._east_u = edge.pre_vertex.u
-                    self._east_p = edge.pre_vertex.p
-                    self._east_v = edge.pre_vertex.v
-                if edge.compass == "SE":
-
-            else:
-                raise exceptions.ConfigurationException(
-                    "Should only have WeatherDemoEdge's coming to me")
-
-    def _write_state_data(self, spec):
+    def _write_state_data(self, spec, machine_graph):
         """
 
         :param spec:
@@ -215,26 +181,21 @@ class WeatherVertex(
         spec.write_value(data=self._u, data_type=DataType.S3231)
         spec.write_value(data=self._v, data_type=DataType.S3231)
         spec.write_value(data=self._p, data_type=DataType.S3231)
-        spec.write_value(data=self._psi, data_type=DataType.S3231)
 
-        # east elements
-        spec.write_value(self._east_u, data_type=DataType.S3231)
-        spec.write_value(self._east_v, data_type=DataType.S3231)
-        spec.write_value(self._east_p, data_type=DataType.S3231)
+        edges = machine_graph.get_edges_ending_at_vertex(self)
 
-        # ne elements
-        spec.write_value(self._north_east_u, data_type=DataType.S3231)
-        spec.write_value(self._north_east_v, data_type=DataType.S3231)
-        spec.write_value(self._north_east_p, data_type=DataType.S3231)
-
-        # n elements
-        spec.write_value(self._north_u, data_type=DataType.S3231)
-        spec.write_value(self._north_v, data_type=DataType.S3231)
-        spec.write_value(self._north_p, data_type=DataType.S3231)
-
-        # w elements
-
-
+        # for each direction, write the source vertex's u,v,p which allows
+        # the first timer tick to just run as normal
+        for position in range(0, len(self.ORDER_OF_DIRECTIONS)):
+            for edge in edges:
+                if isinstance(edge, WeatherDemoEdge):
+                    if edge.compass == self.ORDER_OF_DIRECTIONS[position]:
+                        spec.write_value(
+                            edge.pre_vertex.u, data_type=DataType.S3231)
+                        spec.write_value(
+                            edge.pre_vertex.v, data_type=DataType.S3231)
+                        spec.write_value(
+                            edge.pre_vertex.p, data_type=DataType.S3231)
 
         # constant elements
         spec.write_value(self._tdt, data_type=DataType.S3231)
@@ -309,24 +270,29 @@ class WeatherVertex(
 
         # get incoming edges
         incoming_edges = \
-            graph.get_edges_ending_at_vertex_with_partition_name(
-                self, "DATA")
+            graph.get_edges_ending_at_vertex_with_partition_name(self, "DATA")
 
-        if len(incoming_edges) > 3:
+        # verify n edges
+        if len(incoming_edges) > 8:
+            print incoming_edges
             raise exceptions.ConfigurationException(
-                "Should only have 1 edge")
+                "Should only have 8 edge")
 
-        compass_order = ["S", "SW", "W"]
-        position = 0
-        for position in range(0, 3):
+        # for each edge, write the base key, so that the cores can figure
+        # which bit of data its received
+        for position in range(0, len(self.ORDER_OF_DIRECTIONS)):
             found_edge = None
             for edge in incoming_edges:
-                if edge.compass == compass_order[position]:
+                if edge.compass == self.ORDER_OF_DIRECTIONS[position]:
                     found_edge = edge
+
             if found_edge is not None:
-                key = routing_info.get_first_key_for_edge(incoming_edge)
+                key = routing_info.get_first_key_for_edge(found_edge)
                 spec.write_value(data=key)
             else:
+                logger.warning(
+                    "Something is odd here. missing edge for direction {}"
+                    .format(self.ORDER_OF_DIRECTIONS[position]))
                 spec.write_value(data_type=DataType.INT32, data=-1)
 
     @property

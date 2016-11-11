@@ -182,7 +182,7 @@ static bool initialize(uint32_t *timer_period) {
  */
 void c_main() {
     log_info("starting heat_demo\n");
-
+    log_info("the fiq event at beginning is %d", get_fiq_event());
     // Load DTCM data
     uint32_t timer_period;
 

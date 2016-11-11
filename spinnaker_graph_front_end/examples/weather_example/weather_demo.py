@@ -42,7 +42,7 @@ class WeatherRun(object):
     """
 
     def __init__(self):
-        machine_time_step = 100
+        machine_time_step = 1000
         time_scale_factor = 1.0
 
         # figure machine size needed at a min
@@ -83,9 +83,14 @@ class WeatherRun(object):
                 v = self._mass_flux_v[x][y]
 
                 vert = WeatherVertex(
-                    psi=psi, p=p, u=u, v=v,
+                    p=p, u=u, v=v,
                     tdt=TDT, dx=DX, dy=DY, fsdx=FSDX, fsdy=FSDY,
                     alpha=ALPHA, label="weather_vertex{}:{}".format(x, y))
+
+                logger.info(
+                    "for vertex {}:{} p = {} u = {} v = {}".format(
+                        x, y, p, u, v))
+
                 self._vertices[x][y] = vert
                 front_end.add_machine_vertex_instance(vert)
 
@@ -146,11 +151,11 @@ class WeatherRun(object):
                 (y + 1) % MAX_Y_SIZE_OF_FABRIC, "NW")]
 
         for (dest_x, dest_y, compass) in positions:
-            if (x < MAX_Y_SIZE_OF_FABRIC - 1 and
-                    y < MAX_Y_SIZE_OF_FABRIC - 1):
-                front_end.add_machine_edge_instance(WeatherDemoEdge(
-                    self._vertices[x][y], self._vertices[dest_x][dest_y],
-                    compass), "DATA")
+            front_end.add_machine_edge_instance(WeatherDemoEdge(
+                self._vertices[x][y], self._vertices[dest_x][dest_y],
+                compass, "edge between {} and {}".format(
+                    self._vertices[x][y], self._vertices[dest_x][dest_y])),
+                "DATA")
 
     @staticmethod
     def _psi_calculation(x, y):
@@ -285,6 +290,7 @@ if __name__ == "__main__":
     """
     run = WeatherRun()
     run.print_init_states()
-    run.run(RUNTIME)
+    #run.run(RUNTIME)
+    run.run(1)
     run.extract_data()
     run.stop()
