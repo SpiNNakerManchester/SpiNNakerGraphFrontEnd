@@ -19,9 +19,6 @@ from spinnaker_graph_front_end.utilities.conf import config
 # FEC imports
 from spinn_front_end_common.abstract_models\
     .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
-from spinn_front_end_common.interface.buffer_management.buffer_models.\
-    receives_buffers_to_host_basic_impl import \
-    ReceiveBuffersToHostBasicImpl
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utility_models.live_packet_gather import \
     LivePacketGather
@@ -43,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 class HeatDemoVertex(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-        ReceiveBuffersToHostBasicImpl, AbstractBinaryUsesSimulationRun):
+        AbstractBinaryUsesSimulationRun):
     """ A vertex partition for a heat demo; represents a heat element.
     """
 
@@ -73,19 +70,21 @@ class HeatDemoVertex(
         # resources used by a heat element vertex
         sdram = SDRAMResource(
             23 + config.getint("Buffers", "minimum_buffer_sdram"))
-        resources = ResourceContainer(cpu_cycles=CPUCyclesPerTickResource(45),
-                                      dtcm=DTCMResource(34),
-                                      sdram=sdram)
+        self._resources = \
+            ResourceContainer(cpu_cycles=CPUCyclesPerTickResource(45),
+                              dtcm=DTCMResource(34), sdram=sdram)
 
-        ReceiveBuffersToHostBasicImpl.__init__(self)
-        MachineVertex.__init__(
-            self, label=label, resources_required=resources,
-            constraints=constraints)
+        MachineVertex.__init__(self, label=label, constraints=constraints)
 
         # app specific data items
         self._heat_temperature = heat_temperature
         self._time_between_requests = config.getint(
             "Buffers", "time_between_requests")
+
+    @property
+    @overrides(MachineVertex.resources_required)
+    def resources_required(self):
+        return self._resources
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
