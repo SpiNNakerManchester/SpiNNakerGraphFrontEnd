@@ -8,14 +8,16 @@ from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.sdram_resource import SDRAMResource
 
 # spinn front end common imports
-from spinn_front_end_common.interface.buffer_management.buffer_models.\
-    receives_buffers_to_host_basic_impl import \
-    ReceiveBuffersToHostBasicImpl
 from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.utilities import exceptions
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.abstract_models\
     .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
+from spinn_front_end_common.interface.buffer_management.buffer_models\
+    .abstract_receive_buffers_to_host import AbstractReceiveBuffersToHost
+from spinn_front_end_common.utilities import helpful_functions
+from spinn_front_end_common.interface.buffer_management \
+    import recording_utilities
 from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
     import MachineDataSpecableVertex
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
@@ -31,7 +33,7 @@ import struct
 
 class ConwayBasicCell(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-        ReceiveBuffersToHostBasicImpl, AbstractBinaryUsesSimulationRun):
+        AbstractReceiveBuffersToHost, AbstractBinaryUsesSimulationRun):
     """ Cell which represents a cell within the 2d fabric
     """
 
@@ -49,17 +51,18 @@ class ConwayBasicCell(
                ('RESULTS', 4)])
 
     def __init__(self, label, state):
-
-        ReceiveBuffersToHostBasicImpl.__init__(self)
-
-        # activate the buffer out functionality
-        self.activate_buffering_output(
-            minimum_sdram_for_buffering=(
-                config.getint("Buffers", "minimum_buffer_sdram")),
-            buffering_port=config.getint("Buffers", "receive_buffer_port"),
-            buffered_sdram_per_timestep=4)
-
         MachineVertex .__init__(self, label)
+
+        self._buffer_size_before_receive = None
+        if config.getboolean("Buffers", "enable_buffered_recording"):
+            self._buffer_size_before_receive = config.getint(
+                "Buffers", "buffer_size_before_receive")
+        self._time_between_requests = config.getint(
+            "Buffers", "time_between_requests")
+        self._receive_buffer_host = config.get(
+            "Buffers", "receive_buffer_host")
+        self._receive_buffer_port = config.getint(
+            "Buffers", "receive_buffer_port")
 
         # app specific data items
         self._state = state
@@ -89,9 +92,9 @@ class ConwayBasicCell(
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.NEIGHBOUR_INITIAL_STATES.value,
             size=8, label="neighour_states")
-        self.reserve_buffer_regions(
-            spec, [self.DATA_REGIONS.RESULTS.value],
-            [constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP])
+        spec.reserve_memory_region(
+            region=self.DATA_REGIONS.RESULTS.value,
+            size=recording_utilities.get_recording_header_size(1))
 
         # simulation.c requirements
         spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
@@ -100,13 +103,11 @@ class ConwayBasicCell(
             time_scale_factor))
 
         # get recorded buffered regions sorted
-        buffer_size_before_receive = config.getint(
-            "Buffers", "buffer_size_before_receive")
-        time_between_requests = config.getint(
-            "Buffers", "time_between_requests")
-        self.write_recording_data(
-            spec, iptags, [constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP],
-            buffer_size_before_receive, time_between_requests)
+        spec.switch_write_focus(self.DATA_REGIONS.RESULTS.value)
+        spec.write_array(recording_utilities.get_recording_header_array(
+            [constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP],
+            self._time_between_requests, self._buffer_size_before_receive,
+            iptags, self._receive_buffer_host, self._receive_buffer_port))
 
         # check got right number of keys and edges going into me
         partitions = \
@@ -183,10 +184,7 @@ class ConwayBasicCell(
         data = list()
 
         # for buffering output info is taken form the buffer manager
-        reader, data_missing = \
-            buffer_manager.get_data_for_vertex(
-                placement, self.recording_region_id_from_dsg_region(
-                    self.DATA_REGIONS.RESULTS.value))
+        reader, data_missing = buffer_manager.get_data_for_vertex(placement, 0)
 
         # do check for missing data
         if data_missing:
@@ -215,9 +213,9 @@ class ConwayBasicCell(
                 self._calculate_sdram_requirement()),
             dtcm=DTCMResource(0),
             cpu_cycles=CPUCyclesPerTickResource(0))
-        resources.extend(self.get_extra_resources(
-            config.get("Buffers", "receive_buffer_host"),
-            config.getint("Buffers", "receive_buffer_port")))
+        resources.extend(recording_utilities.get_recording_resources(
+            [constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP],
+            self._receive_buffer_host, self._receive_buffer_port))
         return resources
 
     @property
@@ -232,3 +230,22 @@ class ConwayBasicCell(
 
     def __repr__(self):
         return self._label
+
+    @overrides(AbstractReceiveBuffersToHost.get_minimum_buffer_sdram_usage)
+    def get_minimum_buffer_sdram_usage(self):
+        return 1024
+
+    @overrides(AbstractReceiveBuffersToHost.get_n_timesteps_in_buffer_space)
+    def get_n_timesteps_in_buffer_space(self, buffer_space, machine_time_step):
+        return recording_utilities.get_n_timesteps_in_buffer_space(
+            buffer_space, 100)
+
+    @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)
+    def get_recorded_region_ids(self):
+        return [0]
+
+    @overrides(AbstractReceiveBuffersToHost.get_recording_region_base_address)
+    def get_recording_region_base_address(self, txrx, placement):
+        return helpful_functions.locate_memory_region_for_placement(
+            placement, self.DATA_REGIONS.RECORDED_DATA.value, txrx)
+

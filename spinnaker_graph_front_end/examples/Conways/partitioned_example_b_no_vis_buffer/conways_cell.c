@@ -6,6 +6,7 @@
 #include <simulation.h>
 #include <debug.h>
 #include <circular_buffer.h>
+#include <recording.h>
 
 /*! multicast routing keys to communicate with neighbours */
 uint my_key;
@@ -242,18 +243,11 @@ void receive_data_void(uint key, uint unknown) {
 
 static bool initialise_recording(){
     address_t address = data_specification_get_data_address();
-    address_t system_region = data_specification_get_region(
-        SYSTEM_REGION, address);
-    address_t region_addresses_to_record[] = {
-        data_specification_get_region(RECORDED_DATA, address)
-    };
-    uint8_t n_regions_to_record = 1;
-    uint32_t *recording_flags_from_system_conf =
-        &system_region[SIMULATION_N_TIMING_DETAIL_WORDS];
+    address_t recording_region = data_specification_get_region(
+        RECORDED_DATA, address);
 
     bool success = recording_initialize(
-        n_regions_to_record, region_addresses_to_record,
-        recording_flags_from_system_conf, &recording_flags);
+        recording_region, &recording_flags);
     log_info("Recording flags = 0x%08x", recording_flags);
     return success;
 }
