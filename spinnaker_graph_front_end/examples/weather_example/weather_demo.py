@@ -292,5 +292,5 @@ if __name__ == "__main__":
     run.print_init_states()
     #run.run(RUNTIME)
     run.run(1)
-    run.extract_data()
+    #run.extract_data()
     run.stop()

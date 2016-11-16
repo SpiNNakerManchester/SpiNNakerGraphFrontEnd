@@ -11,7 +11,7 @@
 
 /*! multicast routing keys to communicate with neighbours */
 uint my_key;
-uint has_key = NULL;
+uint has_key;
 
 /*! buffer used to store spikes */
 static circular_buffer input_buffer;
@@ -21,41 +21,40 @@ static uint32_t current_key;
 static uint32_t N_PACKETS_PER_EDGE = 14;
 
 //! weather specific data items
-s3231 my_p = NULL;
-s3231 my_v = NULL;
-s3231 my_u = NULL;
-s3231 my_cv = NULL;
-s3231 my_cu = NULL;
-s3231 my_z = NULL;
-s3231 my_h = NULL;
+s3231 my_p;
+s3231 my_v;
+s3231 my_u;
+s3231 my_cv;
+s3231 my_cu;
+s3231 my_z;
+s3231 my_h;
 
 //! constants
-s3231 tdt = NULL;
-s3231 dx = NULL;
-s3231 dy = NULL;
-s3231 fsdx = NULL;
-s3231 fsdy = NULL;
-s3231 alpha = NULL;
+s3231 tdt;
+s3231 dx;
+s3231 dy;
+s3231 fsdx;
+s3231 fsdy;
+s3231 alpha;
 
 // weather receive data items
-s3231 east_elements[] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
-s3231 north_east_elements[] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
-s3231 north_elements[] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
-s3231 north_west_elements[] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
-s3231 west_elements[] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
-s3231 south_west_elements[] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
-s3231 south_elements[] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
-s3231 south_east_elements[] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL};
-
+s3231 east_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
+s3231 north_east_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
+s3231 north_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
+s3231 north_west_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
+s3231 west_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
+s3231 south_west_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
+s3231 south_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
+s3231 south_east_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
 //! neighbour keys
-uint32_t north_key = NULL;
-uint32_t north_east_key = NULL;
-uint32_t east_key = NULL;
-uint32_t north_west_key = NULL;
-uint32_t west_key = NULL;
-uint32_t south_west_key = NULL;
-uint32_t south_key = NULL;
-uint32_t south_east_key = NULL;
+uint32_t north_key;
+uint32_t north_east_key;
+uint32_t east_key;
+uint32_t north_west_key;
+uint32_t west_key;
+uint32_t south_west_key;
+uint32_t south_key;
+uint32_t south_east_key;
 
 //! recorded data items
 uint32_t size_written = 0;
@@ -63,7 +62,6 @@ uint32_t size_written = 0;
 //! control value, which says how many timer ticks to run for before exiting
 static uint32_t simulation_ticks = 0;
 static uint32_t time = 0;
-static s3231 CONVERTER = 2147483647.0;
 address_t address = NULL;
 
 //! int as a bool to represent if this simulation should run forever
@@ -77,6 +75,9 @@ static const long unsigned fract POINT_5 = 0.5k;
 
 // optimisation for doing multiplications in the logic code.
 static const long unsigned fract POINT_025 = 0.25k;
+
+// optimisation for doing multiplications in the logic code.
+
 
 // optimisation for doing divide in the logic code.
 static const uint32_t EIGHT = 8.0k;
@@ -114,8 +115,9 @@ typedef struct init_data_t{
     s3231 west_u; s3231 west_v; s3231 west_p;
     s3231 north_west_u; s3231 north_west_v; s3231 north_west_p;
     // constants
-    s3231 tdt; s3231 dx; s3231 dy; s3231 fsdx; s3231 fsdy; s3231 alpha
+    s3231 tdt; s3231 dx; s3231 dy; s3231 fsdx; s3231 fsdy; s3231 alpha;
 }init_data_t;
+
 
 //! human readable definitions of each element in the initial state
 //! region (this is more debug than used, as they use offsets from direction
@@ -165,11 +167,12 @@ typedef enum initial_state_region_elements {
 
 } initial_state_region_elements;
 
+
 //! human readable for the key allocation offset for the data bits
 typedef enum key_offsets {
     U_TOP_BIT = 0, U_FLOAT_BIT = 1, V_TOP_BIT = 2, V_FLOAT_BIT = 3,
-    P_TOP_BIT = 4, P_FLOAT_BIT = 5, Z_TOP_BIT = 6, Z_FLOAT_BIT = 7, 
-    H_TOP_BIT = 8, H_FLOAT_BIT = 9, CV_TOP_BIT = 10, CV_FLOAT_BIT = 11, 
+    P_TOP_BIT = 4, P_FLOAT_BIT = 5, Z_TOP_BIT = 6, Z_FLOAT_BIT = 7,
+    H_TOP_BIT = 8, H_FLOAT_BIT = 9, CV_TOP_BIT = 10, CV_FLOAT_BIT = 11,
     CU_TOP_BIT = 12, CU_FLOAT_BIT = 13
 } key_offsets;
 
@@ -183,6 +186,7 @@ typedef enum key_order {
     NORTH = 0, NORTH_EAST = 1, EAST = 2, NORTH_WEST = 3, WEST = 4,
     SOUTH_WEST = 5, SOUTH = 6, SOUTH_EAST = 7
 } key_order;
+
 
 //! \brief function to read in a s3231 from 2 ints
 //! \param[in] top_bit: the top bit of the s3231 int
@@ -215,6 +219,8 @@ unsigned long fract convert_s3231_to_long_fract_bit(s3231 value_to_convert){
 unsigned fract convert_s3231_to_fract_bit(s3231 value_to_convert){
     return (unsigned fract)(value_to_convert);
 }
+
+
 //! \brief prints a s3231 to the logger
 //! \param[in] string: the text name for the value
 //! \param[in] value_to_print: the s3231 value to print
@@ -291,21 +297,10 @@ void print_elements(){
     print_a_set_of_elements(north_west_elements, name);
 }
 
-/****f* weather.c/receive_data
- *
- * SUMMARY
- *  This function is used as a callback for packet received events.
- * receives data from 8 neighbours and updates the states params
- *
- * SYNOPSIS
- *  void receive_data (uint key, uint payload)
- *
- * INPUTS
- *   uint key: packet routing key - provided by the RTS
- *   uint payload: packet payload - provided by the RTS
- *
- * SOURCE
- */
+
+//! \brief method for receiving multicast packets with payloads
+//! \param[in] key: the multicast key
+//! \param[in] payload: the multicast payload.
 void receive_data(uint key, uint payload) {
     log_info("the key i've received is %d\n", key);
     log_info("the payload i've received is %d\n", payload);
@@ -324,10 +319,12 @@ void receive_data(uint key, uint payload) {
 //! \param[in] final_elements: the final s3231's for the direction
 //! \param[in] compass: which direction its dealing with now.
 void convert_inputs_to_s3231_elements(
-        s3231 *components, s3231 *final_elements, char *compass){
+        s3231 *components, s3231 *final_elements,
+        uint32_t* has_component_flags, char *compass){
 
     // try to deal with u
-    if (components[U_TOP_BIT] != NULL && components[U_FLOAT_BIT] != NULL){
+    if (has_component_flags[U_TOP_BIT] == 1 &&
+            has_component_flags[U_FLOAT_BIT] == 1){
         final_elements[U] = translate_to_s3231_value(
             components[U_TOP_BIT], components[U_FLOAT_BIT]);
     }
@@ -336,7 +333,8 @@ void convert_inputs_to_s3231_elements(
     }
 
     // try to deal with v
-    if (components[V_TOP_BIT] != NULL && components[V_FLOAT_BIT] != NULL){
+    if (has_component_flags[V_TOP_BIT] == 1 &&
+            has_component_flags[V_FLOAT_BIT] == 1){
         final_elements[V] = translate_to_s3231_value(
             components[V_TOP_BIT], components[V_FLOAT_BIT]);
     }else{
@@ -344,7 +342,8 @@ void convert_inputs_to_s3231_elements(
     }
 
     // try to deal with p
-    if (components[P_TOP_BIT] != NULL && components[P_FLOAT_BIT] != NULL){
+    if (has_component_flags[P_TOP_BIT] == 1 &&
+            has_component_flags[P_FLOAT_BIT] == 1){
         final_elements[P] = translate_to_s3231_value(
             components[P_TOP_BIT], components[P_FLOAT_BIT]);
     }else{
@@ -352,7 +351,8 @@ void convert_inputs_to_s3231_elements(
     }
 
     // try to deal with Z
-    if (components[Z_TOP_BIT] != NULL && components[Z_FLOAT_BIT] != NULL){
+    if (has_component_flags[Z_TOP_BIT] == 1 &&
+            has_component_flags[Z_FLOAT_BIT] == 1){
         final_elements[Z] = translate_to_s3231_value(
             components[Z_TOP_BIT], components[Z_FLOAT_BIT]);
     }else{
@@ -360,7 +360,8 @@ void convert_inputs_to_s3231_elements(
     }
 
     // try to deal with H
-    if (components[H_TOP_BIT] != NULL && components[H_FLOAT_BIT] != NULL){
+    if (has_component_flags[H_TOP_BIT] == 1 &&
+            has_component_flags[H_FLOAT_BIT] == 1){
         final_elements[H] = translate_to_s3231_value(
             components[H_TOP_BIT], components[H_FLOAT_BIT]);
     }else{
@@ -368,7 +369,8 @@ void convert_inputs_to_s3231_elements(
     }
 
     // try to deal with cv
-    if (components[CV_TOP_BIT] != NULL && components[CV_FLOAT_BIT] != NULL){
+    if (has_component_flags[CV_TOP_BIT] == 1 &&
+            has_component_flags[CV_FLOAT_BIT] == 1){
         final_elements[CV] = translate_to_s3231_value(
             components[CV_TOP_BIT], components[CV_FLOAT_BIT]);
     }else{
@@ -376,7 +378,8 @@ void convert_inputs_to_s3231_elements(
     }
 
     // try to deal with cu
-    if (components[CU_TOP_BIT] != NULL && components[CU_FLOAT_BIT] != NULL){
+    if (has_component_flags[CU_TOP_BIT] == 1 &&
+            has_component_flags[CU_FLOAT_BIT] == 1){
         final_elements[CU] = translate_to_s3231_value(
             components[CU_TOP_BIT], components[CU_FLOAT_BIT]);
     }else{
@@ -384,15 +387,18 @@ void convert_inputs_to_s3231_elements(
     }
 }
 
+
 //! \brief puts the element in the correct location
 //! \param[in] elements: the list of which this payload is going to reside
-void process_key_payload(s3231 *elements){
+void process_key_payload(s3231 *elements, uint32_t *has_flag_elements){
     // get the offset in the array from the key
     uint32_t offset = current_key & 0xFFFFFFF0;
 
     // add the element to the correct offset
     elements[offset] = (s3231) current_payload;
+    has_flag_elements[offset] = 1;
 }
+
 
 //! \brief reads in the ring buffer to get all the packets needed for the run
 void read_input_buffer(){
@@ -416,43 +422,67 @@ void read_input_buffer(){
 
     // linked to the key offset map
     s3231 east_components[] = {
-        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-        NULL, NULL, NULL};
-        
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k, 0.0k};
+    uint32_t has_east_components[] = {
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k};
+
     // linked to the key offset map
     s3231 north_east_components[] = {
-        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-        NULL, NULL, NULL};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k, 0.0k};
+    uint32_t has_north_east_components[] = {
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k};
 
     // linked to the key offset map
     s3231 north_components[] = {
-        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-        NULL, NULL, NULL};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k, 0.0k};
+    uint32_t has_north_components[] = {
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k};
 
     // linked to the key offset map
     s3231 north_west_components[] = {
-        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-        NULL, NULL, NULL};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k, 0.0k};
+    uint32_t has_north_west_components[] = {
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k};
 
     // linked to the key offset map
     s3231 west_components[] = {
-        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-        NULL, NULL, NULL};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k, 0.0k};
+    uint32_t has_west_components[] = {
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k};
 
     // linked to the key offset map
     s3231 south_west_components[] = {
-        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-        NULL, NULL, NULL};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k, 0.0k};
+    uint32_t has_south_west_components[] = {
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k};
 
     // linked to the key offset map
     s3231 south_east_components[] = {
-        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-        NULL, NULL, NULL};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k, 0.0k};
+    uint32_t has_south_components[] = {
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k};
 
     // linked to the key offset map
     s3231 south_components[] = {
-        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-        NULL, NULL, NULL};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k, 0.0k};
+    uint32_t has_south_east_components[] = {
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k};
 
     // pull payloads and keys from input_buffer.
     // translate into s3231 elements
@@ -469,22 +499,33 @@ void read_input_buffer(){
 
             // process into the correct location
             if (masked_key == north_key){
-                process_key_payload(north_components);
+                process_key_payload(
+                    north_components, has_north_components);
             }
             else if (masked_key == north_east_key){
-                process_key_payload(north_east_components);
+                process_key_payload(
+                    north_east_components, has_north_east_components);
             }
             else if (masked_key == east_key){
-                process_key_payload(east_components);
+                process_key_payload(east_components, has_east_components);
             }
             else if (masked_key == south_east_key){
-                process_key_payload(south_east_components);
+                process_key_payload(
+                    south_east_components, has_south_east_components);
             }
             else if (masked_key == south_key){
-                process_key_payload(south_components);
+                process_key_payload(south_components, has_south_components);
             }
             else if (masked_key == south_west_key){
-                process_key_payload(south_west_components);
+                process_key_payload(
+                    south_west_components, has_south_west_components);
+            }
+            else if (masked_key == north_west_key){
+                process_key_payload(
+                    north_west_components, has_north_west_components);
+            }
+            else if (masked_key == west_key){
+                process_key_payload(west_components, has_west_components);
             }
 
         }
@@ -494,25 +535,33 @@ void read_input_buffer(){
 
     }
     spin1_mode_restore(cpsr);
-    
+
     // convert 2 ints into s3231 for the correct locations.
     // handle north first
     convert_inputs_to_s3231_elements(
-        north_components, north_elements, "north");
+        north_components, north_elements,
+        has_north_east_components, "north");
     convert_inputs_to_s3231_elements(
-        north_east_components, north_east_elements, "north_east");
+        north_east_components, north_east_elements,
+        has_north_east_components, "north_east");
     convert_inputs_to_s3231_elements(
-        east_components, east_elements, "east");
+        east_components, east_elements,
+        has_east_components, "east");
     convert_inputs_to_s3231_elements(
-        south_east_components, south_east_elements, "south_east");
+        south_east_components, south_east_elements,
+        has_south_east_components, "south_east");
     convert_inputs_to_s3231_elements(
-        south_components, south_elements, "south");
+        south_components, south_elements,
+        has_south_components, "south");
     convert_inputs_to_s3231_elements(
-        south_west_components, south_west_elements, "south_west");
+        south_west_components, south_west_elements,
+        has_south_west_components, "south_west");
     convert_inputs_to_s3231_elements(
-        west_components, west_elements, "west");
+        west_components, west_elements,
+        has_west_components, "west");
     convert_inputs_to_s3231_elements(
-        north_west_components, north_west_elements, "north_west");
+        north_west_components, north_west_elements,
+        has_north_west_components, "north_west");
 }
 
 //! \brief records the data into the recording region
@@ -578,6 +627,7 @@ void send_states(){
     log_debug("sent my states via multicast");
 }
 
+
 //! \brief calculates the cu for this atom
 void calculate_cu(){
     my_cu = POINT_5 * (my_p + south_elements[P]) * my_u;
@@ -588,13 +638,16 @@ void calculate_cv(){
     my_cv = POINT_5 * (my_p + west_elements[P] * my_v);
 }
 
+
 //! \brief calculates the z for this atom
 void calculate_z(){
-    my_z = (fsdx *
-            (my_v - south_elements[V]) - fsdy * (my_u - west_elements[U])) /
-            (south_west_elements[P] + west_elements[P] + my_p +
-             south_elements[P]);
+    double numerator_bit =
+        (fsdx * (my_v - south_elements[V]) - fsdy * (my_u - west_elements[U]));
+    double denominator_bit =
+        (south_west_elements[P] + west_elements[P] + my_p + south_elements[P]);
+    my_z = (s3231)(numerator_bit / denominator_bit);
 }
+
 
 //! \brief calculates the h for this atom
 void calculate_h(){
@@ -603,12 +656,13 @@ void calculate_h(){
         east_elements[V] * my_v * my_v);
 }
 
+
 //! \brief calculates the new u,v,p for this atom
 void calculate_new_internal_states(){
     // TODO move these to constants from python
-    s3231 tdts8 = tdt / EIGHT;
-    s3231 tdtsdx = tdt / dx;
-    s3231 tdtsdy = tdt / dx;
+    //s3231 tdts8 = tdt / EIGHT;
+    //s3231 tdtsdx = tdt / dx;
+    //s3231 tdtsdy = tdt / dx;
 
 
 
@@ -661,6 +715,7 @@ void update(uint ticks, uint b) {
         //record_state();
 }
 
+
 //! \brief this method is to catch strange behaviour
 //! \param[in] key: the key being received
 //! \param[in] unknown: second arg with no state. set to zero by default
@@ -669,6 +724,7 @@ void receive_data_void(uint key, uint unknown) {
     use(unknown);
     log_error("this should never ever be done\n");
 }
+
 
 //! \brief sets my key from sdram
 //! \param[in] address: the top level address location for dsg region data
@@ -685,7 +741,7 @@ void set_key(address_t address){
 //! \brief function to read in a s3231 from 2 ints
 //! \param[in] top_bit_offset: the top bit of the s3231 int
 //! \param[in] float_bit_offset: the float bit of the s3231 int
-//! \param[in] region_address: the 
+//! \param[in] region_address: the
 //! \param[out] the s3231 value
 s3231 read_in_s3231_value_sdram(
         uint32_t top_bit_offset, uint32_t float_bit_offset,
@@ -799,6 +855,7 @@ void set_init_states(address_t address){
     print_elements();
     print_constants();
 }
+
 
 //! \brief reads in the keys expected from neighbours from sdram.
 void set_neighbour_keys(address_t address){
