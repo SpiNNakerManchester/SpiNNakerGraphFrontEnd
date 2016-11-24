@@ -36,10 +36,7 @@ total_number_of_cores = len([
 for x in range(0, total_number_of_cores):
     front_end.add_machine_vertex(
         HelloWorldVertex,
-        {
-            'machine_time_step': machine_time_step,
-            'time_scale_factor': time_scale_factor
-        },
+        {},
         label="Hello World at x {}".format(x))
 
 front_end.run(10)
