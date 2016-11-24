@@ -151,7 +151,7 @@ s3231 translate_to_s3231_value(uint32_t top_bit, uint32_t float_bit){
 //! \param[in] the s3231 to convert
 //! \param[out] the int bit of the s3231
 int32_t convert_s3231_to_int_bit(s3231 value_to_convert){
-    return (int32_t)(value_to_convert >> 32);
+    return (int32_t)((bitslk(value_to_convert) >> 32) & 0xFFFFFFFF);
 }
 
 //! \brief converts a s3231 to the long fract bit for printing

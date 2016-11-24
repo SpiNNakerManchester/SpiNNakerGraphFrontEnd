@@ -13,6 +13,8 @@ from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.sdram_resource import SDRAMResource
 
 # graph front end imports
+from spinn_front_end_common.interface.buffer_management import \
+    recording_utilities
 from .weather_edge import WeatherDemoEdge
 from spinnaker_graph_front_end.utilities.conf import config
 
@@ -21,9 +23,8 @@ from spinn_front_end_common.utilities import helpful_functions
 from spinn_front_end_common.utilities import exceptions
 from spinn_front_end_common.abstract_models\
     .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
-from spinn_front_end_common.interface.buffer_management.buffer_models.\
-    receives_buffers_to_host_basic_impl import \
-    ReceiveBuffersToHostBasicImpl
+from spinn_front_end_common.interface.buffer_management.buffer_models\
+    .abstract_receive_buffers_to_host import AbstractReceiveBuffersToHost
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
@@ -41,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 class WeatherVertex(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-        ReceiveBuffersToHostBasicImpl, AbstractBinaryUsesSimulationRun):
+        AbstractReceiveBuffersToHost, AbstractBinaryUsesSimulationRun):
     """ A vertex partition for a heat demo; represents a heat element.
     """
 
@@ -54,6 +55,8 @@ class WeatherVertex(
                ('INIT_STATE_VALUES', 4),
                ('FINAL_STATES', 5)])
 
+    S3231_SIZE_IN_BYTES = 8
+
     # 1 for has key, 1 for key for the 8 directions
     NEIGHBOUR_DATA_REGION_SIZE = 16 * 4
     
@@ -61,11 +64,14 @@ class WeatherVertex(
     TRANSMISSION_DATA_REGION_SIZE = 2 * 4
     
     # each state variable needs 4 bytes for their s15:16 data item.
-    INIT_STATE_REGION_SIZE = 68 * 4
+    INIT_STATE_REGION_SIZE = 68 * S3231_SIZE_IN_BYTES
 
-    # each state variable needs 4 bytes for the their s15:16 data item.
+    # arbitary size for recording data (used in auto pause and resume)
+    FINAL_STATE_REGION_SIZE = 6000
+
+    # each state variable needs 4 bytes for the their s32:31 data item.
     # u,v,p
-    FINAL_STATE_REGION_SIZE = 3 * 4
+    FINAL_STATE_REGION_SIZE_PER_TIMER_TICK = 3 * S3231_SIZE_IN_BYTES
 
     # bool flags
     TRUE = 1
@@ -85,13 +91,15 @@ class WeatherVertex(
         # resources used by a weather element vertex
         sdram = SDRAMResource(
             23 + config.getint("Buffers", "minimum_buffer_sdram"))
-        resources = ResourceContainer(cpu_cycles=CPUCyclesPerTickResource(45),
-                                      dtcm=DTCMResource(34),
-                                      sdram=sdram)
+
+        self._resources = ResourceContainer(
+            cpu_cycles=CPUCyclesPerTickResource(45),
+            dtcm=DTCMResource(34),
+            sdram=sdram)
+
         MachineVertex.__init__(
-            self, label=label, resources_required=resources,
-            constraints=constraints)
-        ReceiveBuffersToHostBasicImpl.__init__(self)
+            self, label=label, constraints=constraints)
+        AbstractReceiveBuffersToHost.__init__(self)
 
         # app specific data items
         self._u = u
@@ -116,6 +124,11 @@ class WeatherVertex(
         self._north_u = None
         self._north_p = None
         self._north_v = None
+
+    @property
+    @overrides(MachineVertex.resources_required)
+    def resources_required(self):
+        return self._resources
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
@@ -318,6 +331,20 @@ class WeatherVertex(
     @v.setter
     def v(self, new_value):
         self._v = new_value
+
+    def get_recorded_region_ids(self):
+        return [0]
+
+    def get_minimum_buffer_sdram_usage(self):
+        return self.FINAL_STATE_REGION_SIZE
+
+    def get_recording_region_base_address(self, txrx, placement):
+        return helpful_functions.locate_memory_region_for_placement(
+            placement, self.DATA_REGIONS.FINAL_STATES.value, txrx)
+
+    def get_n_timesteps_in_buffer_space(self, buffer_space, machine_time_step):
+        return recording_utilities.get_n_timesteps_in_buffer_space(
+            buffer_space, [self.FINAL_STATE_REGION_SIZE_PER_TIMER_TICK])
 
     def get_data(self, transceiver, placement):
 
