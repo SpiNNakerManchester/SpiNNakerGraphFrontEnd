@@ -46,6 +46,7 @@ s3231 west_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
 s3231 south_west_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
 s3231 south_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
 s3231 south_east_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
+
 //! neighbour keys
 uint32_t north_key;
 uint32_t north_east_key;
@@ -75,9 +76,6 @@ static const long unsigned fract POINT_5 = 0.5k;
 
 // optimisation for doing multiplications in the logic code.
 static const long unsigned fract POINT_025 = 0.25k;
-
-// optimisation for doing multiplications in the logic code.
-
 
 // optimisation for doing divide in the logic code.
 static const uint32_t EIGHT = 8.0k;
@@ -117,56 +115,6 @@ typedef struct init_data_t{
     // constants
     s3231 tdt; s3231 dx; s3231 dy; s3231 fsdx; s3231 fsdy; s3231 alpha;
 }init_data_t;
-
-
-//! human readable definitions of each element in the initial state
-//! region (this is more debug than used, as they use offsets from direction
-//! start points
-typedef enum initial_state_region_elements {
-    U_INIT_TOP_BIT = 0, U_INIT_POINT_BIT = 1, V_INIT_TOP_BIT = 2,
-    V_INIT_POINT_BIT = 3, P_INIT_TOP_BIT = 4, P_INIT_POINT_BIT = 5,
-
-    NORTH_U_INIT_TOP_BIT = 6, NORTH_U_INIT_POINT_BIT = 7,
-    NORTH_V_INIT_TOP_BIT = 8, NORTH_V_INIT_POINT_BIT = 9,
-    NORTH_P_INIT_TOP_BIT = 10, NORTH_P_INIT_POINT_BIT = 11,
-
-    NORTH_EAST_U_INIT_TOP_BIT = 12, NORTH_EAST_U_INIT_POINT_BIT = 13,
-    NORTH_EAST_V_INIT_TOP_BIT = 14, NORTH_EAST_V_INIT_POINT_BIT = 15,
-    NORTH_EAST_P_INIT_TOP_BIT = 16, NORTH_EAST_P_INIT_POINT_BIT = 17,
-
-    EAST_U_INIT_TOP_BIT = 18, EAST_U_INIT_POINT_BIT = 19,
-    EAST_V_INIT_TOP_BIT = 20, EAST_V_INIT_POINT_BIT = 21,
-    EAST_P_INIT_TOP_BIT = 22, EAST_P_INIT_POINT_BIT = 23,
-
-    NORTH_WEST_U_INIT_TOP_BIT = 24, NORTH_WEST_U_INIT_POINT_BIT = 25,
-    NORTH_WEST_V_INIT_TOP_BIT = 26, NORTH_WEST_V_INIT_POINT_BIT = 27,
-    NORTH_WEST_P_INIT_TOP_BIT = 28, NORTH_WEST_P_INIT_POINT_BIT = 29,
-
-    WEST_U_INIT_TOP_BIT = 30, WEST_U_INIT_POINT_BIT = 31,
-    WEST_V_INIT_TOP_BIT = 32, WEST_V_INIT_POINT_BIT = 33,
-    WEST_P_INIT_TOP_BIT = 34, WEST_P_INIT_POINT_BIT = 35,
-
-    SOUTH_WEST_U_INIT_TOP_BIT = 36, SOUTH_WEST_U_INIT_POINT_BIT = 37,
-    SOUTH_WEST_V_INIT_TOP_BIT = 38, SOUTH_WEST_V_INIT_POINT_BIT = 39,
-    SOUTH_WEST_P_INIT_TOP_BIT = 40, SOUTH_WEST_P_INIT_POINT_BIT = 41,
-
-    SOUTH_U_INIT_TOP_BIT = 42, SOUTH_U_INIT_POINT_BIT = 43,
-    SOUTH_V_INIT_TOP_BIT = 44, SOUTH_V_INIT_POINT_BIT = 45,
-    SOUTH_P_INIT_TOP_BIT = 46, SOUTH_P_INIT_POINT_BIT = 47,
-
-    SOUTH_EAST_U_INIT_TOP_BIT = 48, SOUTH_EAST_U_INIT_POINT_BIT = 49,
-    SOUTH_EAST_V_INIT_TOP_BIT = 50, SOUTH_EAST_V_INIT_POINT_BIT = 51,
-    SOUTH_EAST_P_INIT_TOP_BIT = 52, SOUTH_EAST_P_INIT_POINT_BIT = 53,
-
-    TDT_TOP_BIT = 54, TDT_FLOAT_BIT = 55,
-    DX_TOP_BIT = 56, DX_FLOAT_BIT = 57,
-    DY_TOP_BIT = 58, DY_FLOAT_BIT = 59,
-    FSDX_TOP_BIT = 60, FSDX_FLOAT_BIT = 61,
-    FSDY_TOP_BIT = 62, FSDY_FLOAT_BIT = 63,
-    ALPHA_TOP_BIT = 64, ALPHA_FLOAT_BIT = 65
-
-} initial_state_region_elements;
-
 
 //! human readable for the key allocation offset for the data bits
 typedef enum key_offsets {
@@ -425,64 +373,64 @@ void read_input_buffer(){
         0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
         0.0k, 0.0k, 0.0k};
     uint32_t has_east_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k, 0.0k};
 
     // linked to the key offset map
     s3231 north_east_components[] = {
         0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
         0.0k, 0.0k, 0.0k};
     uint32_t has_north_east_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k, 0.0k};
 
     // linked to the key offset map
     s3231 north_components[] = {
         0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
         0.0k, 0.0k, 0.0k};
     uint32_t has_north_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k, 0.0k};
 
     // linked to the key offset map
     s3231 north_west_components[] = {
         0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
         0.0k, 0.0k, 0.0k};
     uint32_t has_north_west_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k, 0.0k};
 
     // linked to the key offset map
     s3231 west_components[] = {
         0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
         0.0k, 0.0k, 0.0k};
     uint32_t has_west_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k, 0.0k};
 
     // linked to the key offset map
     s3231 south_west_components[] = {
         0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
         0.0k, 0.0k, 0.0k};
     uint32_t has_south_west_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k, 0.0k};
 
     // linked to the key offset map
     s3231 south_east_components[] = {
         0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
         0.0k, 0.0k, 0.0k};
     uint32_t has_south_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k, 0.0k};
 
     // linked to the key offset map
     s3231 south_components[] = {
         0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
         0.0k, 0.0k, 0.0k};
     uint32_t has_south_east_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
+        0.0k, 0.0k, 0.0k};
 
     // pull payloads and keys from input_buffer.
     // translate into s3231 elements
@@ -566,15 +514,15 @@ void read_input_buffer(){
 
 //! \brief records the data into the recording region
 void record_state(){
-    //* record my state via sdram
-    //address_t record_region =
-    //    data_specification_get_region(FINAL_STATES, address);
-    //uint8_t* record_space_address = (uint8_t*) record_region;
-    //record_space_address = record_space_address + 4 + size_written;
-    ///spin1_memcpy(record_space_address, &my_state, 4);
-    //size_written = size_written + 4;
-    //log_debug("space written is %d", size_written);
-    ///log_debug("recorded my state \n");
+    // record my state via sdram
+    address_t record_region =
+        data_specification_get_region(FINAL_STATES, address);
+    uint8_t* record_space_address = (uint8_t*) record_region;
+    record_space_address = record_space_address + 4 + size_written;
+    spin1_memcpy(record_space_address, &my_p, 4);
+    size_written = size_written + 4;
+    log_debug("space written is %d", size_written);
+    log_debug("recorded my state \n");
 }
 
 //! \brief sends the states needed for the neighbours to do their calculation.
@@ -641,11 +589,11 @@ void calculate_cv(){
 
 //! \brief calculates the z for this atom
 void calculate_z(){
-    double numerator_bit =
+    s3231 numerator_bit =
         (fsdx * (my_v - south_elements[V]) - fsdy * (my_u - west_elements[U]));
-    double denominator_bit =
+    s3231 denominator_bit =
         (south_west_elements[P] + west_elements[P] + my_p + south_elements[P]);
-    my_z = (s3231)(numerator_bit / denominator_bit);
+    my_z = numerator_bit / denominator_bit;
 }
 
 
@@ -738,37 +686,6 @@ void set_key(address_t address){
     }
 }
 
-//! \brief function to read in a s3231 from 2 ints
-//! \param[in] top_bit_offset: the top bit of the s3231 int
-//! \param[in] float_bit_offset: the float bit of the s3231 int
-//! \param[in] region_address: the
-//! \param[out] the s3231 value
-s3231 read_in_s3231_value_sdram(
-        uint32_t top_bit_offset, uint32_t float_bit_offset,
-        address_t region_address){
-    s3231 my_top_bit = ((s3231)region_address[top_bit_offset]) << 32;
-    s3231 my_point_bit = (s3231) region_address[float_bit_offset];
-    s3231 my_value = my_top_bit + my_point_bit;
-    return my_value;
-}
-
-//! \brief reads in elements from sdram into a array of u, v, p given a offset
-//! to start with within the dsg region.
-//! \param[in] elements: the array to put the read in values
-//! \param[in] start_position: offset to the data region to read from
-//! \param[in] my_state_region_address: the data region start point
-void read_in_direction_elements(
-        s3231 *elements, uint32_t start_position,
-        address_t my_state_region_address){
-    // get north stuff
-    elements[U] = read_in_s3231_value_sdram(
-        start_position, start_position + 1, my_state_region_address);
-    elements[V] = read_in_s3231_value_sdram(
-        start_position + 2, start_position + 3, my_state_region_address);
-    elements[P] = read_in_s3231_value_sdram(
-        start_position + 4, start_position + 5, my_state_region_address);
-}
-
 //! \brief reads in the init states from sdram
 //! \param[in] the address in sdram for the dsg region where this stuff starts
 void set_init_states(address_t address){
@@ -780,75 +697,59 @@ void set_init_states(address_t address){
     // converts sdram data into s3231 data types for easier usage during
     // transfer to dtcm data items
     init_data_t *init_data =  (init_data_t*) my_state_region_address;
+
+    // this cores initial states
     my_p = init_data->my_p;
+    my_u = init_data->my_u;
+    my_v = init_data->my_v;
 
+    // north initial states
+    north_elements[U] = init_data->north_u;
+    north_elements[V] = init_data->north_v;
+    north_elements[P] = init_data->north_p;
 
-    // u
-    my_u = read_in_s3231_value_sdram(
-        U_INIT_TOP_BIT, U_INIT_POINT_BIT, my_state_region_address);
+    // north east initial states
+    north_east_elements[U] = init_data->north_east_u;
+    north_east_elements[V] = init_data->north_east_v;
+    north_east_elements[P] = init_data->north_east_p;
 
-    // v
-    my_v = read_in_s3231_value_sdram(
-        V_INIT_TOP_BIT, V_INIT_POINT_BIT, my_state_region_address);
+    // east initial states
+    east_elements[U] = init_data->east_u;
+    east_elements[V] = init_data->east_v;
+    east_elements[P] = init_data->east_p;
 
-    // p
-    my_p = read_in_s3231_value_sdram(
-        P_INIT_TOP_BIT, P_INIT_POINT_BIT, my_state_region_address);
+    // south east initial states
+    south_east_elements[U] = init_data->south_east_u;
+    south_east_elements[V] = init_data->south_east_v;
+    south_east_elements[P] = init_data->south_east_p;
 
-    // get north stuff
-    read_in_direction_elements(
-        north_elements, NORTH_U_INIT_TOP_BIT, my_state_region_address);
+    // south initial states
+    south_elements[U] = init_data->south_u;
+    south_elements[V] = init_data->south_v;
+    south_elements[P] = init_data->south_p;
 
-    // get ne stuff
-    read_in_direction_elements(
-        north_east_elements, NORTH_EAST_U_INIT_TOP_BIT,
-        my_state_region_address);
+    // south west initial states
+    south_west_elements[U] = init_data->south_west_u;
+    south_west_elements[V] = init_data->south_west_v;
+    south_west_elements[P] = init_data->south_west_p;
 
-    // get east stuff
-    read_in_direction_elements(
-        east_elements, EAST_U_INIT_TOP_BIT, my_state_region_address);
+    // west initial states
+    west_elements[U] = init_data->west_u;
+    west_elements[V] = init_data->west_v;
+    west_elements[P] = init_data->west_p;
 
-    // get se stuff
-    read_in_direction_elements(
-        south_east_elements, SOUTH_EAST_U_INIT_TOP_BIT,
-        my_state_region_address);
-
-    // get s stuff
-    read_in_direction_elements(
-        south_elements, SOUTH_U_INIT_TOP_BIT, my_state_region_address);
-
-    // sw stuff
-    read_in_direction_elements(
-        south_west_elements, SOUTH_WEST_U_INIT_TOP_BIT,
-        my_state_region_address);
-
-    // w stuff
-    read_in_direction_elements(
-        west_elements, WEST_U_INIT_TOP_BIT, my_state_region_address);
-
-    // nw stuff
-    read_in_direction_elements(
-        north_west_elements, NORTH_WEST_U_INIT_TOP_BIT,
-        my_state_region_address);
+    // north west initial states
+    north_west_elements[U] = init_data->north_west_u;
+    north_west_elements[V] = init_data->north_west_v;
+    north_west_elements[P] = init_data->north_west_p;
 
     // get constants
-    tdt = read_in_s3231_value_sdram(
-        TDT_TOP_BIT, TDT_FLOAT_BIT, my_state_region_address);
-
-    dx = read_in_s3231_value_sdram(
-        DX_TOP_BIT, DX_FLOAT_BIT, my_state_region_address);
-
-    dy = read_in_s3231_value_sdram(
-        DY_TOP_BIT, DY_FLOAT_BIT, my_state_region_address);
-
-    fsdx = read_in_s3231_value_sdram(
-        FSDX_TOP_BIT, FSDX_FLOAT_BIT, my_state_region_address);
-
-    fsdy = read_in_s3231_value_sdram(
-        FSDY_TOP_BIT, FSDY_FLOAT_BIT, my_state_region_address);
-
-    alpha = read_in_s3231_value_sdram(
-        ALPHA_TOP_BIT, ALPHA_FLOAT_BIT, my_state_region_address);
+    tdt = init_data->tdt;
+    dx = init_data->dx;
+    dy = init_data->dy;
+    fsdx = init_data->fsdx;
+    fsdy = init_data->fsdy;
+    alpha = init_data->alpha;
 
     // print out the values
     print_my_states();
@@ -878,7 +779,7 @@ void set_neighbour_keys(address_t address){
 static bool initialize(uint32_t *timer_period) {
     log_info("Initialise: started\n");
 
-    // Get the address this core's DTCM data starts at from SRAM
+    // Get the address this core's DTCM data starts at from SDRAM
     address = data_specification_get_data_address();
 
     // Read the header
@@ -923,7 +824,6 @@ static bool initialize(uint32_t *timer_period) {
 void c_main() {
     log_info("starting weather cell\n");
 
-    log_info("the fiq event at beginning is %d", get_fiq_event());
     // Load DTCM data
     uint32_t timer_period;
 

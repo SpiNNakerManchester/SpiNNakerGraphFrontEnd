@@ -4,7 +4,6 @@ from spinnaker_graph_front_end.examples.weather_example.weather_edge import \
 
 from spinnaker_graph_front_end.examples.weather_example.weather_vertex \
     import WeatherVertex
-from pacman.model.graphs.machine.impl.machine_edge import MachineEdge
 
 import math
 import logging
@@ -12,8 +11,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 # grid size
-MAX_X_SIZE_OF_FABRIC = 64
-MAX_Y_SIZE_OF_FABRIC = 64
+#MAX_X_SIZE_OF_FABRIC = 64
+#MAX_Y_SIZE_OF_FABRIC = 64
+MAX_X_SIZE_OF_FABRIC = 2
+MAX_Y_SIZE_OF_FABRIC = 2
 
 # runtime
 RUNTIME = 4000
