@@ -1,11 +1,10 @@
 # front end common imports
-from spinn_front_end_common.utilities.notification_protocol.socket_address import \
-    SocketAddress
+from spinn_front_end_common.utilities.notification_protocol.socket_address \
+    import SocketAddress
 from spinn_front_end_common.utilities.utility_objs.executable_finder \
     import ExecutableFinder
 
 # graph front end imports
-from spinnaker_graph_front_end.utilities import conf
 from spinnaker_graph_front_end._version import \
     __version__, __version_name__, __version_month__, __version_year__
 from spinnaker_graph_front_end.spinnaker import SpiNNaker
@@ -15,11 +14,13 @@ from spinn_front_end_common.utility_models.live_packet_gather \
     import LivePacketGather  # @IgnorePep8
 from spinn_front_end_common.utility_models.reverse_ip_tag_multi_cast_source \
     import ReverseIpTagMultiCastSource  # @IgnorePep8
-from pacman.model.partitioned_graph.multi_cast_partitioned_edge \
-    import MultiCastPartitionedEdge  # @IgnorePep8
+from pacman.model.graphs.machine.impl.machine_edge \
+    import MachineEdge  # @IgnorePep8
 
 
 import logging
+import inspect
+import sys
 logger = logging.getLogger(__name__)
 
 
@@ -30,17 +31,53 @@ _none_labelled_edge_count = None
 
 def setup(hostname=None, graph_label=None, model_binary_module=None,
           model_binary_folder=None, database_socket_addresses=None,
-          user_dsg_algorithm=None, n_chips_required=None):
+          user_dsg_algorithm=None, n_chips_required=None,
+          extra_pre_run_algorithms=None, extra_post_run_algorithms=None,
+          time_scale_factor=None, machine_time_step=None):
     """
 
-    :param hostname:
-    :param graph_label:
-    :param model_binary_module:
-    :param model_binary_folder:
-    :param database_socket_addresses:
-    :param user_dsg_algorithm:
-
-    :return:
+    :param hostname:\
+        the hostname of the SpiNNaker machine to operate on\
+        (over rides the machine_name from the cfg file).
+    :type hostname: str
+    :param graph_label:\
+        a human readable label for the graph (used mainly in reports)
+    :type graph_label: str
+    :param model_binary_module:\
+        the module where the binary files can be found for the c code that is \
+        being used in this application; mutually exclusive with the \
+        model_binary_folder.
+    :type model_binary_module: python module
+    :param model_binary_folder:\
+        the folder where the binary files can be found for the c code that is\
+        being used in this application; mutually exclusive with the\
+        model_binary_module.
+    :type model_binary_folder: str
+    :param database_socket_addresses:\
+        set of SocketAddresses that need to be added for the database\
+        notification functionality. This are over and above the ones used by\
+        the LiveEventConnection
+    :type database_socket_addresses: list of SocketAddresses
+    :param user_dsg_algorithm:\
+        an algorithm used for generating the application data which is loaded\
+        onto the machine. if not set, will use the data specification language\
+        algorithm required for the type of graph being used.
+    :type user_dsg_algorithm: str
+    :param n_chips_required:\
+        if you need to be allocated a machine (for spalloc) before building\
+        your graph, then fill this in with a general idea of the number of\
+        chips you need so that the spalloc system can allocate you a machine\
+        big enough for your needs.
+    :type n_chips_required: int
+    :param extra_pre_run_algorithms:\
+        algorithms which need to be ran after mapping and loading has occurred\
+        but before the system has ran. These are plugged directly into the\
+        work flow management.
+    :type extra_post_run_algorithms: list of str
+    :param extra_post_run_algorithms:\
+        algorithms which need to be ran after the simulation has ran. These\
+        could be post processing of generated data on the machine for example.
+    :type extra_pre_run_algorithms: list of str
     """
     from spinnaker_graph_front_end import spinnaker
     import os
@@ -49,7 +86,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
     global _none_labelled_edge_count
 
     logger.info(
-        "SpiNNaker graph front end (c) {}, Alan Stokes, "
+        "SpiNNaker graph front end (c) {}, "
         "University of Manchester".format(__version_year__))
     parent_dir = os.path.split(os.path.split(
         spinnaker.__file__)[0])[0]
@@ -65,6 +102,9 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
             os.path.dirname(model_binary_module.__file__))
     elif model_binary_folder is not None:
         executable_finder.add_path(model_binary_folder)
+    else:
+        file_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+        executable_finder.add_path(file_dir)
 
     # set up the spinnaker object
     _spinnaker = SpiNNaker(
@@ -72,7 +112,11 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         executable_finder=executable_finder,
         database_socket_addresses=database_socket_addresses,
         dsg_algorithm=user_dsg_algorithm,
-        n_chips_required=n_chips_required)
+        n_chips_required=n_chips_required,
+        extra_pre_run_algorithms=extra_pre_run_algorithms,
+        extra_post_run_algorithms=extra_post_run_algorithms,
+        machine_time_step=machine_time_step,
+        time_scale_factor=time_scale_factor)
 
 
 def run(duration=None):
@@ -98,24 +142,29 @@ def stop():
 
 
 def read_xml_file(file_path):
-    """ Reads a xml file and translates it into a graph and partitioned graph\
-        (if required)
+    """ Reads a xml file and translates it into an application graph and \
+        machine graph (if required)
 
     :param file_path: the file path in absolute form
     :return: None
     """
     global _spinnaker
+    logger.warn("This functionality is not yet supported")
     _spinnaker.read_xml_file(file_path)
 
 
 def add_vertex(cellclass, cellparams, label=None, constraints=None):
     """
 
-    :param cellclass:
-    :param cellparams:
-    :param constraints:
-    :param label:
-    :return:
+    :param cellclass: the class object for creating the vertex
+    :param cellparams: the input params for the class object
+    :param constraints: any constraints to be applied to the vertex once built
+    :param label: the label for this vertex
+    :type cellclass: python object
+    :type cellparams: dictionary of name and value
+    :type constraints: list of AbstractConstraint
+    :type label: str
+    :return: the vertex instance object
     """
     global _spinnaker
 
@@ -134,29 +183,33 @@ def add_vertex(cellclass, cellparams, label=None, constraints=None):
     # add vertex
     cellparams['constraints'] = constraints
     vertex = cellclass(**cellparams)
-    _spinnaker.add_partitionable_vertex(vertex)
+    _spinnaker.add_application_vertex(vertex)
     return vertex
 
 
 def add_vertex_instance(vertex_to_add):
     """
-
-    :param vertex_to_add:
-    :return:
+    :param vertex_to_add: vertex instance to add to the graph
+    :type vertex_to_add: instance of AbstractPartitionabelVertex
+    :return: None
     """
     global _spinnaker
-    _spinnaker.add_partitionable_vertex(vertex_to_add)
+    _spinnaker.add_application_vertex(vertex_to_add)
 
 
-def add_partitioned_vertex(
+def add_machine_vertex(
         cellclass, cellparams, label=None, constraints=None):
     """
 
-    :param cellclass:
-    :param cellparams:
-    :param label:
-    :param constraints:
-    :return:
+    :param cellclass: the class object for creating the vertex
+    :param cellparams: the input params for the class object
+    :param constraints: any constraints to be applied to the vertex once built
+    :param label: the label for this vertex
+    :type cellclass: python object
+    :type cellparams: dictionary of name and value
+    :type constraints: list of AbstractConstraint
+    :type label: str
+    :return: the vertex instance object
     """
     global _spinnaker
 
@@ -172,43 +225,42 @@ def add_partitioned_vertex(
     elif label is not None:
         cellparams['label'] = label
 
-    # add partitioned vertex
+    # add vertex
     cellparams['constraints'] = constraints
     vertex = cellclass(**cellparams)
-    _spinnaker.add_partitioned_vertex(vertex)
+    _spinnaker.add_machine_vertex(vertex)
     return vertex
 
 
-def add_partitioned_vertex_instance(vertex_to_add):
+def add_machine_vertex_instance(vertex_to_add):
     """
 
-    :param vertex_to_add:
-    :return:
+    :param vertex_to_add: the vertex to add to the partitioned graph
+    :return: None
     """
     global _spinnaker
-    _spinnaker.add_partitioned_vertex(vertex_to_add)
+    _spinnaker.add_machine_vertex(vertex_to_add)
 
 
-def add_edge(cell_type, cellparams, label=None, constraints=None,
-             partition_id=None):
+def add_edge(cell_type, cellparams, semantic_label, label=None):
     """
 
     :param cell_type:
     :param cellparams:
+    :param semantic_label:
     :param constraints:
     :param label:
-    :param partition_id:
     :return:
     """
     global _spinnaker
 
     # correct label if needed
     if label is None and 'label' not in cellparams:
-        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
+        label = "Edge {}".format(_spinnaker.none_labelled_edge_count)
         _spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif 'label' in cellparams and cellparams['label'] is None:
-        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
+        label = "Edge {}".format(_spinnaker.none_labelled_edge_count)
         _spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif label is not None:
@@ -216,60 +268,56 @@ def add_edge(cell_type, cellparams, label=None, constraints=None,
 
     # add edge
     edge = cell_type(**cellparams)
-    _spinnaker.add_partitionable_edge(edge, partition_id, constraints)
+    _spinnaker.add_application_edge(edge, semantic_label)
     return edge
 
 
-def add_partitionable_edge_instance(edge, partition_id, constraints):
+def add_application_edge_instance(edge, partition_id):
     """
 
     :param edge:
     :param partition_id:
-    :param constraints:
     :return:
     """
-    _spinnaker.add_partitionable_edge(edge, partition_id, constraints)
+    _spinnaker.add_application_edge(edge, partition_id)
 
 
-def add_partitioned_edge_instance(edge, partition_id, constraints):
+def add_machine_edge_instance(edge, partition_id):
     """
 
     :param edge:
     :param partition_id:
-    :param constraints:
     :return:
     """
-    _spinnaker.add_partitioned_edge(edge, partition_id, constraints)
+    _spinnaker.add_machine_edge(edge, partition_id)
 
 
-def add_partitioned_edge(cellclass, cellparams, label=None, constraints=None,
-                         partition_id=None):
+def add_machine_edge(cellclass, cellparams, semantic_label, label=None):
     """
 
     :param cellclass:
     :param cellparams:
-    :param constraints:
+    :param semantic_label:
     :param label:
-    :param partition_id:
     :return:
     """
     global _spinnaker
 
     # correct label if needed
     if label is None and 'label' not in cellparams:
-        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
+        label = "Edge {}".format(_spinnaker.none_labelled_edge_count)
         _spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif 'label' in cellparams and cellparams['label'] is None:
-        label = "Vertex {}".format(_spinnaker.none_labelled_edge_count)
+        label = "Edge {}".format(_spinnaker.none_labelled_edge_count)
         _spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif label is not None:
         cellparams['label'] = label
 
-    # add partitioned edge
+    # add edge
     edge = cellclass(**cellparams)
-    _spinnaker.add_partitioned_edge(edge, partition_id, constraints)
+    _spinnaker.add_machine_edge(edge, semantic_label)
     return edge
 
 
@@ -277,8 +325,8 @@ def add_socket_address(
         database_ack_port_num, database_notify_host, database_notify_port_num):
     """
     adds a socket address for the notification protocol
-    :param database_ack_port_num: port num to send ack to
-    :param database_notify_host: host ip to send notifcation to
+    :param database_ack_port_num: port num to send acknowledgement to
+    :param database_notify_host: host ip to send notification to
     :param database_notify_port_num: port that the external device will be
     notified on.
     """
@@ -357,22 +405,22 @@ def timescale_factor():
     return _spinnaker.time_scale_factor
 
 
-def partitioned_graph():
+def machine_graph():
     """
 
     :return:
     """
     global _spinnaker
-    return _spinnaker.partitioned_graph
+    return _spinnaker.machine_graph
 
 
-def partitionable_graph():
+def application_graph():
     """
 
     :return:
     """
     global _spinnaker
-    return _spinnaker.partitionable_graph
+    return _spinnaker.application_graph
 
 
 def routing_infos():
@@ -399,7 +447,7 @@ def transceiver():
     :return:
     """
     global _spinnaker
-    return _spinnaker.txrx
+    return _spinnaker.transceiver
 
 
 def graph_mapper():

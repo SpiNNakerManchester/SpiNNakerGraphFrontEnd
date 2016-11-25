@@ -39,25 +39,24 @@ def _install_cfg():
 
 # Create a config, read global defaults and then read in additional files
 config = ConfigParser.RawConfigParser()
-default = os.path.join(os.path.dirname(spinnaker_graph_front_end.__file__),
-                       "spiNNakerGraphFrontEnd.cfg")
-spinnaker_graph_front_end_user = \
-    os.path.expanduser("~/.spiNNakerGraphFrontEnd.cfg")
-spinnaker_graph_front_end_others = \
-    (spinnaker_graph_front_end_user, "spiNNakerGraphFrontEnd.cfg")
-located_spinnaker_graph_front_end = list()
+default = os.path.join(
+    os.path.dirname(spinnaker_graph_front_end.__file__),
+    "spiNNakerGraphFrontEnd.cfg")
+user_config = os.path.expanduser(os.path.join(
+    "~", ".spiNNakerGraphFrontEnd.cfg"))
+other_configs = (user_config, "spiNNakerGraphFrontEnd.cfg")
+located_configs = list()
 
-found_spinnaker_graph_front_end = False
-for possible_spinnaker_graph_front_end_file in spinnaker_graph_front_end_others:
-    if os.path.isfile(possible_spinnaker_graph_front_end_file):
-        found_spinnaker_graph_front_end = True
-        located_spinnaker_graph_front_end.append(
-            os.path.abspath(possible_spinnaker_graph_front_end_file))
+found_config = False
+for possible_config in other_configs:
+    if os.path.isfile(possible_config):
+        found_config = True
+        located_configs.append(os.path.abspath(possible_config))
 
 with open(default) as f:
     config.readfp(f)
-if found_spinnaker_graph_front_end:
-    read = config.read(spinnaker_graph_front_end_others)
+if found_config:
+    read = config.read(other_configs)
 else:
     # Create a default pacman.cfg in the user home directory and get them
     # to update it.
