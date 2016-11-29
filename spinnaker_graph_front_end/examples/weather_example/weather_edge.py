@@ -1,5 +1,3 @@
-from enum import Enum
-
 # front end common imports
 from pacman.model.graphs.machine.impl.machine_edge import MachineEdge
 from spinn_front_end_common.abstract_models.\
@@ -22,7 +20,7 @@ class WeatherDemoEdge(MachineEdge, AbstractProvidesNKeysForPartition):
         return self._compass
 
     def get_n_keys_for_partition(self, partition, graph_mapper):
-        return 14
+        return 7  # one for p, v, u, cu, cv, z, h
 
     def __str__(self):
         return self.__repr__()

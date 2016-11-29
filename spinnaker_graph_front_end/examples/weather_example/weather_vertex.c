@@ -18,34 +18,34 @@ static circular_buffer input_buffer;
 static uint32_t current_payload;
 static uint32_t current_key;
 
-static uint32_t N_PACKETS_PER_EDGE = 14;
+static uint32_t N_PACKETS_PER_EDGE = 7;
 
 //! weather specific data items
-s3231 my_p;
-s3231 my_v;
-s3231 my_u;
-s3231 my_cv;
-s3231 my_cu;
-s3231 my_z;
-s3231 my_h;
+s1615 my_p;
+s1615 my_v;
+s1615 my_u;
+s1615 my_cv;
+s1615 my_cu;
+s1615 my_z;
+s1615 my_h;
 
 //! constants
-s3231 tdt;
-s3231 dx;
-s3231 dy;
-s3231 fsdx;
-s3231 fsdy;
-s3231 alpha;
+s1615 tdt;
+s1615 dx;
+s1615 dy;
+s1615 fsdx;
+s1615 fsdy;
+s1615 alpha;
 
 // weather receive data items
-s3231 east_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
-s3231 north_east_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
-s3231 north_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
-s3231 north_west_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
-s3231 west_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
-s3231 south_west_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
-s3231 south_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
-s3231 south_east_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
+s1615 east_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
+s1615 north_east_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
+s1615 north_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
+s1615 north_west_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
+s1615 west_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
+s1615 south_west_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
+s1615 south_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
+s1615 south_east_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
 
 //! neighbour keys
 uint32_t north_key;
@@ -82,11 +82,11 @@ static const uint32_t EIGHT = 8.0k;
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
-    SYSTEM_REGION,
-    TRANSMISSIONS,
-    NEIGHBOUR_KEYS,
-    INIT_STATE_VALUES,
-    FINAL_STATES
+    SYSTEM_REGION = 0,
+    TRANSMISSIONS = 1,
+    NEIGHBOUR_KEYS = 2,
+    INIT_STATE_VALUES = 3,
+    FINAL_STATES = 4
 } regions_e;
 
 //! values for the priority for each callback
@@ -102,27 +102,19 @@ typedef enum transmission_region_elements {
 //! \brief a possible way to avoid reading in issues.
 typedef struct init_data_t{
     // my values
-    s3231 my_u; s3231 my_v; s3231 my_p;
+    s1615 my_u; s1615 my_v; s1615 my_p;
     // neighbour values
-    s3231 north_u; s3231 north_v; s3231 north_p;
-    s3231 north_east_u; s3231 north_east_v; s3231 north_east_p;
-    s3231 east_u; s3231 east_v; s3231 east_p;
-    s3231 south_east_u; s3231 south_east_v; s3231 south_east_p;
-    s3231 south_u; s3231 south_v; s3231 south_p;
-    s3231 south_west_u; s3231 south_west_v; s3231 south_west_p;
-    s3231 west_u; s3231 west_v; s3231 west_p;
-    s3231 north_west_u; s3231 north_west_v; s3231 north_west_p;
+    s1615 north_u; s1615 north_v; s1615 north_p;
+    s1615 north_east_u; s1615 north_east_v; s1615 north_east_p;
+    s1615 east_u; s1615 east_v; s1615 east_p;
+    s1615 south_east_u; s1615 south_east_v; s1615 south_east_p;
+    s1615 south_u; s1615 south_v; s1615 south_p;
+    s1615 south_west_u; s1615 south_west_v; s1615 south_west_p;
+    s1615 west_u; s1615 west_v; s1615 west_p;
+    s1615 north_west_u; s1615 north_west_v; s1615 north_west_p;
     // constants
-    s3231 tdt; s3231 dx; s3231 dy; s3231 fsdx; s3231 fsdy; s3231 alpha;
+    s1615 tdt; uint32_t dx; uint32_t dy; s1615 fsdx; s1615 fsdy; s1615 alpha;
 }init_data_t;
-
-//! human readable for the key allocation offset for the data bits
-typedef enum key_offsets {
-    U_TOP_BIT = 0, U_FLOAT_BIT = 1, V_TOP_BIT = 2, V_FLOAT_BIT = 3,
-    P_TOP_BIT = 4, P_FLOAT_BIT = 5, Z_TOP_BIT = 6, Z_FLOAT_BIT = 7,
-    H_TOP_BIT = 8, H_FLOAT_BIT = 9, CV_TOP_BIT = 10, CV_FLOAT_BIT = 11,
-    CU_TOP_BIT = 12, CU_FLOAT_BIT = 13
-} key_offsets;
 
 //! human readable for the location in a array for element bits
 typedef enum element_offsets {
@@ -135,52 +127,10 @@ typedef enum key_order {
     SOUTH_WEST = 5, SOUTH = 6, SOUTH_EAST = 7
 } key_order;
 
-
-//! \brief function to read in a s3231 from 2 ints
-//! \param[in] top_bit: the top bit of the s3231 int
-//! \param[in] float_bit: the float bit of the s3231 int
-//! \param[out] the s3231 value
-s3231 translate_to_s3231_value(uint32_t top_bit, uint32_t float_bit){
-    s3231 my_top_bit = ((s3231)top_bit) << 32;
-    s3231 my_point_bit = (s3231)float_bit;
-    s3231 my_value = my_top_bit + my_point_bit;
-    return my_value;
-}
-
-//! \brief converts a s3231 to the int bit for printing
-//! \param[in] the s3231 to convert
-//! \param[out] the int bit of the s3231
-int32_t convert_s3231_to_int_bit(s3231 value_to_convert){
-    return (int32_t)((bitslk(value_to_convert) >> 32) & 0xFFFFFFFF);
-}
-
-//! \brief converts a s3231 to the long fract bit for printing
-//! \param[in] the s3231 to convert
-//! \param[out] the fract bit of the s3231
-unsigned long fract convert_s3231_to_long_fract_bit(s3231 value_to_convert){
-    return (unsigned long fract)(value_to_convert);
-}
-
-//! \brief converts a s3231 to the fract bit for printing
-//! \param[in] the s3231 to convert
-//! \param[out] the fract bit of the s3231
-unsigned fract convert_s3231_to_fract_bit(s3231 value_to_convert){
-    return (unsigned fract)(value_to_convert);
-}
-
-
-//! \brief prints a s3231 to the logger
-//! \param[in] string: the text name for the value
-//! \param[in] value_to_print: the s3231 value to print
-void print(const char * string, s3231 value_to_print){
-    log_info("%s = %d.%R", string, convert_s3231_to_int_bit(value_to_print),
-                           convert_s3231_to_fract_bit(value_to_print));
-}
-
 //! \brief print the constants of the vertex
 void print_constants(){
     log_info("doing constants");
-    s3231 to_print_items[] = {tdt, dx, dy, fsdx, fsdy, alpha};
+    s1615 to_print_items[] = {tdt, dx, dy, fsdx, fsdy, alpha};
     const char *to_print_strings[6];
     to_print_strings[0] = "tdt";
     to_print_strings[1] = "dx";
@@ -189,20 +139,22 @@ void print_constants(){
     to_print_strings[4] = "fsdy";
     to_print_strings[5] = "alpha";
     for(int position = 0; position < 6; position ++){
-        print(to_print_strings[position], to_print_items[position]);
+        log_info(
+            "%s = %k", to_print_strings[position], to_print_items[position]);
     }
     log_info("end constants");
 }
 
 //! \brief print my local states
 void print_my_states(){
-    s3231 to_print_items[] = {my_u, my_v, my_p};
+    s1615 to_print_items[] = {my_u, my_v, my_p};
     const char *to_print_strings[3];
     to_print_strings[0] = "my_u";
     to_print_strings[1] = "my_v";
     to_print_strings[2] = "my_p";
     for(int position = 0; position < 3; position++){
-        print(to_print_strings[position], to_print_items[position]);
+        log_info(
+            "%s = %k", to_print_strings[position], to_print_items[position]);
     }
     log_info("my key = %d", my_key);
 }
@@ -210,8 +162,8 @@ void print_my_states(){
 //! \brief print a set of elements for u,v,p
 //! \param[in] elements_to_print: the array of elements to print elements of
 //! \param[in] name: the name of the set of elements.
-void print_a_set_of_elements(s3231 *elements_to_print, char* name){
-    s3231 to_print_items[] = {elements_to_print[U], elements_to_print[V],
+void print_a_set_of_elements(s1615 *elements_to_print, char* name){
+    s1615 to_print_items[] = {elements_to_print[U], elements_to_print[V],
                              elements_to_print[P]};
     const char *to_print_strings[3];
 
@@ -220,7 +172,8 @@ void print_a_set_of_elements(s3231 *elements_to_print, char* name){
     to_print_strings[1] = strcat(strcpy(copy_name, name), ":v");
     to_print_strings[2] = strcat(strcpy(copy_name, name), ":p");
     for(int position = 0; position < 3; position ++){
-        print(to_print_strings[position], to_print_items[position]);
+        log_info(
+            "%s = %k", to_print_strings[position], to_print_items[position]);
     }
 }
 
@@ -261,89 +214,14 @@ void receive_data(uint key, uint payload) {
     }
 }
 
-//! \brief converts the 2 uint32s for each element from the directions and
-//! converts them into the s3231 elements
-//! \param[in] components: the set of 2 uint32's for the final elements
-//! \param[in] final_elements: the final s3231's for the direction
-//! \param[in] compass: which direction its dealing with now.
-void convert_inputs_to_s3231_elements(
-        s3231 *components, s3231 *final_elements,
-        uint32_t* has_component_flags, char *compass){
-
-    // try to deal with u
-    if (has_component_flags[U_TOP_BIT] == 1 &&
-            has_component_flags[U_FLOAT_BIT] == 1){
-        final_elements[U] = translate_to_s3231_value(
-            components[U_TOP_BIT], components[U_FLOAT_BIT]);
-    }
-    else{
-         log_error("missing a packet for the u from the %s", compass);
-    }
-
-    // try to deal with v
-    if (has_component_flags[V_TOP_BIT] == 1 &&
-            has_component_flags[V_FLOAT_BIT] == 1){
-        final_elements[V] = translate_to_s3231_value(
-            components[V_TOP_BIT], components[V_FLOAT_BIT]);
-    }else{
-         log_error("missing a packet for the v from the %s", compass);
-    }
-
-    // try to deal with p
-    if (has_component_flags[P_TOP_BIT] == 1 &&
-            has_component_flags[P_FLOAT_BIT] == 1){
-        final_elements[P] = translate_to_s3231_value(
-            components[P_TOP_BIT], components[P_FLOAT_BIT]);
-    }else{
-         log_error("missing a packet for the p from the %s", compass);
-    }
-
-    // try to deal with Z
-    if (has_component_flags[Z_TOP_BIT] == 1 &&
-            has_component_flags[Z_FLOAT_BIT] == 1){
-        final_elements[Z] = translate_to_s3231_value(
-            components[Z_TOP_BIT], components[Z_FLOAT_BIT]);
-    }else{
-         log_error("missing a packet for the z from the %s", compass);
-    }
-
-    // try to deal with H
-    if (has_component_flags[H_TOP_BIT] == 1 &&
-            has_component_flags[H_FLOAT_BIT] == 1){
-        final_elements[H] = translate_to_s3231_value(
-            components[H_TOP_BIT], components[H_FLOAT_BIT]);
-    }else{
-         log_error("missing a packet for the h from the %s", compass);
-    }
-
-    // try to deal with cv
-    if (has_component_flags[CV_TOP_BIT] == 1 &&
-            has_component_flags[CV_FLOAT_BIT] == 1){
-        final_elements[CV] = translate_to_s3231_value(
-            components[CV_TOP_BIT], components[CV_FLOAT_BIT]);
-    }else{
-         log_error("missing a packet for the cv from the %s", compass);
-    }
-
-    // try to deal with cu
-    if (has_component_flags[CU_TOP_BIT] == 1 &&
-            has_component_flags[CU_FLOAT_BIT] == 1){
-        final_elements[CU] = translate_to_s3231_value(
-            components[CU_TOP_BIT], components[CU_FLOAT_BIT]);
-    }else{
-         log_error("missing a packet for the cu from the %s", compass);
-    }
-}
-
-
 //! \brief puts the element in the correct location
 //! \param[in] elements: the list of which this payload is going to reside
-void process_key_payload(s3231 *elements, uint32_t *has_flag_elements){
+void process_key_payload(s1615 *elements, uint32_t *has_flag_elements){
     // get the offset in the array from the key
     uint32_t offset = current_key & 0xFFFFFFF0;
 
     // add the element to the correct offset
-    elements[offset] = (s3231) current_payload;
+    elements[offset] = (s1615) current_payload;
     has_flag_elements[offset] = 1;
 }
 
@@ -369,71 +247,39 @@ void read_input_buffer(){
     circular_buffer_print_buffer(input_buffer);
 
     // linked to the key offset map
-    s3231 east_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k, 0.0k};
     uint32_t has_east_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k, 0.0k};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
 
     // linked to the key offset map
-    s3231 north_east_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k, 0.0k};
     uint32_t has_north_east_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k, 0.0k};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
 
     // linked to the key offset map
-    s3231 north_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k, 0.0k};
     uint32_t has_north_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k, 0.0k};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
 
     // linked to the key offset map
-    s3231 north_west_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k, 0.0k};
     uint32_t has_north_west_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k, 0.0k};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
 
     // linked to the key offset map
-    s3231 west_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k, 0.0k};
     uint32_t has_west_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k, 0.0k};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
 
     // linked to the key offset map
-    s3231 south_west_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k, 0.0k};
     uint32_t has_south_west_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k, 0.0k};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
 
     // linked to the key offset map
-    s3231 south_east_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k, 0.0k};
     uint32_t has_south_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k, 0.0k};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
 
     // linked to the key offset map
-    s3231 south_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k, 0.0k};
     uint32_t has_south_east_components[] = {
-        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k,
-        0.0k, 0.0k, 0.0k};
+        0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
 
     // pull payloads and keys from input_buffer.
-    // translate into s3231 elements
+    // translate into s1615 elements
     for (uint32_t counter = 0; counter < n_packets_per_timer_tick; counter ++){
         bool success1 = circular_buffer_get_next(
             input_buffer, &current_payload);
@@ -448,34 +294,33 @@ void read_input_buffer(){
             // process into the correct location
             if (masked_key == north_key){
                 process_key_payload(
-                    north_components, has_north_components);
+                    north_elements, has_north_components);
             }
             else if (masked_key == north_east_key){
                 process_key_payload(
-                    north_east_components, has_north_east_components);
+                    north_east_elements, has_north_east_components);
             }
             else if (masked_key == east_key){
-                process_key_payload(east_components, has_east_components);
+                process_key_payload(east_elements, has_east_components);
             }
             else if (masked_key == south_east_key){
                 process_key_payload(
-                    south_east_components, has_south_east_components);
+                    south_east_elements, has_south_east_components);
             }
             else if (masked_key == south_key){
-                process_key_payload(south_components, has_south_components);
+                process_key_payload(south_elements, has_south_components);
             }
             else if (masked_key == south_west_key){
                 process_key_payload(
-                    south_west_components, has_south_west_components);
+                    south_west_elements, has_south_west_components);
             }
             else if (masked_key == north_west_key){
                 process_key_payload(
-                    north_west_components, has_north_west_components);
+                    north_west_elements, has_north_west_components);
             }
             else if (masked_key == west_key){
-                process_key_payload(west_components, has_west_components);
+                process_key_payload(west_elements, has_west_components);
             }
-
         }
         else{
             log_debug("couldn't read state from my neighbours.");
@@ -483,33 +328,6 @@ void read_input_buffer(){
 
     }
     spin1_mode_restore(cpsr);
-
-    // convert 2 ints into s3231 for the correct locations.
-    // handle north first
-    convert_inputs_to_s3231_elements(
-        north_components, north_elements,
-        has_north_east_components, "north");
-    convert_inputs_to_s3231_elements(
-        north_east_components, north_east_elements,
-        has_north_east_components, "north_east");
-    convert_inputs_to_s3231_elements(
-        east_components, east_elements,
-        has_east_components, "east");
-    convert_inputs_to_s3231_elements(
-        south_east_components, south_east_elements,
-        has_south_east_components, "south_east");
-    convert_inputs_to_s3231_elements(
-        south_components, south_elements,
-        has_south_components, "south");
-    convert_inputs_to_s3231_elements(
-        south_west_components, south_west_elements,
-        has_south_west_components, "south_west");
-    convert_inputs_to_s3231_elements(
-        west_components, west_elements,
-        has_west_components, "west");
-    convert_inputs_to_s3231_elements(
-        north_west_components, north_west_elements,
-        has_north_west_components, "north_west");
 }
 
 //! \brief records the data into the recording region
@@ -528,38 +346,17 @@ void record_state(){
 //! \brief sends the states needed for the neighbours to do their calculation.
 void send_states(){
     // send my new state to the simulation neighbours
-    uint32_t elements_to_send[14] = {
-        convert_s3231_to_int_bit(my_u),
-        bitsulr(convert_s3231_to_long_fract_bit(my_u)),
-        convert_s3231_to_int_bit(my_v),
-        bitsulr(convert_s3231_to_long_fract_bit(my_v)),
-        convert_s3231_to_int_bit(my_p),
-        bitsulr(convert_s3231_to_long_fract_bit(my_p)),
-        convert_s3231_to_int_bit(my_z),
-        bitsulr(convert_s3231_to_long_fract_bit(my_z)),
-        convert_s3231_to_int_bit(my_h),
-        bitsulr(convert_s3231_to_long_fract_bit(my_h)),
-        convert_s3231_to_int_bit(my_cv),
-         bitsulr(convert_s3231_to_long_fract_bit(my_cv)),
-        convert_s3231_to_int_bit(my_cu),
-        bitsulr(convert_s3231_to_long_fract_bit(my_cu))
-    };
+    uint32_t elements_to_send[7] =
+        {my_u, my_v, my_p, my_z, my_h, my_cv, my_cu};
 
-    const char *to_print_strings[14];
-    to_print_strings[0] = "top_bit_u";
-    to_print_strings[1] = "point_bit_u";
-    to_print_strings[2] = "top_bit_v";
-    to_print_strings[3] = "point_bit_v";
-    to_print_strings[4] = "top_bit_p";
-    to_print_strings[5] = "point_bit_p";
-    to_print_strings[6] = "top_bit_z";
-    to_print_strings[7] = "point_bit_z";
-    to_print_strings[8] = "top_bit_h";
-    to_print_strings[9] = "point_bit_h";
-    to_print_strings[10] = "top_bit_cv";
-    to_print_strings[11] = "point_bit_cv";
-    to_print_strings[12] = "top_bit_cu";
-    to_print_strings[13] = "point_bit_cu";
+    const char *to_print_strings[7];
+    to_print_strings[0] = "my_u";
+    to_print_strings[1] = "my_v";
+    to_print_strings[2] = "my_p";
+    to_print_strings[3] = "my_z";
+    to_print_strings[4] = "my_h";
+    to_print_strings[5] = "my_cv";
+    to_print_strings[6] = "my_cu";
 
     for(uint32_t position = 0; position < N_PACKETS_PER_EDGE; position++){
         // log what we're firing
@@ -589,9 +386,9 @@ void calculate_cv(){
 
 //! \brief calculates the z for this atom
 void calculate_z(){
-    s3231 numerator_bit =
+    s1615 numerator_bit =
         (fsdx * (my_v - south_elements[V]) - fsdy * (my_u - west_elements[U]));
-    s3231 denominator_bit =
+    s1615 denominator_bit =
         (south_west_elements[P] + west_elements[P] + my_p + south_elements[P]);
     my_z = numerator_bit / denominator_bit;
 }
@@ -608,9 +405,9 @@ void calculate_h(){
 //! \brief calculates the new u,v,p for this atom
 void calculate_new_internal_states(){
     // TODO move these to constants from python
-    //s3231 tdts8 = tdt / EIGHT;
-    //s3231 tdtsdx = tdt / dx;
-    //s3231 tdtsdy = tdt / dx;
+    //s1615 tdts8 = tdt / EIGHT;
+    //s1615 tdtsdx = tdt / dx;
+    //s1615 tdtsdy = tdt / dx;
 
 
 
@@ -683,6 +480,7 @@ void set_key(address_t address){
     has_key = transmission_region_address[HAS_KEY];
     if (has_key == TRUE) {
         my_key = transmission_region_address[MY_KEY];
+        log_info("has key of value %d", my_key);
     }
 }
 
@@ -694,7 +492,7 @@ void set_init_states(address_t address){
     address_t my_state_region_address = data_specification_get_region(
         INIT_STATE_VALUES, address);
 
-    // converts sdram data into s3231 data types for easier usage during
+    // converts sdram data into s1615 data types for easier usage during
     // transfer to dtcm data items
     init_data_t *init_data =  (init_data_t*) my_state_region_address;
 

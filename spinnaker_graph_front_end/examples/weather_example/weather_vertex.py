@@ -52,10 +52,10 @@ class WeatherVertex(
         names=[('SYSTEM', 0),
                ('TRANSMISSIONS', 1),
                ('NEIGHBOUR_KEYS', 2),
-               ('INIT_STATE_VALUES', 4),
-               ('FINAL_STATES', 5)])
+               ('INIT_STATE_VALUES', 3),
+               ('FINAL_STATES', 4)])
 
-    S3231_SIZE_IN_BYTES = 8
+    S1615_SIZE_IN_BYTES = 4
 
     # 1 for has key, 1 for key for the 8 directions
     NEIGHBOUR_DATA_REGION_SIZE = 16 * 4
@@ -64,14 +64,14 @@ class WeatherVertex(
     TRANSMISSION_DATA_REGION_SIZE = 2 * 4
     
     # each state variable needs 4 bytes for their s15:16 data item.
-    INIT_STATE_REGION_SIZE = 68 * S3231_SIZE_IN_BYTES
+    INIT_STATE_REGION_SIZE = 68 * S1615_SIZE_IN_BYTES
 
     # arbitary size for recording data (used in auto pause and resume)
     FINAL_STATE_REGION_SIZE = 6000
 
     # each state variable needs 4 bytes for the their s32:31 data item.
     # u,v,p
-    FINAL_STATE_REGION_SIZE_PER_TIMER_TICK = 3 * S3231_SIZE_IN_BYTES
+    FINAL_STATE_REGION_SIZE_PER_TIMER_TICK = 3 * S1615_SIZE_IN_BYTES
 
     # bool flags
     TRUE = 1
@@ -191,9 +191,9 @@ class WeatherVertex(
         spec.comment("writing initial states for this weather element \n")
 
         # add basic data elements
-        spec.write_value(data=self._u, data_type=DataType.S3231)
-        spec.write_value(data=self._v, data_type=DataType.S3231)
-        spec.write_value(data=self._p, data_type=DataType.S3231)
+        spec.write_value(data=self._u, data_type=DataType.S1615)
+        spec.write_value(data=self._v, data_type=DataType.S1615)
+        spec.write_value(data=self._p, data_type=DataType.S1615)
 
         edges = machine_graph.get_edges_ending_at_vertex(self)
 
@@ -204,19 +204,19 @@ class WeatherVertex(
                 if isinstance(edge, WeatherDemoEdge):
                     if edge.compass == self.ORDER_OF_DIRECTIONS[position]:
                         spec.write_value(
-                            edge.pre_vertex.u, data_type=DataType.S3231)
+                            edge.pre_vertex.u, data_type=DataType.S1615)
                         spec.write_value(
-                            edge.pre_vertex.v, data_type=DataType.S3231)
+                            edge.pre_vertex.v, data_type=DataType.S1615)
                         spec.write_value(
-                            edge.pre_vertex.p, data_type=DataType.S3231)
+                            edge.pre_vertex.p, data_type=DataType.S1615)
 
         # constant elements
-        spec.write_value(self._tdt, data_type=DataType.S3231)
-        spec.write_value(self._dx, data_type=DataType.S3231)
-        spec.write_value(self._dy, data_type = DataType.S3231)
-        spec.write_value(self._fsdx, data_type = DataType.S3231)
-        spec.write_value(self._fsdy, data_type = DataType.S3231)
-        spec.write_value(self._alpha, data_type = DataType.S3231)
+        spec.write_value(self._tdt, data_type=DataType.S1615)
+        spec.write_value(self._dx, data_type=DataType.UINT32)
+        spec.write_value(self._dy, data_type = DataType.UINT32)
+        spec.write_value(self._fsdx, data_type = DataType.S1615)
+        spec.write_value(self._fsdy, data_type = DataType.S1615)
+        spec.write_value(self._alpha, data_type = DataType.S1615)
 
     def _reserve_memory_regions(self, spec, system_size):
         """
