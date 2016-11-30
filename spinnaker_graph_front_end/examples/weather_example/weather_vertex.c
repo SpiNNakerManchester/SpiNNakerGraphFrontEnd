@@ -8,6 +8,7 @@
 #include <debug.h>
 #include <circular_buffer.h>
 #include <string.h>
+#include <recording.h>
 
 /*! multicast routing keys to communicate with neighbours */
 uint my_key;
@@ -20,22 +21,37 @@ static uint32_t current_key;
 
 static uint32_t N_PACKETS_PER_EDGE = 7;
 
+//! The number of clock ticks to back off before starting the timer, in an
+//! attempt to avoid overloading the network
+static uint32_t random_backoff;
+
 //! weather specific data items
-s1615 my_p;
-s1615 my_v;
-s1615 my_u;
+s1615 my_current_p;
+s1615 my_current_v;
+s1615 my_current_u;
+s1615 my_old_p;
+s1615 my_old_v;
+s1615 my_old_u;
+s1615 my_new_p;
+s1615 my_new_v;
+s1615 my_new_u;
 s1615 my_cv;
 s1615 my_cu;
 s1615 my_z;
 s1615 my_h;
 
 //! constants
-s1615 tdt;
 s1615 dx;
 s1615 dy;
 s1615 fsdx;
 s1615 fsdy;
 s1615 alpha;
+s1615 tdts8;
+s1615 tdtsdx;
+s1615 tdtsdy;
+s1615 tdt2s8;
+s1615 tdt2sdx;
+s1615 tdt2sdy;
 
 // weather receive data items
 s1615 east_elements[] = {0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k, 0.0k};
@@ -58,7 +74,7 @@ uint32_t south_key;
 uint32_t south_east_key;
 
 //! recorded data items
-uint32_t size_written = 0;
+static uint32_t recording_flags = 0;
 
 //! control value, which says how many timer ticks to run for before exiting
 static uint32_t simulation_ticks = 0;
@@ -79,6 +95,9 @@ static const long unsigned fract POINT_025 = 0.25k;
 
 // optimisation for doing divide in the logic code.
 static const uint32_t EIGHT = 8.0k;
+
+//! how many entries in the ring buffer that there should be per timer tick
+static uint32_t N_PACKETS_PER_TIMER_TICK = 7 * 8 * 2;
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
@@ -102,7 +121,7 @@ typedef enum transmission_region_elements {
 //! \brief a possible way to avoid reading in issues.
 typedef struct init_data_t{
     // my values
-    s1615 my_u; s1615 my_v; s1615 my_p;
+    s1615 my_current_u; s1615 my_current_v; s1615 my_current_p;
     // neighbour values
     s1615 north_u; s1615 north_v; s1615 north_p;
     s1615 north_east_u; s1615 north_east_v; s1615 north_east_p;
@@ -113,7 +132,11 @@ typedef struct init_data_t{
     s1615 west_u; s1615 west_v; s1615 west_p;
     s1615 north_west_u; s1615 north_west_v; s1615 north_west_p;
     // constants
-    s1615 tdt; uint32_t dx; uint32_t dy; s1615 fsdx; s1615 fsdy; s1615 alpha;
+    uint32_t dx; uint32_t dy; s1615 fsdx; s1615 fsdy; 
+    s1615 alpha; s1615 tdts8; s1615 tdtsdx; s1615 tdtsdy; s1615 tdt2s8;
+    s1615 tdt2sdx; s1615 tdt2sdy;
+    // offset fix
+    uint32_t random_backoff;
 }init_data_t;
 
 //! human readable for the location in a array for element bits
@@ -130,14 +153,27 @@ typedef enum key_order {
 //! \brief print the constants of the vertex
 void print_constants(){
     log_info("doing constants");
-    s1615 to_print_items[] = {tdt, dx, dy, fsdx, fsdy, alpha};
-    const char *to_print_strings[6];
-    to_print_strings[0] = "tdt";
-    to_print_strings[1] = "dx";
-    to_print_strings[2] = "dy";
-    to_print_strings[3] = "fsdx";
-    to_print_strings[4] = "fsdy";
-    to_print_strings[5] = "alpha";
+    
+    // create list of things to print
+    s1615 to_print_items[] = {
+        dx, dy, fsdx, fsdy, alpha, tdts8, tdtsdx, tdtsdy, tdt2s8, tdt2sdx, 
+        tdt2sdy};
+        
+    // create list of names of params
+    const char *to_print_strings[11];
+    to_print_strings[0] = "dx";
+    to_print_strings[1] = "dy";
+    to_print_strings[2] = "fsdx";
+    to_print_strings[3] = "fsdy";
+    to_print_strings[4] = "alpha";
+    to_print_strings[5] = "tdts8";
+    to_print_strings[6] = "tdtsdx";
+    to_print_strings[7] = "tdtsdy";
+    to_print_strings[8] = "tdt2s8";
+    to_print_strings[9] = "tdt2sdx";
+    to_print_strings[10] = "tdt2sdy";
+    
+    
     for(int position = 0; position < 6; position ++){
         log_info(
             "%s = %k", to_print_strings[position], to_print_items[position]);
@@ -147,11 +183,11 @@ void print_constants(){
 
 //! \brief print my local states
 void print_my_states(){
-    s1615 to_print_items[] = {my_u, my_v, my_p};
+    s1615 to_print_items[] = {my_current_u, my_current_v, my_current_p};
     const char *to_print_strings[3];
-    to_print_strings[0] = "my_u";
-    to_print_strings[1] = "my_v";
-    to_print_strings[2] = "my_p";
+    to_print_strings[0] = "my_current_u";
+    to_print_strings[1] = "my_current_v";
+    to_print_strings[2] = "my_current_p";
     for(int position = 0; position < 3; position++){
         log_info(
             "%s = %k", to_print_strings[position], to_print_items[position]);
@@ -203,8 +239,6 @@ void print_elements(){
 //! \param[in] key: the multicast key
 //! \param[in] payload: the multicast payload.
 void receive_data(uint key, uint payload) {
-    log_info("the key i've received is %d\n", key);
-    log_info("the payload i've received is %d\n", payload);
     // If there was space to add data to incoming data queue
     if (!circular_buffer_add(input_buffer, key)) {
         log_info("Could not add state");
@@ -218,10 +252,16 @@ void receive_data(uint key, uint payload) {
 //! \param[in] elements: the list of which this payload is going to reside
 void process_key_payload(s1615 *elements, uint32_t *has_flag_elements){
     // get the offset in the array from the key
-    uint32_t offset = current_key & 0xFFFFFFF0;
+    uint32_t offset = current_key & 0x00000007;
 
-    // add the element to the correct offset
-    elements[offset] = (s1615) current_payload;
+    if (offset > 6){
+        log_error("got wrong offset. The offset i got from key %d is %d",
+        current_key, offset);
+        rt_error(RTE_SWERR);
+    }
+
+    // add the element to the correct offset with a reinterpret cast to s1615
+    elements[offset] = kbits(current_payload);
     has_flag_elements[offset] = 1;
 }
 
@@ -229,18 +269,22 @@ void process_key_payload(s1615 *elements, uint32_t *has_flag_elements){
 //! \brief reads in the ring buffer to get all the packets needed for the run
 void read_input_buffer(){
 
-    circular_buffer_print_buffer(input_buffer);
-
-    // calculate how many packets should be in the buffer
-    uint32_t n_packets_per_timer_tick = 14 * 8;
-
-    while(circular_buffer_size(input_buffer) < n_packets_per_timer_tick){
+    uint32_t last_seen_size = 0;
+    uint32_t current_buffer_size;
+    while(circular_buffer_size(input_buffer) < N_PACKETS_PER_TIMER_TICK){
+        current_buffer_size = circular_buffer_size(input_buffer);
         for(uint32_t counter=0; counter < 10000; counter++){
             //do nothing
         }
-        log_info("size of buffer is %d whereas it should be %d",
-                 circular_buffer_size(input_buffer), n_packets_per_timer_tick);
+
+        if (current_buffer_size != last_seen_size){
+            log_info(
+                "size of buffer is %d whereas it should be %d",
+                current_buffer_size, N_PACKETS_PER_TIMER_TICK);
+            last_seen_size = current_buffer_size;
+        }
     }
+
     log_info("running past buffer length");
 
     cpsr = spin1_int_disable();
@@ -280,7 +324,8 @@ void read_input_buffer(){
 
     // pull payloads and keys from input_buffer.
     // translate into s1615 elements
-    for (uint32_t counter = 0; counter < n_packets_per_timer_tick; counter ++){
+    for (uint32_t counter = 0; counter < N_PACKETS_PER_TIMER_TICK / 2;
+            counter ++){
         bool success1 = circular_buffer_get_next(
             input_buffer, &current_payload);
         bool success2 = circular_buffer_get_next(
@@ -325,7 +370,6 @@ void read_input_buffer(){
         else{
             log_debug("couldn't read state from my neighbours.");
         }
-
     }
     spin1_mode_restore(cpsr);
 }
@@ -333,13 +377,14 @@ void read_input_buffer(){
 //! \brief records the data into the recording region
 void record_state(){
     // record my state via sdram
-    address_t record_region =
-        data_specification_get_region(FINAL_STATES, address);
-    uint8_t* record_space_address = (uint8_t*) record_region;
-    record_space_address = record_space_address + 4 + size_written;
-    spin1_memcpy(record_space_address, &my_p, 4);
-    size_written = size_written + 4;
-    log_debug("space written is %d", size_written);
+    recording_record(0, &my_current_p, 4);
+    recording_record(0, &my_current_u, 4);
+    recording_record(0, &my_current_v, 4);
+    recording_record(0, &my_cu, 4);
+    recording_record(0, &my_cv, 4);
+    recording_record(0, &my_z, 4);
+    recording_record(0, &my_h, 4);
+    recording_do_timestep_update(time);
     log_debug("recorded my state \n");
 }
 
@@ -347,12 +392,12 @@ void record_state(){
 void send_states(){
     // send my new state to the simulation neighbours
     uint32_t elements_to_send[7] =
-        {my_u, my_v, my_p, my_z, my_h, my_cv, my_cu};
+        {my_current_u, my_current_v, my_current_p, my_z, my_h, my_cv, my_cu};
 
     const char *to_print_strings[7];
-    to_print_strings[0] = "my_u";
-    to_print_strings[1] = "my_v";
-    to_print_strings[2] = "my_p";
+    to_print_strings[0] = "my_current_u";
+    to_print_strings[1] = "my_current_v";
+    to_print_strings[2] = "my_current_p";
     to_print_strings[3] = "my_z";
     to_print_strings[4] = "my_h";
     to_print_strings[5] = "my_cv";
@@ -360,57 +405,111 @@ void send_states(){
 
     for(uint32_t position = 0; position < N_PACKETS_PER_EDGE; position++){
         // log what we're firing
+        uint32_t this_data_key = my_key + position;
         log_info(
-            "firing packet %s with value %d",
-            to_print_strings[position], elements_to_send[position]);
+            "firing packet %s with value %d with key %d",
+            to_print_strings[position], elements_to_send[position],
+            this_data_key);
 
         while (!spin1_send_mc_packet(
-                my_key & position, elements_to_send[position], WITH_PAYLOAD)) {
+                this_data_key, (uint) elements_to_send[position],
+                WITH_PAYLOAD)) {
             spin1_delay_us(1);
         }
     }
-    log_debug("sent my states via multicast");
+    log_info("sent my states via multicast");
 }
 
 
 //! \brief calculates the cu for this atom
 void calculate_cu(){
-    my_cu = POINT_5 * (my_p + south_elements[P]) * my_u;
+    my_cu = POINT_5 * (my_current_p + south_elements[P]) * my_current_u;
 }
 
 //! \brief calculates the cv for this atom
 void calculate_cv(){
-    my_cv = POINT_5 * (my_p + west_elements[P] * my_v);
+    my_cv = POINT_5 * (my_current_p + west_elements[P] * my_current_v);
 }
-
 
 //! \brief calculates the z for this atom
 void calculate_z(){
     s1615 numerator_bit =
-        (fsdx * (my_v - south_elements[V]) - fsdy * (my_u - west_elements[U]));
+        (fsdx * (my_current_v - south_elements[V]) - fsdy *
+        (my_current_u - west_elements[U]));
     s1615 denominator_bit =
-        (south_west_elements[P] + west_elements[P] + my_p + south_elements[P]);
+        (south_west_elements[P] + west_elements[P] + my_current_p +
+         south_elements[P]);
     my_z = numerator_bit / denominator_bit;
 }
 
-
 //! \brief calculates the h for this atom
 void calculate_h(){
-    my_h = my_p + POINT_025 * (
-        north_elements[U] * north_elements[U] + my_u * my_u +
-        east_elements[V] * my_v * my_v);
+    my_h = my_current_p + POINT_025 * (
+        north_elements[U] * north_elements[U] + my_current_u * my_current_u +
+        east_elements[V] * my_current_v * my_current_v);
+}
+
+//! \brief calculates the new p value based off other values
+void calculate_new_p(s1615 current_tdtsdx, s1615 current_tdtsdy){
+    my_new_p = my_old_p - current_tdtsdx * (north_elements[CU] - my_cu) -
+        current_tdtsdy * (east_elements[CV] - my_cv);
 }
 
 
+//! \brief calculates the new v value based off other values
+void calculate_new_v(s1615 current_tdts_8, s1615 current_tdtsdy){
+    my_new_v = my_old_v - current_tdts_8 *(north_elements[Z] + my_z) *
+        (north_elements[CU] + my_cu + west_elements[CU] +
+        south_west_elements[CU]) - current_tdtsdy * (my_h - south_elements[H]);
+}
+
+
+//! \brief calculates the new u value based off other values
+void calculate_new_u(s1615 current_tdts_8, s1615 current_tdtsdx){
+    my_new_u = my_old_u + current_tdts_8 * (east_elements[Z] + my_z) *
+        (east_elements[CV] + south_west_elements[CV] + south_elements[CV] +
+         my_cv) - current_tdtsdx * (my_h - south_elements[H]);
+}
+
+//! \brief moves values from new to current sets
+void transfer_data_from_new_to_current(){
+    my_current_p = my_new_p;
+    my_current_u = my_new_u;
+    my_current_v = my_new_v;
+}
+
 //! \brief calculates the new u,v,p for this atom
-void calculate_new_internal_states(){
-    // TODO move these to constants from python
-    //s1615 tdts8 = tdt / EIGHT;
-    //s1615 tdtsdx = tdt / dx;
-    //s1615 tdtsdy = tdt / dx;
+void calculate_new_internal_states(bool if_first_time){
+    s1615 current_tdts_8;
+    s1615 current_tdtsdx;
+    s1615 current_tdtsdy;
 
+    // deduce which constants to use (avoids a divide)
+    if(if_first_time){
+        current_tdts_8 = tdts8;
+        current_tdtsdx = tdtsdx;
+        current_tdtsdy = tdtsdy;
+    }
+    else{
+        current_tdts_8 = tdt2s8;
+        current_tdtsdx = tdt2sdx;
+        current_tdtsdy = tdt2sdy;
+    }
 
+    // calculate the new states
+    calculate_new_u(current_tdts_8, current_tdtsdx);
+    calculate_new_v(current_tdts_8, current_tdtsdy);
+    calculate_new_p(current_tdtsdx, current_tdtsdy);
+}
 
+//! \brief smooth old values for next cycle
+void smooth_old_values(){
+    my_old_u =
+        my_current_u + alpha * (my_new_u - 2.0 * my_current_u + my_old_u);
+    my_old_v =
+        my_current_v + alpha * (my_new_v - 2.0 * my_current_v + my_old_v);
+    my_old_p =
+        my_current_p + alpha * (my_new_p - 2.0 * my_current_p + my_old_p);
 }
 
 
@@ -421,6 +520,14 @@ void update(uint ticks, uint b) {
     use(b);
     use(ticks);
 
+    log_info("setting off random back off");
+    // Wait a random number of clock cycles to smooth out comms traffic
+    uint32_t random_backoff_time = tc[T1_COUNT] - random_backoff;
+    while (tc[T1_COUNT] > random_backoff_time) {
+        // Do Nothing
+    }
+    log_info("finished random back off");
+
     time++;
 
     log_info("on tick %d of %d", time, simulation_ticks);
@@ -429,12 +536,13 @@ void update(uint ticks, uint b) {
     // killed
     if ((infinite_run != TRUE) && (time >= simulation_ticks)) {
 
-        // update recording data
-        address_t record_region =
-            data_specification_get_region(FINAL_STATES, address);
-        uint8_t* record_space_address = (uint8_t*) record_region;
-        log_info("wrote final store of %d bytes", size_written);
-        spin1_memcpy(record_space_address, &size_written, 4);
+        // Finalise any recordings that are in progress, writing back the final
+        // amounts of samples recorded to SDRAM
+        if (recording_flags > 0) {
+            log_info("updating recording regions");
+            recording_finalise();
+        }
+
 
         log_info("Simulation complete.\n");
 
@@ -444,20 +552,31 @@ void update(uint ticks, uint b) {
         return;
     }
 
-    if (time > 1){
+    if (time > 0){
         read_input_buffer();
     }
 
+    // calculate new parameters values
     calculate_cu();
     calculate_cv();
     calculate_z();
     calculate_h();
 
-    calculate_new_internal_states();
+    calculate_new_internal_states(time == 0);
 
+    // if first timer, no smoothing needed, just do transfer
+    if (time == 0){
+        transfer_data_from_new_to_current();
+    }
+    else{
+        smooth_old_values();
+        transfer_data_from_new_to_current();
+    }
+
+    // send new states to next core.
     send_states();
 
-        //record_state();
+    record_state();
 }
 
 
@@ -497,9 +616,13 @@ void set_init_states(address_t address){
     init_data_t *init_data =  (init_data_t*) my_state_region_address;
 
     // this cores initial states
-    my_p = init_data->my_p;
-    my_u = init_data->my_u;
-    my_v = init_data->my_v;
+    my_current_p = init_data->my_current_p;
+    my_current_u = init_data->my_current_u;
+    my_current_v = init_data->my_current_v;
+
+    my_old_p = init_data->my_current_p;
+    my_old_u = init_data->my_current_u;
+    my_old_v = init_data->my_current_v;
 
     // north initial states
     north_elements[U] = init_data->north_u;
@@ -542,12 +665,20 @@ void set_init_states(address_t address){
     north_west_elements[P] = init_data->north_west_p;
 
     // get constants
-    tdt = init_data->tdt;
     dx = init_data->dx;
     dy = init_data->dy;
     fsdx = init_data->fsdx;
     fsdy = init_data->fsdy;
     alpha = init_data->alpha;
+    tdts8 = init_data->tdts8;
+    tdtsdx = init_data->tdtsdx;
+    tdtsdy = init_data->tdtsdy;
+    tdt2s8 = init_data->tdt2s8;
+    tdt2sdx = init_data->tdt2sdx;
+    tdt2sdy = init_data->tdt2sdy;
+
+    // get random backoff
+    random_backoff = init_data->random_backoff;
 
     // print out the values
     print_my_states();
@@ -593,6 +724,16 @@ static bool initialize(uint32_t *timer_period) {
             &infinite_run, SDP, NULL, NULL)) {
         return false;
     }
+
+    // sort out recording interface
+    address_t recording_region = data_specification_get_region(
+        FINAL_STATES, address);
+    bool success = recording_initialize(
+        recording_region, &recording_flags);
+    if (!success){
+        return false;
+    }
+    log_info("Recording flags = 0x%08x", recording_flags);
 
     // find the key to use
     log_info("set key");

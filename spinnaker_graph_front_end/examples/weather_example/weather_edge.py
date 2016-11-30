@@ -5,22 +5,18 @@ from spinn_front_end_common.abstract_models.\
     AbstractProvidesNKeysForPartition
 
 
-class WeatherDemoEdge(MachineEdge, AbstractProvidesNKeysForPartition):
-    """ Used in conjunction with a heat demo vertex to execute the heat demo
+class WeatherDemoEdge(MachineEdge):
+    """ Used in conjunction with a weather demo vertex
     """
 
     def __init__(self, pre_vertex, post_vertex, compass, label=None):
         MachineEdge.__init__(
             self, pre_vertex, post_vertex, label=label)
-        AbstractProvidesNKeysForPartition.__init__(self)
         self._compass = compass
 
     @property
     def compass(self):
         return self._compass
-
-    def get_n_keys_for_partition(self, partition, graph_mapper):
-        return 7  # one for p, v, u, cu, cv, z, h
 
     def __str__(self):
         return self.__repr__()

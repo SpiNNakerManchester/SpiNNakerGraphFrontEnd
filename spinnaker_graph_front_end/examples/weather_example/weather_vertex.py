@@ -15,6 +15,9 @@ from pacman.model.resources.sdram_resource import SDRAMResource
 # graph front end imports
 from spinn_front_end_common.interface.buffer_management import \
     recording_utilities
+from spinn_front_end_common.abstract_models.\
+    abstract_provides_n_keys_for_partition import \
+    AbstractProvidesNKeysForPartition
 from .weather_edge import WeatherDemoEdge
 from spinnaker_graph_front_end.utilities.conf import config
 
@@ -36,13 +39,15 @@ from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
 from enum import Enum
 import logging
 import struct
+import random
 
 logger = logging.getLogger(__name__)
 
 
 class WeatherVertex(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-        AbstractReceiveBuffersToHost, AbstractBinaryUsesSimulationRun):
+        AbstractReceiveBuffersToHost, AbstractBinaryUsesSimulationRun,
+        AbstractProvidesNKeysForPartition):
     """ A vertex partition for a heat demo; represents a heat element.
     """
 
@@ -64,9 +69,9 @@ class WeatherVertex(
     TRANSMISSION_DATA_REGION_SIZE = 2 * 4
     
     # each state variable needs 4 bytes for their s15:16 data item.
-    INIT_STATE_REGION_SIZE = 68 * S1615_SIZE_IN_BYTES
+    INIT_STATE_REGION_SIZE = 39 * S1615_SIZE_IN_BYTES
 
-    # arbitary size for recording data (used in auto pause and resume)
+    # arbitrary size for recording data (used in auto pause and resume)
     FINAL_STATE_REGION_SIZE = 6000
 
     # each state variable needs 4 bytes for the their s32:31 data item.
@@ -97,9 +102,14 @@ class WeatherVertex(
             dtcm=DTCMResource(34),
             sdram=sdram)
 
+        # inheritance stuff
         MachineVertex.__init__(
             self, label=label, constraints=constraints)
         AbstractReceiveBuffersToHost.__init__(self)
+        AbstractProvidesNKeysForPartition.__init__(self)
+        MachineDataSpecableVertex.__init__(self)
+        AbstractHasAssociatedBinary.__init__(self)
+        AbstractBinaryUsesSimulationRun.__init__(self)
 
         # app specific data items
         self._u = u
@@ -125,10 +135,26 @@ class WeatherVertex(
         self._north_p = None
         self._north_v = None
 
+        # buffered data items (used for buffered recording)
+        self._buffer_size_before_receive = None
+        if config.getboolean("Buffers", "enable_buffered_recording"):
+            self._buffer_size_before_receive = config.getint(
+                "Buffers", "buffer_size_before_receive")
+        self._time_between_requests = config.getint(
+            "Buffers", "time_between_requests")
+        self._receive_buffer_host = config.get(
+            "Buffers", "receive_buffer_host")
+        self._receive_buffer_port = config.getint(
+            "Buffers", "receive_buffer_port")
+
+    @overrides(AbstractProvidesNKeysForPartition.get_n_keys_for_partition)
+    def get_n_keys_for_partition(self, partition, graph_mapper):
+        return 7  # one for p, v, u, cu, cv, z, h
+
     @property
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
-        return self._resources
+        return self._resources  # standard resources
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
@@ -172,6 +198,13 @@ class WeatherVertex(
             self.get_binary_file_name(), machine_time_step,
             time_scale_factor))
 
+        # get recorded buffered regions sorted
+        spec.switch_write_focus(self.DATA_REGIONS.FINAL_STATES.value)
+        spec.write_array(recording_utilities.get_recording_header_array(
+            [constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP],
+            self._time_between_requests, self._buffer_size_before_receive,
+            iptags, self._receive_buffer_host, self._receive_buffer_port))
+
         # application specific data items
         self._write_transmission_keys(spec, routing_info, machine_graph)
         self._write_key_data(spec, routing_info, machine_graph)
@@ -181,10 +214,10 @@ class WeatherVertex(
         spec.end_specification()
 
     def _write_state_data(self, spec, machine_graph):
-        """
+        """ writes the init state for the c code to read
 
-        :param spec:
-        :return:
+        :param spec: the DSG specification object
+        :return: None
         """
         spec.switch_write_focus(
             region=self.DATA_REGIONS.INIT_STATE_VALUES.value)
@@ -200,6 +233,7 @@ class WeatherVertex(
         # for each direction, write the source vertex's u,v,p which allows
         # the first timer tick to just run as normal
         for position in range(0, len(self.ORDER_OF_DIRECTIONS)):
+            found = False
             for edge in edges:
                 if isinstance(edge, WeatherDemoEdge):
                     if edge.compass == self.ORDER_OF_DIRECTIONS[position]:
@@ -209,14 +243,30 @@ class WeatherVertex(
                             edge.pre_vertex.v, data_type=DataType.S1615)
                         spec.write_value(
                             edge.pre_vertex.p, data_type=DataType.S1615)
+                        found = True
+            if not found:
+                raise exceptions.ConfigurationException(
+                    "need a {} direction edge".format(
+                        self.ORDER_OF_DIRECTIONS[position]))
 
         # constant elements
-        spec.write_value(self._tdt, data_type=DataType.S1615)
         spec.write_value(self._dx, data_type=DataType.UINT32)
-        spec.write_value(self._dy, data_type = DataType.UINT32)
-        spec.write_value(self._fsdx, data_type = DataType.S1615)
-        spec.write_value(self._fsdy, data_type = DataType.S1615)
-        spec.write_value(self._alpha, data_type = DataType.S1615)
+        spec.write_value(self._dy, data_type=DataType.UINT32)
+        spec.write_value(self._fsdx, data_type=DataType.S1615)
+        spec.write_value(self._fsdy, data_type=DataType.S1615)
+        spec.write_value(self._alpha, data_type=DataType.S1615)
+        spec.write_value(self._tdt / 8.0, data_type=DataType.S1615)
+        spec.write_value(self._tdt / self._dx, data_type=DataType.S1615)
+        spec.write_value(self._tdt / self._dy, data_type=DataType.S1615)
+        spec.write_value((self._tdt + self._tdt) / 8.0,
+                         data_type=DataType.S1615)
+        spec.write_value((self._tdt + self._tdt) / self._dx,
+                         data_type=DataType.S1615)
+        spec.write_value((self._tdt + self._tdt) / self._dy,
+                         data_type=DataType.S1615)
+
+        # random back off for smoothing transmissions
+        spec.write_value(random.randint(0, len(machine_graph.vertices)))
 
     def _reserve_memory_regions(self, spec, system_size):
         """
@@ -346,38 +396,46 @@ class WeatherVertex(
         return recording_utilities.get_n_timesteps_in_buffer_space(
             buffer_space, [self.FINAL_STATE_REGION_SIZE_PER_TIMER_TICK])
 
-    def get_data(self, transceiver, placement):
+    def get_data(self, buffer_manager, placement):
 
-        # Get the data region base address where results are stored for the
-        # core
-        record_region_base_address = \
-            helpful_functions.locate_memory_region_for_placement(
-                placement, self.DATA_REGIONS.FINAL_STATES.value, transceiver)
+        # for buffering output info is taken form the buffer manager
+        reader, data_missing = buffer_manager.get_data_for_vertex(placement, 0)
 
-        # find how many bytes are needed to be read
-        number_of_bytes_to_read = str(transceiver.read_memory(
-            placement.x, placement.y, record_region_base_address, 4))
+        # do check for missing data
+        if data_missing:
+            print "missing_data from ({}, {}, {}); ".format(
+                placement.x, placement.y, placement.p)
 
-        number_of_bytes_to_read = \
-            struct.unpack("<I", number_of_bytes_to_read)[0]
+        # get raw data
+        raw_data = reader.read_all()
 
-        # read the bytes
-        if number_of_bytes_to_read != (self._n_machine_time_steps * 4):
-            raise exceptions.ConfigurationException(
-                "number of bytes seems wrong")
-        else:
-            raw_data = str(transceiver.read_memory(
-                placement.x, placement.y, record_region_base_address + 4,
-                number_of_bytes_to_read))
+        length_of_data = len(raw_data)
+        length_of_data2 = len(str(raw_data))
+        data3 = str(raw_data)
+        format_string = "<{0}I{0}I{0}I{0}I{0}I{0}I{0}I"\
+            .format(len(raw_data) / (7*4))
 
         # convert to float
-        elements = struct.unpack(
-            "<{}qqq".format(self._n_machine_time_steps), raw_data)
+        elements = struct.unpack(format_string, bytes(raw_data))
 
-        # convert into keyed data
+        # convert into keyed data one for p, v, u, cu, cv, z, h
         data = dict()
-        data['p'] = elements[0] / 2147483647.0
-        data['u'] = elements[1] / 2147483647.0
-        data['v'] = elements[2] / 2147483647.0
+        data['p'] = list()
+        data['u'] = list()
+        data['v'] = list()
+        data['cu'] = list()
+        data['cv'] = list()
+        data['z'] = list()
+        data['h'] = list()
+
+        # store elements
+        for position in range(0, len(raw_data) / (7*4)):
+            data['p'].append(elements[0 + (position * 7)] / 32767.0)
+            data['u'].append(elements[1 + (position * 7)] / 32767.0)
+            data['v'].append(elements[2 + (position * 7)] / 32767.0)
+            data['cu'].append(elements[3 + (position * 7)] / 32767.0)
+            data['cv'].append(elements[4 + (position * 7)] / 32767.0)
+            data['z'].append(elements[5 + (position * 7)] / 32767.0)
+            data['h'].append(elements[6 + (position * 7)] / 32767.0)
 
         return data
