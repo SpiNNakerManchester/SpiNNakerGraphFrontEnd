@@ -99,7 +99,8 @@ class WeatherVertex(
 
         self._resources = ResourceContainer(
             cpu_cycles=CPUCyclesPerTickResource(45),
-            dtcm=DTCMResource(34),
+            dtcm=DTCMResource(34),  # not used currently due to note being a
+            # application graph vertex
             sdram=sdram)
 
         # inheritance stuff
@@ -123,17 +124,6 @@ class WeatherVertex(
         self._fsdx = fsdx
         self._fsdy = fsdy
         self._alpha = alpha
-
-        # values from other places
-        self._east_u = None
-        self._east_p = None
-        self._east_v = None
-        self._north_east_u = None
-        self._north_east_p = None
-        self._north_east_v = None
-        self._north_u = None
-        self._north_p = None
-        self._north_v = None
 
         # buffered data items (used for buffered recording)
         self._buffer_size_before_receive = None

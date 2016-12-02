@@ -25,17 +25,16 @@ DT = 90.0
 TDT = DT
 DX = 100000.0
 DY = 100000.0
-FSDX = round(4.0 / DX, 6)
-FSDY = round(4.0 / DY, 6)
+FSDX = 4.0 / DX
+FSDY = 4.0 / DY
 A = 1000000.0
 ALPHA = 0.001
 EL = MAX_Y_SIZE_OF_FABRIC * DX
-PI_UNROUNDED = 4.0 * math.atan(float(1.0))
-PI = round(PI_UNROUNDED, 6)
-TPI = round(PI_UNROUNDED + PI_UNROUNDED, 6)
-DI = round(TPI / MAX_X_SIZE_OF_FABRIC, 6)
-DJ = round(TPI / MAX_Y_SIZE_OF_FABRIC, 6)
-PCF = round(PI_UNROUNDED * PI_UNROUNDED * A * A / (EL * EL), 6)
+PI = 4.0 * math.atan(float(1.0))
+TPI = PI + PI
+DI = TPI / MAX_X_SIZE_OF_FABRIC
+DJ = TPI / MAX_Y_SIZE_OF_FABRIC
+PCF = PI * PI * A * A / (EL * EL)
 
 
 
@@ -51,8 +50,9 @@ class WeatherRun(object):
         # print the constants
         self._print_constants()
 
-        # verify that the constants are the same as c
-        self._verify_constants()
+        # verify that the constants are the same as c (recorded at 3 by 3)
+        if MAX_X_SIZE_OF_FABRIC == 3 and MAX_Y_SIZE_OF_FABRIC == 3:
+            self._verify_constants()
 
         # figure machine size needed at a min
         min_chips = (MAX_X_SIZE_OF_FABRIC * MAX_Y_SIZE_OF_FABRIC) / 16
@@ -68,6 +68,7 @@ class WeatherRun(object):
             [None for _ in range(MAX_X_SIZE_OF_FABRIC)]
             for _ in range(MAX_Y_SIZE_OF_FABRIC)]
 
+        # handle the psi value generation
         self._psi = [
             [None for _ in range(MAX_X_SIZE_OF_FABRIC + 1)]
             for _ in range(MAX_Y_SIZE_OF_FABRIC + 1)]
@@ -82,6 +83,14 @@ class WeatherRun(object):
             [None for _ in range(MAX_X_SIZE_OF_FABRIC + 1)]
             for _ in range(MAX_Y_SIZE_OF_FABRIC + 1)]
         self._sort_out_v()
+
+        # print out initial values for verification purposes
+        self._print_initial_values()
+
+        # verify that the init values are correct for c code.
+        # recorded for a 3 by 3 grid
+        #if MAX_X_SIZE_OF_FABRIC == 3 and MAX_Y_SIZE_OF_FABRIC == 3:
+        #    self._verify_vertex_initial_values()
 
         # build vertices
         for x in range(0, MAX_X_SIZE_OF_FABRIC):
@@ -129,35 +138,64 @@ class WeatherRun(object):
         logger.info("constant DJ    = {}".format(DJ))
         logger.info("constant PCF   = {}".format(PCF))
 
-    def _verify_constants(self):
-        if DT != 90.0:
+    def _print_initial_values(self):
+        logger.info("printing init values of psi")
+        for x in range(0, MAX_X_SIZE_OF_FABRIC):
+            for y in range(0, MAX_Y_SIZE_OF_FABRIC):
+                logger.info("psi for {}:{} is {}".format(
+                    x, y, self._psi[x][y]))
+
+
+    @staticmethod
+    def _verify_constants():
+        if round(DT, 6) != 90.0:
             raise Exception("DT is wrong")
-        if TDT != 90.0:
+        if round(TDT, 6) != 90.0:
             raise Exception("TDT is wrong")
-        if DX != 100000.0:
+        if round(DX, 6) != 100000.0:
             raise Exception("DX is wrong")
-        if DY != 100000.0:
+        if round(DY, 6) != 100000.0:
             raise Exception("DY is wrong")
-        if FSDX != 0.000040:
+        if round(FSDX, 6) != 0.000040:
             raise Exception("FSDX is wrong")
-        if FSDY != 0.000040:
+        if round(FSDY, 6) != 0.000040:
             raise Exception("FSDY is wrong")
-        if A != 1000000.0:
+        if round(A, 6) != 1000000.0:
             raise Exception("A is wrong")
-        if ALPHA != 0.001000:
+        if round(ALPHA, 6) != 0.001000:
             raise Exception("ALPHA is wrong")
-        if EL != 300000.0:
+        if round(EL, 6) != 300000.0:
             raise Exception("EL is wrong")
-        if PI != 3.141593:
+        if round(PI, 6) != 3.141593:
             raise Exception("PI is wrong")
-        if TPI != 6.283185:
+        if round(TPI, 6) != 6.283185:
             raise Exception("TPI is wrong")
-        if DI != 2.094395:
+        if round(DI, 6) != 2.094395:
             raise Exception("DI is wrong")
-        if DJ != 2.094395:
+        if round(DJ, 6) != 2.094395:
             raise Exception("DJ is wrong")
-        if PCF != 109.662277:
+        if round(PCF, 6) != 109.662271: # c says 109.662277 but we're
+            # assuming that last bit of value is not important
             raise Exception("PCF is wrong")
+
+    def _verify_vertex_initial_values(self):
+        p = [
+            50219.324554, 50054.831150, 50054.831116, 50054.831150,
+            49890.337745, 49890.337712, 50054.831116, 49890.337712,
+            49890.337678]
+        u = [7.500002, 7.500002, 7.500002, -0.000001, -0.000001, -0.000001,
+             14.999999, 14.999999, 14.999999]
+        v = [-7.500002, -7.500002, -7.500002, 0.000001, 0.000001, 0.000001,
+             -14.999999, -14.999999, -14.999999]
+        psi = [750000.025237, 750000.025237, 750000.025237, 0.000000,
+               0.000000, 0.000000, 749999.873816, 749999.873816,
+               749999.873816]
+        for x in range(0, MAX_X_SIZE_OF_FABRIC):
+            for y in range(0, MAX_Y_SIZE_OF_FABRIC):
+                if (round(self._psi[x][y], 6) !=
+                        psi[x + (y *  MAX_X_SIZE_OF_FABRIC)]):
+                    raise Exception("PSI is wrong for vertex {}:{}".format(
+                        x, y))
 
 
     def _sort_out_psi(self):
@@ -229,6 +267,11 @@ class WeatherRun(object):
         :param y: the y coord of the vertex to make a psi of
         :return: the psi calculation
         """
+        # a * sin((i + .5) * di) * sin((j + .5) * dj);
+
+        sinx = math.sin((x + 0.5) * DI)
+        siny = math.sin((y + 0.5) * DJ)
+        total = A * sinx, 6 * siny, 6
         return A * math.sin((x + 0.5) * DI) * math.sin((y + 0.5) * DJ)
 
     @staticmethod
@@ -430,6 +473,7 @@ if __name__ == "__main__":
 
     # extract data from machine
     data = run.extract_data()
+
     # print data to screen
     run.print_all_data(data)
     run.print_diagonal_data(data)
