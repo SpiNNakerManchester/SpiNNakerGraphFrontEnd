@@ -65,8 +65,6 @@ class Vertex(
             "Buffers", "time_between_requests")
         self._receive_buffer_host = config.get(
             "Buffers", "receive_buffer_host")
-        self._receive_buffer_port = config.getint(
-            "Buffers", "receive_buffer_port")
 
         self.placement = None
 
@@ -80,8 +78,7 @@ class Vertex(
                 constants.SYSTEM_BYTES_REQUIREMENT +
                 self.TRANSMISSION_REGION_N_BYTES))
         resources.extend(recording_utilities.get_recording_resources(
-            [self._recording_size], self._receive_buffer_host,
-            self._receive_buffer_port))
+            [self._recording_size], self._receive_buffer_host))
         return resources
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
@@ -117,7 +114,7 @@ class Vertex(
         spec.write_array(recording_utilities.get_recording_header_array(
             [self._recording_size], self._time_between_requests,
             self._buffer_size_before_receive, iptags,
-            self._receive_buffer_host, self._receive_buffer_port))
+            self._receive_buffer_host))
 
         # Get the key, assuming all outgoing edges use the same key
         has_key = 0

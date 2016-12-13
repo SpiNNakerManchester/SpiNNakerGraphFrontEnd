@@ -61,8 +61,6 @@ class ConwayBasicCell(
             "Buffers", "time_between_requests")
         self._receive_buffer_host = config.get(
             "Buffers", "receive_buffer_host")
-        self._receive_buffer_port = config.getint(
-            "Buffers", "receive_buffer_port")
 
         # app specific data items
         self._state = state
@@ -107,7 +105,7 @@ class ConwayBasicCell(
         spec.write_array(recording_utilities.get_recording_header_array(
             [constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP],
             self._time_between_requests, self._buffer_size_before_receive,
-            iptags, self._receive_buffer_host, self._receive_buffer_port))
+            iptags, self._receive_buffer_host))
 
         # check got right number of keys and edges going into me
         partitions = \
@@ -215,7 +213,7 @@ class ConwayBasicCell(
             cpu_cycles=CPUCyclesPerTickResource(0))
         resources.extend(recording_utilities.get_recording_resources(
             [constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP],
-            self._receive_buffer_host, self._receive_buffer_port))
+            self._receive_buffer_host))
         return resources
 
     @property

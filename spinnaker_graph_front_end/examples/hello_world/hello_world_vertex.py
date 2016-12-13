@@ -53,8 +53,6 @@ class HelloWorldVertex(
             "Buffers", "time_between_requests")
         self._receive_buffer_host = config.get(
             "Buffers", "receive_buffer_host")
-        self._receive_buffer_port = config.getint(
-            "Buffers", "receive_buffer_port")
 
         self._string_data_size = 5000
 
@@ -68,8 +66,7 @@ class HelloWorldVertex(
             dtcm=DTCMResource(100), sdram=SDRAMResource(100))
 
         resources.extend(recording_utilities.get_recording_resources(
-            [self._string_data_size],
-            self._receive_buffer_host, self._receive_buffer_port))
+            [self._string_data_size], self._receive_buffer_host))
 
         return resources
 
@@ -102,8 +99,7 @@ class HelloWorldVertex(
         spec.write_array(recording_utilities.get_recording_header_array(
             [self._string_data_size], self._time_between_requests,
             self._string_data_size + 256, iptags,
-            config.get("Buffers", "receive_buffer_host"),
-            config.getint("Buffers", "receive_buffer_port")))
+            config.get("Buffers", "receive_buffer_host")))
 
         # End-of-Spec:
         spec.end_specification()
