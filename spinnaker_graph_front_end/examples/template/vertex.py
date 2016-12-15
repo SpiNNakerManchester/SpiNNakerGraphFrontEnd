@@ -26,6 +26,7 @@ from spinnaker_graph_front_end.utilities.conf import config
 from enum import Enum
 
 import logging
+from spinnman.model.enums.executable_start_type import ExecutableStartType
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +88,10 @@ class Vertex(
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
         return "c_code.aplx"
+
+    @overrides(AbstractHasAssociatedBinary.get_binary_start_mode_enum)
+    def get_binary_start_mode_enum(self):
+        return ExecutableStartType.USES_SIMULATION_INTERFACE
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(

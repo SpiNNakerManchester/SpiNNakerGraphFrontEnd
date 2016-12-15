@@ -29,6 +29,7 @@ from spinnaker_graph_front_end.utilities.conf import config
 # general imports
 from enum import Enum
 import struct
+from spinnman.model.enums.executable_start_type import ExecutableStartType
 
 
 class ConwayBasicCell(
@@ -70,6 +71,10 @@ class ConwayBasicCell(
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
         return "conways_cell.aplx"
+
+    @overrides(AbstractHasAssociatedBinary.get_binary_start_mode_enum)
+    def get_binary_start_mode_enum(self):
+        return ExecutableStartType.USES_SIMULATION_INTERFACE
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(

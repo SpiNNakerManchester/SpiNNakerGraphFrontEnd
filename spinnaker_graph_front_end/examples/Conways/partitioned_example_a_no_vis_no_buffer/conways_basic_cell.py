@@ -27,6 +27,7 @@ from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
 # general imports
 from enum import Enum
 import struct
+from spinnman.model.enums.executable_start_type import ExecutableStartType
 
 
 @supports_injection
@@ -56,7 +57,7 @@ class ConwayBasicCell(
             sdram=SDRAMResource(0), dtcm=DTCMResource(0),
             cpu_cycles=CPUCyclesPerTickResource(0))
 
-        MachineVertex.__init__(self, resources, label)
+        MachineVertex.__init__(self, label)
         NeedsNMachineTimeSteps.__init__(self)
 
         # app specific elements
@@ -65,6 +66,10 @@ class ConwayBasicCell(
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
         return "conways_cell.aplx"
+
+    @overrides(AbstractHasAssociatedBinary.get_binary_start_mode_enum)
+    def get_binary_start_mode_enum(self):
+        return ExecutableStartType.USES_SIMULATION_INTERFACE
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(

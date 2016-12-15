@@ -34,6 +34,7 @@ from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
 # general imports
 from enum import Enum
 import logging
+from spinnman.model.enums.executable_start_type import ExecutableStartType
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +94,10 @@ class HeatDemoVertex(
         :return:
         """
         return "heat_demo.aplx"
+
+    @overrides(AbstractHasAssociatedBinary.get_binary_start_mode_enum)
+    def get_binary_start_mode_enum(self):
+        return ExecutableStartType.USES_SIMULATION_INTERFACE
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
