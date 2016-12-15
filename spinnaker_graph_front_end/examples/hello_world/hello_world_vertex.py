@@ -1,5 +1,4 @@
 from pacman.model.decorators.overrides import overrides
-from spinn_front_end_common.utilities import helpful_functions
 from pacman.model.graphs.machine.impl.machine_vertex \
     import MachineVertex
 from pacman.model.resources.cpu_cycles_per_tick_resource import \
@@ -20,6 +19,7 @@ from spinn_front_end_common.interface.buffer_management.buffer_models\
     .abstract_receive_buffers_to_host import AbstractReceiveBuffersToHost
 from spinn_front_end_common.interface.buffer_management\
     import recording_utilities
+from spinn_front_end_common.utilities import helpful_functions
 
 
 from spinnaker_graph_front_end.utilities.conf import config
@@ -53,6 +53,8 @@ class HelloWorldVertex(
             "Buffers", "time_between_requests")
         self._receive_buffer_host = config.get(
             "Buffers", "receive_buffer_host")
+        self._receive_buffer_port = helpful_functions.read_config_int(
+            config, "Buffers", "receive_buffer_port")
 
         self._string_data_size = 5000
 
@@ -66,7 +68,8 @@ class HelloWorldVertex(
             dtcm=DTCMResource(100), sdram=SDRAMResource(100))
 
         resources.extend(recording_utilities.get_recording_resources(
-            [self._string_data_size], self._receive_buffer_host))
+            [self._string_data_size],
+            self._receive_buffer_host, self._receive_buffer_port))
 
         return resources
 
@@ -98,8 +101,7 @@ class HelloWorldVertex(
         spec.switch_write_focus(self.DATA_REGIONS.STRING_DATA.value)
         spec.write_array(recording_utilities.get_recording_header_array(
             [self._string_data_size], self._time_between_requests,
-            self._string_data_size + 256, iptags,
-            config.get("Buffers", "receive_buffer_host")))
+            self._string_data_size + 256, iptags))
 
         # End-of-Spec:
         spec.end_specification()
