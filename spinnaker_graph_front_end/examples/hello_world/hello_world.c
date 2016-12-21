@@ -21,8 +21,7 @@ static uint32_t recording_flags = 0;
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
     SYSTEM_REGION,
-    RECORDED_DATA,
-    BUFFERING_OUT_STATE,
+    RECORDED_DATA
 } regions_e;
 
 //! values for the priority for each callback
@@ -77,18 +76,10 @@ void record_data() {
 //! \return True if recording initialisation is successful, false otherwise
 static bool initialise_recording(){
     address_t address = data_specification_get_data_address();
-    address_t system_region = data_specification_get_region(
-        SYSTEM_REGION, address);
-    regions_e regions_to_record[] = {RECORDED_DATA};
-    uint8_t n_regions_to_record = 1;
-    uint32_t *recording_flags_from_system_conf =
-        &system_region[SIMULATION_N_TIMING_DETAIL_WORDS];
-    regions_e state_region = BUFFERING_OUT_STATE;
+    address_t recording_region = data_specification_get_region(
+        RECORDED_DATA, address);
 
-    bool success = recording_initialize(
-        n_regions_to_record, regions_to_record,
-        recording_flags_from_system_conf, state_region,
-        &recording_flags);
+    bool success = recording_initialize(recording_region, &recording_flags);
     log_info("Recording flags = 0x%08x", recording_flags);
     return success;
 }
