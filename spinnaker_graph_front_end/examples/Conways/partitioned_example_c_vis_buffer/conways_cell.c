@@ -48,7 +48,7 @@ typedef enum regions_e {
 
 //! values for the priority for each callback
 typedef enum callback_priorities{
-    MC_PACKET = -1, TIMER = 2
+    MC_PACKET = -1, SDP=1, TIMER = 2
 } callback_priorities;
 
 //! values for the states
@@ -272,7 +272,7 @@ static bool initialize(uint32_t *timer_period) {
     if (!simulation_initialise(
             data_specification_get_region(SYSTEM_REGION, address),
             APPLICATION_NAME_HASH, timer_period, &simulation_ticks,
-            &infinite_run, NULL, NULL, NULL, NULL)) {
+            &infinite_run, SDP)) {
         return false;
     }
 
