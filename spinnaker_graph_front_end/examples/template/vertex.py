@@ -66,8 +66,8 @@ class Vertex(
             "Buffers", "time_between_requests")
         self._receive_buffer_host = config.get(
             "Buffers", "receive_buffer_host")
-        self._receive_buffer_port = config.getint(
-            "Buffers", "receive_buffer_port")
+        self._receive_buffer_port = helpful_functions.read_config_int(
+            config, "Buffers", "receive_buffer_port")
 
         self.placement = None
 
@@ -121,8 +121,7 @@ class Vertex(
         spec.switch_write_focus(self.DATA_REGIONS.RECORDED_DATA.value)
         spec.write_array(recording_utilities.get_recording_header_array(
             [self._recording_size], self._time_between_requests,
-            self._buffer_size_before_receive, iptags,
-            self._receive_buffer_host, self._receive_buffer_port))
+            self._buffer_size_before_receive, iptags))
 
         # Get the key, assuming all outgoing edges use the same key
         has_key = 0
