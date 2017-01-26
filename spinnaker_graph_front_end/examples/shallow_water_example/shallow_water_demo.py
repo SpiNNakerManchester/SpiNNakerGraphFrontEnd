@@ -1,8 +1,8 @@
 import spinnaker_graph_front_end as front_end
-from spinnaker_graph_front_end.examples.weather_example.weather_edge import \
+from spinnaker_graph_front_end.examples.shallow_water_example.shallow_water_edge import \
     WeatherDemoEdge
 
-from spinnaker_graph_front_end.examples.weather_example.weather_vertex \
+from spinnaker_graph_front_end.examples.shallow_water_example.shallow_water_vertex \
     import WeatherVertex
 
 import math
@@ -30,7 +30,7 @@ FSDY = 4.0 / DY
 A = 1000000.0
 ALPHA = 0.001
 EL = MAX_Y_SIZE_OF_FABRIC * DX
-PI = 4.0 * math.atan(float(1.0))
+PI = 3.14159265359
 TPI = PI + PI
 DI = TPI / MAX_X_SIZE_OF_FABRIC
 DJ = TPI / MAX_Y_SIZE_OF_FABRIC
@@ -44,8 +44,8 @@ class WeatherRun(object):
     """
 
     def __init__(self):
-        machine_time_step = 1000
-        time_scale_factor = 10.0
+        machine_time_step = 850
+        time_scale_factor = 1.0
 
         # print the constants
         self._print_constants()
@@ -61,7 +61,11 @@ class WeatherRun(object):
         front_end.setup(
             machine_time_step=machine_time_step,
             time_scale_factor=time_scale_factor,
-            n_chips_required=min_chips)
+            n_chips_required=min_chips, end_user_extra_mapping_inputs={
+                'NumberOfCPUCyclesUsedByThePacketReceiveCallback': 40,
+                'NumberOfCpuCyclesByOtherCallbacks': 600,
+                'NPacketsPerTimeWindow': 7,
+                'EndUserConfigurableSafetyFactorForTDMAAgenda': 2})
 
         # contain the vertices for the connection aspect
         self._vertices = [
@@ -174,7 +178,7 @@ class WeatherRun(object):
             raise Exception("DI is wrong")
         if round(DJ, 6) != 2.094395:
             raise Exception("DJ is wrong")
-        if round(PCF, 6) != 109.662271: # c says 109.662277 but we're
+        if round(PCF, 9) != 109.662271123: # c says 109.662277 but we're
             # assuming that last bit of value is not important
             raise Exception("PCF is wrong")
 
@@ -271,7 +275,9 @@ class WeatherRun(object):
 
         sinx = math.sin((x + 0.5) * DI)
         siny = math.sin((y + 0.5) * DJ)
-        total = A * sinx, 6 * siny, 6
+        total = A * sinx * siny
+        logger.info("psi {}{}, sinx {} siny {} total {}".format(x,y,sinx, siny,
+                                                          total))
         return A * math.sin((x + 0.5) * DI) * math.sin((y + 0.5) * DJ)
 
     @staticmethod
@@ -424,9 +430,10 @@ class WeatherRun(object):
         the recorded data extracted from the spinnaker machine
         :return None
         """
+        print recorded_data
 
         # print all elements for all times
-        for time in range(0, 30):
+        for time in range(0, 1):
 
             # print all for this time
             for x_coord in range(0, MAX_X_SIZE_OF_FABRIC):
@@ -476,7 +483,7 @@ if __name__ == "__main__":
 
     # print data to screen
     run.print_all_data(data)
-    run.print_diagonal_data(data)
+    #run.print_diagonal_data(data)
 
     # finish sim on machine. basically clean up for future sims.
     run.stop()

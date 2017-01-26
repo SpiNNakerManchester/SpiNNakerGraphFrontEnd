@@ -81,6 +81,9 @@ static uint32_t simulation_ticks = 0;
 static uint32_t time = 0;
 address_t address = NULL;
 
+//! control flag for exiting if stuck in busy loop waiting for packets
+static uint32_t told_to_exit_flag = 0;
+
 //! int as a bool to represent if this simulation should run forever
 static uint32_t infinite_run;
 
@@ -152,7 +155,7 @@ typedef enum key_order {
 
 //! \brief print the constants of the vertex
 void print_constants(){
-    log_info("doing constants");
+    log_debug("doing constants");
     
     // create list of things to print
     s1615 to_print_items[] = {
@@ -175,11 +178,13 @@ void print_constants(){
     
     
     for(int position = 0; position < 6; position ++){
-        log_info(
+        log_debug(
             "%s = %k", to_print_strings[position], to_print_items[position]);
     }
-    log_info("end constants");
+    log_debug("end constants");
 }
+
+void force_exit_function()
 
 //! \brief print my local states
 void print_my_states(){
@@ -189,10 +194,10 @@ void print_my_states(){
     to_print_strings[1] = "my_current_v";
     to_print_strings[2] = "my_current_p";
     for(int position = 0; position < 3; position++){
-        log_info(
+        log_debug(
             "%s = %k", to_print_strings[position], to_print_items[position]);
     }
-    log_info("my key = %d", my_key);
+    log_debug("my key = %d", my_key);
 }
 
 //! \brief print a set of elements for u,v,p
@@ -208,7 +213,7 @@ void print_a_set_of_elements(s1615 *elements_to_print, char* name){
     to_print_strings[1] = strcat(strcpy(copy_name, name), ":v");
     to_print_strings[2] = strcat(strcpy(copy_name, name), ":p");
     for(int position = 0; position < 3; position ++){
-        log_info(
+        log_debug(
             "%s = %k", to_print_strings[position], to_print_items[position]);
     }
 }
@@ -241,10 +246,10 @@ void print_elements(){
 void receive_data(uint key, uint payload) {
     // If there was space to add data to incoming data queue
     if (!circular_buffer_add(input_buffer, key)) {
-        log_info("Could not add state");
+        log_error("Could not add state");
     }
     if (!circular_buffer_add(input_buffer, payload)) {
-        log_info("Could not add state");
+        log_error("Could not add state");
     }
 }
 
@@ -278,14 +283,14 @@ void read_input_buffer(){
         }
 
         if (current_buffer_size != last_seen_size){
-            log_info(
+            log_debug(
                 "size of buffer is %d whereas it should be %d",
                 current_buffer_size, N_PACKETS_PER_TIMER_TICK);
             last_seen_size = current_buffer_size;
         }
     }
 
-    log_info("running past buffer length");
+    log_debug("running past buffer length");
 
     cpsr = spin1_int_disable();
     circular_buffer_print_buffer(input_buffer);
@@ -406,7 +411,7 @@ void send_states(){
     for(uint32_t position = 0; position < N_PACKETS_PER_EDGE; position++){
         // log what we're firing
         uint32_t this_data_key = my_key + position;
-        log_info(
+        log_debug(
             "firing packet %s with value %d with key %d",
             to_print_strings[position], elements_to_send[position],
             this_data_key);
@@ -417,7 +422,7 @@ void send_states(){
             spin1_delay_us(1);
         }
     }
-    log_info("sent my states via multicast");
+    log_debug("sent my states via multicast");
 }
 
 
@@ -520,31 +525,32 @@ void update(uint ticks, uint b) {
     use(b);
     use(ticks);
 
-    log_info("setting off random back off");
+    log_debug("setting off random back off");
     // Wait a random number of clock cycles to smooth out comms traffic
     uint32_t random_backoff_time = tc[T1_COUNT] - random_backoff;
     while (tc[T1_COUNT] > random_backoff_time) {
         // Do Nothing
     }
-    log_info("finished random back off");
+    log_debug("finished random back off");
 
     time++;
 
-    log_info("on tick %d of %d", time, simulation_ticks);
+    log_debug("on tick %d of %d", time, simulation_ticks);
 
     // check that the run time hasn't already elapsed and thus needs to be
     // killed
     if ((infinite_run != TRUE) && (time >= simulation_ticks)) {
 
+        record_state();
         // Finalise any recordings that are in progress, writing back the final
         // amounts of samples recorded to SDRAM
         if (recording_flags > 0) {
-            log_info("updating recording regions");
+            log_debug("updating recording regions");
             recording_finalise();
         }
 
 
-        log_info("Simulation complete.\n");
+        log_debug("Simulation complete.\n");
 
         // falls into the pause resume mode of operating
         simulation_handle_pause_resume(NULL);
@@ -576,7 +582,7 @@ void update(uint ticks, uint b) {
     // send new states to next core.
     send_states();
 
-    record_state();
+    //record_state();
 }
 
 
@@ -599,7 +605,7 @@ void set_key(address_t address){
     has_key = transmission_region_address[HAS_KEY];
     if (has_key == TRUE) {
         my_key = transmission_region_address[MY_KEY];
-        log_info("has key of value %d", my_key);
+        log_debug("has key of value %d", my_key);
     }
 }
 
@@ -706,7 +712,7 @@ void set_neighbour_keys(address_t address){
 //! \param[in] timer_period. the pointer for the timer period (set in sdram)
 //! \param[out] bool which states if the init has been successful or not
 static bool initialize(uint32_t *timer_period) {
-    log_info("Initialise: started\n");
+    log_debug("Initialise: started\n");
 
     // Get the address this core's DTCM data starts at from SDRAM
     address = data_specification_get_data_address();
@@ -733,27 +739,29 @@ static bool initialize(uint32_t *timer_period) {
     if (!success){
         return false;
     }
-    log_info("Recording flags = 0x%08x", recording_flags);
+    log_debug("Recording flags = 0x%08x", recording_flags);
 
     // find the key to use
-    log_info("set key");
+    log_debug("set key");
     set_key(address);
 
     // read in initials states
-    log_info("set init states");
+    log_debug("set init states");
     set_init_states(address);
 
+    // read in 
+
     // read neighbour keys
-    log_info("set neighbour keys");
+    log_debug("set neighbour keys");
     set_neighbour_keys(address);
 
     // initialise my input_buffer for receiving packets
-    log_info("build buffer");
+    log_debug("build buffer");
     input_buffer = circular_buffer_initialize(512);
     if (input_buffer == 0){
         return false;
     }
-    log_info("input_buffer initialised");
+    log_debug("input_buffer initialised");
 
     return true;
 }
@@ -761,7 +769,7 @@ static bool initialize(uint32_t *timer_period) {
 //! \brief main entrance method. initialises this core and then sets up the
 //! callbacks and event driven functions. Then finally calls run.
 void c_main() {
-    log_info("starting weather cell\n");
+    log_debug("starting weather cell\n");
 
     // Load DTCM data
     uint32_t timer_period;
@@ -773,18 +781,18 @@ void c_main() {
     }
 
     // set timer tick value to configured value
-    log_info("setting timer to execute every %d microseconds", timer_period);
+    log_debug("setting timer to execute every %d microseconds", timer_period);
     spin1_set_timer_tick(timer_period);
 
     // register callbacks
-    log_info("setting multicast packet with payload receiver callback");
+    log_debug("setting multicast packet with payload receiver callback");
     spin1_callback_on(MCPL_PACKET_RECEIVED, receive_data, MC_PACKET);
 
-    log_info("setting the timer tick callback");
+    log_debug("setting the timer tick callback");
     spin1_callback_on(TIMER_TICK, update, TIMER);
 
     // start execution
-    log_info("Starting\n");
+    log_debug("Starting\n");
     // Start the time at "-1" so that the first tick will be 0
     time = UINT32_MAX;
 
