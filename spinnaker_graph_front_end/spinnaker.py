@@ -20,7 +20,7 @@ class SpiNNaker(SpinnakerMainInterface):
             database_socket_addresses=None, dsg_algorithm=None,
             n_chips_required=None, extra_pre_run_algorithms=None,
             extra_post_run_algorithms=None, time_scale_factor=None,
-            machine_time_step=None):
+            machine_time_step=None, end_user_extra_mapping_inputs=None):
 
         # dsg algorithm store for user defined algorithms
         self._user_dsg_algorithm = dsg_algorithm
@@ -30,6 +30,11 @@ class SpiNNaker(SpinnakerMainInterface):
         extra_xml_path = list()
 
         extra_mapping_inputs = dict()
+
+        # add extra end user mapping algorithms.
+        if end_user_extra_mapping_inputs is not None:
+            extra_mapping_inputs.update(end_user_extra_mapping_inputs)
+
         extra_mapping_inputs["CreateAtomToEventIdMapping"] = config.getboolean(
             "Database", "create_routing_info_to_atom_id_mapping")
 

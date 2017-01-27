@@ -1,4 +1,3 @@
-
 # dsg imports
 from data_specification.enums.data_type import DataType
 
@@ -16,7 +15,7 @@ from pacman.executor.injection_decorator import inject_items
 # graph front end imports
 from spinn_front_end_common.interface.buffer_management import \
     recording_utilities
-from spinn_front_end_common.abstract_models.\
+from spinn_front_end_common.abstract_models. \
     abstract_provides_n_keys_for_partition import \
     AbstractProvidesNKeysForPartition
 from .shallow_water_edge import ShallowWaterEdge
@@ -25,9 +24,9 @@ from spinnaker_graph_front_end.utilities.conf import config
 # FEC imports
 from spinn_front_end_common.utilities import helpful_functions
 from spinn_front_end_common.utilities import exceptions
-from spinn_front_end_common.abstract_models\
+from spinn_front_end_common.abstract_models \
     .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
-from spinn_front_end_common.interface.buffer_management.buffer_models\
+from spinn_front_end_common.interface.buffer_management.buffer_models \
     .abstract_receive_buffers_to_host import AbstractReceiveBuffersToHost
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utilities import constants
@@ -49,8 +48,8 @@ logger = logging.getLogger(__name__)
 
 
 class ShallowWaterVertex(
-        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-        AbstractReceiveBuffersToHost, AbstractBinaryUsesSimulationRun,
+    MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
+    AbstractReceiveBuffersToHost, AbstractBinaryUsesSimulationRun,
     AbstractProvidesNKeysForPartition,
     ProvidesProvenanceDataFromMachineImpl):
     """ A vertex partition for a heat demo; represents a heat element.
@@ -67,26 +66,28 @@ class ShallowWaterVertex(
                ('FINAL_STATES', 5),
                ('PROVENANCE', 6)])
 
-    S1615_SIZE_IN_BYTES = 4
+    DATA_TYPE_OF_FLOAT = DataType.FLOAT_32
+
+    FLOAT_SIZE_IN_BYTES = DATA_TYPE_OF_FLOAT.size
 
     # 1 for has key, 1 for key for the 8 directions
     NEIGHBOUR_DATA_REGION_SIZE = 16 * 4
 
     # 2 , 1 for window offset, 1 for time between sends
     TIMING_DATA_REGION_SIZE = 2 * 4
-    
+
     # 1 int for has key, 1 int for the key
     TRANSMISSION_DATA_REGION_SIZE = 2 * 4
-    
-    # each state variable needs 4 bytes for their s15:16 data item.
-    INIT_STATE_REGION_SIZE = 38 * S1615_SIZE_IN_BYTES
+
+    # each state variable needs 4 bytes for their float data item.
+    INIT_STATE_REGION_SIZE = 38 * FLOAT_SIZE_IN_BYTES
 
     # arbitrary size for recording data (used in auto pause and resume)
     FINAL_STATE_REGION_SIZE = 6000
 
-    # each state variable needs 4 bytes for the their s32:31 data item.
+    # each state variable needs 4 bytes for the their float data item.
     # u,v,p
-    FINAL_STATE_REGION_SIZE_PER_TIMER_TICK = 3 * S1615_SIZE_IN_BYTES
+    FINAL_STATE_REGION_SIZE_PER_TIMER_TICK = 3 * FLOAT_SIZE_IN_BYTES
 
     # bool flags
     TRUE = 1
@@ -251,9 +252,9 @@ class ShallowWaterVertex(
             "writing initial states for this shallow water element \n")
 
         # add basic data elements
-        spec.write_value(data=self._u, data_type=DataType.S1615)
-        spec.write_value(data=self._v, data_type=DataType.S1615)
-        spec.write_value(data=self._p, data_type=DataType.S1615)
+        spec.write_value(data=self._u, data_type=self.DATA_TYPE_OF_FLOAT)
+        spec.write_value(data=self._v, data_type=self.DATA_TYPE_OF_FLOAT)
+        spec.write_value(data=self._p, data_type=self.DATA_TYPE_OF_FLOAT)
 
         edges = machine_graph.get_edges_ending_at_vertex(self)
 
@@ -265,11 +266,14 @@ class ShallowWaterVertex(
                 if isinstance(edge, ShallowWaterEdge):
                     if edge.compass == self.ORDER_OF_DIRECTIONS[position]:
                         spec.write_value(
-                            edge.pre_vertex.u, data_type=DataType.S1615)
+                            edge.pre_vertex.u,
+                            data_type=self.DATA_TYPE_OF_FLOAT)
                         spec.write_value(
-                            edge.pre_vertex.v, data_type=DataType.S1615)
+                            edge.pre_vertex.v,
+                            data_type=self.DATA_TYPE_OF_FLOAT)
                         spec.write_value(
-                            edge.pre_vertex.p, data_type=DataType.S1615)
+                            edge.pre_vertex.p,
+                            data_type=self.DATA_TYPE_OF_FLOAT)
                         found = True
             if not found:
                 raise exceptions.ConfigurationException(
@@ -277,20 +281,22 @@ class ShallowWaterVertex(
                         self.ORDER_OF_DIRECTIONS[position]))
 
         # constant elements
-        spec.write_value(self._dx, data_type=DataType.UINT32)
-        spec.write_value(self._dy, data_type=DataType.UINT32)
-        spec.write_value(self._fsdx, data_type=DataType.S1615)
-        spec.write_value(self._fsdy, data_type=DataType.S1615)
-        spec.write_value(self._alpha, data_type=DataType.S1615)
-        spec.write_value(self._tdt / 8.0, data_type=DataType.S1615)
-        spec.write_value(self._tdt / self._dx, data_type=DataType.S1615)
-        spec.write_value(self._tdt / self._dy, data_type=DataType.S1615)
+        spec.write_value(self._dx, data_type=self.DATA_TYPE_OF_FLOAT)
+        spec.write_value(self._dy, data_type=self.DATA_TYPE_OF_FLOAT)
+        spec.write_value(self._fsdx, data_type=self.DATA_TYPE_OF_FLOAT)
+        spec.write_value(self._fsdy, data_type=self.DATA_TYPE_OF_FLOAT)
+        spec.write_value(self._alpha, data_type=self.DATA_TYPE_OF_FLOAT)
+        spec.write_value(self._tdt / 8.0, data_type=self.DATA_TYPE_OF_FLOAT)
+        spec.write_value(self._tdt / self._dx,
+                         data_type=self.DATA_TYPE_OF_FLOAT)
+        spec.write_value(self._tdt / self._dy,
+                         data_type=self.DATA_TYPE_OF_FLOAT)
         spec.write_value((self._tdt + self._tdt) / 8.0,
-                         data_type=DataType.S1615)
+                         data_type=self.DATA_TYPE_OF_FLOAT)
         spec.write_value((self._tdt + self._tdt) / self._dx,
-                         data_type=DataType.S1615)
+                         data_type=self.DATA_TYPE_OF_FLOAT)
         spec.write_value((self._tdt + self._tdt) / self._dy,
-                         data_type=DataType.S1615)
+                         data_type=self.DATA_TYPE_OF_FLOAT)
 
     def get_provenance_data_from_machine(self, transceiver, placement):
         provenance_data = self._read_provenance_data(transceiver, placement)
@@ -387,7 +393,7 @@ class ShallowWaterVertex(
             else:
                 logger.warning(
                     "Something is odd here. missing edge for direction {}"
-                    .format(self.ORDER_OF_DIRECTIONS[position]))
+                        .format(self.ORDER_OF_DIRECTIONS[position]))
                 spec.write_value(data_type=DataType.INT32, data=-1)
 
     @property
@@ -442,10 +448,14 @@ class ShallowWaterVertex(
         raw_data = reader.read_all()
 
         length_of_data = len(raw_data)
+        print length_of_data
         length_of_data2 = len(str(raw_data))
+        print length_of_data2
         data3 = str(raw_data)
-        format_string = "<{0}I{0}I{0}I{0}I{0}I{0}I{0}I"\
-            .format(len(raw_data) / (7*4))
+        print data3
+        format_string = "<{0}{1}{0}{1}{0}{1}{0}{1}{0}{1}{0}{1}{0}{1}" \
+            .format(len(raw_data) / (7 * self.DATA_TYPE_OF_FLOAT.size),
+                    self.DATA_TYPE_OF_FLOAT.struct_encoding)
 
         # convert to float
         elements = struct.unpack(format_string, bytes(raw_data))
@@ -461,13 +471,20 @@ class ShallowWaterVertex(
         data['h'] = list()
 
         # store elements
-        for position in range(0, len(raw_data) / (7*4)):
-            data['p'].append(elements[0 + (position * 7)] / 32767.0)
-            data['u'].append(elements[1 + (position * 7)] / 32767.0)
-            data['v'].append(elements[2 + (position * 7)] / 32767.0)
-            data['cu'].append(elements[3 + (position * 7)] / 32767.0)
-            data['cv'].append(elements[4 + (position * 7)] / 32767.0)
-            data['z'].append(elements[5 + (position * 7)] / 32767.0)
-            data['h'].append(elements[6 + (position * 7)] / 32767.0)
+        for position in range(0, len(raw_data) / (7 * 4)):
+            data['p'].append(elements[0 + (position * 7)] /
+                             self.DATA_TYPE_OF_FLOAT.scale)
+            data['u'].append(elements[1 + (position * 7)] /
+                             self.DATA_TYPE_OF_FLOAT.scale)
+            data['v'].append(elements[2 + (position * 7)] /
+                             self.DATA_TYPE_OF_FLOAT.scale)
+            data['cu'].append(elements[3 + (position * 7)] /
+                              self.DATA_TYPE_OF_FLOAT.scale)
+            data['cv'].append(elements[4 + (position * 7)] /
+                              self.DATA_TYPE_OF_FLOAT.scale)
+            data['z'].append(elements[5 + (position * 7)] /
+                             self.DATA_TYPE_OF_FLOAT.scale)
+            data['h'].append(elements[6 + (position * 7)] /
+                             self.DATA_TYPE_OF_FLOAT.scale)
 
         return data

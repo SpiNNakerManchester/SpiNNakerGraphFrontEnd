@@ -33,7 +33,8 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
           model_binary_folder=None, database_socket_addresses=None,
           user_dsg_algorithm=None, n_chips_required=None,
           extra_pre_run_algorithms=None, extra_post_run_algorithms=None,
-          time_scale_factor=None, machine_time_step=None):
+          time_scale_factor=None, machine_time_step=None,
+          end_user_extra_mapping_inputs=None):
     """
 
     :param hostname:\
@@ -78,6 +79,8 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         algorithms which need to be ran after the simulation has ran. These\
         could be post processing of generated data on the machine for example.
     :type extra_pre_run_algorithms: list of str
+    :param end_user_extra_mapping_inputs: extra inputs for the mapping phase.
+    :type end_user_extra_mapping_inputs: dict of data type and value.
     """
     from spinnaker_graph_front_end import spinnaker
     import os
@@ -116,7 +119,8 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         extra_pre_run_algorithms=extra_pre_run_algorithms,
         extra_post_run_algorithms=extra_post_run_algorithms,
         machine_time_step=machine_time_step,
-        time_scale_factor=time_scale_factor)
+        time_scale_factor=time_scale_factor,
+        end_user_extra_mapping_inputs=end_user_extra_mapping_inputs)
 
 
 def run(duration=None):

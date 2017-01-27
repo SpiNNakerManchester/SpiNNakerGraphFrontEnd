@@ -1,8 +1,8 @@
 import spinnaker_graph_front_end as front_end
-from spinnaker_graph_front_end.examples.shallow_water_example. \
+from spinnaker_graph_front_end.examples.shallow_water_example_soft_float. \
     shallow_water_edge import ShallowWaterEdge
 
-from spinnaker_graph_front_end.examples.shallow_water_example. \
+from spinnaker_graph_front_end.examples.shallow_water_example_soft_float. \
     shallow_water_vertex import ShallowWaterVertex
 
 import math
@@ -11,8 +11,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 # grid size
-#MAX_X_SIZE_OF_FABRIC = 64
-#MAX_Y_SIZE_OF_FABRIC = 64
+# MAX_X_SIZE_OF_FABRIC = 64
+# MAX_Y_SIZE_OF_FABRIC = 64
 MAX_X_SIZE_OF_FABRIC = 3
 MAX_Y_SIZE_OF_FABRIC = 3
 
@@ -23,14 +23,14 @@ NumberOFPacketsPerWindow = 7
 FUDGE_FACTOR_FOR_TDMA = 2
 
 # timing
-MACHINE_TIME_STEP_IN_MICRO_SECONDS = 120
+MACHINE_TIME_STEP_IN_MICRO_SECONDS = 1000
 TIME_SCALE_FACTOR = 1
 
 # machine assumptions
 CORES_PER_CHIP = 16
 
 # runtime
-#RUNTIME = 4000
+# RUNTIME = 4000
 RUNTIME = 30
 
 # random state variable inits
@@ -107,7 +107,7 @@ class WeatherRun(object):
 
         # verify that the init values are correct for c code.
         # recorded for a 3 by 3 grid
-        #if MAX_X_SIZE_OF_FABRIC == 3 and MAX_Y_SIZE_OF_FABRIC == 3:
+        # if MAX_X_SIZE_OF_FABRIC == 3 and MAX_Y_SIZE_OF_FABRIC == 3:
         #    self._verify_vertex_initial_values()
 
         # build vertices
@@ -163,7 +163,6 @@ class WeatherRun(object):
                 logger.info("psi for {}:{} is {}".format(
                     x, y, self._psi[x][y]))
 
-
     @staticmethod
     def _verify_constants():
         if round(DT, 6) != 90.0:
@@ -211,7 +210,7 @@ class WeatherRun(object):
         for x in range(0, MAX_X_SIZE_OF_FABRIC):
             for y in range(0, MAX_Y_SIZE_OF_FABRIC):
                 if (round(self._psi[x][y], 6) !=
-                        psi[x + (y *  MAX_X_SIZE_OF_FABRIC)]):
+                        psi[x + (y * MAX_X_SIZE_OF_FABRIC)]):
                     raise Exception("PSI is wrong for vertex {}:{}".format(
                         x, y))
 
@@ -257,16 +256,16 @@ class WeatherRun(object):
         positions = [
             (x, (y + 1) % MAX_Y_SIZE_OF_FABRIC, "N"),
             ((x + 1) % MAX_X_SIZE_OF_FABRIC,
-                (y + 1) % MAX_Y_SIZE_OF_FABRIC, "NE"),
+             (y + 1) % MAX_Y_SIZE_OF_FABRIC, "NE"),
             ((x + 1) % MAX_X_SIZE_OF_FABRIC, y, "E"),
             ((x + 1) % MAX_X_SIZE_OF_FABRIC,
-                (y - 1) % MAX_Y_SIZE_OF_FABRIC, "SE"),
+             (y - 1) % MAX_Y_SIZE_OF_FABRIC, "SE"),
             (x, (y - 1) % MAX_Y_SIZE_OF_FABRIC, "S"),
             ((x - 1) % MAX_X_SIZE_OF_FABRIC,
-                (y - 1) % MAX_Y_SIZE_OF_FABRIC, "SW"),
+             (y - 1) % MAX_Y_SIZE_OF_FABRIC, "SW"),
             ((x - 1) % MAX_X_SIZE_OF_FABRIC, y, "W"),
             ((x - 1) % MAX_X_SIZE_OF_FABRIC,
-                (y + 1) % MAX_Y_SIZE_OF_FABRIC, "NW")]
+             (y + 1) % MAX_Y_SIZE_OF_FABRIC, "NW")]
 
         # build edges for each direction for this vertex
         for (dest_x, dest_y, compass) in positions:
@@ -342,9 +341,9 @@ class WeatherRun(object):
         :return: None
         """
         logger.info("Number of points in the x direction {}\n"
-            .format(MAX_X_SIZE_OF_FABRIC))
+                    .format(MAX_X_SIZE_OF_FABRIC))
         logger.info("Number of points in the y direction {}\n"
-            .format(MAX_Y_SIZE_OF_FABRIC))
+                    .format(MAX_Y_SIZE_OF_FABRIC))
         logger.info("grid spacing in the x direction {}\n".format(DX))
         logger.info("grid spacing in the y direction {}\n".format(DY))
         logger.info("time step {}\n".format(DT))
@@ -399,7 +398,7 @@ class WeatherRun(object):
 
         # do the final prints as in c
         logger.info(" cycle number {} model time in hours {}\n".format(
-            RUNTIME,  DT * RUNTIME))
+            RUNTIME, DT * RUNTIME))
 
         # print p elements from data
         logger.info("diagonal elements of p")
@@ -480,6 +479,7 @@ class WeatherRun(object):
         # clear the machine
         front_end.stop()
 
+
 if __name__ == "__main__":
     """
     main entrance method
@@ -494,10 +494,10 @@ if __name__ == "__main__":
     run.run(RUNTIME)
 
     # extract data from machine
-    data = run.extract_data()
+    # data = run.extract_data()
 
     # print data to screen
-    run.print_all_data(data)
+    # run.print_all_data(data)
     # run.print_diagonal_data(data)
 
     # finish sim on machine. basically clean up for future sims.
