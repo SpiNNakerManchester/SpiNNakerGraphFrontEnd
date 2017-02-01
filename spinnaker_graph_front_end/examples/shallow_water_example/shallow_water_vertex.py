@@ -444,7 +444,7 @@ class ShallowWaterVertex(
         length_of_data = len(raw_data)
         length_of_data2 = len(str(raw_data))
         data3 = str(raw_data)
-        format_string = "<{0}I{0}I{0}I{0}I{0}I{0}I{0}I"\
+        format_string = "<{0}i{0}i{0}i{0}i{0}i{0}i{0}i" \
             .format(len(raw_data) / (7*4))
 
         # convert to float
@@ -462,12 +462,19 @@ class ShallowWaterVertex(
 
         # store elements
         for position in range(0, len(raw_data) / (7*4)):
-            data['p'].append(elements[0 + (position * 7)] / 32767.0)
-            data['u'].append(elements[1 + (position * 7)] / 32767.0)
-            data['v'].append(elements[2 + (position * 7)] / 32767.0)
-            data['cu'].append(elements[3 + (position * 7)] / 32767.0)
-            data['cv'].append(elements[4 + (position * 7)] / 32767.0)
-            data['z'].append(elements[5 + (position * 7)] / 32767.0)
-            data['h'].append(elements[6 + (position * 7)] / 32767.0)
+            data['p'].append(
+                elements[0 + (position * 7)] / DataType.S1615.scale)
+            data['u'].append(
+                elements[1 + (position * 7)] / DataType.S1615.scale)
+            data['v'].append(
+                elements[2 + (position * 7)] / DataType.S1615.scale)
+            data['cu'].append(
+                elements[3 + (position * 7)] / DataType.S1615.scale)
+            data['cv'].append(
+                elements[4 + (position * 7)] / DataType.S1615.scale)
+            data['z'].append(
+                elements[5 + (position * 7)] / DataType.S1615.scale)
+            data['h'].append(
+                elements[6 + (position * 7)] / DataType.S1615.scale)
 
         return data

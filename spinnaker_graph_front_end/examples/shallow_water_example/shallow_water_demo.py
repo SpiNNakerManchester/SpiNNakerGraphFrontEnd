@@ -7,6 +7,8 @@ from spinnaker_graph_front_end.examples.shallow_water_example. \
 
 import math
 import logging
+import os
+import subprocess
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +24,16 @@ NumberOfCpuCyclesByOtherCallbacks = 600
 NumberOFPacketsPerWindow = 7
 FUDGE_FACTOR_FOR_TDMA = 2
 
+# read in from file the initial params (fixes c generation issues)
+READ_IN_FROM_FILE = True
+
 # timing
-MACHINE_TIME_STEP_IN_MICRO_SECONDS = 120
+# super fast,. not recording
+# MACHINE_TIME_STEP_IN_MICRO_SECONDS = 120
+# TIME_SCALE_FACTOR = 1
+
+# recording
+MACHINE_TIME_STEP_IN_MICRO_SECONDS = 400
 TIME_SCALE_FACTOR = 1
 
 # machine assumptions
@@ -57,12 +67,18 @@ class WeatherRun(object):
 
     def __init__(self):
 
+        # run c code for data
+        args = ["./PURE-C/test", str(MAX_X_SIZE_OF_FABRIC),
+                str(MAX_Y_SIZE_OF_FABRIC)]
+
+        # Run the external command
+        child = subprocess.Popen(
+            args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE)
+        child.wait()
+
         # print the constants
         self._print_constants()
-
-        # verify that the constants are the same as c (recorded at 3 by 3)
-        if MAX_X_SIZE_OF_FABRIC == 3 and MAX_Y_SIZE_OF_FABRIC == 3:
-            self._verify_constants()
 
         # figure machine size needed at a min
         min_chips = \
@@ -86,6 +102,13 @@ class WeatherRun(object):
             [None for _ in range(MAX_X_SIZE_OF_FABRIC)]
             for _ in range(MAX_Y_SIZE_OF_FABRIC)]
 
+        # handle read in if needed
+        if READ_IN_FROM_FILE:
+            self._read_in_psi = self._read_in_psi_from_file()
+            self._read_in_u = self._read_in_u_from_file()
+            self._read_in_v = self._read_in_v_from_file()
+            self._read_in_p = self._read_in_p_from_file()
+
         # handle the psi value generation
         self._psi = [
             [None for _ in range(MAX_X_SIZE_OF_FABRIC + 1)]
@@ -105,11 +128,6 @@ class WeatherRun(object):
         # print out initial values for verification purposes
         self._print_initial_values()
 
-        # verify that the init values are correct for c code.
-        # recorded for a 3 by 3 grid
-        #if MAX_X_SIZE_OF_FABRIC == 3 and MAX_Y_SIZE_OF_FABRIC == 3:
-        #    self._verify_vertex_initial_values()
-
         # build vertices
         for x in range(0, MAX_X_SIZE_OF_FABRIC):
             for y in range(0, MAX_Y_SIZE_OF_FABRIC):
@@ -124,7 +142,7 @@ class WeatherRun(object):
                     alpha=ALPHA, label="weather_vertex{}:{}".format(x, y))
 
                 logger.info(
-                    "for vertex {}:{} p = {} u = {} v = {}".format(
+                    "for vertex {}:{} p = {} \t\t u = {} \t\t v = {}".format(
                         x, y, p, u, v))
 
                 self._vertices[x][y] = vert
@@ -163,57 +181,71 @@ class WeatherRun(object):
                 logger.info("psi for {}:{} is {}".format(
                     x, y, self._psi[x][y]))
 
+    @staticmethod
+    def _read_in_p_from_file():
+        read_in_data = [
+            [None for _ in range(MAX_X_SIZE_OF_FABRIC)]
+            for _ in range(MAX_Y_SIZE_OF_FABRIC)]
+
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        dir_path = os.path.join(dir_path, "initial_p.txt")
+        reader = open(dir_path)
+        for line in reader:
+            bits = line.split(",")
+            final_number_bits = bits[2].split("\n")
+            read_in_data[int(bits[0])][int(bits[1])] = \
+                float(final_number_bits[0])
+        return read_in_data
 
     @staticmethod
-    def _verify_constants():
-        if round(DT, 6) != 90.0:
-            raise Exception("DT is wrong")
-        if round(TDT, 6) != 90.0:
-            raise Exception("TDT is wrong")
-        if round(DX, 6) != 100000.0:
-            raise Exception("DX is wrong")
-        if round(DY, 6) != 100000.0:
-            raise Exception("DY is wrong")
-        if round(FSDX, 6) != 0.000040:
-            raise Exception("FSDX is wrong")
-        if round(FSDY, 6) != 0.000040:
-            raise Exception("FSDY is wrong")
-        if round(A, 6) != 1000000.0:
-            raise Exception("A is wrong")
-        if round(ALPHA, 6) != 0.001000:
-            raise Exception("ALPHA is wrong")
-        if round(EL, 6) != 300000.0:
-            raise Exception("EL is wrong")
-        if round(PI, 6) != 3.141593:
-            raise Exception("PI is wrong")
-        if round(TPI, 6) != 6.283185:
-            raise Exception("TPI is wrong")
-        if round(DI, 6) != 2.094395:
-            raise Exception("DI is wrong")
-        if round(DJ, 6) != 2.094395:
-            raise Exception("DJ is wrong")
-        if round(PCF, 9) != 109.662271123:  # c says 109.662277 but we're
-            # assuming that last bit of value is not important
-            raise Exception("PCF is wrong")
+    def _read_in_psi_from_file():
+        read_in_data = [
+            [None for _ in range(MAX_X_SIZE_OF_FABRIC)]
+            for _ in range(MAX_Y_SIZE_OF_FABRIC)]
 
-    def _verify_vertex_initial_values(self):
-        p = [
-            50219.324554, 50054.831150, 50054.831116, 50054.831150,
-            49890.337745, 49890.337712, 50054.831116, 49890.337712,
-            49890.337678]
-        u = [7.500002, 7.500002, 7.500002, -0.000001, -0.000001, -0.000001,
-             14.999999, 14.999999, 14.999999]
-        v = [-7.500002, -7.500002, -7.500002, 0.000001, 0.000001, 0.000001,
-             -14.999999, -14.999999, -14.999999]
-        psi = [750000.025237, 750000.025237, 750000.025237, 0.000000,
-               0.000000, 0.000000, 749999.873816, 749999.873816,
-               749999.873816]
-        for x in range(0, MAX_X_SIZE_OF_FABRIC):
-            for y in range(0, MAX_Y_SIZE_OF_FABRIC):
-                if (round(self._psi[x][y], 6) !=
-                        psi[x + (y *  MAX_X_SIZE_OF_FABRIC)]):
-                    raise Exception("PSI is wrong for vertex {}:{}".format(
-                        x, y))
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        dir_path = os.path.join(dir_path, "initial_psi.txt")
+        reader = open(dir_path)
+        for line in reader:
+            bits = line.split(",")
+            final_number_bits = bits[2].split("\n")
+            read_in_data[int(bits[0])][int(bits[1])] = \
+                float(final_number_bits[0])
+        return read_in_data
+
+    @staticmethod
+    def _read_in_u_from_file():
+        read_in_data = [
+            [None for _ in range(MAX_X_SIZE_OF_FABRIC)]
+            for _ in range(MAX_Y_SIZE_OF_FABRIC)]
+
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        dir_path = os.path.join(dir_path, "initial_u.txt")
+        reader = open(dir_path)
+
+        for line in reader:
+            bits = line.split(",")
+            final_number_bits = bits[2].split("\n")
+            read_in_data[int(bits[0])][int(bits[1])] = \
+                float(final_number_bits[0])
+        return read_in_data
+
+    @staticmethod
+    def _read_in_v_from_file():
+        read_in_data = [
+            [None for _ in range(MAX_X_SIZE_OF_FABRIC)]
+            for _ in range(MAX_Y_SIZE_OF_FABRIC)]
+
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        dir_path = os.path.join(dir_path, "initial_v.txt")
+        reader = open(dir_path)
+
+        for line in reader:
+            bits = line.split(",")
+            final_number_bits = bits[2].split("\n")
+            read_in_data[int(bits[0])][int(bits[1])] = \
+                float(final_number_bits[0])
+        return read_in_data
 
     def _sort_out_psi(self):
         """ calculates the psi values for each atom
@@ -222,7 +254,10 @@ class WeatherRun(object):
         """
         for x in range(0, MAX_X_SIZE_OF_FABRIC):
             for y in range(0, MAX_Y_SIZE_OF_FABRIC):
-                self._psi[x][y] = self._psi_calculation(x, y)
+                if READ_IN_FROM_FILE:
+                    self._psi[x][y] = self._read_in_psi[x][y]
+                else:
+                    self._psi[x][y] = self._psi_calculation(x, y)
 
     def _sort_out_u(self):
         """calculates the u values for each atom
@@ -231,8 +266,11 @@ class WeatherRun(object):
         """
         for x in range(0, MAX_X_SIZE_OF_FABRIC):
             for y in range(0, MAX_Y_SIZE_OF_FABRIC):
-                self._mass_flux_u[x][y] = \
-                    self._mass_flux_u_calculation(x, y, self._psi)
+                if READ_IN_FROM_FILE:
+                    self._mass_flux_u[x][y] = self._read_in_u[x][y]
+                else:
+                    self._mass_flux_u[x][y] = \
+                        self._mass_flux_u_calculation(x, y, self._psi)
 
     def _sort_out_v(self):
         """calculates the u values for each atom
@@ -241,8 +279,11 @@ class WeatherRun(object):
         """
         for x in range(0, MAX_X_SIZE_OF_FABRIC):
             for y in range(0, MAX_Y_SIZE_OF_FABRIC):
-                self._mass_flux_v[x][y] = \
-                    self._mass_flux_v_calculation(x, y, self._psi)
+                if READ_IN_FROM_FILE:
+                    self._mass_flux_v[x][y] = self._read_in_v[x][y]
+                else:
+                    self._mass_flux_v[x][y] = \
+                        self._mass_flux_v_calculation(x, y, self._psi)
 
     def _build_edges_for_vertex(self, x, y):
         """ for a given vertex, builds the edges that communicate
@@ -295,16 +336,18 @@ class WeatherRun(object):
                                                                total))
         return A * math.sin((x + 0.5) * DI) * math.sin((y + 0.5) * DJ)
 
-    @staticmethod
-    def _pressure_calculation(x, y):
+    def _pressure_calculation(self, x, y):
         """ creates the p calculation
 
         :param x: the x coord of the vertex to make a p of
         :param y: the y coord of the vertex to make a p of
         :return: the p calculation
         """
-        return PCF * (math.cos(2.0 * x * DI) +
-                      math.cos(2.0 * y * DJ)) + 50000.0
+        if READ_IN_FROM_FILE:
+            return self._read_in_p[x][y]
+        else:
+            return PCF * (math.cos(2.0 * x * DI) +
+                          math.cos(2.0 * y * DJ)) + 50000.0
 
     @staticmethod
     def _mass_flux_u_calculation(x, y, psi):
@@ -445,10 +488,9 @@ class WeatherRun(object):
         the recorded data extracted from the spinnaker machine
         :return None
         """
-        print recorded_data
 
         # print all elements for all times
-        for time in range(0, 1):
+        for time in range(0, RUNTIME):
 
             # print all for this time
             for x_coord in range(0, MAX_X_SIZE_OF_FABRIC):
@@ -456,24 +498,42 @@ class WeatherRun(object):
                     logger.info("{}:{}:{} p is {}".format(
                         x_coord, y_coord, time,
                         recorded_data[(x_coord, y_coord)]['p'][time]))
-                    logger.info("{}:{}:{} v is {}".format(
-                        x_coord, y_coord, time,
-                        recorded_data[(x_coord, y_coord)]['v'][time]))
+
+            for x_coord in range(0, MAX_X_SIZE_OF_FABRIC):
+                for y_coord in range(0, MAX_Y_SIZE_OF_FABRIC):
                     logger.info("{}:{}:{} u is {}".format(
                         x_coord, y_coord, time,
                         recorded_data[(x_coord, y_coord)]['u'][time]))
+
+            for x_coord in range(0, MAX_X_SIZE_OF_FABRIC):
+                for y_coord in range(0, MAX_Y_SIZE_OF_FABRIC):
+                    logger.info("{}:{}:{} v is {}".format(
+                        x_coord, y_coord, time,
+                        recorded_data[(x_coord, y_coord)]['v'][time]))
+
+            for x_coord in range(0, MAX_X_SIZE_OF_FABRIC):
+                for y_coord in range(0, MAX_Y_SIZE_OF_FABRIC):
                     logger.info("{}:{}:{} cu is {}".format(
                         x_coord, y_coord, time,
                         recorded_data[(x_coord, y_coord)]['cu'][time]))
+
+            for x_coord in range(0, MAX_X_SIZE_OF_FABRIC):
+                for y_coord in range(0, MAX_Y_SIZE_OF_FABRIC):
                     logger.info("{}:{}:{} cv is {}".format(
                         x_coord, y_coord, time,
                         recorded_data[(x_coord, y_coord)]['cv'][time]))
-                    logger.info("{}:{}:{} z is {}".format(
-                        x_coord, y_coord, time,
-                        recorded_data[(x_coord, y_coord)]['z'][time]))
+
+            for x_coord in range(0, MAX_X_SIZE_OF_FABRIC):
+                for y_coord in range(0, MAX_Y_SIZE_OF_FABRIC):
                     logger.info("{}:{}:{} h is {}".format(
                         x_coord, y_coord, time,
                         recorded_data[(x_coord, y_coord)]['h'][time]))
+
+            for x_coord in range(0, MAX_X_SIZE_OF_FABRIC):
+                for y_coord in range(0, MAX_Y_SIZE_OF_FABRIC):
+                    logger.info("{}:{}:{} z is {}".format(
+                        x_coord, y_coord, time,
+                        recorded_data[(x_coord, y_coord)]['z'][time]))
 
     @staticmethod
     def stop():

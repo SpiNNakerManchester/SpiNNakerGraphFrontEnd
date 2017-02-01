@@ -10,7 +10,7 @@
  ***************
  * 'Pure' C version developed by G.D Riley (UoM) (25 Jan 2012)
  * removed all ftocmacros
- * used sin and cos not sinf and cosf (since all data are doubles)
+ * used sin and cos not sinf and cosf (since all data are floats)
  * needed to declare arrays +1 to cope with Fortran indexing
  * Compile:
  * gcc -O2 -c wtime.c
@@ -23,20 +23,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 #define MIN(x,y) ((x)>(y)?(y):(x))
 #define MAX(x,y) ((x)>(y)?(x):(y))
-
 #define TRUE 1
 #define FALSE 0
-#define M 3
-#define N 3
-#define M_LEN M + 1
-#define N_LEN N + 1
 #define ITMAX 30
 #define L_OUT TRUE
 
-extern double wtime(); 
+extern float wtime();
+
+int M;
+int N;
+int M_LEN;
+int N_LEN;
 
 
 //! Benchmark weather prediction program for comparing the
@@ -80,26 +81,40 @@ extern double wtime();
 //! Minimal serial version (26 May 2011)
 
 int main(int argc, char **argv) {
+
+  if (argc < 2){
+     printf("no args sent, using defaults");
+     M = 3;
+     N = 3;
+
+  }
+  else{
+    M = atoi(argv[1]);
+    N = atoi(argv[2]);
+  }
+
+  M_LEN = M + 1;
+  N_LEN = N + 1;
   
   // solution arrays
-  double u[M_LEN][N_LEN],v[M_LEN][N_LEN],p[M_LEN][N_LEN];
-  double unew[M_LEN][N_LEN],vnew[M_LEN][N_LEN],pnew[M_LEN][N_LEN];
-  double uold[M_LEN][N_LEN],vold[M_LEN][N_LEN],pold[M_LEN][N_LEN];
-  double cu[M_LEN][N_LEN],cv[M_LEN][N_LEN],z[M_LEN][N_LEN],h[M_LEN][N_LEN],psi[M_LEN][N_LEN];
+  float u[M_LEN][N_LEN],v[M_LEN][N_LEN],p[M_LEN][N_LEN];
+  float unew[M_LEN][N_LEN],vnew[M_LEN][N_LEN],pnew[M_LEN][N_LEN];
+  float uold[M_LEN][N_LEN],vold[M_LEN][N_LEN],pold[M_LEN][N_LEN];
+  float cu[M_LEN][N_LEN],cv[M_LEN][N_LEN],z[M_LEN][N_LEN],h[M_LEN][N_LEN],psi[M_LEN][N_LEN];
 
-  double dt,tdt,dx,dy,a,alpha,el,pi;
-  double tpi,di,dj,pcf;
-  double tdts8,tdtsdx,tdtsdy,fsdx,fsdy;
+  float dt,tdt,dx,dy,a,alpha,el,pi;
+  float tpi,di,dj,pcf;
+  float tdts8,tdtsdx,tdtsdy,fsdx,fsdy;
 
   int mnmin,ncycle;
   int i,j;
  
   // timer variables 
-  double mfs100,mfs200,mfs300,mfs310;
-  double t100,t200,t300;
-  double tstart,ctime,tcyc,time,ptime;
-  double t100i,t200i,t300i;
-  double c1,c2;
+  float mfs100,mfs200,mfs300,mfs310;
+  float t100,t200,t300;
+  float tstart,ctime,tcyc,time,ptime;
+  float t100i,t200i,t300i;
+  float c1,c2;
 
   // ** Initialisations ** 
 
@@ -143,12 +158,12 @@ int main(int argc, char **argv) {
   // Initial values of the stream function and p
   for (i=0;i<M_LEN;i++) {
     for (j=0;j<N_LEN;j++) {
-      double sinx = sin((i + .5) * di);
-      double siny = sin((j + .5) * dj);
-      double total = a * sinx * siny;
+      float sinx = sin((i + .5) * di);
+      float siny = sin((j + .5) * dj);
+      float total = a * sinx * siny;
       printf("psi %d%d, sinx %20.16f siny %20.16f total %20.16f \n", i, j, sinx, siny, total);
-      psi[i][j] = a * sin((i + .5) * di) * sin((j + .5) * dj);
-      p[i][j] = pcf * (cos(2. * (i) * di) + cos(2. * (j) * dj)) + 50000.;
+      psi[i][j] = a * sinf((i + .5) * di) * sinf((j + .5) * dj);
+      p[i][j] = pcf * (cosf(2. * (i) * di) + cosf(2. * (j) * dj)) + 50000.;
     }
   }
     
@@ -190,30 +205,71 @@ int main(int argc, char **argv) {
 
     mnmin = MIN(M,N);
     printf(" initial elements of p\n");
+
+
+    FILE *f = fopen("initial_p.txt", "w");
+    if (f == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
+    }
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%f ",p[i][j]);
+      printf("%d,%d,%f \n",i, j, p[i][j]);
+      fprintf(f, "%d,%d,%f \n",i, j, p[i][j]);
       }
+    }
+    fclose(f);
+
+
+
+    f = fopen("initial_u.txt", "w");
+    if (f == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
     }
     printf("\n initial elements of u\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%f ",u[i][i]);
+      printf("%d, %d, %f \n",i, j, u[i][j]);
+      fprintf(f, "%d,%d,%f \n",i, j, u[i][j]);
       }
+    }
+    fclose(f);
+
+
+
+    f = fopen("initial_v.txt", "w");
+    if (f == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
     }
     printf("\n initial elements of v\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%f ",v[i][i]);
+      printf("%d, %d, %f \n",i, j, v[i][j]);
+      fprintf(f, "%d,%d,%f \n",i, j, v[i][j]);
       }
     }
+    fclose(f);
 
+
+    f = fopen("initial_psi.txt", "w");
+    if (f == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
+    }
     printf("\n initial elements of psi\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%f ",psi[i][i]);
+      printf("%d, %d, %f \n",i, j, psi[i][i]);
+      fprintf(f, "%d,%d, %f \n",i, j, psi[i][j]);
       }
     }
+    fclose(f);
     printf("\n");
   }
 
@@ -248,7 +304,11 @@ int main(int argc, char **argv) {
     }
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-        h[i][j] = p[i][j] + .25 * (u[i + 1][j] * u[i + 1][j] + u[i][j] * u[i][j] + v[i][j + 1] * v[i][j + 1] + v[i][j] * v[i][j]);
+        h[i][j] = p[i][j] + .25 *
+        (u[i + 1][j] * u[i + 1][j] +
+         u[i][j] * u[i][j] +
+         v[i][j + 1] * v[i][j + 1] +
+         v[i][j] * v[i][j]);
       }
     }
 
@@ -282,17 +342,24 @@ int main(int argc, char **argv) {
 
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-        unew[i + 1][j] = uold[i + 1][j] + tdts8 * (z[i + 1][j + 1] + z[i + 1][j]) * (cv[i + 1][j + 1] + cv[i][j + 1] + cv[i][j] + cv[i + 1][j]) - tdtsdx * (h[i + 1][j] - h[i][j]);
+        unew[i + 1][j] = uold[i + 1][j] + tdts8 *
+        (z[i + 1][j + 1] + z[i + 1][j]) *
+        (cv[i + 1][j + 1] + cv[i][j + 1] + cv[i][j] + cv[i + 1][j])
+        - tdtsdx * (h[i + 1][j] - h[i][j]);
       }
     }
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-        vnew[i][j + 1] = vold[i][j + 1] - tdts8 * (z[i + 1][j + 1] + z[i][j + 1]) * (cu[i + 1][j + 1] + cu[i][j + 1] + cu[i][j] + cu[i + 1][j]) - tdtsdy * (h[i][j + 1] - h[i][j]);
+        vnew[i][j + 1] = vold[i][j + 1] - tdts8 *
+        (z[i + 1][j + 1] + z[i][j + 1]) *
+        (cu[i + 1][j + 1] + cu[i][j + 1] + cu[i][j] + cu[i + 1][j]) -
+        tdtsdy * (h[i][j + 1] - h[i][j]);
       }
     }
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-        pnew[i][j] = pold[i][j] - tdtsdx * (cu[i + 1][j] - cu[i][j]) - tdtsdy * (cv[i][j + 1] - cv[i][j]); 
+        pnew[i][j] = pold[i][j] - tdtsdx * (cu[i + 1][j] - cu[i][j]) -
+        tdtsdy * (cv[i][j + 1] - cv[i][j]);
       }
     }
 
@@ -371,7 +438,7 @@ int main(int argc, char **argv) {
 
     }
 
-    printf(" elements of p\n");
+    printf(" elements of p for cycle %d\n", ncycle);
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
       printf("%d:%d:%d p %f \n",i, j, ncycle, pnew[i][j]);

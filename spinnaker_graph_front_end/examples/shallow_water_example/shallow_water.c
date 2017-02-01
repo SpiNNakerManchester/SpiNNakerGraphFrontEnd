@@ -177,6 +177,7 @@ void print_constants(){
     to_print_strings[2] = "fsdx";
     to_print_strings[3] = "fsdy";
     to_print_strings[4] = "alpha";
+    to_print_strings[4] = "alpha";
     to_print_strings[5] = "tdts8";
     to_print_strings[6] = "tdtsdx";
     to_print_strings[7] = "tdtsdy";
@@ -616,7 +617,7 @@ void update(uint ticks, uint b) {
     // send new states to next core.
     send_states();
 
-    //record_state();
+    record_state();
 }
 
 

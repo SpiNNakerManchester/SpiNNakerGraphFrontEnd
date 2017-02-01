@@ -94,13 +94,13 @@ static uint32_t infinite_run;
 uint cpsr = 0;
 
 // optimisation for doing multiplications in the logic code.
-static const long unsigned fract POINT_5 = 0.5k;
+static const float POINT_5 = 0.5;
 
 // optimisation for doing multiplications in the logic code.
-static const long unsigned fract POINT_025 = 0.25k;
+static const float POINT_025 = 0.25;
 
 // optimisation for doing divide in the logic code.
-static const uint32_t EIGHT = 8.0k;
+static const uint32_t EIGHT = 8;
 
 //! how many entries in the ring buffer that there should be per timer tick
 static uint32_t N_PACKETS_PER_TIMER_TICK = 7 * 8 * 2;
@@ -133,20 +133,29 @@ typedef enum transmission_region_elements {
 //! \brief a possible way to avoid reading in issues.
 typedef struct init_data_t{
     // my values
-    float my_current_u; float my_current_v; float my_current_p;
+    int my_current_u; int my_current_v; int my_current_p; int my_current_z;
+    int my_current_h; int my_current_cv; int my_current_cu;
     // neighbour values
-    float north_u; float north_v; float north_p;
-    float north_east_u; float north_east_v; float north_east_p;
-    float east_u; float east_v; float east_p;
-    float south_east_u; float south_east_v; float south_east_p;
-    float south_u; float south_v; float south_p;
-    float south_west_u; float south_west_v; float south_west_p;
-    float west_u; float west_v; float west_p;
-    float north_west_u; float north_west_v; float north_west_p;
+    int north_u; int north_v; int north_p; int north_z; int north_h; int 
+    north_cv; int north_cu;
+    int north_east_u; int north_east_v; int north_east_p; int north_east_z; 
+    int north_east_h; int north_east_cv; int north_east_cu;
+    int east_u; int east_v; int east_p; int east_z; int east_h; int east_cv;
+    int east_cu;
+    int south_east_u; int south_east_v; int south_east_p; int south_east_z;
+    int south_east_h; int south_east_cv; int south_east_cu;
+    int south_u; int south_v; int south_p; int south_z; int south_h; 
+    int south_cv; int south_cu;
+    int south_west_u; int south_west_v; int south_west_p; int south_west_z;
+    int south_west_h; int south_west_cv; int south_west_cu;
+    int west_u; int west_v; int west_p; int west_z; int west_h; int west_cv;
+    int west_cu;
+    int north_west_u; int north_west_v; int north_west_p; int north_west_z;
+    int north_west_h; int north_west_cv; int north_west_cu;
     // constants
-    uint32_t dx; uint32_t dy; float fsdx; float fsdy; 
-    float alpha; float tdts8; float tdtsdx; float tdtsdy; float tdt2s8;
-    float tdt2sdx; float tdt2sdy;
+    uint32_t dx; uint32_t dy; int fsdx; int fsdy;
+    int alpha; int tdts8; int tdtsdx; int tdtsdy; int tdt2s8;
+    int tdt2sdx; int tdt2sdy;
     // offset fix
     uint32_t random_backoff;
 }init_data_t;
@@ -161,6 +170,22 @@ typedef enum key_order {
     NORTH = 0, NORTH_EAST = 1, EAST = 2, NORTH_WEST = 3, WEST = 4,
     SOUTH_WEST = 5, SOUTH = 6, SOUTH_EAST = 7
 } key_order;
+
+//! \brief converts a int to a float via bit wise conversion
+//! \param[in] y: the int to convert
+//! \param[out] the converrted float
+static inline float int_to_float( int data){
+    union { float x; int y; } cast_union;
+    cast_union.y = data;
+    return cast_union.x;
+}
+
+
+static inline int float_to_int( float data){
+    union { float x; int y; } cast_union;
+    cast_union.x = data;
+    return cast_union.y;
+}
 
 //! \brief print the constants of the vertex
 void print_constants(){
@@ -201,15 +226,21 @@ void force_exit_function(address_t provenance_region){
 
 //! \brief print my local states
 void print_my_states(){
-    float to_print_items[] = {my_current_u, my_current_v, my_current_p};
-    const char *to_print_strings[3];
+    float to_print_items[] = {
+        my_current_u, my_current_v, my_current_p, my_z, my_h, my_cv, my_cu};
+    const char *to_print_strings[7];
     to_print_strings[0] = "my_current_u";
     to_print_strings[1] = "my_current_v";
     to_print_strings[2] = "my_current_p";
-    for(int position = 0; position < 3; position++){
+    to_print_strings[3] = "my_current_z";
+    to_print_strings[4] = "my_current_h";
+    to_print_strings[5] = "my_current_cv";
+    to_print_strings[6] = "my_current_cu";
+
+    for(int position = 0; position < 7; position++){
         log_info(
             "%s = %x", to_print_strings[position],
-            (int) to_print_items[position]);
+            float_to_int(to_print_items[position]));
     }
     log_info("my key = %d", my_key);
 }
@@ -218,21 +249,32 @@ void print_my_states(){
 //! \param[in] elements_to_print: the array of elements to print elements of
 //! \param[in] name: the name of the set of elements.
 void print_a_set_of_elements(float *elements_to_print, char* name){
-    float to_print_items[] = {elements_to_print[U], elements_to_print[V],
-                              elements_to_print[P]};
-    const char *to_print_strings[3];
+    float to_print_items[] = {
+        elements_to_print[U], elements_to_print[V], elements_to_print[P],
+        elements_to_print[Z], elements_to_print[H], elements_to_print[CV],
+        elements_to_print[CU]};
+    const char *to_print_strings[7];
 
     char copy_name1[80];
     char copy_name2[80];
     char copy_name3[80];
+    char copy_name4[80];
+    char copy_name5[80];
+    char copy_name6[80];
+    char copy_name7[80];
+    
 
     to_print_strings[0] = strcat(strcpy(copy_name1, name), ":u");
     to_print_strings[1] = strcat(strcpy(copy_name2, name), ":v");
     to_print_strings[2] = strcat(strcpy(copy_name3, name), ":p");
-    for(int position = 0; position < 3; position ++){
+    to_print_strings[3] = strcat(strcpy(copy_name4, name), ":z");
+    to_print_strings[4] = strcat(strcpy(copy_name5, name), ":h");
+    to_print_strings[5] = strcat(strcpy(copy_name6, name), ":cv");
+    to_print_strings[6] = strcat(strcpy(copy_name7, name), ":cu");
+    for(int position = 0; position < 7; position ++){
         log_info(
             "%s = %x", to_print_strings[position],
-            (int) to_print_items[position]);
+            float_to_int(to_print_items[position]));
     }
 }
 
@@ -286,7 +328,7 @@ void process_key_payload(float *elements, uint32_t *has_flag_elements){
     }
 
     // add the element to the correct offset with a reinterpret cast to float
-    elements[offset] = (float) (current_payload);
+    elements[offset] = int_to_float(current_payload);
     has_flag_elements[offset] = 1;
 }
 
@@ -425,7 +467,7 @@ void send_packet(uint32_t key, uint payload){
     }
 
     // Send the packet
-    while (!spin1_send_mc_packet(key, payload, WITH_PAYLOAD)) {
+    while (!spin1_send_mc_packet(key, float_to_int(payload), WITH_PAYLOAD)) {
         spin1_delay_us(1);
     }
 }
@@ -433,7 +475,7 @@ void send_packet(uint32_t key, uint payload){
 //! \brief sends the states needed for the neighbours to do their calculation.
 void send_states(){
     // send my new state to the simulation neighbours
-    uint32_t elements_to_send[7] =
+    float elements_to_send[7] =
         {my_current_u, my_current_v, my_current_p, my_z, my_h, my_cv, my_cu};
 
     const char *to_print_strings[7];
@@ -459,14 +501,14 @@ void send_states(){
         // log what we're firing
         uint32_t this_data_key = my_key + position;
         log_info(
-            "firing packet %s with value %d with key %d",
-            to_print_strings[position], elements_to_send[position],
+            "firing packet %s with value %x with key %d",
+            to_print_strings[position], float_to_int(elements_to_send[position]),
             this_data_key);
 
         // Set the next expected time to wait for between spike sending
         expected_time = tc[T1_COUNT] - time_between_spikes;
 
-        send_packet(this_data_key, (uint) elements_to_send[position]);
+        send_packet(this_data_key, float_to_int(elements_to_send[position]));
     }
     log_info("sent my states via multicast");
 }
@@ -474,19 +516,19 @@ void send_states(){
 
 //! \brief calculates the cu for this atom
 void calculate_cu(){
-    my_cu = POINT_5 * (my_current_p + south_elements[P]) * my_current_u;
+    my_cu = POINT_5 * (my_current_p + west_elements[P]) * my_current_u;
 }
 
 //! \brief calculates the cv for this atom
 void calculate_cv(){
-    my_cv = POINT_5 * (my_current_p + west_elements[P] * my_current_v);
+    my_cv = POINT_5 * (my_current_p + south_elements[P]) * my_current_v;
 }
 
 //! \brief calculates the z for this atom
 void calculate_z(){
     float numerator_bit =
-        (fsdx * (my_current_v - south_elements[V]) - fsdy *
-        (my_current_u - west_elements[U]));
+        (fsdx * (my_current_v - west_elements[V]) - fsdy *
+        (my_current_u - south_elements[U]));
     float denominator_bit =
         (south_west_elements[P] + west_elements[P] + my_current_p +
          south_elements[P]);
@@ -496,30 +538,31 @@ void calculate_z(){
 //! \brief calculates the h for this atom
 void calculate_h(){
     my_h = my_current_p + POINT_025 * (
-        north_elements[U] * north_elements[U] + my_current_u * my_current_u +
-        east_elements[V] * my_current_v * my_current_v);
+        east_elements[U] * east_elements[U] + my_current_u * my_current_u +
+        north_elements[V] * north_elements[V] + my_current_v * my_current_v);
 }
 
 //! \brief calculates the new p value based off other values
 void calculate_new_p(float current_tdtsdx, float current_tdtsdy){
-    my_new_p = my_old_p - current_tdtsdx * (north_elements[CU] - my_cu) -
-        current_tdtsdy * (east_elements[CV] - my_cv);
+    my_new_p = my_old_p - current_tdtsdx * (east_elements[CU] - my_cu) -
+        current_tdtsdy * (north_elements[CV] - my_cv);
 }
 
 
 //! \brief calculates the new v value based off other values
 void calculate_new_v(float current_tdts_8, float current_tdtsdy){
-    my_new_v = my_old_v - current_tdts_8 *(north_elements[Z] + my_z) *
-        (north_elements[CU] + my_cu + west_elements[CU] +
-        south_west_elements[CU]) - current_tdtsdy * (my_h - south_elements[H]);
+    my_new_v = my_old_v - current_tdts_8 * (east_elements[Z] + my_z) *
+        (east_elements[CU] + my_cu + south_elements[CU] +
+         south_east_elements[CU]) -
+         current_tdtsdy * (my_h - south_elements[H]);
 }
 
 
 //! \brief calculates the new u value based off other values
 void calculate_new_u(float current_tdts_8, float current_tdtsdx){
-    my_new_u = my_old_u + current_tdts_8 * (east_elements[Z] + my_z) *
-        (east_elements[CV] + south_west_elements[CV] + south_elements[CV] +
-         my_cv) - current_tdtsdx * (my_h - south_elements[H]);
+    my_new_u = my_old_u + current_tdts_8 * (north_elements[Z] + my_z) *
+        (north_elements[CV] + north_west_elements[CV] + west_elements[CV] +
+         my_cv) - current_tdtsdx * (my_h - west_elements[H]);
 }
 
 //! \brief moves values from new to current sets
@@ -652,6 +695,9 @@ void set_key(address_t address){
     }
 }
 
+
+
+
 //! \brief reads in the init states from sdram
 //! \param[in] the address in sdram for the dsg region where this stuff starts
 void set_init_states(address_t address){
@@ -666,66 +712,102 @@ void set_init_states(address_t address){
     init_data_t *init_data =  (init_data_t*) my_state_region_address;
 
     // this cores initial states
-    my_current_p = init_data->my_current_p;
-    my_current_u = init_data->my_current_u;
-    my_current_v = init_data->my_current_v;
+    my_current_p = int_to_float(init_data->my_current_p);
+    my_current_u = int_to_float(init_data->my_current_u);
+    my_current_v = int_to_float(init_data->my_current_v);
+    my_cv = int_to_float(init_data->my_current_cv);
+    my_cu = int_to_float(init_data->my_current_cu);
+    my_z = int_to_float(init_data->my_current_z);
+    my_h = int_to_float(init_data->my_current_h);
 
-    my_old_p = init_data->my_current_p;
-    my_old_u = init_data->my_current_u;
-    my_old_v = init_data->my_current_v;
+    my_old_p = int_to_float(init_data->my_current_p);
+    my_old_u = int_to_float(init_data->my_current_u);
+    my_old_v = int_to_float(init_data->my_current_v);
 
     // north initial states
-    north_elements[U] = init_data->north_u;
-    north_elements[V] = init_data->north_v;
-    north_elements[P] = init_data->north_p;
+    north_elements[U] = int_to_float(init_data->north_u);
+    north_elements[V] = int_to_float(init_data->north_v);
+    north_elements[P] = int_to_float(init_data->north_p);
+    north_elements[Z] = int_to_float(init_data->north_z);
+    north_elements[H] = int_to_float(init_data->north_h);
+    north_elements[CV] = int_to_float(init_data->north_cv);
+    north_elements[CU] = int_to_float(init_data->north_cu);
 
     // north east initial states
-    north_east_elements[U] = init_data->north_east_u;
-    north_east_elements[V] = init_data->north_east_v;
-    north_east_elements[P] = init_data->north_east_p;
+    north_east_elements[U] = int_to_float(init_data->north_east_u);
+    north_east_elements[V] = int_to_float(init_data->north_east_v);
+    north_east_elements[P] = int_to_float(init_data->north_east_p);
+    north_east_elements[Z] = int_to_float(init_data->north_east_z);
+    north_east_elements[H] = int_to_float(init_data->north_east_h);
+    north_east_elements[CV] = int_to_float(init_data->north_east_cv);
+    north_east_elements[CU] = int_to_float(init_data->north_east_cu);
 
     // east initial states
-    east_elements[U] = init_data->east_u;
-    east_elements[V] = init_data->east_v;
-    east_elements[P] = init_data->east_p;
-
+    east_elements[U] = int_to_float(init_data->east_u);
+    east_elements[V] = int_to_float(init_data->east_v);
+    east_elements[P] = int_to_float(init_data->east_p);
+    east_elements[Z] = int_to_float(init_data->east_z);
+    east_elements[H] = int_to_float(init_data->east_h);
+    east_elements[CV] = int_to_float(init_data->east_cv);
+    east_elements[CU] = int_to_float(init_data->east_cu);
+    
     // south east initial states
-    south_east_elements[U] = init_data->south_east_u;
-    south_east_elements[V] = init_data->south_east_v;
-    south_east_elements[P] = init_data->south_east_p;
+    south_east_elements[U] = int_to_float(init_data->south_east_u);
+    south_east_elements[V] = int_to_float(init_data->south_east_v);
+    south_east_elements[P] = int_to_float(init_data->south_east_p);
+    south_east_elements[Z] = int_to_float(init_data->south_east_z);
+    south_east_elements[H] = int_to_float(init_data->south_east_h);
+    south_east_elements[CV] = int_to_float(init_data->south_east_cv);
+    south_east_elements[CU] = int_to_float(init_data->south_east_cu);
 
     // south initial states
-    south_elements[U] = init_data->south_u;
-    south_elements[V] = init_data->south_v;
-    south_elements[P] = init_data->south_p;
+    south_elements[U] = int_to_float(init_data->south_u);
+    south_elements[V] = int_to_float(init_data->south_v);
+    south_elements[P] = int_to_float(init_data->south_p);
+    south_elements[Z] = int_to_float(init_data->south_z);
+    south_elements[H] = int_to_float(init_data->south_h);
+    south_elements[CV] = int_to_float(init_data->south_cv);
+    south_elements[CU] = int_to_float(init_data->south_cu);
 
     // south west initial states
-    south_west_elements[U] = init_data->south_west_u;
-    south_west_elements[V] = init_data->south_west_v;
-    south_west_elements[P] = init_data->south_west_p;
+    south_west_elements[U] = int_to_float(init_data->south_west_u);
+    south_west_elements[V] = int_to_float(init_data->south_west_v);
+    south_west_elements[P] = int_to_float(init_data->south_west_p);
+    south_west_elements[Z] = int_to_float(init_data->south_west_z);
+    south_west_elements[H] = int_to_float(init_data->south_west_h);
+    south_west_elements[CV] = int_to_float(init_data->south_west_cv);
+    south_west_elements[CU] = int_to_float(init_data->south_west_cu);
 
     // west initial states
-    west_elements[U] = init_data->west_u;
-    west_elements[V] = init_data->west_v;
-    west_elements[P] = init_data->west_p;
+    west_elements[U] = int_to_float(init_data->west_u);
+    west_elements[V] = int_to_float(init_data->west_v);
+    west_elements[P] = int_to_float(init_data->west_p);
+    west_elements[Z] = int_to_float(init_data->west_z);
+    west_elements[H] = int_to_float(init_data->west_h);
+    west_elements[CV] = int_to_float(init_data->west_cv);
+    west_elements[CU] = int_to_float(init_data->west_cu);
 
     // north west initial states
-    north_west_elements[U] = init_data->north_west_u;
-    north_west_elements[V] = init_data->north_west_v;
-    north_west_elements[P] = init_data->north_west_p;
+    north_west_elements[U] = int_to_float(init_data->north_west_u);
+    north_west_elements[V] = int_to_float(init_data->north_west_v);
+    north_west_elements[P] = int_to_float(init_data->north_west_p);
+    north_west_elements[Z] = int_to_float(init_data->north_west_z);
+    north_west_elements[H] = int_to_float(init_data->north_west_h);
+    north_west_elements[CV] = int_to_float(init_data->north_west_cv);
+    north_west_elements[CU] = int_to_float(init_data->north_west_cu);
 
     // get constants
-    dx = init_data->dx;
-    dy = init_data->dy;
-    fsdx = init_data->fsdx;
-    fsdy = init_data->fsdy;
-    alpha = init_data->alpha;
-    tdts8 = init_data->tdts8;
-    tdtsdx = init_data->tdtsdx;
-    tdtsdy = init_data->tdtsdy;
-    tdt2s8 = init_data->tdt2s8;
-    tdt2sdx = init_data->tdt2sdx;
-    tdt2sdy = init_data->tdt2sdy;
+    dx = int_to_float(init_data->dx);
+    dy = int_to_float(init_data->dy);
+    fsdx = int_to_float(init_data->fsdx);
+    fsdy = int_to_float(init_data->fsdy);
+    alpha = int_to_float(init_data->alpha);
+    tdts8 = int_to_float(init_data->tdts8);
+    tdtsdx = int_to_float(init_data->tdtsdx);
+    tdtsdy = int_to_float(init_data->tdtsdy);
+    tdt2s8 = int_to_float(init_data->tdt2s8);
+    tdt2sdx = int_to_float(init_data->tdt2sdx);
+    tdt2sdy = int_to_float(init_data->tdt2sdy);
 
     // print out the values
     print_my_states();
