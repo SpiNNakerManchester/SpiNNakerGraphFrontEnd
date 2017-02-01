@@ -21,7 +21,7 @@ MAX_Y_SIZE_OF_FABRIC = 3
 # tdma constants
 NumberOfCPUCyclesUsedByThePacketReceiveCallback = 90
 NumberOfCpuCyclesByOtherCallbacks = 600
-NumberOFPacketsPerWindow = 7
+NumberOFPacketsPerWindow = 4
 FUDGE_FACTOR_FOR_TDMA = 2
 
 # read in from file the initial params (fixes c generation issues)

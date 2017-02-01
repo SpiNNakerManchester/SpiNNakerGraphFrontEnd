@@ -304,6 +304,12 @@ int main(int argc, char **argv) {
     }
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
+        printf(
+          "%d, %d, %f %f %f %f %f %f %f %f %f\n",i, j, p[i][j], u[i + 1][j],
+          u[i + 1][j], u[i][j],
+          u[i][j], v[i][j + 1], v[i][j + 1], v[i][j], v[i][j]);
+
+
         h[i][j] = p[i][j] + .25 *
         (u[i + 1][j] * u[i + 1][j] +
          u[i][j] * u[i][j] +

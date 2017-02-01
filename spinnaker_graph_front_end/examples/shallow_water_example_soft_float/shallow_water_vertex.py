@@ -81,8 +81,8 @@ class ShallowWaterVertex(
 
     # each state variable needs 4 bytes for their float data item.
     INIT_STATE_REGION_SIZE = (
-        (8 * 7 * FLOAT_SIZE_IN_BYTES) +  # neighbour states
-        (7 * FLOAT_SIZE_IN_BYTES) +  # my states
+        (8 * 3 * FLOAT_SIZE_IN_BYTES) +  # neighbour states
+        (3 * FLOAT_SIZE_IN_BYTES) +  # my states
         (11 * FLOAT_SIZE_IN_BYTES))  # constants
 
     # arbitrary size for recording data (used in auto pause and resume)
@@ -259,14 +259,6 @@ class ShallowWaterVertex(
         spec.write_value(data=self._u, data_type=self.DATA_TYPE_OF_FLOAT)
         spec.write_value(data=self._v, data_type=self.DATA_TYPE_OF_FLOAT)
         spec.write_value(data=self._p, data_type=self.DATA_TYPE_OF_FLOAT)
-        spec.write_value(data=self.calculate_z(edges),
-                         data_type=self.DATA_TYPE_OF_FLOAT)
-        spec.write_value(data=self.calculate_h(edges),
-                         data_type=self.DATA_TYPE_OF_FLOAT)
-        spec.write_value(data=self.calculate_cv(edges),
-                         data_type=self.DATA_TYPE_OF_FLOAT)
-        spec.write_value(data=self.calculate_cu(edges),
-                         data_type=self.DATA_TYPE_OF_FLOAT)
 
         edges = machine_graph.get_edges_ending_at_vertex(self)
 
@@ -286,26 +278,6 @@ class ShallowWaterVertex(
                             data_type=self.DATA_TYPE_OF_FLOAT)
                         spec.write_value(
                             edge.pre_vertex.p,
-                            data_type=self.DATA_TYPE_OF_FLOAT)
-                        spec.write_value(
-                            edge.pre_vertex.calculate_z(
-                                machine_graph.get_edges_ending_at_vertex(
-                                    edge.pre_vertex)),
-                            data_type=self.DATA_TYPE_OF_FLOAT)
-                        spec.write_value(
-                            edge.pre_vertex.calculate_h(
-                                machine_graph.get_edges_ending_at_vertex(
-                                    edge.pre_vertex)),
-                            data_type=self.DATA_TYPE_OF_FLOAT)
-                        spec.write_value(
-                            edge.pre_vertex.calculate_cv(
-                                machine_graph.get_edges_ending_at_vertex(
-                                    edge.pre_vertex)),
-                            data_type=self.DATA_TYPE_OF_FLOAT)
-                        spec.write_value(
-                            edge.pre_vertex.calculate_cu(
-                                machine_graph.get_edges_ending_at_vertex(
-                                    edge.pre_vertex)),
                             data_type=self.DATA_TYPE_OF_FLOAT)
                         found = True
             if not found:
@@ -330,70 +302,6 @@ class ShallowWaterVertex(
                          data_type=self.DATA_TYPE_OF_FLOAT)
         spec.write_value((self._tdt + self._tdt) / self._dy,
                          data_type=self.DATA_TYPE_OF_FLOAT)
-
-    def calculate_cu(self, edges):
-        """ calculates cu
-
-        :param edges: the edges going into this vertex
-        :return: the current cu value
-        """
-        for edge in edges:
-            if isinstance(edge, ShallowWaterEdge):
-                if edge.compass == "W":
-                    return 0.5 * (self._p + edge.pre_vertex.p) * self._u
-
-    def calculate_cv(self, edges):
-        """calculates cv
-
-        :param edges: the edges going into this vertex
-        :return: the current cv value
-        """
-        for edge in edges:
-            if isinstance(edge, ShallowWaterEdge):
-                if edge.compass == "S":
-                    return 0.5 * (self._p + edge.pre_vertex.p) * self._v
-
-    def calculate_z(self, edges):
-        """calculates z
-
-        :param edges: the edges going into this vertex
-        :return: the current z value
-        """
-        west_edge = None
-        south_edge = None
-        south_west_edge = None
-
-        for edge in edges:
-            if isinstance(edge, ShallowWaterEdge):
-                if edge.compass == "S":
-                    south_edge = edge
-                elif edge.compass == "W":
-                    west_edge = edge
-                elif edge.compass == "SW":
-                    south_west_edge = edge
-        return (self._fsdx * (self._v - west_edge.pre_vertex.v) -
-                self._fsdy * (self._u - south_edge.pre_vertex.u)) / (
-                   south_west_edge.pre_vertex.p + south_edge.pre_vertex.p +
-                   self._p + west_edge.pre_vertex.p)
-
-    def calculate_h(self, edges):
-        """calculates h
-
-        :param edges: the edges going into this vertex
-        :return: the current h value
-        """
-        east_edge = None
-        north_edge = None
-        for edge in edges:
-            if isinstance(edge, ShallowWaterEdge):
-                if edge.compass == "E":
-                    east_edge = edge
-                elif edge.compass == "N":
-                    north_edge = edge
-        return self._p + 0.25 * (
-            east_edge.pre_vertex.u + self._u * self._u +
-            north_edge.pre_vertex.v * north_edge.pre_vertex.v + self._v *
-            self._v)
 
     def get_provenance_data_from_machine(self, transceiver, placement):
         provenance_data = self._read_provenance_data(transceiver, placement)

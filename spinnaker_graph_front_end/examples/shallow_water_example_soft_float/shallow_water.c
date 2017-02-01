@@ -14,13 +14,15 @@
 uint my_key;
 uint has_key;
 
+//! flag that tells the timer tick which data to deal with
+uint is_cv_or_p_calculation;
+
 /*! buffer used to store spikes */
 static circular_buffer input_buffer;
 static uint32_t current_payload;
 static uint32_t current_key;
 
 static uint32_t SIZE_OF_DATA_ITEM = 4;
-static uint32_t N_PACKETS_PER_EDGE = 7;
 
 //! The number of clock ticks to back off before starting the timer, in an
 //! attempt to avoid overloading the network
@@ -103,7 +105,10 @@ static const float POINT_025 = 0.25;
 static const uint32_t EIGHT = 8;
 
 //! how many entries in the ring buffer that there should be per timer tick
+
 static uint32_t N_PACKETS_PER_TIMER_TICK = 7 * 8 * 2;
+static uint32_t N_PACKETS_PER_CV_CU_H_Z_TIMER_TICK = 3 * 8 * 2;
+static uint32_t N_PACKETS_PER_P_U_V_TIMER_TICK = 4 * 8 * 2;
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
@@ -133,25 +138,16 @@ typedef enum transmission_region_elements {
 //! \brief a possible way to avoid reading in issues.
 typedef struct init_data_t{
     // my values
-    int my_current_u; int my_current_v; int my_current_p; int my_current_z;
-    int my_current_h; int my_current_cv; int my_current_cu;
+    int my_current_u; int my_current_v; int my_current_p;
     // neighbour values
-    int north_u; int north_v; int north_p; int north_z; int north_h; int 
-    north_cv; int north_cu;
-    int north_east_u; int north_east_v; int north_east_p; int north_east_z; 
-    int north_east_h; int north_east_cv; int north_east_cu;
-    int east_u; int east_v; int east_p; int east_z; int east_h; int east_cv;
-    int east_cu;
-    int south_east_u; int south_east_v; int south_east_p; int south_east_z;
-    int south_east_h; int south_east_cv; int south_east_cu;
-    int south_u; int south_v; int south_p; int south_z; int south_h; 
-    int south_cv; int south_cu;
-    int south_west_u; int south_west_v; int south_west_p; int south_west_z;
-    int south_west_h; int south_west_cv; int south_west_cu;
-    int west_u; int west_v; int west_p; int west_z; int west_h; int west_cv;
-    int west_cu;
-    int north_west_u; int north_west_v; int north_west_p; int north_west_z;
-    int north_west_h; int north_west_cv; int north_west_cu;
+    int north_u; int north_v; int north_p;
+    int north_east_u; int north_east_v; int north_east_p;
+    int east_u; int east_v; int east_p;
+    int south_east_u; int south_east_v; int south_east_p;
+    int south_u; int south_v; int south_p;
+    int south_west_u; int south_west_v; int south_west_p;
+    int west_u; int west_v; int west_p;
+    int north_west_u; int north_west_v; int north_west_p;
     // constants
     uint32_t dx; uint32_t dy; int fsdx; int fsdy;
     int alpha; int tdts8; int tdtsdx; int tdtsdy; int tdt2s8;
@@ -227,17 +223,13 @@ void force_exit_function(address_t provenance_region){
 //! \brief print my local states
 void print_my_states(){
     float to_print_items[] = {
-        my_current_u, my_current_v, my_current_p, my_z, my_h, my_cv, my_cu};
-    const char *to_print_strings[7];
+        my_current_u, my_current_v, my_current_p};
+    const char *to_print_strings[3];
     to_print_strings[0] = "my_current_u";
     to_print_strings[1] = "my_current_v";
     to_print_strings[2] = "my_current_p";
-    to_print_strings[3] = "my_current_z";
-    to_print_strings[4] = "my_current_h";
-    to_print_strings[5] = "my_current_cv";
-    to_print_strings[6] = "my_current_cu";
 
-    for(int position = 0; position < 7; position++){
+    for(int position = 0; position < 3; position++){
         log_info(
             "%s = %x", to_print_strings[position],
             float_to_int(to_print_items[position]));
@@ -338,7 +330,15 @@ void read_input_buffer(){
 
     uint32_t last_seen_size = 0;
     uint32_t current_buffer_size;
-    while(circular_buffer_size(input_buffer) < N_PACKETS_PER_TIMER_TICK){
+
+    uint n_elements_to_see = 0;
+    if (is_cv_or_p_calculation == 0){
+        n_elements_to_see = N_PACKETS_PER_CV_CU_H_Z_TIMER_TICK;
+    }
+    else{
+        n_elements_to_see = N_PACKETS_PER_P_U_V_TIMER_TICK;
+    }
+    while(circular_buffer_size(input_buffer) < n_elements_to_see){
         current_buffer_size = circular_buffer_size(input_buffer);
         for(uint32_t counter=0; counter < 10000; counter++){
             //do nothing
@@ -347,7 +347,7 @@ void read_input_buffer(){
         if (current_buffer_size != last_seen_size){
             log_info(
                 "size of buffer is %d whereas it should be %d",
-                current_buffer_size, N_PACKETS_PER_TIMER_TICK);
+                current_buffer_size, n_elements_to_see);
             last_seen_size = current_buffer_size;
         }
     }
@@ -391,7 +391,7 @@ void read_input_buffer(){
 
     // pull payloads and keys from input_buffer.
     // translate into float elements
-    for (uint32_t counter = 0; counter < N_PACKETS_PER_TIMER_TICK / 2;
+    for (uint32_t counter = 0; counter < n_elements_to_see / 2;
             counter ++){
         bool success1 = circular_buffer_get_next(
             input_buffer, &current_key);
@@ -472,20 +472,25 @@ void send_packet(uint32_t key, uint payload){
     }
 }
 
-//! \brief sends the states needed for the neighbours to do their calculation.
-void send_states(){
-    // send my new state to the simulation neighbours
-    float elements_to_send[7] =
-        {my_current_u, my_current_v, my_current_p, my_z, my_h, my_cv, my_cu};
 
-    const char *to_print_strings[7];
-    to_print_strings[0] = "my_current_u";
-    to_print_strings[1] = "my_current_v";
-    to_print_strings[2] = "my_current_p";
-    to_print_strings[3] = "my_z";
-    to_print_strings[4] = "my_h";
-    to_print_strings[5] = "my_cv";
-    to_print_strings[6] = "my_cu";
+//! \brief sends the cu, cv, h, and z elements to their neighbours for their
+//! second phase computation.
+void send_cu_cv_h_z_states(){
+    // send my new state to the simulation neighbours
+    float elements_to_send[4];
+    elements_to_send[0] = my_z;
+    elements_to_send[1] = my_h;
+    elements_to_send[2] = my_cv;
+    elements_to_send[3] = my_cu;
+
+    // key offsets for cv cu z h
+    int key_offset[4] = {3, 4, 5, 6};
+
+    const char *to_print_strings[4];
+    to_print_strings[0] = "my_z";
+    to_print_strings[1] = "my_h";
+    to_print_strings[2] = "my_cv";
+    to_print_strings[3] = "my_cu";
 
     // Wait till my place in the tdma agenda
     uint32_t agenda_start_time = tc[T1_COUNT] - window_offset;
@@ -495,15 +500,55 @@ void send_states(){
         }
     }
 
-    // start firing packets
-    for(uint32_t position = 0; position < N_PACKETS_PER_EDGE; position++){
+    for(uint32_t position = 0; position < 4; position++){
+
+        // log what we're firing
+        uint32_t this_data_key = my_key + key_offset[position];
+        log_info(
+            "firing packet %s with value %x with key %d",
+            to_print_strings[position],
+            float_to_int(elements_to_send[position]), this_data_key);
+
+        // Set the next expected time to wait for between spike sending
+        expected_time = tc[T1_COUNT] - time_between_spikes;
+
+        send_packet(this_data_key, float_to_int(elements_to_send[position]));
+    }
+    log_info("sent my states via multicast");
+}
+
+//! \brief sends the p,u,v elements to their neighbours for their first phase
+//! computation
+void send_p_u_v_states(){
+
+    // send my new state to the simulation neighbours
+    float elements_to_send[3];
+    elements_to_send[0] = my_current_u;
+    elements_to_send[1] = my_current_v;
+    elements_to_send[2] = my_current_p;
+
+    const char *to_print_strings[3];
+
+    to_print_strings[0] = "my_current_u";
+    to_print_strings[1] = "my_current_v";
+    to_print_strings[2] = "my_current_p";
+
+    // Wait till my place in the tdma agenda
+    uint32_t agenda_start_time = tc[T1_COUNT] - window_offset;
+    while (tc[T1_COUNT] > agenda_start_time) {
+        if (told_to_exit_flag == 1){
+            return;
+        }
+    }
+
+    for(uint32_t position = 0; position < 3; position++){
 
         // log what we're firing
         uint32_t this_data_key = my_key + position;
         log_info(
             "firing packet %s with value %x with key %d",
-            to_print_strings[position], float_to_int(elements_to_send[position]),
-            this_data_key);
+            to_print_strings[position],
+            float_to_int(elements_to_send[position]), this_data_key);
 
         // Set the next expected time to wait for between spike sending
         expected_time = tc[T1_COUNT] - time_between_spikes;
@@ -530,8 +575,8 @@ void calculate_z(){
         (fsdx * (my_current_v - west_elements[V]) - fsdy *
         (my_current_u - south_elements[U]));
     float denominator_bit =
-        (south_west_elements[P] + west_elements[P] + my_current_p +
-         south_elements[P]);
+        (south_west_elements[P] + south_elements[P] + my_current_p +
+         west_elements[P]);
     my_z = numerator_bit / denominator_bit;
 }
 
@@ -614,11 +659,6 @@ void update(uint ticks, uint b) {
     use(b);
     use(ticks);
 
-    log_info("setting off random back off");
-
-
-    log_info("finished random back off");
-
     time++;
 
     log_info("on tick %d of %d", time, simulation_ticks);
@@ -644,31 +684,39 @@ void update(uint ticks, uint b) {
         return;
     }
 
-    if (time > 0){
-        read_input_buffer();
-    }
+    log_info("starting positional timer work");
+    if (is_cv_or_p_calculation == 0){
+        if (time > 0){
+            read_input_buffer();
+        }
 
-    // calculate new parameters values
-    calculate_cu();
-    calculate_cv();
-    calculate_z();
-    calculate_h();
+        // calculate new parameters values
+        calculate_cu();
+        calculate_cv();
+        calculate_z();
+        calculate_h();
 
-    calculate_new_internal_states(time == 0);
-
-    // if first timer, no smoothing needed, just do transfer
-    if (time == 0){
-        transfer_data_from_new_to_current();
+        send_cu_cv_h_z_states();
+        is_cv_or_p_calculation = 1;
     }
     else{
-        smooth_old_values();
-        transfer_data_from_new_to_current();
+        read_input_buffer();
+        calculate_new_internal_states(time == 0);
+
+        // if first timer, no smoothing needed, just do transfer
+        if (time == 0){
+            transfer_data_from_new_to_current();
+        }
+        else{
+            smooth_old_values();
+            transfer_data_from_new_to_current();
+        }
+
+        // send new states to next core.
+        send_p_u_v_states();
+        //record_state();
+        is_cv_or_p_calculation = 0;
     }
-
-    // send new states to next core.
-    send_states();
-
-    //record_state();
 }
 
 
@@ -696,8 +744,6 @@ void set_key(address_t address){
 }
 
 
-
-
 //! \brief reads in the init states from sdram
 //! \param[in] the address in sdram for the dsg region where this stuff starts
 void set_init_states(address_t address){
@@ -715,10 +761,6 @@ void set_init_states(address_t address){
     my_current_p = int_to_float(init_data->my_current_p);
     my_current_u = int_to_float(init_data->my_current_u);
     my_current_v = int_to_float(init_data->my_current_v);
-    my_cv = int_to_float(init_data->my_current_cv);
-    my_cu = int_to_float(init_data->my_current_cu);
-    my_z = int_to_float(init_data->my_current_z);
-    my_h = int_to_float(init_data->my_current_h);
 
     my_old_p = int_to_float(init_data->my_current_p);
     my_old_u = int_to_float(init_data->my_current_u);
@@ -728,73 +770,41 @@ void set_init_states(address_t address){
     north_elements[U] = int_to_float(init_data->north_u);
     north_elements[V] = int_to_float(init_data->north_v);
     north_elements[P] = int_to_float(init_data->north_p);
-    north_elements[Z] = int_to_float(init_data->north_z);
-    north_elements[H] = int_to_float(init_data->north_h);
-    north_elements[CV] = int_to_float(init_data->north_cv);
-    north_elements[CU] = int_to_float(init_data->north_cu);
 
     // north east initial states
     north_east_elements[U] = int_to_float(init_data->north_east_u);
     north_east_elements[V] = int_to_float(init_data->north_east_v);
     north_east_elements[P] = int_to_float(init_data->north_east_p);
-    north_east_elements[Z] = int_to_float(init_data->north_east_z);
-    north_east_elements[H] = int_to_float(init_data->north_east_h);
-    north_east_elements[CV] = int_to_float(init_data->north_east_cv);
-    north_east_elements[CU] = int_to_float(init_data->north_east_cu);
 
     // east initial states
     east_elements[U] = int_to_float(init_data->east_u);
     east_elements[V] = int_to_float(init_data->east_v);
     east_elements[P] = int_to_float(init_data->east_p);
-    east_elements[Z] = int_to_float(init_data->east_z);
-    east_elements[H] = int_to_float(init_data->east_h);
-    east_elements[CV] = int_to_float(init_data->east_cv);
-    east_elements[CU] = int_to_float(init_data->east_cu);
     
     // south east initial states
     south_east_elements[U] = int_to_float(init_data->south_east_u);
     south_east_elements[V] = int_to_float(init_data->south_east_v);
     south_east_elements[P] = int_to_float(init_data->south_east_p);
-    south_east_elements[Z] = int_to_float(init_data->south_east_z);
-    south_east_elements[H] = int_to_float(init_data->south_east_h);
-    south_east_elements[CV] = int_to_float(init_data->south_east_cv);
-    south_east_elements[CU] = int_to_float(init_data->south_east_cu);
 
     // south initial states
     south_elements[U] = int_to_float(init_data->south_u);
     south_elements[V] = int_to_float(init_data->south_v);
     south_elements[P] = int_to_float(init_data->south_p);
-    south_elements[Z] = int_to_float(init_data->south_z);
-    south_elements[H] = int_to_float(init_data->south_h);
-    south_elements[CV] = int_to_float(init_data->south_cv);
-    south_elements[CU] = int_to_float(init_data->south_cu);
 
     // south west initial states
     south_west_elements[U] = int_to_float(init_data->south_west_u);
     south_west_elements[V] = int_to_float(init_data->south_west_v);
     south_west_elements[P] = int_to_float(init_data->south_west_p);
-    south_west_elements[Z] = int_to_float(init_data->south_west_z);
-    south_west_elements[H] = int_to_float(init_data->south_west_h);
-    south_west_elements[CV] = int_to_float(init_data->south_west_cv);
-    south_west_elements[CU] = int_to_float(init_data->south_west_cu);
 
     // west initial states
     west_elements[U] = int_to_float(init_data->west_u);
     west_elements[V] = int_to_float(init_data->west_v);
     west_elements[P] = int_to_float(init_data->west_p);
-    west_elements[Z] = int_to_float(init_data->west_z);
-    west_elements[H] = int_to_float(init_data->west_h);
-    west_elements[CV] = int_to_float(init_data->west_cv);
-    west_elements[CU] = int_to_float(init_data->west_cu);
 
     // north west initial states
     north_west_elements[U] = int_to_float(init_data->north_west_u);
     north_west_elements[V] = int_to_float(init_data->north_west_v);
     north_west_elements[P] = int_to_float(init_data->north_west_p);
-    north_west_elements[Z] = int_to_float(init_data->north_west_z);
-    north_west_elements[H] = int_to_float(init_data->north_west_h);
-    north_west_elements[CV] = int_to_float(init_data->north_west_cv);
-    north_west_elements[CU] = int_to_float(init_data->north_west_cu);
 
     // get constants
     dx = int_to_float(init_data->dx);
@@ -935,6 +945,8 @@ void c_main() {
     log_info("Starting\n");
     // Start the time at "-1" so that the first tick will be 0
     time = UINT32_MAX;
+
+    is_cv_or_p_calculation = 0;
 
     simulation_run();
 }
