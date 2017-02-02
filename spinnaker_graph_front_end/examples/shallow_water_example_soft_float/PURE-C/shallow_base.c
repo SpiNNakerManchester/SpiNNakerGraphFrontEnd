@@ -174,6 +174,13 @@ int main(int argc, char **argv) {
       v[i][j + 1] = (psi[i + 1][j + 1] - psi[i][j + 1]) / dx;
     }
   }
+
+    printf("\n initial elements of u before periodic\n");
+    for (i=0;i<M;i++) {
+      for (j=0;j<N;j++) {
+      printf("%d, %d, %f \n",i, j, u[i][j]);
+      }
+    }
      
   // Periodic continuation
   for (j=0;j<N;j++) {
@@ -186,6 +193,8 @@ int main(int argc, char **argv) {
   }
   u[0][N] = u[M][0];
   v[M][0] = v[0][N];
+
+
   for (i=0;i<M_LEN;i++) {
     for (j=0;j<N_LEN;j++) {
       uold[i][j] = u[i][j];
@@ -265,7 +274,7 @@ int main(int argc, char **argv) {
     printf("\n initial elements of psi\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d, %d, %f \n",i, j, psi[i][i]);
+      printf("%d, %d, %f \n",i, j, psi[i][j]);
       fprintf(f, "%d,%d, %f \n",i, j, psi[i][j]);
       }
     }
@@ -304,10 +313,10 @@ int main(int argc, char **argv) {
     }
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-        printf(
-          "%d, %d, %f %f %f %f %f %f %f %f %f\n",i, j, p[i][j], u[i + 1][j],
-          u[i + 1][j], u[i][j],
-          u[i][j], v[i][j + 1], v[i][j + 1], v[i][j], v[i][j]);
+        //printf(
+        //  "%d, %d, %f %f %f %f %f %f %f %f %f\n",i, j, p[i][j], u[i + 1][j],
+        //  u[i + 1][j], u[i][j],
+        //  u[i][j], v[i][j + 1], v[i][j + 1], v[i][j], v[i][j]);
 
 
         h[i][j] = p[i][j] + .25 *
@@ -360,6 +369,10 @@ int main(int argc, char **argv) {
         (z[i + 1][j + 1] + z[i][j + 1]) *
         (cu[i + 1][j + 1] + cu[i][j + 1] + cu[i][j] + cu[i + 1][j]) -
         tdtsdy * (h[i][j + 1] - h[i][j]);
+        printf("vnew\n");
+        printf("%d, %d, %g, %g, %g, %g, %g, %g, %g, %g, %g\n",
+            i,j,vold[i][j + 1], z[i + 1][j + 1], z[i][j + 1], cu[i + 1][j + 1],
+            cu[i][j + 1], cu[i][j], cu[i + 1][j], h[i][j + 1], h[i][j]);
       }
     }
     for (i=0;i<M;i++) {
@@ -370,7 +383,57 @@ int main(int argc, char **argv) {
     }
 
     c2 = wtime();  
-    t200 = t200 + (c2 - c1); 
+    t200 = t200 + (c2 - c1);
+
+    printf("before preiodic thingy");
+
+    printf(" elements of p for cycle %d\n", ncycle);
+    for (i=0;i<M;i++) {
+      for (j=0;j<N;j++) {
+      printf("%d:%d:%d p %f \n",i, j, ncycle, pnew[i][j]);
+      }
+    }
+    printf("\n elements of u\n");
+    for (i=0;i<M;i++) {
+      for (j=0;j<N;j++) {
+      printf("%d:%d:%d u %f \n",i, j, ncycle, unew[i][j]);
+    }
+    }
+
+    printf("\n elements of v\n");
+    for (i=0;i<M;i++) {
+      for (j=0;j<N;j++) {
+      printf("%d:%d:%d v %f \n",i, j, ncycle, vnew[i][j]);
+      }
+    }
+
+        printf("\n elements of cu\n");
+    for (i=0;i<M;i++) {
+      for (j=0;j<N;j++) {
+      printf("%d:%d:%d cu %f \n",i, j, ncycle, cu[i][j]);
+      }
+    }
+
+        printf("\n elements of cv\n");
+    for (i=0;i<M;i++) {
+      for (j=0;j<N;j++) {
+      printf("%d:%d:%d cv %f \n",i, j, ncycle, cv[i][j]);
+      }
+    }
+
+        printf("\n elements of h\n");
+    for (i=0;i<M;i++) {
+      for (j=0;j<N;j++) {
+      printf("%d:%d:%d h %g \n",i, j, ncycle, h[i][j]);
+      }
+    }
+
+        printf("\n elements of z\n");
+    for (i=0;i<M;i++) {
+      for (j=0;j<N;j++) {
+      printf("%d:%d:%d z %g \n",i, j, ncycle, z[i][j]);
+      }
+    }
 
     // Periodic continuation
     for (j=0;j<N;j++) {
@@ -481,14 +544,14 @@ int main(int argc, char **argv) {
         printf("\n elements of h\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d:%d:%d h %f \n",i, j, ncycle, h[i][j]);
+      printf("%d:%d:%d h %g \n",i, j, ncycle, h[i][j]);
       }
     }
 
         printf("\n elements of z\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d:%d:%d z %f \n",i, j, ncycle, z[i][j]);
+      printf("%d:%d:%d z %g \n",i, j, ncycle, z[i][j]);
       }
     }
 

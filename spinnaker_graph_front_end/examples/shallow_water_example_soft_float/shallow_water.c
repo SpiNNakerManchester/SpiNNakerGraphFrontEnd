@@ -163,13 +163,13 @@ typedef enum element_offsets {
 
 //! human readable for the location of keys in sdram
 typedef enum key_order {
-    NORTH = 0, NORTH_EAST = 1, EAST = 2, NORTH_WEST = 3, WEST = 4,
-    SOUTH_WEST = 5, SOUTH = 6, SOUTH_EAST = 7
+    NORTH = 0, NORTH_EAST = 1, EAST = 2, SOUTH_EAST = 3, SOUTH = 4,
+    SOUTH_WEST = 5, WEST = 6, NORTH_WEST = 7
 } key_order;
 
 //! \brief converts a int to a float via bit wise conversion
 //! \param[in] y: the int to convert
-//! \param[out] the converrted float
+//! \param[out] the converted float
 static inline float int_to_float( int data){
     union { float x; int y; } cast_union;
     cast_union.y = data;
@@ -444,13 +444,13 @@ void read_input_buffer(){
 //! \brief records the data into the recording region
 void record_state(){
     // record my state via sdram
-    recording_record(0, &my_current_p, SIZE_OF_DATA_ITEM);
-    recording_record(0, &my_current_u, SIZE_OF_DATA_ITEM);
-    recording_record(0, &my_current_v, SIZE_OF_DATA_ITEM);
-    recording_record(0, &my_cu, SIZE_OF_DATA_ITEM);
-    recording_record(0, &my_cv, SIZE_OF_DATA_ITEM);
-    recording_record(0, &my_z, SIZE_OF_DATA_ITEM);
-    recording_record(0, &my_h, SIZE_OF_DATA_ITEM);
+    recording_record(0, &float_to_int(my_current_p), SIZE_OF_DATA_ITEM);
+    recording_record(0, &float_to_int(my_current_u), SIZE_OF_DATA_ITEM);
+    recording_record(0, &float_to_int(my_current_v), SIZE_OF_DATA_ITEM);
+    recording_record(0, &float_to_int(my_cu), SIZE_OF_DATA_ITEM);
+    recording_record(0, &float_to_int(my_cv), SIZE_OF_DATA_ITEM);
+    recording_record(0, &float_to_int(my_z), SIZE_OF_DATA_ITEM);
+    recording_record(0, &float_to_int(my_h), SIZE_OF_DATA_ITEM);
     recording_do_timestep_update(time);
     log_info("recorded my state \n");
 }
@@ -467,7 +467,7 @@ void send_packet(uint32_t key, uint payload){
     }
 
     // Send the packet
-    while (!spin1_send_mc_packet(key, float_to_int(payload), WITH_PAYLOAD)) {
+    while (!spin1_send_mc_packet(key, payload, WITH_PAYLOAD)) {
         spin1_delay_us(1);
     }
 }
@@ -561,53 +561,59 @@ void send_p_u_v_states(){
 
 //! \brief calculates the cu for this atom
 void calculate_cu(){
-    my_cu = POINT_5 * (my_current_p + west_elements[P]) * my_current_u;
+    my_cu = POINT_5 * (my_current_p + south_elements[P]) * my_current_u;
 }
 
 //! \brief calculates the cv for this atom
 void calculate_cv(){
-    my_cv = POINT_5 * (my_current_p + south_elements[P]) * my_current_v;
+    my_cv = POINT_5 * (my_current_p + west_elements[P]) * my_current_v;
 }
 
 //! \brief calculates the z for this atom
 void calculate_z(){
     float numerator_bit =
-        (fsdx * (my_current_v - west_elements[V]) - fsdy *
-        (my_current_u - south_elements[U]));
+        (fsdx * (my_current_v - south_elements[V]) - fsdy *
+        (my_current_u - west_elements[U]));
     float denominator_bit =
-        (south_west_elements[P] + south_elements[P] + my_current_p +
-         west_elements[P]);
+        (south_west_elements[P] + west_elements[P] + my_current_p +
+         south_elements[P]);
     my_z = numerator_bit / denominator_bit;
 }
 
 //! \brief calculates the h for this atom
 void calculate_h(){
     my_h = my_current_p + POINT_025 * (
-        east_elements[U] * east_elements[U] + my_current_u * my_current_u +
-        north_elements[V] * north_elements[V] + my_current_v * my_current_v);
+        north_elements[U] * north_elements[U] + my_current_u * my_current_u +
+        east_elements[V] * east_elements[V] + my_current_v * my_current_v);
 }
 
 //! \brief calculates the new p value based off other values
 void calculate_new_p(float current_tdtsdx, float current_tdtsdy){
-    my_new_p = my_old_p - current_tdtsdx * (east_elements[CU] - my_cu) -
-        current_tdtsdy * (north_elements[CV] - my_cv);
+    my_new_p = my_old_p - current_tdtsdx * (north_elements[CU] - my_cu) -
+        current_tdtsdy * (east_elements[CV] - my_cv);
 }
 
 
 //! \brief calculates the new v value based off other values
 void calculate_new_v(float current_tdts_8, float current_tdtsdy){
-    my_new_v = my_old_v - current_tdts_8 * (east_elements[Z] + my_z) *
-        (east_elements[CU] + my_cu + south_elements[CU] +
-         south_east_elements[CU]) -
-         current_tdtsdy * (my_h - south_elements[H]);
+    my_new_v = my_old_v - current_tdts_8 * (north_elements[Z] + my_z) *
+        (north_elements[CU] + my_cu + west_elements[CU] +
+         north_west_elements[CU]) -
+         current_tdtsdy * (my_h - west_elements[H]);
+    log_info("%x, %x, %x, %x, %x, %x, %x, %x, %x", float_to_int(my_old_v),
+        float_to_int(north_elements[Z]), float_to_int(my_z),
+        float_to_int(north_elements[CU]), float_to_int(my_cu),
+        float_to_int(west_elements[CU]),
+        float_to_int(north_west_elements[CU]), float_to_int(my_h),
+        float_to_int(west_elements[H]));
 }
 
 
 //! \brief calculates the new u value based off other values
 void calculate_new_u(float current_tdts_8, float current_tdtsdx){
-    my_new_u = my_old_u + current_tdts_8 * (north_elements[Z] + my_z) *
-        (north_elements[CV] + north_west_elements[CV] + west_elements[CV] +
-         my_cv) - current_tdtsdx * (my_h - west_elements[H]);
+    my_new_u = my_old_u + current_tdts_8 * (east_elements[Z] + my_z) *
+        (east_elements[CV] + south_east_elements[CV] + south_elements[CV] +
+         my_cv) - current_tdtsdx * (my_h - south_elements[H]);
 }
 
 //! \brief moves values from new to current sets
@@ -701,6 +707,11 @@ void update(uint ticks, uint b) {
     }
     else{
         read_input_buffer();
+
+        // debug
+        print_my_states();
+        print_elements();
+
         calculate_new_internal_states(time == 0);
 
         // if first timer, no smoothing needed, just do transfer
@@ -831,14 +842,23 @@ void set_neighbour_keys(address_t address){
     
     address_t my_neighbour_state_region_address =
         data_specification_get_region(NEIGHBOUR_KEYS, address);
-    north_key = my_neighbour_state_region_address[SOUTH];
-    north_east_key = my_neighbour_state_region_address[SOUTH_WEST];
-    east_key = my_neighbour_state_region_address[WEST];
+    north_key = my_neighbour_state_region_address[NORTH];
+    north_east_key = my_neighbour_state_region_address[NORTH_EAST];
+    east_key = my_neighbour_state_region_address[EAST];
     south_east_key = my_neighbour_state_region_address[SOUTH_EAST];
     south_key = my_neighbour_state_region_address[SOUTH];
     south_west_key = my_neighbour_state_region_address[SOUTH_WEST];
     west_key = my_neighbour_state_region_address[WEST];
     north_west_key = my_neighbour_state_region_address[NORTH_WEST];
+
+    log_info("north key = %d", north_key);
+    log_info("north_east key = %d", north_east_key);
+    log_info("east key = %d", east_key);
+    log_info("south_east key = %d", south_east_key);
+    log_info("south key = %d", south_key);
+    log_info("south west key = %d", south_west_key);
+    log_info("west key = %d", west_key);
+    log_info("north_west key = %d", north_west_key);
 }
 
 

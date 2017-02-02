@@ -73,7 +73,7 @@ class WeatherRun(object):
 
         # Run the external command
         child = subprocess.Popen(
-            args, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            args, stdout=None, stderr=subprocess.PIPE,
             stdin=subprocess.PIPE)
         child.wait()
 
@@ -152,6 +152,34 @@ class WeatherRun(object):
         for x in range(0, MAX_X_SIZE_OF_FABRIC):
             for y in range(0, MAX_Y_SIZE_OF_FABRIC):
                 self._build_edges_for_vertex(x, y)
+
+        self._periodic_continuation()
+
+    def _periodic_continuation(self):
+        """ does some boundary case switching
+
+        :return: None
+        """
+        for j in range(0, MAX_Y_SIZE_OF_FABRIC - 1):
+            self._vertices[0][j].u = self._vertices[
+                MAX_X_SIZE_OF_FABRIC - 1][j].u
+            self._vertices[MAX_Y_SIZE_OF_FABRIC - 1][
+                (j + 1) % MAX_Y_SIZE_OF_FABRIC].v = \
+                self._vertices[0][(j + 1) % MAX_Y_SIZE_OF_FABRIC].v
+        for i in range(0, MAX_X_SIZE_OF_FABRIC - 1):
+            self._vertices[(i + 1) % MAX_Y_SIZE_OF_FABRIC][
+                MAX_X_SIZE_OF_FABRIC - 1].u = self._vertices[
+                (i + 1) % MAX_Y_SIZE_OF_FABRIC][0].u
+            self._vertices[i][0].v = self._vertices[0][
+                MAX_Y_SIZE_OF_FABRIC - 1].v
+
+        self._vertices[0][MAX_Y_SIZE_OF_FABRIC - 1].u = self._vertices[
+            MAX_X_SIZE_OF_FABRIC - 1][0].u
+        self._vertices[MAX_X_SIZE_OF_FABRIC - 1][0].v = self._vertices[
+            0][MAX_Y_SIZE_OF_FABRIC - 1].v
+
+
+
 
     @staticmethod
     def _print_constants():
@@ -296,18 +324,20 @@ class WeatherRun(object):
 
         # the 8 positions from neighbours
         positions = [
-            (x, (y + 1) % MAX_Y_SIZE_OF_FABRIC, "N"),
+            ((x + 1) % MAX_X_SIZE_OF_FABRIC, y, "N"),
             ((x + 1) % MAX_X_SIZE_OF_FABRIC,
              (y + 1) % MAX_Y_SIZE_OF_FABRIC, "NE"),
-            ((x + 1) % MAX_X_SIZE_OF_FABRIC, y, "E"),
-            ((x + 1) % MAX_X_SIZE_OF_FABRIC,
-             (y - 1) % MAX_Y_SIZE_OF_FABRIC, "SE"),
-            (x, (y - 1) % MAX_Y_SIZE_OF_FABRIC, "S"),
+            (x, (y + 1) % MAX_Y_SIZE_OF_FABRIC, "E"),
+            ((x - 1) % MAX_X_SIZE_OF_FABRIC,
+             (y + 1) % MAX_Y_SIZE_OF_FABRIC, "SE"),
+            ((x - 1) % MAX_X_SIZE_OF_FABRIC, y, "S"),
             ((x - 1) % MAX_X_SIZE_OF_FABRIC,
              (y - 1) % MAX_Y_SIZE_OF_FABRIC, "SW"),
-            ((x - 1) % MAX_X_SIZE_OF_FABRIC, y, "W"),
-            ((x - 1) % MAX_X_SIZE_OF_FABRIC,
-             (y + 1) % MAX_Y_SIZE_OF_FABRIC, "NW")]
+            (x, (y - 1) % MAX_Y_SIZE_OF_FABRIC, "W"),
+            ((x + 1) % MAX_X_SIZE_OF_FABRIC,
+             (y - 1) % MAX_Y_SIZE_OF_FABRIC, "NW")]
+
+        logger.info("positions = {}".format(positions))
 
         # build edges for each direction for this vertex
         for (dest_x, dest_y, compass) in positions:

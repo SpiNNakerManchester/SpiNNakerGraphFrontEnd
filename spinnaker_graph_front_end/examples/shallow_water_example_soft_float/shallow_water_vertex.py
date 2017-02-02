@@ -97,7 +97,8 @@ class ShallowWaterVertex(
     FALSE = 0
 
     # the order of which directions are written to sdram
-    ORDER_OF_DIRECTIONS = ["N", "NE", "E", "NW", "W", "SW", "S", "SE"]
+    # ORDER_OF_DIRECTIONS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+    ORDER_OF_DIRECTIONS = ["S", "SW", "W", "NW", "N", "NE", "E", "SE"]
 
     # model specific stuff
     _model_based_max_atoms_per_core = 1
@@ -464,7 +465,6 @@ class ShallowWaterVertex(
 
         testbytes = [hex(val) for val in bytearray(raw_data)]
         print testbytes
-
 
         # convert to float
         elements = struct.unpack(format_string, bytes(raw_data))
