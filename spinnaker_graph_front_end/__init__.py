@@ -19,7 +19,6 @@ from pacman.model.graphs.machine.impl.machine_edge \
 
 
 import logging
-import inspect
 import sys
 logger = logging.getLogger(__name__)
 
@@ -27,6 +26,7 @@ logger = logging.getLogger(__name__)
 _spinnaker = None
 _none_labelled_vertex_count = None
 _none_labelled_edge_count = None
+_magicRefsPEP8 = [LivePacketGather, ReverseIpTagMultiCastSource, MachineEdge]
 
 
 def setup(hostname=None, graph_label=None, model_binary_module=None,

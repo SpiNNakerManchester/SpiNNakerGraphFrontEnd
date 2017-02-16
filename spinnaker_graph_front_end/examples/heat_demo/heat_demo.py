@@ -185,6 +185,7 @@ def receive_heat(label, atom, value):
     print "{}: {}".format(label, value / 65536.0)
     condition.release()
 
+
 # Set up callbacks to occur when spikes are received
 for label in receive_labels:
     live_heat_connection.add_receive_callback(label, receive_heat)
