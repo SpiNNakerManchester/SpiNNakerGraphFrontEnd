@@ -15,7 +15,8 @@ import string
 import sys
 
 import spinnaker_graph_front_end
-from spinnaker_graph_front_end.utilities.conf import log
+from spinnaker_graph_front_end.utilities.conf.log import ConfiguredFilter
+from spinnaker_graph_front_end.utilities.conf.log import ConfiguredFormatter
 
 read = list()
 
@@ -86,8 +87,8 @@ try:
         logging.basicConfig(level=0)
 
     for handler in logging.root.handlers:
-        handler.addFilter(log.ConfiguredFilter(config))
-        handler.setFormatter(log.ConfiguredFormatter(config))
+        handler.addFilter(ConfiguredFilter(config))
+        handler.setFormatter(ConfiguredFormatter(config))
 except ConfigParser.NoSectionError:
     pass
 except ConfigParser.NoOptionError:
