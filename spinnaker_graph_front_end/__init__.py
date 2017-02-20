@@ -1,3 +1,8 @@
+import inspect
+import logging
+import os
+import sys
+
 # front end common imports
 from spinn_front_end_common.utilities.notification_protocol.socket_address \
     import SocketAddress
@@ -9,18 +14,15 @@ from spinnaker_graph_front_end._version import \
     __version__, __version_name__, __version_month__, __version_year__
 from spinnaker_graph_front_end.spinnaker import SpiNNaker
 
-# utility models for graph front ends
-from spinn_front_end_common.utility_models.live_packet_gather \
-    import LivePacketGather  # @IgnorePep8
-from spinn_front_end_common.utility_models.reverse_ip_tag_multi_cast_source \
-    import ReverseIpTagMultiCastSource  # @IgnorePep8
-from pacman.model.graphs.machine.impl.machine_edge \
-    import MachineEdge  # @IgnorePep8
+if os.environ.get('READTHEDOCS', None) != 'True':
+    # utility models for graph front ends
+    from spinn_front_end_common.utility_models.live_packet_gather \
+        import LivePacketGather  # @IgnorePep8
+    from spinn_front_end_common.utility_models.reverse_ip_tag_multi_cast_source \
+        import ReverseIpTagMultiCastSource  # @IgnorePep8
+    from pacman.model.graphs.machine.impl.machine_edge \
+        import MachineEdge  # @IgnorePep8
 
-
-import logging
-import inspect
-import sys
 logger = logging.getLogger(__name__)
 
 
