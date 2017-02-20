@@ -12,9 +12,9 @@ from spinn_front_end_common.utilities.utility_objs.executable_finder \
 # graph front end imports
 from spinnaker_graph_front_end._version import \
     __version__, __version_name__, __version_month__, __version_year__
-from spinnaker_graph_front_end.spinnaker import SpiNNaker
 
 if os.environ.get('READTHEDOCS', None) != 'True':
+    from spinnaker_graph_front_end.spinnaker import SpiNNaker
     # utility models for graph front ends
     from spinn_front_end_common.utility_models.live_packet_gather \
         import LivePacketGather  # @IgnorePep8
