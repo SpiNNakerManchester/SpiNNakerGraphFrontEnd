@@ -44,13 +44,15 @@ def create_directory(directory):
         shutil.rmtree(directory)
         os.makedirs(directory)
 
+
+# Create a config, read global defaults and then read in additional files
+config = ConfigParser.RawConfigParser()
+
 if os.environ.get('READTHEDOCS', None) == 'True':
     print "config creation prevented as in readthedocs"
 else:
     read = list()
 
-    # Create a config, read global defaults and then read in additional files
-    config = ConfigParser.RawConfigParser()
     default = os.path.join(
         os.path.dirname(spinnaker_graph_front_end.__file__),
         "spiNNakerGraphFrontEnd.cfg")
