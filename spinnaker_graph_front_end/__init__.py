@@ -1,4 +1,3 @@
-import inspect
 import logging
 import os
 import sys
@@ -16,12 +15,9 @@ from spinnaker_graph_front_end._version import \
 if os.environ.get('READTHEDOCS', None) != 'True':
     from spinnaker_graph_front_end.spinnaker import SpiNNaker
     # utility models for graph front ends
-    from spinn_front_end_common.utility_models.live_packet_gather \
-        import LivePacketGather  # @IgnorePep8
-    from spinn_front_end_common.utility_models.reverse_ip_tag_multi_cast_source \
-        import ReverseIpTagMultiCastSource  # @IgnorePep8
-    from pacman.model.graphs.machine.impl.machine_edge \
-        import MachineEdge  # @IgnorePep8
+    from spinn_front_end_common.utility_models.live_packet_gather import LivePacketGather  # NOQA
+    from spinn_front_end_common.utility_models.reverse_ip_tag_multi_cast_source import ReverseIpTagMultiCastSource  # NOQA
+    from pacman.model.graphs.machine.impl.machine_edge import MachineEdge  # NOQA
 
 logger = logging.getLogger(__name__)
 
