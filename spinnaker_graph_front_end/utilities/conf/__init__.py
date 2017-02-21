@@ -22,6 +22,10 @@ read = list()
 
 
 def _install_cfg():
+    if os.environ.get('READTHEDOCS', None) == 'True':
+        print "config file creation prevented as in readthedocs"
+        return
+
     template_cfg = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                 "spiNNakerGraphFrontEnd.cfg.template")
     home_cfg = os.path.expanduser("~/.spiNNakerGraphFrontEnd.cfg")
