@@ -360,5 +360,4 @@ for f in os.listdir("."):
     if (os.path.isfile(f) and f.endswith(
             ".rst") and f != "index.rst" and f != "modules.rst"):
         os.remove(f)
-apidoc.main([None, '-o', ".", "../../spinnaker_graph_front_end",
-             "../../spinnaker_graph_front_end/examples"])
+apidoc.main([None, '-o', ".", "../../spinnaker_graph_front_end"])
