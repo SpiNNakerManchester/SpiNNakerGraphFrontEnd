@@ -1,7 +1,8 @@
 These pages document the python code for the SpiNNakerGraphFrontEnd_ module
 which is part of the SpiNNaker_ Project.
 
-This code depends on SpiNNMachine_, SpiNNStorageHandlers_, SpiNNMan_, PACMAN_, DataSpecification_, SpiNNFrontEndCommon_.
+This code depends on SpiNNMachine_, SpiNNStorageHandlers_, SpiNNMan_, PACMAN_, DataSpecification_, SpiNNFrontEndCommon_
+(Combined_documentation_).
 
 .. _SpiNNaker: http://apt.cs.manchester.ac.uk/projects/SpiNNaker
 .. _SpiNNakerGraphFrontEnd: https://github.com/SpiNNakerManchester/SpiNNakerGraphFrontEnd
@@ -11,6 +12,7 @@ This code depends on SpiNNMachine_, SpiNNStorageHandlers_, SpiNNMan_, PACMAN_, D
 .. _PACMAN: http://pacman.readthedocs.io
 .. _DataSpecification: http://dataspecification.readthedocs.io
 .. _SpiNNFrontEndCommon: http://spinnfrontendcommon.readthedocs.io
+.. _Combined_documentation: http://spinnakermanchester.readthedocs.io
 
 SpiNNakerGraphFrontEnd
 ======================
