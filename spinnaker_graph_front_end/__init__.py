@@ -244,7 +244,7 @@ def add_machine_vertex_instance(vertex_to_add):
     """
 
     :param vertex_to_add: the vertex to add to the partitioned graph
-    :return: None
+    :rtype: None
     """
     global _spinnaker
     _spinnaker.add_machine_vertex(vertex_to_add)
