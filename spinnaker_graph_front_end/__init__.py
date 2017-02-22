@@ -304,6 +304,7 @@ def add_socket_address(
         database_ack_port_num, database_notify_host, database_notify_port_num):
     """
     adds a socket address for the notification protocol
+
     :param database_ack_port_num: port num to send acknowledgement to
     :param database_notify_host: host ip to send notification to
     :param database_notify_port_num: port that the external device will be
