@@ -36,6 +36,7 @@ def _install_cfg():
     print "************************************"
     sys.exit(0)
 
+
 # creates a directory if needed, or deletes it and rebuilds it
 def create_directory(directory):
     if not os.path.exists(directory):
