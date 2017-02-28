@@ -37,6 +37,7 @@ def _install_cfg():
     print "************************************"
     sys.exit(0)
 
+
 # Create a config, read global defaults and then read in additional files
 config = ConfigParser.RawConfigParser()
 default = os.path.join(

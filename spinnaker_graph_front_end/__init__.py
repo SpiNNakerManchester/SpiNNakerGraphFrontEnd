@@ -11,22 +11,34 @@ from spinnaker_graph_front_end.spinnaker import SpiNNaker
 
 # utility models for graph front ends
 from spinn_front_end_common.utility_models.live_packet_gather \
-    import LivePacketGather  # @IgnorePep8
+    import LivePacketGather
 from spinn_front_end_common.utility_models.reverse_ip_tag_multi_cast_source \
-    import ReverseIpTagMultiCastSource  # @IgnorePep8
+    import ReverseIpTagMultiCastSource
 from pacman.model.graphs.machine.impl.machine_edge \
-    import MachineEdge  # @IgnorePep8
+    import MachineEdge
 
+from spinnaker_graph_front_end import spinnaker
 
+import os
 import logging
-import inspect
 import sys
-logger = logging.getLogger(__name__)
 
+logger = logging.getLogger(__name__)
 
 _spinnaker = None
 _none_labelled_vertex_count = None
 _none_labelled_edge_count = None
+
+__all__ = ['LivePacketGather', 'ReverseIpTagMultiCastSource', 'MachineEdge',
+           'setup', 'run', 'stop', 'read_xml_file', 'add_vertex_instance',
+           'add_vertex', 'add_machine_vertex', 'add_machine_vertex_instance',
+           'add_edge', 'add_application_edge_instance', 'add_machine_edge',
+           'add_machine_edge_instance', 'add_socket_address', 'get_txrx',
+           'get_machine_dimensions', 'get_number_of_cores_on_machine',
+           'has_ran', 'machine_time_step', 'no_machine_time_steps',
+           'timescale_factor', 'machine_graph', 'application_graph',
+           'routing_infos', 'placements', 'transceiver', 'graph_mapper',
+           'buffer_manager', 'machine', 'is_allocated_machine']
 
 
 def setup(hostname=None, graph_label=None, model_binary_module=None,
@@ -79,8 +91,6 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         could be post processing of generated data on the machine for example.
     :type extra_pre_run_algorithms: list of str
     """
-    from spinnaker_graph_front_end import spinnaker
-    import os
     global _spinnaker
     global _none_labelled_vertex_count
     global _none_labelled_edge_count
@@ -88,8 +98,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
     logger.info(
         "SpiNNaker graph front end (c) {}, "
         "University of Manchester".format(__version_year__))
-    parent_dir = os.path.split(os.path.split(
-        spinnaker.__file__)[0])[0]
+    parent_dir = os.path.split(os.path.split(spinnaker.__file__)[0])[0]
     logger.info(
         "Release version {}({}) - {} {}. Installed in folder {}".format(
             __version__, __version_name__, __version_month__, __version_year__,
