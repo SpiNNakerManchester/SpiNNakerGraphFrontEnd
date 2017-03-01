@@ -2,8 +2,6 @@ from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex\
     import MachineDataSpecableVertex
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary\
     import AbstractHasAssociatedBinary
-from spinn_front_end_common.abstract_models\
-    .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
 from spinn_front_end_common.interface.buffer_management.buffer_models\
     .abstract_receive_buffers_to_host import AbstractReceiveBuffersToHost
 from spinn_front_end_common.utilities import helpful_functions
@@ -21,12 +19,13 @@ from pacman.model.resources.sdram_resource import SDRAMResource
 
 from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.interface.simulation import simulation_utilities
+from spinn_front_end_common.utilities.utility_objs.executable_start_type \
+    import ExecutableStartType
 from spinnaker_graph_front_end.utilities.conf import config
 
 from enum import Enum
 
 import logging
-from spinnman.model.enums.executable_start_type import ExecutableStartType
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +34,7 @@ PARTITION_ID = "DATA"
 
 class Vertex(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-        AbstractReceiveBuffersToHost, AbstractBinaryUsesSimulationRun):
+        AbstractReceiveBuffersToHost):
 
     # The number of bytes for the has_key flag and the key
     TRANSMISSION_REGION_N_BYTES = 2 * 4
@@ -89,8 +88,8 @@ class Vertex(
     def get_binary_file_name(self):
         return "c_code.aplx"
 
-    @overrides(AbstractHasAssociatedBinary.get_binary_start_mode_enum)
-    def get_binary_start_mode_enum(self):
+    @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
+    def get_binary_start_type(self):
         return ExecutableStartType.USES_SIMULATION_INTERFACE
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)

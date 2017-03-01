@@ -33,18 +33,6 @@ class SpiNNaker(SpinnakerMainInterface):
         extra_mapping_inputs["CreateAtomToEventIdMapping"] = config.getboolean(
             "Database", "create_routing_info_to_atom_id_mapping")
 
-        # defaults from cfg for router compressor on chip
-        extra_mapping_inputs['RecordIOBufOnChipRouterCompressorFlag'] = \
-            config.getboolean("OnChipRouterCompressor",
-                              "record_iobuf_from_on_chip_router_compressor")
-        extra_mapping_inputs['RouterCompressorOnlyCompressWhenNeededFlag'] = \
-            config.getboolean(
-                "OnChipRouterCompressor",
-                "on_chip_router_compressor_compress_only_when_needed")
-        extra_mapping_inputs['RouterCompressorUseDefaultTargetLength'] = \
-            config.getboolean(
-                "OnChipRouterCompressor", "compress_as_much_as_possible")
-
         SpinnakerMainInterface.__init__(
             self, config, graph_label=graph_label,
             executable_finder=executable_finder,
@@ -76,8 +64,6 @@ class SpiNNaker(SpinnakerMainInterface):
 
         logger.info("Setting time scale factor to {}."
                     .format(self._time_scale_factor))
-
-        logger.info("Setting appID to %d." % self._app_id)
 
         # get the machine time step
         logger.info("Setting machine time step to {} micro-seconds."
