@@ -105,11 +105,8 @@ class ConwayBasicCell(
                 "Can only handle one type of partition. ")
 
         # check for duplicates
-        edges = machine_graph.get_edges_ending_at_vertex(self)
-        empty_list = set()
-        for edge in edges:
-            empty_list.add(edge.pre_vertex.label)
-        if len(empty_list) != 8:
+        edges = list(machine_graph.get_edges_ending_at_vertex(self))
+        if len(set(edges)) != 8:
             output = ""
             for edge in edges:
                 output += edge.pre_subvertex.label + " : "
@@ -117,7 +114,7 @@ class ConwayBasicCell(
                 "I've got duplicate edges. This is a error. The edges are "
                 "connected to these vertices \n {}".format(output))
 
-        if len(machine_graph.get_edges_ending_at_vertex(self)) != 8:
+        if len(edges) != 8:
             raise exceptions.ConfigurationException(
                 "I've not got the right number of connections. I have {} "
                 "instead of 9".format(
@@ -155,7 +152,7 @@ class ConwayBasicCell(
             region=self.DATA_REGIONS.NEIGHBOUR_INITIAL_STATES.value)
         alive = 0
         dead = 0
-        for edge in machine_graph.get_edges_ending_at_vertex(self):
+        for edge in edges:
             state = edge.pre_vertex.state
             if state:
                 alive += 1
