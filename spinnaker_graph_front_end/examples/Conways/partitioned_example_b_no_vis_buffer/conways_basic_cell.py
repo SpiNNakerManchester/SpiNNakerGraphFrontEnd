@@ -6,6 +6,7 @@ from pacman.model.resources.cpu_cycles_per_tick_resource import \
     CPUCyclesPerTickResource
 from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.sdram_resource import SDRAMResource
+from pacman.utilities import utility_calls
 
 # spinn front end common imports
 from spinn_front_end_common.utilities import constants
@@ -116,16 +117,13 @@ class ConwayBasicCell(
         # check got right number of keys and edges going into me
         partitions = \
             machine_graph.get_outgoing_edge_partitions_starting_at_vertex(self)
-        if len(partitions) != 1:
+        if not utility_calls.is_single(partitions):
             raise exceptions.ConfigurationException(
                 "Can only handle one type of partition. ")
 
         # check for duplicates
-        edges = machine_graph.get_edges_ending_at_vertex(self)
-        empty_list = set()
-        for edge in edges:
-            empty_list.add(edge.pre_vertex.label)
-        if len(empty_list) != 8:
+        edges = list(machine_graph.get_edges_ending_at_vertex(self))
+        if len(set(edges)) != 8:
             output = ""
             for edge in edges:
                 output += edge.pre_vertex.label + " : "
@@ -133,7 +131,7 @@ class ConwayBasicCell(
                 "I've got duplicate edges. This is a error. The edges are "
                 "connected to these vertices \n {}".format(output))
 
-        if len(machine_graph.get_edges_ending_at_vertex(self)) != 8:
+        if len(edges) != 8:
             raise exceptions.ConfigurationException(
                 "I've not got the right number of connections. I have {} "
                 "instead of 9".format(
@@ -171,7 +169,7 @@ class ConwayBasicCell(
             region=self.DATA_REGIONS.NEIGHBOUR_INITIAL_STATES.value)
         alive = 0
         dead = 0
-        for edge in machine_graph.get_edges_ending_at_vertex(self):
+        for edge in edges:
             state = edge.pre_vertex.state
             if state:
                 alive += 1
