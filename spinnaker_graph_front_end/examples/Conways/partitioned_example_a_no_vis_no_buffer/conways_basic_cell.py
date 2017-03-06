@@ -9,6 +9,7 @@ from pacman.model.resources.cpu_cycles_per_tick_resource import \
     CPUCyclesPerTickResource
 from pacman.model.resources.dtcm_resource import DTCMResource
 from pacman.model.resources.sdram_resource import SDRAMResource
+from pacman.utilities import utility_calls
 
 # spinn front end common imports
 from spinn_front_end_common.utilities import constants
@@ -100,7 +101,7 @@ class ConwayBasicCell(
         # check got right number of keys and edges going into me
         partitions = \
             machine_graph.get_outgoing_edge_partitions_starting_at_vertex(self)
-        if len(partitions) != 1:
+        if not utility_calls.is_single(partitions):
             raise exceptions.ConfigurationException(
                 "Can only handle one type of partition. ")
 
