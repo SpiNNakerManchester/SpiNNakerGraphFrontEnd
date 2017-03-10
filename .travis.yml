@@ -7,13 +7,20 @@ matrix:
 virtualenv:
   system_site_packages: true
 
-install:
+cache: pip
+
+before_install:
+  - pip install --upgrade pip setuptools wheel
+  - pip install --only-binary=numpy,scipy numpy scipy
+  # SpiNNakerManchester internal dependencies; development mode
   - pip install --upgrade git+git://github.com/SpiNNakerManchester/SpiNNMachine.git@master
   - pip install --upgrade git+git://github.com/SpiNNakerManchester/SpiNNMan.git@master
   - pip install --upgrade git+git://github.com/SpiNNakerManchester/SpiNNStorageHandlers.git@master
   - pip install --upgrade git+git://github.com/SpiNNakerManchester/PACMAN.git@master
   - pip install --upgrade git+git://github.com/SpiNNakerManchester/DataSpecification.git@master
   - pip install --upgrade git+git://github.com/SpiNNakerManchester/SpiNNFrontEndCommon.git@master
+
+install:
   - pip install -r requirements-test.txt
   - python ./setup.py install
 
