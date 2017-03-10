@@ -1,4 +1,6 @@
-from pacman.model.resources.resource_container import ResourceContainer
+from pacman.model.graphs.machine import SimpleMachineVertex
+from pacman.model.resources import ResourceContainer
+
 from spinn_front_end_common.abstract_models\
     .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary\
@@ -8,8 +10,6 @@ from spinn_front_end_common.abstract_models\
     import AbstractGeneratesDataSpecification
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utilities import constants
-from pacman.model.graphs.machine.impl.simple_machine_vertex \
-    import SimpleMachineVertex
 
 
 class TestRunVertex(

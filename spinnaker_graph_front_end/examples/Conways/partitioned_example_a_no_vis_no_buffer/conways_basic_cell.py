@@ -3,12 +3,9 @@ from pacman.model.decorators.overrides import overrides
 
 from pacman.executor.injection_decorator import requires_injection, \
     supports_injection
-from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
-from pacman.model.resources.resource_container import ResourceContainer
-from pacman.model.resources.cpu_cycles_per_tick_resource import \
-    CPUCyclesPerTickResource
-from pacman.model.resources.dtcm_resource import DTCMResource
-from pacman.model.resources.sdram_resource import SDRAMResource
+from pacman.model.graphs.machine import MachineVertex
+from pacman.model.resources import ResourceContainer, CPUCyclesPerTickResource
+from pacman.model.resources import DTCMResource, SDRAMResource
 
 # spinn front end common imports
 from spinn_front_end_common.utilities import constants
@@ -225,4 +222,4 @@ class ConwayBasicCell(
                 self._n_machine_time_steps + 4)
 
     def __repr__(self):
-        return self._label
+        return self.label

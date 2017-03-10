@@ -1,4 +1,5 @@
-from pacman.model.resources.resource_container import ResourceContainer
+from pacman.model.resources import ResourceContainer
+from pacman.model.graphs.machine import SimpleMachineVertex
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary\
     import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models\
@@ -6,8 +7,6 @@ from spinn_front_end_common.abstract_models\
     import AbstractGeneratesDataSpecification
 from spinn_front_end_common.abstract_models.abstract_starts_synchronized\
     import AbstractStartsSynchronized
-from pacman.model.graphs.machine.impl.simple_machine_vertex \
-    import SimpleMachineVertex
 
 
 class TestNormalVertex(
