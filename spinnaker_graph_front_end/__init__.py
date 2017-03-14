@@ -307,7 +307,7 @@ def add_socket_address(
 
     :param database_ack_port_num: port num to send acknowledgement to
     :param database_notify_host: host ip to send notification to
-    :param database_notify_port_num: port that the external device will be
+    :param database_notify_port_num: port that the external device will be\
         notified on.
     """
     global _spinnaker
