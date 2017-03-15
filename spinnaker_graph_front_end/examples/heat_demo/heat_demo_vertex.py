@@ -20,8 +20,7 @@ from spinn_front_end_common.utility_models.live_packet_gather import \
     LivePacketGather
 from spinn_front_end_common.utility_models.\
     reverse_ip_tag_multi_cast_source import ReverseIpTagMultiCastSource
-from spinn_front_end_common.utilities import constants
-from spinn_front_end_common.utilities import exceptions
+from spinn_front_end_common.utilities import constants, exceptions
 from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
     import MachineDataSpecableVertex
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
@@ -84,10 +83,6 @@ class HeatDemoVertex(
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
-        """
-
-        :return:
-        """
         return "heat_demo.aplx"
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
@@ -142,7 +137,6 @@ class HeatDemoVertex(
 
         :param spec:
         :param system_size:
-        :return:
         """
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.SYSTEM.value,
@@ -166,7 +160,7 @@ class HeatDemoVertex(
         :param spec:
         :param routing_info:
         :param graph:
-        :return:
+        :rtype: None
         """
 
         # Every edge should have the same key
@@ -196,7 +190,7 @@ class HeatDemoVertex(
         :param spec:
         :param routing_info:
         :param graph:
-        :return:
+        :rtype: None
         """
         spec.switch_write_focus(region=self.DATA_REGIONS.NEIGHBOUR_KEYS.value)
 

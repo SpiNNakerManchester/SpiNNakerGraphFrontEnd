@@ -20,10 +20,6 @@ class HeatDemoEdge(MachineEdge):
 
     @property
     def direction(self):
-        """
-
-        :return:
-        """
         return self._direction
 
     def __str__(self):
