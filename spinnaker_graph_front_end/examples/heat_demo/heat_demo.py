@@ -65,7 +65,7 @@ live_gatherer = front_end.add_machine_vertex(
         'message_type': EIEIOType.KEY_PAYLOAD_32_BIT
     }
 )
-live_gatherer.add_constraint(PlacerChipAndCoreConstraint(0, 0, 1))
+live_placed = False
 
 # Create a list of lists of vertices (x * 4) by (y * 4)
 # (for 16 cores on a chip - missing cores will have missing vertices)
@@ -88,19 +88,24 @@ for x in range(0, max_x_element_id):
         chip = machine.get_chip_at(chip_x, chip_y)
         if chip is not None:
             core = chip.get_processor_with_id(core_p)
-            if (core is not None and not core.is_monitor and
-                    not (chip_x == 0 and chip_y == 0 and core_p == 1)):
-                element = front_end.add_machine_vertex(
-                    HeatDemoVertex,
-                    {
-                        'machine_time_step': machine_time_step,
-                        'time_scale_factor': time_scale_factor
-                    },
-                    label="Heat Element {}, {}".format(
-                        x, y))
-                vertices[x][y] = element
-                vertices[x][y].add_constraint(PlacerChipAndCoreConstraint(
-                    chip_x, chip_y, core_p))
+            if (core is not None and not core.is_monitor):
+
+                if not live_placed:
+                    live_gatherer.add_constraint(
+                        PlacerChipAndCoreConstraint(chip_x, chip_y, core_p))
+                    live_placed = True
+                else:
+                    element = front_end.add_machine_vertex(
+                        HeatDemoVertex,
+                        {
+                            'machine_time_step': machine_time_step,
+                            'time_scale_factor': time_scale_factor
+                        },
+                        label="Heat Element {}, {}".format(
+                            x, y))
+                    vertices[x][y] = element
+                    vertices[x][y].add_constraint(
+                        PlacerChipAndCoreConstraint(chip_x, chip_y, core_p))
 
 # build edges
 receive_labels = list()
