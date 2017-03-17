@@ -36,8 +36,11 @@ extensions = [
     'sphinx.ext.intersphinx'
 ]
 
+ds_link = 'http://dataspecification.readthedocs.io/en/latest/'
+fe_link = 'http://spinnfrontendcommon.readthedocs.io/en/latest/'
+
 intersphinx_mapping = {'spinn_machine':
-                       ('http://spinnmachine.readthedocs.org/en/latest/',
+                       ('http://spinnmachine.readthedocs.io/en/latest/',
                            None),
                        'spinn_storage_handlers':
                            ('http://spinnmachine.readthedocs.io/en/latest/',
@@ -47,12 +50,8 @@ intersphinx_mapping = {'spinn_machine':
                             None),
                        'pacman': ('http://pacman.readthedocs.io/en/latest/',
                                   None),
-                       'data_specification':
-                           ('http://dataspecification.readthedocs.io\
-                            /en/latest/', None),
-                       'spinn_front_end_common':
-                           ('http://spinnfrontendcommon.readthedocs.io\
-                           /en/latest/', None)
+                       'data_specification': (ds_link, None),
+                       'spinn_front_end_common': (fe_link, None)
                        }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -361,4 +360,5 @@ for f in os.listdir("."):
     if (os.path.isfile(f) and f.endswith(
             ".rst") and f != "index.rst" and f != "modules.rst"):
         os.remove(f)
-apidoc.main([None, '-o', ".", "../../spinnaker_graph_front_end"])
+apidoc.main([None, '-o', ".", "../../spinnaker_graph_front_end",
+             "../../spinnaker_graph_front_end/examples"])

@@ -71,7 +71,6 @@ class SpiNNaker(SpinnakerMainInterface):
 
     def get_machine_dimensions(self):
         """ Get the machine dimensions
-        :return:
         """
         machine = self.machine
 
@@ -91,7 +90,7 @@ class SpiNNaker(SpinnakerMainInterface):
 
         :param socket_address: the socket address
         :type socket_address:
-        :return:
+        :rtype: None
         """
         self._add_socket_address(socket_address)
 
