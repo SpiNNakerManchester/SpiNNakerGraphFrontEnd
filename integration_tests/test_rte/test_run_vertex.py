@@ -1,6 +1,4 @@
 from pacman.model.resources.resource_container import ResourceContainer
-from spinn_front_end_common.abstract_models\
-    .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary\
     import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models\
@@ -14,14 +12,18 @@ from pacman.model.graphs.machine.impl.simple_machine_vertex \
 
 class TestRunVertex(
         SimpleMachineVertex, AbstractHasAssociatedBinary,
-        AbstractBinaryUsesSimulationRun, AbstractGeneratesDataSpecification):
+        AbstractGeneratesDataSpecification):
 
-    def __init__(self, aplx_file):
+    def __init__(self, aplx_file, executable_type):
         SimpleMachineVertex.__init__(self, ResourceContainer())
         self._aplx_file = aplx_file
+        self._executable_type = executable_type
 
     def get_binary_file_name(self):
         return self._aplx_file
+
+    def get_binary_start_type(self):
+        return self._executable_type
 
     def generate_data_specification(self, spec, placement):
         spec.reserve_memory_region(0, constants.SYSTEM_BYTES_REQUIREMENT)
