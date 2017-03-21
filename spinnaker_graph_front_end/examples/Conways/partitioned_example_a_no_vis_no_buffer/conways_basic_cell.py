@@ -2,7 +2,7 @@
 from pacman.model.decorators.overrides import overrides
 
 from pacman.executor.injection_decorator import requires_injection, \
-    supports_injection
+    supports_injection, inject
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, CPUCyclesPerTickResource
 from pacman.model.resources import DTCMResource, SDRAMResource
@@ -54,7 +54,6 @@ class ConwayBasicCell(
             cpu_cycles=CPUCyclesPerTickResource(0))
 
         MachineVertex.__init__(self, resources, label)
-        NeedsNMachineTimeSteps.__init__(self)
 
         # app specific elements
         self._state = state
@@ -220,3 +219,7 @@ class ConwayBasicCell(
 
     def __repr__(self):
         return self.label
+
+    @inject("TotalMachineTimeSteps")
+    def set_n_machine_time_steps(self, n_machine_time_steps):
+        self._n_machine_time_steps = n_machine_time_steps
