@@ -69,8 +69,8 @@ live_gatherer.add_constraint(PlacerChipAndCoreConstraint(0, 0, 1))
 
 # Create a list of lists of vertices (x * 4) by (y * 4)
 # (for 16 cores on a chip - missing cores will have missing vertices)
-max_x_element_id = (machine.max_chip_x + 1) * 4
-max_y_element_id = (machine.max_chip_y + 1) * 4
+max_x_element_id = 2 * 4
+max_y_element_id = 2 * 4
 vertices = [
     [None for j in range(max_y_element_id)]
     for i in range(max_x_element_id)
