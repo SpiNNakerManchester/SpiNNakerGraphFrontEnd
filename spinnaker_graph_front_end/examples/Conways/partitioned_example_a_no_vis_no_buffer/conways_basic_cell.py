@@ -14,12 +14,13 @@ from spinn_front_end_common.utilities \
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.abstract_models.impl.needs_n_machine_time_steps\
     import NeedsNMachineTimeSteps
-from spinn_front_end_common.abstract_models\
-    .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
 from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
     import MachineDataSpecableVertex
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
     import AbstractHasAssociatedBinary
+from spinn_front_end_common.utilities.utility_objs.executable_start_type \
+    import ExecutableStartType
+
 
 # general imports
 from enum import Enum
@@ -29,7 +30,7 @@ import struct
 @supports_injection
 class ConwayBasicCell(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-        NeedsNMachineTimeSteps, AbstractBinaryUsesSimulationRun):
+        NeedsNMachineTimeSteps):
     """ Cell which represents a cell within the 2d fabric
     """
 
@@ -54,6 +55,8 @@ class ConwayBasicCell(
             cpu_cycles=CPUCyclesPerTickResource(0))
 
         MachineVertex.__init__(self, resources, label)
+        MachineVertex.__init__(self, label)
+        NeedsNMachineTimeSteps.__init__(self)
 
         # app specific elements
         self._state = state
@@ -61,6 +64,10 @@ class ConwayBasicCell(
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
         return "conways_cell.aplx"
+
+    @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
+    def get_binary_start_type(self):
+        return ExecutableStartType.USES_SIMULATION_INTERFACE
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
