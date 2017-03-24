@@ -144,7 +144,7 @@ class ConwayBasicCell(
                     " please fix.")
 
         # write key needed to transmit with
-        key = routing_info.get_first_key_from_partition(partitions[0])
+        key = routing_info.get_first_key_from_partition(next(iter(partitions)))
 
         spec.switch_write_focus(
             region=self.DATA_REGIONS.TRANSMISSIONS.value)
@@ -249,4 +249,4 @@ class ConwayBasicCell(
     @overrides(AbstractReceiveBuffersToHost.get_recording_region_base_address)
     def get_recording_region_base_address(self, txrx, placement):
         return helpful_functions.locate_memory_region_for_placement(
-            placement, self.DATA_REGIONS.RECORDED_DATA.value, txrx)
+            placement, self.DATA_REGIONS.RESULTS.value, txrx)
