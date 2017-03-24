@@ -316,9 +316,28 @@ def read_output(visualiser, out):
     os._exit(0)
 
 
+ini_file = open("heatmap.ini", "w")
+ini_file.write("simparams = \"HEATMAP\";\n")
+ini_file.write("HEATMAP =\n")
+ini_file.write("{\n")
+ini_file.write("TITLE = \"Heat Demo - Live SpiNNaker Plot\";\n")
+ini_file.write("XDIMENSIONS={};\n".format(max_x_element_id))
+ini_file.write("EACHCHIPX=4;\n")
+ini_file.write("YDIMENSIONS={};\n".format(max_y_element_id))
+ini_file.write("EACHCHIPY=4;\n")
+ini_file.write("PLAYPAUSEEXIT=0;\n")
+ini_file.write("INTERACTION=1;\n")
+ini_file.write("DISPLAYMINIPLOT=0;\n")
+ini_file.write("WINHEIGHT=600;\n")
+ini_file.write("WINWIDTH=550;\n")
+ini_file.write("KEYWIDTH=50;\n")
+ini_file.write("DISPLAYKEY=1;\n")
+ini_file.write("};")
+ini_file.close()
+
 print "Executing", visualiser
 vis_exec = subprocess.Popen(
-    args=[visualiser, "-c", "heatmap2x2.ini", "-ip", boot_chip.ip_address],
+    args=[visualiser, "-c", "heatmap.ini", "-ip", boot_chip.ip_address],
     stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1)
 Thread(target=read_output, args=[vis_exec, vis_exec.stdout]).start()
 
