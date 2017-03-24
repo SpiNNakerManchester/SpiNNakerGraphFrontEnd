@@ -84,8 +84,8 @@ for chip in machine.ethernet_connected_chips:
 max_x_element_id = (machine.max_chip_x + 1) * 4
 max_y_element_id = (machine.max_chip_y + 1) * 4
 vertices = [
-    [None for j in range(max_x_element_id)]
-    for i in range(max_y_element_id)
+    [None for j in range(max_y_element_id)]
+    for i in range(max_x_element_id)
 ]
 
 receive_labels = list()
