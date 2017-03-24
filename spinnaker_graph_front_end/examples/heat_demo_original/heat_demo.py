@@ -315,6 +315,7 @@ def read_output(visualiser, out):
         pass
     os._exit(0)
 
+
 print "Executing", visualiser
 vis_exec = subprocess.Popen(
     args=[visualiser, "-c", "heatmap2x2.ini", "-ip", boot_chip.ip_address],
