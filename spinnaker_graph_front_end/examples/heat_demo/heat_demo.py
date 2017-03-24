@@ -41,7 +41,7 @@ database_listen_port = 19998
 
 n_chips_required = None
 if front_end.is_allocated_machine():
-    n_chips_required = 2
+    n_chips_required = (5 * 48) + 1
 
 
 # set up the front end and ask for the detected machines dimensions
@@ -179,21 +179,21 @@ for x in range(0, max_x_element_id):
 
 
 # Set up the live connection for receiving heat elements
-live_heat_connection = LiveEventConnection(
-    live_gatherer_label, receive_labels=receive_labels, local_port=notify_port,
-    machine_vertices=True)
-condition = Condition()
-
-
-def receive_heat(label, atom, value):
-    condition.acquire()
-    print "{}: {}".format(label, value / 65536.0)
-    condition.release()
-
-
-# Set up callbacks to occur when spikes are received
-for label in receive_labels:
-    live_heat_connection.add_receive_callback(label, receive_heat)
+# live_heat_connection = LiveEventConnection(
+#     live_gatherer_label, receive_labels=receive_labels, local_port=notify_port,
+#     machine_vertices=True)
+# condition = Condition()
+#
+#
+# def receive_heat(label, atom, value):
+#     condition.acquire()
+#     print "{}: {}".format(label, value / 65536.0)
+#     condition.release()
+#
+#
+# # Set up callbacks to occur when spikes are received
+# for label in receive_labels:
+#     live_heat_connection.add_receive_callback(label, receive_heat)
 
 front_end.run(1000)
 front_end.stop()

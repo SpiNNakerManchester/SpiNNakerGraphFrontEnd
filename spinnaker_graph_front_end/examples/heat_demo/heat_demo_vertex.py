@@ -292,6 +292,6 @@ class HeatDemoVertex(
         else:
             for _ in range(0, 3):
                 spec.write_value(data_type=DataType.INT32, data=-1)
-            logger.warn(
-                "Set up to not use commands. If commands are needed, "
-                "Please create a command sender and wire it to this vertex.")
+#             logger.warn(
+#                 "Set up to not use commands. If commands are needed, "
+#                 "Please create a command sender and wire it to this vertex.")
