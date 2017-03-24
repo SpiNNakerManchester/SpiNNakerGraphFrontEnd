@@ -150,7 +150,7 @@ for x in range(0, max_x_element_id):
                     semantic_label="TRANSMISSION")
 
             # Add an east link if not at the right
-            if (x + 1) < max_y_element_id and vertices[x + 1][y] is not None:
+            if (x + 1) < max_x_element_id and vertices[x + 1][y] is not None:
                 front_end.add_machine_edge(
                     HeatDemoEdge,
                     {

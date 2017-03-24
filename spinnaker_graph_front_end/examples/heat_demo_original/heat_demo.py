@@ -187,8 +187,8 @@ boot_chip = machine.boot_chip
 max_x_element_id = (machine.max_chip_x + 1) * 4
 max_y_element_id = (machine.max_chip_y + 1) * 4
 vertices = [
-    [None for j in range(max_x_element_id)]
-    for i in range(max_y_element_id)
+    [None for j in range(max_y_element_id)]
+    for i in range(max_x_element_id)
 ]
 
 control_vertex = None
@@ -258,7 +258,7 @@ for x in range(0, max_x_element_id):
                 vertices[x][y].set_north_vertex(vertices[x][y + 1])
 
             # Add an east link if not at the right
-            if (x + 1) < max_y_element_id and vertices[x + 1][y] is not None:
+            if (x + 1) < max_x_element_id and vertices[x + 1][y] is not None:
                 front_end.add_machine_edge_instance(
                     MachineEdge(vertices[x][y], vertices[x + 1][y]),
                     _PARTITION_NAME)
