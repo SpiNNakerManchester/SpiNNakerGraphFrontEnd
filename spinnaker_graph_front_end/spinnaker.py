@@ -65,15 +65,12 @@ class SpiNNaker(SpinnakerMainInterface):
         logger.info("Setting time scale factor to {}."
                     .format(self._time_scale_factor))
 
-        logger.info("Setting appID to %d." % self._app_id)
-
         # get the machine time step
         logger.info("Setting machine time step to {} micro-seconds."
                     .format(self._machine_time_step))
 
     def get_machine_dimensions(self):
         """ Get the machine dimensions
-        :return:
         """
         machine = self.machine
 
@@ -93,7 +90,7 @@ class SpiNNaker(SpinnakerMainInterface):
 
         :param socket_address: the socket address
         :type socket_address:
-        :return:
+        :rtype: None
         """
         self._add_socket_address(socket_address)
 
