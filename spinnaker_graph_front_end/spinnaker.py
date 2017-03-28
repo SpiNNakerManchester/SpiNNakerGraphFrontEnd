@@ -35,7 +35,6 @@ class SpiNNaker(SpinnakerMainInterface):
 
         SpinnakerMainInterface.__init__(
             self, config,
-            config_default_name="spiNNakerGraphFrontEnd.cfg",
             graph_label=graph_label,
             executable_finder=executable_finder,
             database_socket_addresses=database_socket_addresses,
