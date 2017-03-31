@@ -1,9 +1,6 @@
-from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
-from pacman.model.resources.resource_container import ResourceContainer
-from pacman.model.resources.cpu_cycles_per_tick_resource import \
-    CPUCyclesPerTickResource
-from pacman.model.resources.dtcm_resource import DTCMResource
-from pacman.model.resources.sdram_resource import SDRAMResource
+from pacman.model.graphs.machine import MachineVertex
+from pacman.model.resources import ResourceContainer, CPUCyclesPerTickResource
+from pacman.model.resources import DTCMResource, SDRAMResource
 
 
 class ConwayBasicCell(MachineVertex):
@@ -11,7 +8,6 @@ class ConwayBasicCell(MachineVertex):
     """
 
     def __init__(self, label):
-
         resources = ResourceContainer(sdram=SDRAMResource(0),
                                       dtcm=DTCMResource(0),
                                       cpu_cycles=CPUCyclesPerTickResource(0))

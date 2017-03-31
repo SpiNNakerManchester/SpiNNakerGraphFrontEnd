@@ -15,8 +15,7 @@ from spinn_front_end_common.utility_models.live_packet_gather \
     import LivePacketGather
 from spinn_front_end_common.utility_models.reverse_ip_tag_multi_cast_source \
     import ReverseIpTagMultiCastSource
-from pacman.model.graphs.machine.impl.machine_edge \
-    import MachineEdge
+from pacman.model.graphs.machine import MachineEdge
 
 import os
 import logging
