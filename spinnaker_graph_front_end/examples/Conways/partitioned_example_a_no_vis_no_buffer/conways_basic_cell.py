@@ -2,19 +2,15 @@
 from pacman.model.decorators.overrides import overrides
 
 from pacman.executor.injection_decorator import requires_injection, \
-    supports_injection
-from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
-from pacman.model.resources.resource_container import ResourceContainer
-from pacman.model.resources.cpu_cycles_per_tick_resource import \
-    CPUCyclesPerTickResource
-from pacman.model.resources.dtcm_resource import DTCMResource
-from pacman.model.resources.sdram_resource import SDRAMResource
+    supports_injection, inject
+from pacman.model.graphs.machine import MachineVertex
+from pacman.model.resources import ResourceContainer, CPUCyclesPerTickResource
+from pacman.model.resources import DTCMResource, SDRAMResource
 from pacman.utilities import utility_calls
 
 # spinn front end common imports
-from spinn_front_end_common.utilities import constants
-from spinn_front_end_common.utilities import exceptions
-from spinn_front_end_common.utilities import helpful_functions
+from spinn_front_end_common.utilities \
+    import constants, exceptions, helpful_functions
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.abstract_models.impl.needs_n_machine_time_steps\
     import NeedsNMachineTimeSteps
@@ -52,6 +48,13 @@ class ConwayBasicCell(
                ('RESULTS', 4)])
 
     def __init__(self, label, state):
+
+        # resources used by the system.
+        resources = ResourceContainer(
+            sdram=SDRAMResource(0), dtcm=DTCMResource(0),
+            cpu_cycles=CPUCyclesPerTickResource(0))
+
+        MachineVertex.__init__(self, resources, label)
         MachineVertex.__init__(self, label)
         NeedsNMachineTimeSteps.__init__(self)
 
@@ -222,4 +225,8 @@ class ConwayBasicCell(
                 self._n_machine_time_steps + 4)
 
     def __repr__(self):
-        return self._label
+        return self.label
+
+    @inject("TotalMachineTimeSteps")
+    def set_n_machine_time_steps(self, n_machine_time_steps):
+        self._n_machine_time_steps = n_machine_time_steps
