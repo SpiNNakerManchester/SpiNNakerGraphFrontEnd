@@ -1,13 +1,9 @@
 from pacman.model.decorators.overrides import overrides
-from pacman.model.graphs.machine.impl.machine_vertex \
-    import MachineVertex
-from pacman.model.resources.cpu_cycles_per_tick_resource import \
-    CPUCyclesPerTickResource
-from pacman.model.resources.dtcm_resource import DTCMResource
-from pacman.model.resources.resource_container import ResourceContainer
-from pacman.model.resources.sdram_resource import SDRAMResource
+from pacman.model.graphs.machine import MachineVertex
+from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
+from pacman.model.resources import ResourceContainer, SDRAMResource
 
-from spinn_front_end_common.utilities import constants
+from spinn_front_end_common.utilities import constants, helpful_functions
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
     import MachineDataSpecableVertex
@@ -17,7 +13,6 @@ from spinn_front_end_common.interface.buffer_management.buffer_models\
     .abstract_receive_buffers_to_host import AbstractReceiveBuffersToHost
 from spinn_front_end_common.interface.buffer_management\
     import recording_utilities
-from spinn_front_end_common.utilities import helpful_functions
 from spinn_front_end_common.utilities.utility_objs.executable_start_type \
     import ExecutableStartType
 
@@ -25,7 +20,6 @@ from spinn_front_end_common.utilities.utility_objs.executable_start_type \
 from spinnaker_graph_front_end.utilities.conf import config
 
 from enum import Enum
-
 import logging
 
 logger = logging.getLogger(__name__)

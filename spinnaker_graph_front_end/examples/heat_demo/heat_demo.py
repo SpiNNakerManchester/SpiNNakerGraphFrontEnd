@@ -3,7 +3,7 @@ heat demo main entrance allows users to run the heat demo on the tool chain
 """
 
 from pacman.model.constraints.placer_constraints\
-    .placer_chip_and_core_constraint import PlacerChipAndCoreConstraint
+    import PlacerChipAndCoreConstraint
 
 # spinn front end common imports
 from spinn_front_end_common.utility_models.\

@@ -1,12 +1,11 @@
 import spinnaker_graph_front_end as front_end
 
-from pacman.model.constraints.placer_constraints.\
-    placer_chip_and_core_constraint import \
-    PlacerChipAndCoreConstraint
+from pacman.model.graphs.machine import MachineEdge
+from pacman.model.constraints.placer_constraints\
+    import PlacerChipAndCoreConstraint
 from spinnaker_graph_front_end.examples.Conways.\
     partitioned_example_c_vis_buffer.conways_basic_cell \
     import ConwayBasicCell
-from pacman.model.graphs.machine.impl.machine_edge import MachineEdge
 
 runtime = 500
 machine_time_step = 1000
