@@ -34,7 +34,7 @@ class SpiNNaker(SpinnakerMainInterface):
             "Database", "create_routing_info_to_atom_id_mapping")
 
         SpinnakerMainInterface.__init__(
-            self, config, config_default_name="spiNNakerGraphFrontEnd.cfg",
+            self, config,
             graph_label=graph_label,
             executable_finder=executable_finder,
             database_socket_addresses=database_socket_addresses,
