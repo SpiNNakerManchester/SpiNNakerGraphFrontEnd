@@ -4,32 +4,27 @@ from data_specification.enums.data_type import DataType
 
 # pacman imports
 from pacman.model.decorators.overrides import overrides
-from pacman.model.graphs.machine.impl.machine_vertex \
-    import MachineVertex
-from pacman.model.resources.cpu_cycles_per_tick_resource import \
-    CPUCyclesPerTickResource
-from pacman.model.resources.dtcm_resource import DTCMResource
-from pacman.model.resources.resource_container import ResourceContainer
-from pacman.model.resources.sdram_resource import SDRAMResource
+from pacman.model.graphs.machine import MachineVertex
+from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
+from pacman.model.resources import ResourceContainer, SDRAMResource
 
 # graph front end imports
 from .heat_demo_edge import HeatDemoEdge
 from spinnaker_graph_front_end.utilities.conf import config
 
 # FEC imports
-from spinn_front_end_common.abstract_models\
-    .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utility_models.live_packet_gather import \
     LivePacketGather
 from spinn_front_end_common.utility_models.\
     reverse_ip_tag_multi_cast_source import ReverseIpTagMultiCastSource
-from spinn_front_end_common.utilities import constants
-from spinn_front_end_common.utilities import exceptions
+from spinn_front_end_common.utilities import constants, exceptions
 from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
     import MachineDataSpecableVertex
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
     import AbstractHasAssociatedBinary
+from spinn_front_end_common.utilities.utility_objs.executable_start_type \
+    import ExecutableStartType
 
 # general imports
 from enum import Enum
@@ -39,8 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 class HeatDemoVertex(
-        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-        AbstractBinaryUsesSimulationRun):
+        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
     """ A vertex partition for a heat demo; represents a heat element.
     """
 
@@ -88,11 +82,11 @@ class HeatDemoVertex(
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
-        """
-
-        :return:
-        """
         return "heat_demo.aplx"
+
+    @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
+    def get_binary_start_type(self):
+        return ExecutableStartType.USES_SIMULATION_INTERFACE
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
@@ -146,7 +140,6 @@ class HeatDemoVertex(
 
         :param spec:
         :param system_size:
-        :return:
         """
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.SYSTEM.value,
@@ -170,7 +163,7 @@ class HeatDemoVertex(
         :param spec:
         :param routing_info:
         :param graph:
-        :return:
+        :rtype: None
         """
 
         # Every edge should have the same key
@@ -200,7 +193,7 @@ class HeatDemoVertex(
         :param spec:
         :param routing_info:
         :param graph:
-        :return:
+        :rtype: None
         """
         spec.switch_write_focus(region=self.DATA_REGIONS.NEIGHBOUR_KEYS.value)
 

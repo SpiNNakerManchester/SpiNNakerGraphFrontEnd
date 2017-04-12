@@ -1,9 +1,9 @@
+from pacman.model.graphs.machine import MachineEdge
 import spinnaker_graph_front_end as front_end
 
 from spinnaker_graph_front_end.examples.Conways.\
     partitioned_example_b_no_vis_buffer.conways_basic_cell \
     import ConwayBasicCell
-from pacman.model.graphs.machine.impl.machine_edge import MachineEdge
 
 runtime = 50
 machine_time_step = 100
@@ -12,7 +12,7 @@ MAX_X_SIZE_OF_FABRIC = 7
 MAX_Y_SIZE_OF_FABRIC = 7
 
 # set up the front end and ask for the detected machines dimensions
-front_end.setup()
+front_end.setup(n_chips_required=2)
 
 # figure out if machine can handle simulation
 cores = front_end.get_number_of_cores_on_machine()

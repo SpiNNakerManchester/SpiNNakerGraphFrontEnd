@@ -5,7 +5,7 @@ heat demo main entrance allows users to run the heat demo on the tool chain
 from spinn_utilities.socket_address import SocketAddress
 
 from pacman.model.constraints.placer_constraints\
-    .placer_chip_and_core_constraint import PlacerChipAndCoreConstraint
+    import PlacerChipAndCoreConstraint
 
 # spinn front end common imports
 from spinn_front_end_common.utility_models.live_packet_gather_machine_vertex \
@@ -67,8 +67,8 @@ live_gatherer.add_constraint(PlacerChipAndCoreConstraint(0, 0, 1))
 
 # Create a list of lists of vertices (x * 4) by (y * 4)
 # (for 16 cores on a chip - missing cores will have missing vertices)
-max_x_element_id = (machine.max_chip_x + 1) * 4
-max_y_element_id = (machine.max_chip_y + 1) * 4
+max_x_element_id = 2 * 4
+max_y_element_id = 2 * 4
 vertices = [
     [None for j in range(max_y_element_id)]
     for i in range(max_x_element_id)
