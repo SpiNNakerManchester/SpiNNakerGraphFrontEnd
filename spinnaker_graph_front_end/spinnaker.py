@@ -39,7 +39,8 @@ class SpiNNaker(SpinnakerMainInterface):
             "Database", "create_routing_info_to_atom_id_mapping")
 
         SpinnakerMainInterface.__init__(
-            self, config, graph_label=graph_label,
+            self, config,
+            graph_label=graph_label,
             executable_finder=executable_finder,
             database_socket_addresses=database_socket_addresses,
             extra_algorithm_xml_paths=extra_xml_path,
@@ -70,15 +71,12 @@ class SpiNNaker(SpinnakerMainInterface):
         logger.info("Setting time scale factor to {}."
                     .format(self._time_scale_factor))
 
-        logger.info("Setting appID to %d." % self._app_id)
-
         # get the machine time step
         logger.info("Setting machine time step to {} micro-seconds."
                     .format(self._machine_time_step))
 
     def get_machine_dimensions(self):
         """ Get the machine dimensions
-        :return:
         """
         machine = self.machine
 
@@ -98,7 +96,7 @@ class SpiNNaker(SpinnakerMainInterface):
 
         :param socket_address: the socket address
         :type socket_address:
-        :return:
+        :rtype: None
         """
         self._add_socket_address(socket_address)
 

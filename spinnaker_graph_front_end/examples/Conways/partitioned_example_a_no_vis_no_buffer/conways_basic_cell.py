@@ -2,27 +2,25 @@
 from pacman.model.decorators.overrides import overrides
 
 from pacman.executor.injection_decorator import requires_injection, \
-    supports_injection
-from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
-from pacman.model.resources.resource_container import ResourceContainer
-from pacman.model.resources.cpu_cycles_per_tick_resource import \
-    CPUCyclesPerTickResource
-from pacman.model.resources.dtcm_resource import DTCMResource
-from pacman.model.resources.sdram_resource import SDRAMResource
+    supports_injection, inject
+from pacman.model.graphs.machine import MachineVertex
+from pacman.model.resources import ResourceContainer, CPUCyclesPerTickResource
+from pacman.model.resources import DTCMResource, SDRAMResource
+from pacman.utilities import utility_calls
 
 # spinn front end common imports
-from spinn_front_end_common.utilities import constants
-from spinn_front_end_common.utilities import exceptions
-from spinn_front_end_common.utilities import helpful_functions
+from spinn_front_end_common.utilities \
+    import constants, exceptions, helpful_functions
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.abstract_models.impl.needs_n_machine_time_steps\
     import NeedsNMachineTimeSteps
-from spinn_front_end_common.abstract_models\
-    .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
 from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
     import MachineDataSpecableVertex
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
     import AbstractHasAssociatedBinary
+from spinn_front_end_common.utilities.utility_objs.executable_start_type \
+    import ExecutableStartType
+
 
 # general imports
 from enum import Enum
@@ -32,7 +30,7 @@ import struct
 @supports_injection
 class ConwayBasicCell(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-        NeedsNMachineTimeSteps, AbstractBinaryUsesSimulationRun):
+        NeedsNMachineTimeSteps):
     """ Cell which represents a cell within the 2d fabric
     """
 
@@ -57,6 +55,7 @@ class ConwayBasicCell(
             cpu_cycles=CPUCyclesPerTickResource(0))
 
         MachineVertex.__init__(self, resources, label)
+        MachineVertex.__init__(self, label)
         NeedsNMachineTimeSteps.__init__(self)
 
         # app specific elements
@@ -65,6 +64,10 @@ class ConwayBasicCell(
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
         return "conways_cell.aplx"
+
+    @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
+    def get_binary_start_type(self):
+        return ExecutableStartType.USES_SIMULATION_INTERFACE
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
@@ -100,16 +103,13 @@ class ConwayBasicCell(
         # check got right number of keys and edges going into me
         partitions = \
             machine_graph.get_outgoing_edge_partitions_starting_at_vertex(self)
-        if len(partitions) != 1:
+        if not utility_calls.is_single(partitions):
             raise exceptions.ConfigurationException(
                 "Can only handle one type of partition. ")
 
         # check for duplicates
-        edges = machine_graph.get_edges_ending_at_vertex(self)
-        empty_list = set()
-        for edge in edges:
-            empty_list.add(edge.pre_vertex.label)
-        if len(empty_list) != 8:
+        edges = list(machine_graph.get_edges_ending_at_vertex(self))
+        if len(set(edges)) != 8:
             output = ""
             for edge in edges:
                 output += edge.pre_subvertex.label + " : "
@@ -117,7 +117,7 @@ class ConwayBasicCell(
                 "I've got duplicate edges. This is a error. The edges are "
                 "connected to these vertices \n {}".format(output))
 
-        if len(machine_graph.get_edges_ending_at_vertex(self)) != 8:
+        if len(edges) != 8:
             raise exceptions.ConfigurationException(
                 "I've not got the right number of connections. I have {} "
                 "instead of 9".format(
@@ -155,7 +155,7 @@ class ConwayBasicCell(
             region=self.DATA_REGIONS.NEIGHBOUR_INITIAL_STATES.value)
         alive = 0
         dead = 0
-        for edge in machine_graph.get_edges_ending_at_vertex(self):
+        for edge in edges:
             state = edge.pre_vertex.state
             if state:
                 alive += 1
@@ -225,4 +225,8 @@ class ConwayBasicCell(
                 self._n_machine_time_steps + 4)
 
     def __repr__(self):
-        return self._label
+        return self.label
+
+    @inject("TotalMachineTimeSteps")
+    def set_n_machine_time_steps(self, n_machine_time_steps):
+        self._n_machine_time_steps = n_machine_time_steps
