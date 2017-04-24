@@ -444,13 +444,13 @@ void read_input_buffer(){
 //! \brief records the data into the recording region
 void record_state(){
     // record my state via sdram
-    recording_record(0, &float_to_int(my_current_p), SIZE_OF_DATA_ITEM);
-    recording_record(0, &float_to_int(my_current_u), SIZE_OF_DATA_ITEM);
-    recording_record(0, &float_to_int(my_current_v), SIZE_OF_DATA_ITEM);
-    recording_record(0, &float_to_int(my_cu), SIZE_OF_DATA_ITEM);
-    recording_record(0, &float_to_int(my_cv), SIZE_OF_DATA_ITEM);
-    recording_record(0, &float_to_int(my_z), SIZE_OF_DATA_ITEM);
-    recording_record(0, &float_to_int(my_h), SIZE_OF_DATA_ITEM);
+    recording_record(0, &my_current_p, SIZE_OF_DATA_ITEM);
+    recording_record(0, &my_current_u, SIZE_OF_DATA_ITEM);
+    recording_record(0, &my_current_v, SIZE_OF_DATA_ITEM);
+    recording_record(0, &my_cu, SIZE_OF_DATA_ITEM);
+    recording_record(0, &my_cv, SIZE_OF_DATA_ITEM);
+    recording_record(0, &my_z, SIZE_OF_DATA_ITEM);
+    recording_record(0, &my_h, SIZE_OF_DATA_ITEM);
     recording_do_timestep_update(time);
     log_info("recorded my state \n");
 }
@@ -892,10 +892,14 @@ static bool initialize(uint32_t *timer_period) {
     if (!simulation_initialise(
             data_specification_get_region(SYSTEM_REGION, address),
             APPLICATION_NAME_HASH, timer_period, &simulation_ticks,
-            &infinite_run, SDP, force_exit_function,
-            data_specification_get_region(PROVENANCE, address))) {
+            &infinite_run, SDP)) {
         return false;
     }
+
+    // set the provenance data area, and the exit function
+    simulation_set_provenance_data_address(
+        data_specification_get_region(PROVENANCE, address));
+    simulation_set_exit_function(force_exit_function);
 
     // sort out recording interface
     address_t recording_region = data_specification_get_region(
