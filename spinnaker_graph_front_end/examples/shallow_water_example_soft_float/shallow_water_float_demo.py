@@ -1,4 +1,6 @@
 import spinnaker_graph_front_end as front_end
+from spinnaker_graph_front_end.examples.shallow_water_example_soft_float.\
+    debug_functions import DebugCalls
 from spinnaker_graph_front_end.examples.shallow_water_example_soft_float. \
     shallow_water_edge import ShallowWaterEdge
 
@@ -7,7 +9,6 @@ from spinnaker_graph_front_end.examples.shallow_water_example_soft_float. \
 
 import math
 import logging
-import os
 import subprocess
 
 logger = logging.getLogger(__name__)
@@ -67,6 +68,8 @@ class WeatherRun(object):
 
     def __init__(self):
 
+        self._debug_calls = DebugCalls()
+
         # run c code for data
         args = ["./PURE-C/test", str(MAX_X_SIZE_OF_FABRIC),
                 str(MAX_Y_SIZE_OF_FABRIC)]
@@ -78,7 +81,8 @@ class WeatherRun(object):
         child.wait()
 
         # print the constants
-        self._print_constants()
+        self._debug_calls.print_constants(
+            DT, TDT, DX, DY, FSDX, FSDY, A, ALPHA, EL, PI, TPI, DI, DJ, PCF)
 
         # figure machine size needed at a min
         min_chips = \
@@ -104,10 +108,14 @@ class WeatherRun(object):
 
         # handle read in if needed
         if READ_IN_FROM_FILE:
-            self._read_in_psi = self._read_in_psi_from_file()
-            self._read_in_u = self._read_in_u_from_file()
-            self._read_in_v = self._read_in_v_from_file()
-            self._read_in_p = self._read_in_p_from_file()
+            self._read_in_psi = self._debug_calls.read_in_psi_from_file(
+                MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC)
+            self._read_in_u = self._debug_calls.read_in_u_from_file(
+                MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC)
+            self._read_in_v = self._debug_calls.read_in_v_from_file(
+                MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC)
+            self._read_in_p = self._debug_calls.read_in_p_from_file(
+                MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC)
 
         # handle the psi value generation
         self._psi = [
@@ -126,7 +134,8 @@ class WeatherRun(object):
         self._sort_out_v()
 
         # print out initial values for verification purposes
-        self._print_initial_values()
+        self._debug_calls.print_initial_values(
+            MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC, self._psi)
 
         # build vertices
         for x in range(0, MAX_X_SIZE_OF_FABRIC):
@@ -177,103 +186,6 @@ class WeatherRun(object):
             MAX_X_SIZE_OF_FABRIC - 1][0].u
         self._vertices[MAX_X_SIZE_OF_FABRIC - 1][0].v = self._vertices[
             0][MAX_Y_SIZE_OF_FABRIC - 1].v
-
-
-
-
-    @staticmethod
-    def _print_constants():
-        """ prints and checks constants from c and python
-
-        :return: None
-        """
-        logger.info("constant DT    = {}".format(DT))
-        logger.info("constant TDT   = {}".format(TDT))
-        logger.info("constant DX    = {}".format(DX))
-        logger.info("constant DY    = {}".format(DY))
-        logger.info("constant FSDX  = {}".format(FSDX))
-        logger.info("constant FSDY  = {}".format(FSDY))
-        logger.info("constant A     = {}".format(A))
-        logger.info("constant ALPHA = {}".format(ALPHA))
-        logger.info("constant EL    = {}".format(EL))
-        logger.info("constant PI    = {:20.16f}".format(PI))
-        logger.info("constant TPI   = {}".format(TPI))
-        logger.info("constant DI    = {}".format(DI))
-        logger.info("constant DJ    = {}".format(DJ))
-        logger.info("constant PCF   = {}".format(PCF))
-
-    def _print_initial_values(self):
-        logger.info("printing init values of psi")
-        for x in range(0, MAX_X_SIZE_OF_FABRIC):
-            for y in range(0, MAX_Y_SIZE_OF_FABRIC):
-                logger.info("psi for {}:{} is {}".format(
-                    x, y, self._psi[x][y]))
-
-    @staticmethod
-    def _read_in_p_from_file():
-        read_in_data = [
-            [None for _ in range(MAX_X_SIZE_OF_FABRIC)]
-            for _ in range(MAX_Y_SIZE_OF_FABRIC)]
-
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        dir_path = os.path.join(dir_path, "initial_p.txt")
-        reader = open(dir_path)
-        for line in reader:
-            bits = line.split(",")
-            final_number_bits = bits[2].split("\n")
-            read_in_data[int(bits[0])][int(bits[1])] = \
-                float(final_number_bits[0])
-        return read_in_data
-
-    @staticmethod
-    def _read_in_psi_from_file():
-        read_in_data = [
-            [None for _ in range(MAX_X_SIZE_OF_FABRIC)]
-            for _ in range(MAX_Y_SIZE_OF_FABRIC)]
-
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        dir_path = os.path.join(dir_path, "initial_psi.txt")
-        reader = open(dir_path)
-        for line in reader:
-            bits = line.split(",")
-            final_number_bits = bits[2].split("\n")
-            read_in_data[int(bits[0])][int(bits[1])] = \
-                float(final_number_bits[0])
-        return read_in_data
-
-    @staticmethod
-    def _read_in_u_from_file():
-        read_in_data = [
-            [None for _ in range(MAX_X_SIZE_OF_FABRIC)]
-            for _ in range(MAX_Y_SIZE_OF_FABRIC)]
-
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        dir_path = os.path.join(dir_path, "initial_u.txt")
-        reader = open(dir_path)
-
-        for line in reader:
-            bits = line.split(",")
-            final_number_bits = bits[2].split("\n")
-            read_in_data[int(bits[0])][int(bits[1])] = \
-                float(final_number_bits[0])
-        return read_in_data
-
-    @staticmethod
-    def _read_in_v_from_file():
-        read_in_data = [
-            [None for _ in range(MAX_X_SIZE_OF_FABRIC)]
-            for _ in range(MAX_Y_SIZE_OF_FABRIC)]
-
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        dir_path = os.path.join(dir_path, "initial_v.txt")
-        reader = open(dir_path)
-
-        for line in reader:
-            bits = line.split(",")
-            final_number_bits = bits[2].split("\n")
-            read_in_data[int(bits[0])][int(bits[1])] = \
-                float(final_number_bits[0])
-        return read_in_data
 
     def _sort_out_psi(self):
         """ calculates the psi values for each atom
@@ -361,9 +273,8 @@ class WeatherRun(object):
         siny = math.sin((y + 0.5) * DJ)
         total = A * sinx * siny
         logger.info(
-            "psi {}{}, sinx {} siny {:20.16f} total {}".format(x, y, sinx,
-                                                               siny,
-                                                               total))
+            "psi {}{}, sinx {} siny {:20.16f} total {}".format(
+                x, y, sinx, siny, total))
         return A * math.sin((x + 0.5) * DI) * math.sin((y + 0.5) * DJ)
 
     def _pressure_calculation(self, x, y):
@@ -408,46 +319,6 @@ class WeatherRun(object):
                 psi
                 [(x % MAX_X_SIZE_OF_FABRIC)]
                 [(y % MAX_Y_SIZE_OF_FABRIC)]) / DX
-
-    def print_init_states(self):
-        """ print to the logger data for verification
-
-        :return: None
-        """
-        logger.info("Number of points in the x direction {}\n"
-                    .format(MAX_X_SIZE_OF_FABRIC))
-        logger.info("Number of points in the y direction {}\n"
-                    .format(MAX_Y_SIZE_OF_FABRIC))
-        logger.info("grid spacing in the x direction {}\n".format(DX))
-        logger.info("grid spacing in the y direction {}\n".format(DY))
-        logger.info("time step {}\n".format(DT))
-        logger.info("time filter parameter {}\n".format(ALPHA))
-
-        square_min = min(MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC)
-
-        # print p elements from vertex
-        logger.info("initial elements of p\n")
-        for position_x in range(0, square_min):
-            for position_y in range(0, square_min):
-                logger.info("{}:{}p{}".format(
-                    position_x, position_y,
-                    self._vertices[position_x][position_y].p))
-
-        # print u elements from vertex
-        logger.info("initial elements of u\n")
-        for position_x in range(0, square_min):
-            for position_y in range(0, square_min):
-                logger.info("{}:{}u{}".format(
-                    position_x, position_y,
-                    self._vertices[position_x][position_y].u))
-
-        # print v elements from vertex
-        logger.info("initial elements of v\n")
-        for position_x in range(0, square_min):
-            for position_y in range(0, square_min):
-                logger.info("{}:{}v{}".format(
-                    position_x, position_y,
-                    self._vertices[position_x][position_y].v))
 
     @staticmethod
     def run(runtime):
@@ -509,61 +380,15 @@ class WeatherRun(object):
                         self._vertices[x][y]))
         return recorded_data
 
-    @staticmethod
-    def print_all_data(recorded_data):
-        """ prints all data items extracted from the spinnaker machine.
-        mainly used for debug proposes.
+    def print_init_states(self):
+        self._debug_calls.print_init_states(
+            MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC,
+            DX, DY, DT, ALPHA, self._vertices)
 
-        :param recorded_data:
-        the recorded data extracted from the spinnaker machine
-        :return None
-        """
-
-        # print all elements for all times
-        for time in range(0, RUNTIME):
-
-            # print all for this time
-            for x_coord in range(0, MAX_X_SIZE_OF_FABRIC):
-                for y_coord in range(0, MAX_Y_SIZE_OF_FABRIC):
-                    logger.info("{}:{}:{} p is {}".format(
-                        x_coord, y_coord, time,
-                        recorded_data[(x_coord, y_coord)]['p'][time]))
-
-            for x_coord in range(0, MAX_X_SIZE_OF_FABRIC):
-                for y_coord in range(0, MAX_Y_SIZE_OF_FABRIC):
-                    logger.info("{}:{}:{} u is {}".format(
-                        x_coord, y_coord, time,
-                        recorded_data[(x_coord, y_coord)]['u'][time]))
-
-            for x_coord in range(0, MAX_X_SIZE_OF_FABRIC):
-                for y_coord in range(0, MAX_Y_SIZE_OF_FABRIC):
-                    logger.info("{}:{}:{} v is {}".format(
-                        x_coord, y_coord, time,
-                        recorded_data[(x_coord, y_coord)]['v'][time]))
-
-            for x_coord in range(0, MAX_X_SIZE_OF_FABRIC):
-                for y_coord in range(0, MAX_Y_SIZE_OF_FABRIC):
-                    logger.info("{}:{}:{} cu is {}".format(
-                        x_coord, y_coord, time,
-                        recorded_data[(x_coord, y_coord)]['cu'][time]))
-
-            for x_coord in range(0, MAX_X_SIZE_OF_FABRIC):
-                for y_coord in range(0, MAX_Y_SIZE_OF_FABRIC):
-                    logger.info("{}:{}:{} cv is {}".format(
-                        x_coord, y_coord, time,
-                        recorded_data[(x_coord, y_coord)]['cv'][time]))
-
-            for x_coord in range(0, MAX_X_SIZE_OF_FABRIC):
-                for y_coord in range(0, MAX_Y_SIZE_OF_FABRIC):
-                    logger.info("{}:{}:{} h is {}".format(
-                        x_coord, y_coord, time,
-                        recorded_data[(x_coord, y_coord)]['h'][time]))
-
-            for x_coord in range(0, MAX_X_SIZE_OF_FABRIC):
-                for y_coord in range(0, MAX_Y_SIZE_OF_FABRIC):
-                    logger.info("{}:{}:{} z is {}".format(
-                        x_coord, y_coord, time,
-                        recorded_data[(x_coord, y_coord)]['z'][time]))
+    def print_all_data(self, recorded_data):
+        self._debug_calls.print_all_data(
+            recorded_data, RUNTIME, MAX_X_SIZE_OF_FABRIC,
+            MAX_Y_SIZE_OF_FABRIC)
 
     @staticmethod
     def stop():
