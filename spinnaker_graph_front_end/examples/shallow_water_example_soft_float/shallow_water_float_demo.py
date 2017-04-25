@@ -9,7 +9,6 @@ from spinnaker_graph_front_end.examples.shallow_water_example_soft_float. \
 
 import math
 import logging
-import subprocess
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +25,7 @@ NumberOFPacketsPerWindow = 4
 FUDGE_FACTOR_FOR_TDMA = 2
 
 # read in from file the initial params (fixes c generation issues)
-READ_IN_FROM_FILE = True
+READ_IN_FROM_FILE = False
 
 # timing
 # super fast,. not recording
@@ -70,15 +69,9 @@ class WeatherRun(object):
 
         self._debug_calls = DebugCalls()
 
-        # run c code for data
-        args = ["./PURE-C/test", str(MAX_X_SIZE_OF_FABRIC),
-                str(MAX_Y_SIZE_OF_FABRIC)]
-
-        # Run the external command
-        child = subprocess.Popen(
-            args, stdout=None, stderr=subprocess.PIPE,
-            stdin=subprocess.PIPE)
-        child.wait()
+        if READ_IN_FROM_FILE:
+            self._debug_calls.run_orginial_c_code(
+                MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC)
 
         # print the constants
         self._debug_calls.print_constants(
@@ -146,7 +139,7 @@ class WeatherRun(object):
                 v = self._mass_flux_v[x][y]
 
                 vert = ShallowWaterVertex(
-                    p=p, u=u, v=v,
+                    p=p, u=u, v=v, x=x, y=y,
                     tdt=TDT, dx=DX, dy=DY, fsdx=FSDX, fsdy=FSDY,
                     alpha=ALPHA, label="weather_vertex{}:{}".format(x, y))
 
@@ -161,6 +154,10 @@ class WeatherRun(object):
         for x in range(0, MAX_X_SIZE_OF_FABRIC):
             for y in range(0, MAX_Y_SIZE_OF_FABRIC):
                 self._build_edges_for_vertex(x, y)
+
+        self._debug_calls.verify_graph_setup_properly(
+            self._vertices, MAX_X_SIZE_OF_FABRIC,
+            MAX_Y_SIZE_OF_FABRIC)
 
         self._periodic_continuation()
 
@@ -249,7 +246,7 @@ class WeatherRun(object):
             ((x + 1) % MAX_X_SIZE_OF_FABRIC,
              (y - 1) % MAX_Y_SIZE_OF_FABRIC, "NW")]
 
-        logger.info("positions = {}".format(positions))
+        logger.info("positions {}:{} = {}".format(x, y, positions))
 
         # build edges for each direction for this vertex
         for (dest_x, dest_y, compass) in positions:
@@ -257,7 +254,9 @@ class WeatherRun(object):
                 self._vertices[x][y], self._vertices[dest_x][dest_y],
                 compass, "edge between {} and {}".format(
                     self._vertices[x][y], self._vertices[dest_x][dest_y])),
-                "DATA")
+                ShallowWaterVertex.ROUTING_PARTITION)
+            self._vertices[x][y].set_direction_vertex(
+                direction=compass, vertex=self._vertices[dest_x][dest_y])
 
     @staticmethod
     def _psi_calculation(x, y):
@@ -330,38 +329,14 @@ class WeatherRun(object):
         # run the simulation
         front_end.run(runtime)
 
-    @staticmethod
-    def print_diagonal_data(recorded_data):
+    def print_diagonal_data(self, recorded_data):
         """ print the messages c code does at end
 
         :param recorded_data: the recorded data
         :return: None
         """
-
-        # figure min diagnal for the prints
-        square_min = min(MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC)
-
-        # do the final prints as in c
-        logger.info(" cycle number {} model time in hours {}\n".format(
-            RUNTIME, DT * RUNTIME))
-
-        # print p elements from data
-        logger.info("diagonal elements of p")
-        for position in range(0, square_min):
-            logger.info("{}".format(
-                recorded_data[(position, position)]['p'][RUNTIME - 1]))
-
-        # print u elements from data
-        logger.info("diagonal elements of u")
-        for position in range(0, square_min):
-            logger.info("{}".format(
-                recorded_data[(position, position)]['u'][RUNTIME - 1]))
-
-        # print v elements from data
-        logger.info("diagonal elements of v")
-        for position in range(0, square_min):
-            logger.info("{}".format(
-                recorded_data[(position, position)]['v'][RUNTIME - 1]))
+        self._debug_calls.print_diagonal_data(
+            MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC, RUNTIME, DT)
 
     def extract_data(self):
         """ extracts data from the machine

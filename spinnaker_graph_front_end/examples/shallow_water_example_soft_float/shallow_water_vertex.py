@@ -1,9 +1,11 @@
 # dsg imports
+from collections import OrderedDict
+
 from data_specification.enums.data_type import DataType
 
 # pacman imports
 from pacman.model.decorators.overrides import overrides
-from pacman.model.graphs.machine.impl.machine_vertex \
+from pacman.model.graphs.machine.machine_vertex \
     import MachineVertex
 from pacman.model.resources.cpu_cycles_per_tick_resource import \
     CPUCyclesPerTickResource
@@ -18,14 +20,14 @@ from spinn_front_end_common.interface.buffer_management import \
 from spinn_front_end_common.abstract_models. \
     abstract_provides_n_keys_for_partition import \
     AbstractProvidesNKeysForPartition
+from spinn_front_end_common.utilities.utility_objs. \
+    executable_start_type import ExecutableStartType
 from .shallow_water_edge import ShallowWaterEdge
 from spinnaker_graph_front_end.utilities.conf import config
 
 # FEC imports
 from spinn_front_end_common.utilities import helpful_functions
 from spinn_front_end_common.utilities import exceptions
-from spinn_front_end_common.abstract_models \
-    .abstract_binary_uses_simulation_run import AbstractBinaryUsesSimulationRun
 from spinn_front_end_common.interface.buffer_management.buffer_models \
     .abstract_receive_buffers_to_host import AbstractReceiveBuffersToHost
 from spinn_front_end_common.interface.simulation import simulation_utilities
@@ -49,7 +51,7 @@ logger = logging.getLogger(__name__)
 
 class ShallowWaterVertex(
     MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-    AbstractReceiveBuffersToHost, AbstractBinaryUsesSimulationRun,
+    AbstractReceiveBuffersToHost,
     AbstractProvidesNKeysForPartition,
     ProvidesProvenanceDataFromMachineImpl):
     """ A vertex partition for a heat demo; represents a heat element.
@@ -100,12 +102,14 @@ class ShallowWaterVertex(
     # ORDER_OF_DIRECTIONS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
     ORDER_OF_DIRECTIONS = ["S", "SW", "W", "NW", "N", "NE", "E", "SE"]
 
+    ROUTING_PARTITION = "DATA"
+
     # model specific stuff
     _model_based_max_atoms_per_core = 1
     _model_n_atoms = 1
 
     def __init__(
-            self, label, u, v, p, tdt, dx,
+            self, label, u, v, p, tdt, dx, x, y,
             dy, fsdx, fsdy, alpha, constraints=None):
 
         # resources used by a shallow water element vertex
@@ -121,6 +125,10 @@ class ShallowWaterVertex(
             # application graph vertex
             sdram=sdram)
 
+        self._location_vertices = OrderedDict()
+        for direction in self.ORDER_OF_DIRECTIONS:
+            self._location_vertices[direction] = None
+
         # inheritance stuff
         MachineVertex.__init__(
             self, label=label, constraints=constraints)
@@ -128,14 +136,16 @@ class ShallowWaterVertex(
         AbstractProvidesNKeysForPartition.__init__(self)
         MachineDataSpecableVertex.__init__(self)
         AbstractHasAssociatedBinary.__init__(self)
-        AbstractBinaryUsesSimulationRun.__init__(self)
-        ProvidesProvenanceDataFromMachineImpl.__init__(
-            self, self.DATA_REGIONS.PROVENANCE.value, 0)
+        ProvidesProvenanceDataFromMachineImpl.__init__(self)
 
         # app specific data items
         self._u = u
         self._v = v
         self._p = p
+
+        # position data
+        self._x = x
+        self._y = y
 
         # constants to move down
         self._tdt = tdt
@@ -154,6 +164,38 @@ class ShallowWaterVertex(
             "Buffers", "time_between_requests")
         self._receive_buffer_host = config.get(
             "Buffers", "receive_buffer_host")
+
+    def set_direction_vertex(self, direction, vertex):
+        """ hack to bypass confusion of directions and multicast behaviour 
+        of the edges
+        
+        :param direction: the direction of the data for this vertex
+        :param vertex: the vertex that will send data for this vertex direction
+        :rtype: 
+        """
+        self._location_vertices[direction] = vertex
+
+    @property
+    def x(self):
+        return self._x
+
+    @property
+    def y(self):
+        return self._y
+
+    @property
+    @overrides(ProvidesProvenanceDataFromMachineImpl._provenance_region_id)
+    def _provenance_region_id(self):
+        return self.DATA_REGIONS.PROVENANCE.value
+
+    @property
+    @overrides(ProvidesProvenanceDataFromMachineImpl._n_additional_data_items)
+    def _n_additional_data_items(self):
+        return 0
+
+    @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
+    def get_binary_start_type(self):
+        return ExecutableStartType.USES_SIMULATION_INTERFACE
 
     @overrides(AbstractProvidesNKeysForPartition.get_n_keys_for_partition)
     def get_n_keys_for_partition(self, partition, graph_mapper):
@@ -231,7 +273,7 @@ class ShallowWaterVertex(
 
     def _write_timing_data(self, spec, tdma_agenda):
         """ writes the timing agenda requirements for the c code
-        
+
         :param spec: the dsg writer
         :param tdma_agenda: the tdma agenda for the graph.
         :return: None
@@ -375,9 +417,9 @@ class ShallowWaterVertex(
         """
         spec.switch_write_focus(region=self.DATA_REGIONS.NEIGHBOUR_KEYS.value)
 
-        # get incoming edges
         incoming_edges = \
-            graph.get_edges_ending_at_vertex_with_partition_name(self, "DATA")
+            graph.get_edges_ending_at_vertex_with_partition_name(
+                self, self.ROUTING_PARTITION)
 
         # verify n edges
         if len(incoming_edges) > 8:
@@ -385,21 +427,16 @@ class ShallowWaterVertex(
             raise exceptions.ConfigurationException(
                 "Should only have 8 edge")
 
-        # for each edge, write the base key, so that the cores can figure
-        # which bit of data its received
-        for position in range(0, len(self.ORDER_OF_DIRECTIONS)):
-            found_edge = None
-            for edge in incoming_edges:
-                if edge.compass == self.ORDER_OF_DIRECTIONS[position]:
-                    found_edge = edge
-
-            if found_edge is not None:
-                key = routing_info.get_first_key_for_edge(found_edge)
+        # get incoming edges
+        for direction in self._location_vertices:
+            key = routing_info.get_first_key_from_pre_vertex(
+                self._location_vertices[direction], self.ROUTING_PARTITION)
+            if key is not None:
                 spec.write_value(data=key)
             else:
                 logger.warning(
                     "Something is odd here. missing edge for direction {}"
-                        .format(self.ORDER_OF_DIRECTIONS[position]))
+                    .format(direction))
                 spec.write_value(data_type=DataType.INT32, data=-1)
 
     @property

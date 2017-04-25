@@ -1,8 +1,5 @@
 # front end common imports
-from pacman.model.graphs.machine.impl.machine_edge import MachineEdge
-from spinn_front_end_common.abstract_models. \
-    abstract_provides_n_keys_for_partition import \
-    AbstractProvidesNKeysForPartition
+from pacman.model.graphs.machine.machine_edge import MachineEdge
 
 
 class ShallowWaterEdge(MachineEdge):
