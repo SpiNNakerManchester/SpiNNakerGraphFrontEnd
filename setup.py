@@ -36,6 +36,6 @@ setup(
     url="https://github.com/SpiNNakerManchester/SpiNNakerGraphFrontEnd",
     packages=packages,
     package_data=package_data,
-    install_requires=['SpiNNFrontEndCommon >= 3.0.0, < 4.0.0',
+    install_requires=['SpiNNFrontEndCommon >= 1!4.0.0a1, < 1!5.0.0',
                       'numpy', 'lxml', 'six']
 )
