@@ -68,12 +68,12 @@ class ShallowWaterVertex(
                ('FINAL_STATES', 5),
                ('PROVENANCE', 6)])
 
-    DATA_TYPE_OF_FLOAT = DataType.FLOAT_32
+    DATA_TYPE_OF_FLOAT = DataType.UINT32
 
     FLOAT_SIZE_IN_BYTES = DATA_TYPE_OF_FLOAT.size
 
-    # 1 for has key, 1 for key for the 8 directions
-    NEIGHBOUR_DATA_REGION_SIZE = 16 * 4
+    # 1 for has key, 1 for key for the 8 directions and 1 for mask
+    NEIGHBOUR_DATA_REGION_SIZE = 9 * 4
 
     # 2 , 1 for window offset, 1 for time between sends
     TIMING_DATA_REGION_SIZE = 2 * 4
@@ -296,12 +296,21 @@ class ShallowWaterVertex(
             region=self.DATA_REGIONS.INIT_STATE_VALUES.value)
         spec.comment(
             "writing initial states for this shallow water element \n")
-        edges = machine_graph.get_edges_ending_at_vertex(self)
 
         # add basic data elements
-        spec.write_value(data=self._u, data_type=self.DATA_TYPE_OF_FLOAT)
-        spec.write_value(data=self._v, data_type=self.DATA_TYPE_OF_FLOAT)
-        spec.write_value(data=self._p, data_type=self.DATA_TYPE_OF_FLOAT)
+        logger.info("vertex {}:{}".format(self.x, self.y))
+        byte_array = struct.pack("<f", self._u)
+        data = struct.unpack("<I", byte_array)[0]
+        spec.write_value(data=data, data_type=self.DATA_TYPE_OF_FLOAT)
+        logger.info("u = 0x{:08x}".format(data))
+        byte_array = struct.pack("<f", self._v)
+        data = struct.unpack("<I", byte_array)[0]
+        spec.write_value(data=data, data_type=self.DATA_TYPE_OF_FLOAT)
+        logger.info("v = 0x{:08x}".format(data))
+        byte_array = struct.pack("<f", self._p)
+        data = struct.unpack("<I", byte_array)[0]
+        spec.write_value(data=data, data_type=self.DATA_TYPE_OF_FLOAT)
+        logger.info("p = 0x{:08x}".format(data))
 
         edges = machine_graph.get_edges_ending_at_vertex(self)
 
@@ -313,15 +322,18 @@ class ShallowWaterVertex(
                 if isinstance(edge, ShallowWaterEdge):
                     if edge.compass == self.ORDER_OF_DIRECTIONS[position]:
                         # U = 0, V = 1, P = 2, Z = 3, H = 4, CV = 5, CU = 6
-                        spec.write_value(
-                            edge.pre_vertex.u,
-                            data_type=self.DATA_TYPE_OF_FLOAT)
-                        spec.write_value(
-                            edge.pre_vertex.v,
-                            data_type=self.DATA_TYPE_OF_FLOAT)
-                        spec.write_value(
-                            edge.pre_vertex.p,
-                            data_type=self.DATA_TYPE_OF_FLOAT)
+                        byte_array = struct.pack("<f", edge.pre_vertex.u)
+                        data = struct.unpack("<I", byte_array)[0]
+                        spec.write_value(data=data,
+                                         data_type=self.DATA_TYPE_OF_FLOAT)
+                        byte_array = struct.pack("<f", edge.pre_vertex.v)
+                        data = struct.unpack("<I", byte_array)[0]
+                        spec.write_value(data=data,
+                                         data_type=self.DATA_TYPE_OF_FLOAT)
+                        byte_array = struct.pack("<f", edge.pre_vertex.p)
+                        data = struct.unpack("<I", byte_array)[0]
+                        spec.write_value(data=data,
+                                         data_type=self.DATA_TYPE_OF_FLOAT)
                         found = True
             if not found:
                 raise exceptions.ConfigurationException(
@@ -429,8 +441,9 @@ class ShallowWaterVertex(
 
         # get incoming edges
         for direction in self._location_vertices:
-            key = routing_info.get_first_key_from_pre_vertex(
-                self._location_vertices[direction], self.ROUTING_PARTITION)
+            key = routing_info.get_routing_info_from_pre_vertex(
+                self._location_vertices[direction],
+                self.ROUTING_PARTITION).keys_and_masks[0].key
             if key is not None:
                 spec.write_value(data=key)
             else:
@@ -438,6 +451,12 @@ class ShallowWaterVertex(
                     "Something is odd here. missing edge for direction {}"
                     .format(direction))
                 spec.write_value(data_type=DataType.INT32, data=-1)
+
+        # write mask (should be same per direction, so just select one)
+        mask = routing_info.get_routing_info_from_pre_vertex(
+            self._location_vertices["S"],
+            self.ROUTING_PARTITION).keys_and_masks[0].mask
+        spec.write_value(data=mask, data_type=DataType.UINT32)
 
     @property
     def p(self):

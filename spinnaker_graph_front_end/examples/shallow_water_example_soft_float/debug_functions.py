@@ -1,6 +1,7 @@
 import logging
 import os
 import subprocess
+import struct
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +146,32 @@ class DebugCalls(object):
             read_in_data[int(bits[0])][int(bits[1])] = \
                 float(final_number_bits[0])
         return read_in_data
+
+    @staticmethod
+    def print_vertex_bits(max_x_size_of_fabric, max_y_size_of_fabric,
+                          vertices):
+        """
+        
+        :param vertex: 
+        :return: 
+        """
+
+        for x_coord in range(0, max_x_size_of_fabric):
+            for y_coord in range(0, max_y_size_of_fabric):
+                vertex = vertices[x_coord][y_coord]
+                byte_array = struct.pack("<f", vertex.p)
+                p_data = struct.unpack("<I", byte_array)[0]
+
+                byte_array = struct.pack("<f", vertex.u)
+                u_data = struct.unpack("<I", byte_array)[0]
+
+                byte_array = struct.pack("<f", vertex.v)
+                v_data = struct.unpack("<I", byte_array)[0]
+
+                logger.info(
+                    "for vertex {}:{} p = 0x{:08x} \t\t v = 0x{:08x} \t\t "
+                    "u = 0x{:08x}".format(
+                        x_coord, y_coord, p_data, v_data, u_data))
 
     def print_init_states(self, max_x_size_of_fabric, max_y_size_of_fabric,
                           dx, dy, dt, alpha, vertices):

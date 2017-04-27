@@ -19,7 +19,7 @@ MAX_X_SIZE_OF_FABRIC = 3
 MAX_Y_SIZE_OF_FABRIC = 3
 
 # tdma constants
-NumberOfCPUCyclesUsedByThePacketReceiveCallback = 90
+NumberOfCPUCyclesUsedByThePacketReceiveCallback = 2000
 NumberOfCpuCyclesByOtherCallbacks = 600
 NumberOFPacketsPerWindow = 4
 FUDGE_FACTOR_FOR_TDMA = 2
@@ -33,8 +33,8 @@ READ_IN_FROM_FILE = False
 # TIME_SCALE_FACTOR = 1
 
 # recording
-MACHINE_TIME_STEP_IN_MICRO_SECONDS = 4000
-TIME_SCALE_FACTOR = 1
+MACHINE_TIME_STEP_IN_MICRO_SECONDS = 10000
+TIME_SCALE_FACTOR = 20
 
 # machine assumptions
 CORES_PER_CHIP = 16
@@ -143,12 +143,11 @@ class WeatherRun(object):
                     tdt=TDT, dx=DX, dy=DY, fsdx=FSDX, fsdy=FSDY,
                     alpha=ALPHA, label="weather_vertex{}:{}".format(x, y))
 
-                logger.info(
-                    "for vertex {}:{} p = {} \t\t u = {} \t\t v = {}".format(
-                        x, y, p, u, v))
-
                 self._vertices[x][y] = vert
                 front_end.add_machine_vertex_instance(vert)
+
+        self._debug_calls.print_vertex_bits(
+            MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC, self._vertices)
 
         # build edges
         for x in range(0, MAX_X_SIZE_OF_FABRIC):
@@ -160,6 +159,9 @@ class WeatherRun(object):
             MAX_Y_SIZE_OF_FABRIC)
 
         self._periodic_continuation()
+
+        self._debug_calls.print_vertex_bits(
+            MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC, self._vertices)
 
     def _periodic_continuation(self):
         """ does some boundary case switching

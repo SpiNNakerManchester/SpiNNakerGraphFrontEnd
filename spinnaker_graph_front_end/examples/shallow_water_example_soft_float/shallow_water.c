@@ -22,6 +22,8 @@ static circular_buffer input_buffer;
 static uint32_t current_payload;
 static uint32_t current_key;
 
+static uint32_t key_mask;
+
 static uint32_t SIZE_OF_DATA_ITEM = 4;
 
 //! The number of clock ticks to back off before starting the timer, in an
@@ -106,9 +108,11 @@ static const uint32_t EIGHT = 8;
 
 //! how many entries in the ring buffer that there should be per timer tick
 
-static uint32_t N_PACKETS_PER_TIMER_TICK = 7 * 8 * 2;
-static uint32_t N_PACKETS_PER_CV_CU_H_Z_TIMER_TICK = 3 * 8 * 2;
-static uint32_t N_PACKETS_PER_P_U_V_TIMER_TICK = 4 * 8 * 2;
+static uint32_t N_PACKETS_PER_CV_CU_H_Z_STATE_SPACE = 3 * 8 * 2;
+static uint32_t N_PACKETS_PER_P_U_V_STATE_SPACE = 4 * 8 * 2;
+
+static const uint CV_CU_Z_H = 0;
+static const uint P_U_V = 1;
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
@@ -138,20 +142,20 @@ typedef enum transmission_region_elements {
 //! \brief a possible way to avoid reading in issues.
 typedef struct init_data_t{
     // my values
-    int my_current_u; int my_current_v; int my_current_p;
+    float my_current_u; float my_current_v; float my_current_p;
     // neighbour values
-    int north_u; int north_v; int north_p;
-    int north_east_u; int north_east_v; int north_east_p;
-    int east_u; int east_v; int east_p;
-    int south_east_u; int south_east_v; int south_east_p;
-    int south_u; int south_v; int south_p;
-    int south_west_u; int south_west_v; int south_west_p;
-    int west_u; int west_v; int west_p;
-    int north_west_u; int north_west_v; int north_west_p;
+    float north_u; float north_v; float north_p;
+    float north_east_u; float north_east_v; float north_east_p;
+    float east_u; float east_v; float east_p;
+    float south_east_u; float south_east_v; float south_east_p;
+    float south_u; float south_v; float south_p;
+    float south_west_u; float south_west_v; float south_west_p;
+    float west_u; float west_v; float west_p;
+    float north_west_u; float north_west_v; float north_west_p;
     // constants
-    uint32_t dx; uint32_t dy; int fsdx; int fsdy;
-    int alpha; int tdts8; int tdtsdx; int tdtsdy; int tdt2s8;
-    int tdt2sdx; int tdt2sdy;
+    uint32_t dx; uint32_t dy; float fsdx; float fsdy;
+    float alpha; float tdts8; float tdtsdx; float tdtsdy; float tdt2s8;
+    float tdt2sdx; float tdt2sdy;
     // offset fix
     uint32_t random_backoff;
 }init_data_t;
@@ -163,8 +167,8 @@ typedef enum element_offsets {
 
 //! human readable for the location of keys in sdram
 typedef enum key_order {
-    NORTH = 0, NORTH_EAST = 1, EAST = 2, SOUTH_EAST = 3, SOUTH = 4,
-    SOUTH_WEST = 5, WEST = 6, NORTH_WEST = 7
+    SOUTH = 0, SOUTH_WEST = 1, WEST = 2, NORTH_WEST = 3, NORTH = 4,
+    NORTH_EAST = 5, EAST = 6, SOUTH_EAST = 7, KEY_MASK = 8
 } key_order;
 
 //! \brief converts a int to a float via bit wise conversion
@@ -185,6 +189,7 @@ static inline int float_to_int( float data){
 
 //! \brief print the constants of the vertex
 void print_constants(){
+    /*
     log_info("doing constants");
     
     // create list of things to print
@@ -213,6 +218,7 @@ void print_constants(){
             (int) to_print_items[position]);
     }
     log_info("end constants");
+    */
 }
 
 void force_exit_function(address_t provenance_region){
@@ -222,18 +228,9 @@ void force_exit_function(address_t provenance_region){
 
 //! \brief print my local states
 void print_my_states(){
-    float to_print_items[] = {
-        my_current_u, my_current_v, my_current_p};
-    const char *to_print_strings[3];
-    to_print_strings[0] = "my_current_u";
-    to_print_strings[1] = "my_current_v";
-    to_print_strings[2] = "my_current_p";
-
-    for(int position = 0; position < 3; position++){
-        log_info(
-            "%s = %x", to_print_strings[position],
-            float_to_int(to_print_items[position]));
-    }
+    log_info("my_current_u = %x", float_to_int(my_current_u));
+    log_info("my_current_v = %x", float_to_int(my_current_v));
+    log_info("my_current_p = %x", float_to_int(my_current_p));
     log_info("my key = %d", my_key);
 }
 
@@ -307,7 +304,8 @@ void receive_data(uint key, uint payload) {
 
 //! \brief puts the element in the correct location
 //! \param[in] elements: the list of which this payload is going to reside
-void process_key_payload(float *elements, uint32_t *has_flag_elements){
+void process_key_payload(float *elements, uint32_t *has_flag_elements,
+                         const char* direction){
     // get the offset in the array from the key
     uint32_t offset = current_key & 0x00000007;
 
@@ -321,6 +319,9 @@ void process_key_payload(float *elements, uint32_t *has_flag_elements){
 
     // add the element to the correct offset with a reinterpret cast to float
     elements[offset] = int_to_float(current_payload);
+
+    log_info("The data for %s element %d is %x",
+             direction, offset, current_payload);
     has_flag_elements[offset] = 1;
 }
 
@@ -331,13 +332,17 @@ void read_input_buffer(){
     uint32_t last_seen_size = 0;
     uint32_t current_buffer_size;
 
+    // deduce number of elements that should be in the input buffer based on
+    // its function this timer tick (which state in the state space)
     uint n_elements_to_see = 0;
-    if (is_cv_or_p_calculation == 0){
-        n_elements_to_see = N_PACKETS_PER_CV_CU_H_Z_TIMER_TICK;
+    if (is_cv_or_p_calculation == CV_CU_Z_H){
+        n_elements_to_see = N_PACKETS_PER_CV_CU_H_Z_STATE_SPACE;
     }
     else{
-        n_elements_to_see = N_PACKETS_PER_P_U_V_TIMER_TICK;
+        n_elements_to_see = N_PACKETS_PER_P_U_V_STATE_SPACE;
     }
+
+    // read in input buffers
     while(circular_buffer_size(input_buffer) < n_elements_to_see){
         current_buffer_size = circular_buffer_size(input_buffer);
         for(uint32_t counter=0; counter < 10000; counter++){
@@ -352,7 +357,7 @@ void read_input_buffer(){
         }
     }
 
-    log_info("running past buffer length");
+    //log_info("running past buffer length");
 
     cpsr = spin1_int_disable();
     //circular_buffer_print_buffer(input_buffer);
@@ -400,38 +405,37 @@ void read_input_buffer(){
         if (success1 && success2){
 
             // deduce what the base key is
-            uint32_t key_mask = 0xFFFFFFF0;
             uint32_t masked_key = current_key & key_mask;
 
             // process into the correct location
             if (masked_key == north_key){
                 process_key_payload(
-                    north_elements, has_north_components);
+                    north_elements, has_north_components, "N");
             }
             else if (masked_key == north_east_key){
                 process_key_payload(
-                    north_east_elements, has_north_east_components);
+                    north_east_elements, has_north_east_components, "NE");
             }
             else if (masked_key == east_key){
-                process_key_payload(east_elements, has_east_components);
+                process_key_payload(east_elements, has_east_components, "E");
             }
             else if (masked_key == south_east_key){
                 process_key_payload(
-                    south_east_elements, has_south_east_components);
+                    south_east_elements, has_south_east_components, "SE");
             }
             else if (masked_key == south_key){
-                process_key_payload(south_elements, has_south_components);
+                process_key_payload(south_elements, has_south_components, "S");
             }
             else if (masked_key == south_west_key){
                 process_key_payload(
-                    south_west_elements, has_south_west_components);
+                    south_west_elements, has_south_west_components, "SW");
             }
             else if (masked_key == north_west_key){
                 process_key_payload(
-                    north_west_elements, has_north_west_components);
+                    north_west_elements, has_north_west_components, "NW");
             }
             else if (masked_key == west_key){
-                process_key_payload(west_elements, has_west_components);
+                process_key_payload(west_elements, has_west_components, "W");
             }
         }
         else{
@@ -452,10 +456,11 @@ void record_state(){
     recording_record(0, &my_z, SIZE_OF_DATA_ITEM);
     recording_record(0, &my_h, SIZE_OF_DATA_ITEM);
     recording_do_timestep_update(time);
-    log_info("recorded my state \n");
+    //log_info("recorded my state \n");
 }
 
-//! \brief sends packet and waits the hang time
+//! \brief sends packet and waits the hang time, ensuring spread during the
+//! allocated time frame (this should be encapsulated into the sim interface
 void send_packet(uint32_t key, uint payload){
 
     // Wait until the expected time to send
@@ -600,12 +605,12 @@ void calculate_new_v(float current_tdts_8, float current_tdtsdy){
         (north_elements[CU] + my_cu + west_elements[CU] +
          north_west_elements[CU]) -
          current_tdtsdy * (my_h - west_elements[H]);
-    log_info("%x, %x, %x, %x, %x, %x, %x, %x, %x", float_to_int(my_old_v),
-        float_to_int(north_elements[Z]), float_to_int(my_z),
-        float_to_int(north_elements[CU]), float_to_int(my_cu),
-        float_to_int(west_elements[CU]),
-        float_to_int(north_west_elements[CU]), float_to_int(my_h),
-        float_to_int(west_elements[H]));
+    //log_info("%x, %x, %x, %x, %x, %x, %x, %x, %x", float_to_int(my_old_v),
+    //    float_to_int(north_elements[Z]), float_to_int(my_z),
+    //    float_to_int(north_elements[CU]), float_to_int(my_cu),
+    //    float_to_int(west_elements[CU]),
+    //    float_to_int(north_west_elements[CU]), float_to_int(my_h),
+    //    float_to_int(west_elements[H]));
 }
 
 
@@ -677,7 +682,7 @@ void update(uint ticks, uint b) {
         // Finalise any recordings that are in progress, writing back the final
         // amounts of samples recorded to SDRAM
         if (recording_flags > 0) {
-            log_info("updating recording regions");
+            //log_info("updating recording regions");
             recording_finalise();
         }
 
@@ -690,8 +695,8 @@ void update(uint ticks, uint b) {
         return;
     }
 
-    log_info("starting positional timer work");
-    if (is_cv_or_p_calculation == 0){
+    //log_info("starting positional timer work");
+    if (is_cv_or_p_calculation == CV_CU_Z_H){
         if (time > 0){
             read_input_buffer();
         }
@@ -703,7 +708,7 @@ void update(uint ticks, uint b) {
         calculate_h();
 
         send_cu_cv_h_z_states();
-        is_cv_or_p_calculation = 1;
+        is_cv_or_p_calculation = P_U_V;
     }
     else{
         read_input_buffer();
@@ -726,7 +731,7 @@ void update(uint ticks, uint b) {
         // send new states to next core.
         send_p_u_v_states();
         //record_state();
-        is_cv_or_p_calculation = 0;
+        is_cv_or_p_calculation = CV_CU_Z_H;
     }
 }
 
@@ -737,7 +742,7 @@ void update(uint ticks, uint b) {
 void receive_data_void(uint key, uint unknown) {
     use(key);
     use(unknown);
-    log_error("this should never ever be done\n");
+    //log_error("this should never ever be done\n");
 }
 
 
@@ -769,66 +774,66 @@ void set_init_states(address_t address){
     init_data_t *init_data =  (init_data_t*) my_state_region_address;
 
     // this cores initial states
-    my_current_p = int_to_float(init_data->my_current_p);
-    my_current_u = int_to_float(init_data->my_current_u);
-    my_current_v = int_to_float(init_data->my_current_v);
+    my_current_p = init_data->my_current_p;
+    my_current_u = init_data->my_current_u;
+    my_current_v = init_data->my_current_v;
 
-    my_old_p = int_to_float(init_data->my_current_p);
-    my_old_u = int_to_float(init_data->my_current_u);
-    my_old_v = int_to_float(init_data->my_current_v);
+    my_old_p = init_data->my_current_p;
+    my_old_u = init_data->my_current_u;
+    my_old_v = init_data->my_current_v;
 
     // north initial states
-    north_elements[U] = int_to_float(init_data->north_u);
-    north_elements[V] = int_to_float(init_data->north_v);
+    north_elements[U] = init_data->north_u;
+    north_elements[V] = init_data->north_v;
     north_elements[P] = int_to_float(init_data->north_p);
 
     // north east initial states
-    north_east_elements[U] = int_to_float(init_data->north_east_u);
-    north_east_elements[V] = int_to_float(init_data->north_east_v);
-    north_east_elements[P] = int_to_float(init_data->north_east_p);
+    north_east_elements[U] = init_data->north_east_u;
+    north_east_elements[V] = init_data->north_east_v;
+    north_east_elements[P] = init_data->north_east_p;
 
     // east initial states
-    east_elements[U] = int_to_float(init_data->east_u);
-    east_elements[V] = int_to_float(init_data->east_v);
-    east_elements[P] = int_to_float(init_data->east_p);
+    east_elements[U] = init_data->east_u;
+    east_elements[V] = init_data->east_v;
+    east_elements[P] = init_data->east_p;
     
     // south east initial states
-    south_east_elements[U] = int_to_float(init_data->south_east_u);
-    south_east_elements[V] = int_to_float(init_data->south_east_v);
-    south_east_elements[P] = int_to_float(init_data->south_east_p);
+    south_east_elements[U] = init_data->south_east_u;
+    south_east_elements[V] = init_data->south_east_v;
+    south_east_elements[P] = init_data->south_east_p;
 
     // south initial states
-    south_elements[U] = int_to_float(init_data->south_u);
-    south_elements[V] = int_to_float(init_data->south_v);
-    south_elements[P] = int_to_float(init_data->south_p);
+    south_elements[U] = init_data->south_u;
+    south_elements[V] = init_data->south_v;
+    south_elements[P] = init_data->south_p;
 
     // south west initial states
-    south_west_elements[U] = int_to_float(init_data->south_west_u);
-    south_west_elements[V] = int_to_float(init_data->south_west_v);
-    south_west_elements[P] = int_to_float(init_data->south_west_p);
+    south_west_elements[U] = init_data->south_west_u;
+    south_west_elements[V] = init_data->south_west_v;
+    south_west_elements[P] = init_data->south_west_p;
 
     // west initial states
-    west_elements[U] = int_to_float(init_data->west_u);
-    west_elements[V] = int_to_float(init_data->west_v);
-    west_elements[P] = int_to_float(init_data->west_p);
+    west_elements[U] = init_data->west_u;
+    west_elements[V] = init_data->west_v;
+    west_elements[P] = init_data->west_p;
 
     // north west initial states
-    north_west_elements[U] = int_to_float(init_data->north_west_u);
-    north_west_elements[V] = int_to_float(init_data->north_west_v);
-    north_west_elements[P] = int_to_float(init_data->north_west_p);
+    north_west_elements[U] = init_data->north_west_u;
+    north_west_elements[V] = init_data->north_west_v;
+    north_west_elements[P] = init_data->north_west_p;
 
     // get constants
-    dx = int_to_float(init_data->dx);
-    dy = int_to_float(init_data->dy);
-    fsdx = int_to_float(init_data->fsdx);
-    fsdy = int_to_float(init_data->fsdy);
-    alpha = int_to_float(init_data->alpha);
-    tdts8 = int_to_float(init_data->tdts8);
-    tdtsdx = int_to_float(init_data->tdtsdx);
-    tdtsdy = int_to_float(init_data->tdtsdy);
-    tdt2s8 = int_to_float(init_data->tdt2s8);
-    tdt2sdx = int_to_float(init_data->tdt2sdx);
-    tdt2sdy = int_to_float(init_data->tdt2sdy);
+    dx = init_data->dx;
+    dy = init_data->dy;
+    fsdx = init_data->fsdx;
+    fsdy = init_data->fsdy;
+    alpha = init_data->alpha;
+    tdts8 = init_data->tdts8;
+    tdtsdx = init_data->tdtsdx;
+    tdtsdy = init_data->tdtsdy;
+    tdt2s8 = init_data->tdt2s8;
+    tdt2sdx = init_data->tdt2sdx;
+    tdt2sdy = init_data->tdt2sdy;
 
     // print out the values
     print_my_states();
@@ -850,6 +855,7 @@ void set_neighbour_keys(address_t address){
     south_west_key = my_neighbour_state_region_address[SOUTH_WEST];
     west_key = my_neighbour_state_region_address[WEST];
     north_west_key = my_neighbour_state_region_address[NORTH_WEST];
+    key_mask = my_neighbour_state_region_address[KEY_MASK];
 
     log_info("north key = %d", north_key);
     log_info("north_east key = %d", north_east_key);
@@ -859,6 +865,8 @@ void set_neighbour_keys(address_t address){
     log_info("south west key = %d", south_west_key);
     log_info("west key = %d", west_key);
     log_info("north_west key = %d", north_west_key);
+    log_info("mask = %d", key_mask);
+
 }
 
 
@@ -967,10 +975,16 @@ void c_main() {
 
     // start execution
     log_info("Starting\n");
+
     // Start the time at "-1" so that the first tick will be 0
     time = UINT32_MAX;
 
-    is_cv_or_p_calculation = 0;
+    // set state flag (switches between:
+    // 0. calc cu, cv, z, h and sending cv, cu, h, z states
+    // 1 calc new internal states, sending p, u, v, states and transfer data
+    // between new and old
+    is_cv_or_p_calculation = CV_CU_Z_H;
 
+    // start sim
     simulation_run();
 }
