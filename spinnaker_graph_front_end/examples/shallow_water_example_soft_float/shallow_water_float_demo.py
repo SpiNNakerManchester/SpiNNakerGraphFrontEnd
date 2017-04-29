@@ -25,7 +25,8 @@ NumberOFPacketsPerWindow = 4
 FUDGE_FACTOR_FOR_TDMA = 2
 
 # read in from file the initial params (fixes c generation issues)
-READ_IN_FROM_FILE = False
+READ_IN_FROM_FILE = True
+RUN_FROM_SCRIPT = False
 
 # timing
 # super fast,. not recording
@@ -69,7 +70,7 @@ class WeatherRun(object):
 
         self._debug_calls = DebugCalls()
 
-        if READ_IN_FROM_FILE:
+        if RUN_FROM_SCRIPT:
             self._debug_calls.run_orginial_c_code(
                 MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC)
 
@@ -133,7 +134,6 @@ class WeatherRun(object):
         # build vertices
         for x in range(0, MAX_X_SIZE_OF_FABRIC):
             for y in range(0, MAX_Y_SIZE_OF_FABRIC):
-                psi = self._psi[x][y]
                 p = self._pressure_calculation(x, y)
                 u = self._mass_flux_u[x][y]
                 v = self._mass_flux_v[x][y]
@@ -158,33 +158,11 @@ class WeatherRun(object):
             self._vertices, MAX_X_SIZE_OF_FABRIC,
             MAX_Y_SIZE_OF_FABRIC)
 
-        self._periodic_continuation()
+        #self._debug_calls.periodic_continuation(
+        #    MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC, self._vertices)
 
         self._debug_calls.print_vertex_bits(
             MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC, self._vertices)
-
-    def _periodic_continuation(self):
-        """ does some boundary case switching
-
-        :return: None
-        """
-        for j in range(0, MAX_Y_SIZE_OF_FABRIC - 1):
-            self._vertices[0][j].u = self._vertices[
-                MAX_X_SIZE_OF_FABRIC - 1][j].u
-            self._vertices[MAX_Y_SIZE_OF_FABRIC - 1][
-                (j + 1) % MAX_Y_SIZE_OF_FABRIC].v = \
-                self._vertices[0][(j + 1) % MAX_Y_SIZE_OF_FABRIC].v
-        for i in range(0, MAX_X_SIZE_OF_FABRIC - 1):
-            self._vertices[(i + 1) % MAX_Y_SIZE_OF_FABRIC][
-                MAX_X_SIZE_OF_FABRIC - 1].u = self._vertices[
-                (i + 1) % MAX_Y_SIZE_OF_FABRIC][0].u
-            self._vertices[i][0].v = self._vertices[0][
-                MAX_Y_SIZE_OF_FABRIC - 1].v
-
-        self._vertices[0][MAX_Y_SIZE_OF_FABRIC - 1].u = self._vertices[
-            MAX_X_SIZE_OF_FABRIC - 1][0].u
-        self._vertices[MAX_X_SIZE_OF_FABRIC - 1][0].v = self._vertices[
-            0][MAX_Y_SIZE_OF_FABRIC - 1].v
 
     def _sort_out_psi(self):
         """ calculates the psi values for each atom

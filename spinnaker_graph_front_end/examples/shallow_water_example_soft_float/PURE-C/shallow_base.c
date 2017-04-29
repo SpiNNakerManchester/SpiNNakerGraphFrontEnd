@@ -29,7 +29,7 @@
 #define MAX(x,y) ((x)>(y)?(x):(y))
 #define TRUE 1
 #define FALSE 0
-#define ITMAX 30
+#define ITMAX 7
 #define L_OUT TRUE
 
 extern float wtime();
@@ -80,10 +80,19 @@ int N_LEN;
 //!
 //! Minimal serial version (26 May 2011)
 
+
+static int float_to_int( float data){
+    union { float x; int y; } cast_union;
+    cast_union.x = data;
+
+
+    return cast_union.y;
+}
+
 int main(int argc, char **argv) {
 
   if (argc < 2){
-     printf("no args sent, using defaults");
+     printf("no args sent, using defaults\n");
      M = 3;
      N = 3;
 
@@ -139,20 +148,20 @@ int main(int argc, char **argv) {
   dj = tpi / N;
   pcf = pi * pi * a * a / (el * el);
 
-  printf("dt %f\n", dt);
-  printf("tdt %f\n", tdt);
-  printf("dx %f\n", dx);
-  printf("dy %f\n", dx);
-  printf("fsdx %f\n", fsdx);
-  printf("fsdy %f\n", fsdy);
-  printf("a %.11f\n", a);
-  printf("alpha %.11f\n", alpha);
-  printf("el %.11f\n", el);
-  printf("pi %.11f\n", pi);
-  printf("tpi %.11f\n", tpi);
-  printf("di %.11f\n", di);
-  printf("dj %.11f\n", dj);
-  printf("pcf %.11f\n", pcf);
+  printf("dt %08x\n", float_to_int(dt));
+  printf("tdt %08x\n", float_to_int(tdt));
+  printf("dx %08x\n", float_to_int(dx));
+  printf("dy %08x\n", float_to_int(dx));
+  printf("fsdx %08x\n", float_to_int(fsdx));
+  printf("fsdy %08x\n", float_to_int(fsdy));
+  printf("a %08x\n", float_to_int(a));
+  printf("alpha %08x\n", float_to_int(alpha));
+  printf("el %08x\n", float_to_int(el));
+  printf("pi %08x\n", float_to_int(pi));
+  printf("tpi %08x\n", float_to_int(tpi));
+  printf("di %08x\n", float_to_int(di));
+  printf("dj %08x\n", float_to_int(dj));
+  printf("pcf %08x\n", float_to_int(pcf));
 
 
   // Initial values of the stream function and p
@@ -161,7 +170,8 @@ int main(int argc, char **argv) {
       float sinx = sin((i + .5) * di);
       float siny = sin((j + .5) * dj);
       float total = a * sinx * siny;
-      printf("psi %d%d, sinx %20.16f siny %20.16f total %20.16f \n", i, j, sinx, siny, total);
+      printf("psi %d%d, sinx %20.16f siny %20.16f total %08x %f\n", i, j,
+        sinx, siny, float_to_int(total), total);
       psi[i][j] = a * sinf((i + .5) * di) * sinf((j + .5) * dj);
       p[i][j] = pcf * (cosf(2. * (i) * di) + cosf(2. * (j) * dj)) + 50000.;
     }
@@ -174,13 +184,6 @@ int main(int argc, char **argv) {
       v[i][j + 1] = (psi[i + 1][j + 1] - psi[i][j + 1]) / dx;
     }
   }
-
-    printf("\n initial elements of u before periodic\n");
-    for (i=0;i<M;i++) {
-      for (j=0;j<N;j++) {
-      printf("%d, %d, %f \n",i, j, u[i][j]);
-      }
-    }
      
   // Periodic continuation
   for (j=0;j<N;j++) {
@@ -217,68 +220,99 @@ int main(int argc, char **argv) {
 
 
     FILE *f = fopen("initial_p.txt", "w");
+    FILE *raw = fopen("initial_p_float.txt", "w");
     if (f == NULL)
     {
-        printf("Error opening file!\n");
+        printf("Error opening initial p file!\n");
+        exit(1);
+    }
+    if (raw == NULL)
+    {
+        printf("Error opening initial p raw file!\n");
         exit(1);
     }
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d,%d,%f \n",i, j, p[i][j]);
-      fprintf(f, "%d,%d,%f \n",i, j, p[i][j]);
+      printf("%d,%d,%08x \n",i, j, float_to_int(p[i][j]));
+      fprintf(f, "%d,%d,%08x \n",i, j, float_to_int(p[i][j]));
+      fprintf(raw, "%d,%d,%f \n", i, j, p[i][j] );
       }
     }
     fclose(f);
+    fclose(raw);
 
 
 
     f = fopen("initial_u.txt", "w");
+    raw = fopen("initial_u_float.txt", "w");
     if (f == NULL)
     {
-        printf("Error opening file!\n");
+        printf("Error opening initial u file!\n");
+        exit(1);
+    }
+    if (raw == NULL)
+    {
+        printf("Error opening initial u raw file!\n");
         exit(1);
     }
     printf("\n initial elements of u\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d, %d, %f \n",i, j, u[i][j]);
-      fprintf(f, "%d,%d,%f \n",i, j, u[i][j]);
+      printf("%d, %d, %08x \n",i, j, float_to_int(u[i][j]));
+      fprintf(f, "%d,%d,%08x \n",i, j, float_to_int(u[i][j]));
+      fprintf(raw, "%d,%d,%f \n", i, j, u[i][j]);
       }
     }
     fclose(f);
+    fclose(raw);
 
 
 
     f = fopen("initial_v.txt", "w");
+    raw = fopen("initial_v_float.txt", "w");
     if (f == NULL)
     {
-        printf("Error opening file!\n");
+        printf("Error opening initial v file!\n");
+        exit(1);
+    }
+    if (raw == NULL)
+    {
+        printf("Error opening initial v raw file!\n");
         exit(1);
     }
     printf("\n initial elements of v\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d, %d, %f \n",i, j, v[i][j]);
-      fprintf(f, "%d,%d,%f \n",i, j, v[i][j]);
+      printf("%d, %d, %08x \n",i, j, float_to_int(v[i][j]));
+      fprintf(f, "%d,%d,%08x \n",i, j, float_to_int(v[i][j]));
+      fprintf(raw, "%d,%d,%f \n", i, j, v[i][j]);
       }
     }
     fclose(f);
-
+    fclose(raw);
 
     f = fopen("initial_psi.txt", "w");
+    raw = fopen("initial_psi_float.txt", "w");
     if (f == NULL)
     {
-        printf("Error opening file!\n");
+        printf("Error opening psi file!\n");
+        exit(1);
+    }
+    if (raw == NULL)
+    {
+        printf("Error opening initial psi raw file!\n");
         exit(1);
     }
     printf("\n initial elements of psi\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d, %d, %f \n",i, j, psi[i][j]);
-      fprintf(f, "%d,%d, %f \n",i, j, psi[i][j]);
+      printf("%d, %d, %08x \n",i, j, float_to_int(psi[i][j]));
+      fprintf(f, "%d,%d, %08x \n",i, j, float_to_int(psi[i][j]));
+      fprintf(raw, "%d,%d,%f \n", i, j, psi[i][j]);
       }
     }
     fclose(f);
+    fclose(raw);
     printf("\n");
   }
 
@@ -298,6 +332,9 @@ int main(int argc, char **argv) {
 
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
+        printf("cu %d, %d, %08x %08x %08x %f %f %f \n",
+               i+1, j, float_to_int(p[i+1][j]), float_to_int(p[i][j]),
+               float_to_int(u[i+1][j]), p[i + 1][j], p[i][j], u[i + 1][j]);
         cu[i + 1][j] = .5 * (p[i + 1][j] + p[i][j]) * u[i + 1][j];
       }
     }
@@ -326,6 +363,38 @@ int main(int argc, char **argv) {
          v[i][j] * v[i][j]);
       }
     }
+
+
+    printf("\n elements of cu\n");
+    for (i=0;i<M;i++) {
+      for (j=0;j<N;j++) {
+      printf("%d:%d:%d cu %08x cu raw %f\n",
+             i, j, ncycle, float_to_int(cu[i][j]), cu[i][j]);
+      }
+    }
+
+    printf("\n elements of cv\n");
+    for (i=0;i<M;i++) {
+      for (j=0;j<N;j++) {
+      printf("%d:%d:%d cv %08x cvraw %f \n",
+             i, j, ncycle, float_to_int(cv[i][j]), cv[i][j]);
+      }
+    }
+
+    printf("\n elements of h\n");
+    for (i=0;i<M;i++) {
+      for (j=0;j<N;j++) {
+      printf("%d:%d:%d h %08x \n",i, j, ncycle, float_to_int(h[i][j]));
+      }
+    }
+
+    printf("\n elements of z\n");
+    for (i=0;i<M;i++) {
+      for (j=0;j<N;j++) {
+      printf("%d:%d:%d z %08x \n",i, j, ncycle, float_to_int(z[i][j]));
+      }
+    }
+
 
     c2 = wtime();  
     t100 = t100 + (c2 - c1); 
@@ -390,48 +459,53 @@ int main(int argc, char **argv) {
     printf(" elements of p for cycle %d\n", ncycle);
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d:%d:%d p %f \n",i, j, ncycle, pnew[i][j]);
+      printf("%d:%d:%d p %08x praw %f \n",
+             i, j, ncycle, float_to_int(pnew[i][j]), pnew[i][j]);
       }
     }
     printf("\n elements of u\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d:%d:%d u %f \n",i, j, ncycle, unew[i][j]);
-    }
+      printf("%d:%d:%d u %08x uraw %f \n",
+             i, j, ncycle, float_to_int(unew[i][j]), unew[i][j]);
+      }
     }
 
     printf("\n elements of v\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d:%d:%d v %f \n",i, j, ncycle, vnew[i][j]);
+      printf("%d:%d:%d v %08x vraw %f \n",
+             i, j, ncycle, float_to_int(vnew[i][j]), vnew[i][j]);
       }
     }
 
-        printf("\n elements of cu\n");
+    printf("\n elements of cu\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d:%d:%d cu %f \n",i, j, ncycle, cu[i][j]);
+      printf("%d:%d:%d cu %08x cu raw %f\n",
+             i, j, ncycle, float_to_int(cu[i][j]), cu[i][j]);
       }
     }
 
-        printf("\n elements of cv\n");
+    printf("\n elements of cv\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d:%d:%d cv %f \n",i, j, ncycle, cv[i][j]);
+      printf("%d:%d:%d cv %08x cvraw %f \n",
+             i, j, ncycle, float_to_int(cv[i][j]), cv[i][j]);
       }
     }
 
-        printf("\n elements of h\n");
+    printf("\n elements of h\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d:%d:%d h %g \n",i, j, ncycle, h[i][j]);
+      printf("%d:%d:%d h %08x \n",i, j, ncycle, float_to_int(h[i][j]));
       }
     }
 
-        printf("\n elements of z\n");
+    printf("\n elements of z\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d:%d:%d z %g \n",i, j, ncycle, z[i][j]);
+      printf("%d:%d:%d z %08x \n",i, j, ncycle, float_to_int(z[i][j]));
       }
     }
 
@@ -510,48 +584,53 @@ int main(int argc, char **argv) {
     printf(" elements of p for cycle %d\n", ncycle);
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d:%d:%d p %f \n",i, j, ncycle, pnew[i][j]);
+      printf("%d:%d:%d p %08x praw %f \n",
+             i, j, ncycle, float_to_int(pnew[i][j]), pnew[i][j]);
       }
     }
     printf("\n elements of u\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d:%d:%d u %f \n",i, j, ncycle, unew[i][j]);
-    }
+      printf("%d:%d:%d u %08x uraw %f \n",
+             i, j, ncycle, float_to_int(unew[i][j]), unew[i][j]);
+      }
     }
 
     printf("\n elements of v\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d:%d:%d v %f \n",i, j, ncycle, vnew[i][j]);
+      printf("%d:%d:%d v %08x vraw %f \n",
+             i, j, ncycle, float_to_int(vnew[i][j]), vnew[i][j]);
       }
     }
 
         printf("\n elements of cu\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d:%d:%d cu %f \n",i, j, ncycle, cu[i][j]);
+      printf("%d:%d:%d cu %08x cu raw %f\n",
+             i, j, ncycle, float_to_int(cu[i][j]), cu[i][j]);
       }
     }
 
         printf("\n elements of cv\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d:%d:%d cv %f \n",i, j, ncycle, cv[i][j]);
+      printf("%d:%d:%d cv %08x cvraw %f \n",
+             i, j, ncycle, float_to_int(cv[i][j]), cv[i][j]);
       }
     }
 
         printf("\n elements of h\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d:%d:%d h %g \n",i, j, ncycle, h[i][j]);
+      printf("%d:%d:%d h %08x \n",i, j, ncycle, float_to_int(h[i][j]));
       }
     }
 
         printf("\n elements of z\n");
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-      printf("%d:%d:%d z %g \n",i, j, ncycle, z[i][j]);
+      printf("%d:%d:%d z %08x \n",i, j, ncycle, float_to_int(z[i][j]));
       }
     }
 
@@ -567,15 +646,15 @@ int main(int argc, char **argv) {
     printf(" cycle number %d model time in hours %f\n", ITMAX, ptime);
     printf(" diagonal elements of p\n");
     for (i=0; i<mnmin; i++) {
-      printf("%f ",pnew[i][i]);
+      printf("%08x ", float_to_int(pnew[i][i]));
     }
     printf("\n diagonal elements of u\n");
     for (i=0; i<mnmin; i++) {
-      printf("%f ",unew[i][i]);
+      printf("%08x ", float_to_int(unew[i][i]));
     }
     printf("\n diagonal elements of v\n");
     for (i=0; i<mnmin; i++) {
-      printf("%f ",vnew[i][i]);
+      printf("%08x ", float_to_int(vnew[i][i]));
     }
     printf("\n");
 

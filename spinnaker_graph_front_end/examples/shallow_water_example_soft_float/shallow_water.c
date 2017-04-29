@@ -567,6 +567,9 @@ void send_p_u_v_states(){
 //! \brief calculates the cu for this atom
 void calculate_cu(){
     my_cu = POINT_5 * (my_current_p + south_elements[P]) * my_current_u;
+    log_info("cu bits %x, %x, %x",
+             float_to_int(my_current_p), float_to_int(south_elements[P]),
+             float_to_int(my_current_u));
 }
 
 //! \brief calculates the cv for this atom
