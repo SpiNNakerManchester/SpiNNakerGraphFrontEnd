@@ -335,12 +335,14 @@ int main(int argc, char **argv) {
         printf("cu %d, %d, %08x %08x %08x %f %f %f \n",
                i+1, j, float_to_int(p[i+1][j]), float_to_int(p[i][j]),
                float_to_int(u[i+1][j]), p[i + 1][j], p[i][j], u[i + 1][j]);
-        cu[i + 1][j] = .5 * (p[i + 1][j] + p[i][j]) * u[i + 1][j];
+               float point5 = 0.5;
+        cu[i + 1][j] = point5 * (p[i + 1][j] + p[i][j]) * u[i + 1][j];
       }
     }
     for (i=0;i<M;i++) {
       for (j=0;j<N;j++) {
-        cv[i][j + 1] = .5 * (p[i][j + 1] + p[i][j]) * v[i][j + 1];
+        float point5 = 0.5;
+        cv[i][j + 1] = point5 * (p[i][j + 1] + p[i][j]) * v[i][j + 1];
       }
     }
     for (i=0;i<M;i++) {
@@ -355,8 +357,8 @@ int main(int argc, char **argv) {
         //  u[i + 1][j], u[i][j],
         //  u[i][j], v[i][j + 1], v[i][j + 1], v[i][j], v[i][j]);
 
-
-        h[i][j] = p[i][j] + .25 *
+        float point25 = 0.25;
+        h[i][j] = p[i][j] +point25 *
         (u[i + 1][j] * u[i + 1][j] +
          u[i][j] * u[i][j] +
          v[i][j + 1] * v[i][j + 1] +
