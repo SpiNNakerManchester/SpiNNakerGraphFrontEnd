@@ -238,6 +238,7 @@ void print_my_states(){
 //! \param[in] elements_to_print: the array of elements to print elements of
 //! \param[in] name: the name of the set of elements.
 void print_a_set_of_elements(float *elements_to_print, char* name){
+
     float to_print_items[] = {
         elements_to_print[U], elements_to_print[V], elements_to_print[P],
         elements_to_print[Z], elements_to_print[H], elements_to_print[CV],
@@ -788,7 +789,7 @@ void set_init_states(address_t address){
     // north initial states
     north_elements[U] = init_data->north_u;
     north_elements[V] = init_data->north_v;
-    north_elements[P] = int_to_float(init_data->north_p);
+    north_elements[P] = init_data->north_p;
 
     // north east initial states
     north_east_elements[U] = init_data->north_east_u;

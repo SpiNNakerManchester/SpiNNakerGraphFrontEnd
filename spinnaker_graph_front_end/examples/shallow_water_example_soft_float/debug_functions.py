@@ -207,6 +207,9 @@ class DebugCalls(object):
         dir_path = os.path.join(dir_path, "initial_u.txt")
         reader = open(dir_path)
 
+        # data for reading in int
+        #  x = int(hex_string, 16)
+
         for line in reader:
             bits = line.split(",")
             final_number_bits = bits[2].split("\n")
