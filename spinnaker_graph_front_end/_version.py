@@ -1,4 +1,4 @@
-__version__ = "3.0.0"
-__version_month__ = "September"
-__version_year__ = "2016"
-__version_name__ = ""
+__version__ = "1!4.0.0a5"
+__version_month__ = "May"
+__version_year__ = "2017"
+__version_name__ = "Riptalon"
