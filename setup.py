@@ -2,12 +2,14 @@ from setuptools import setup
 from collections import defaultdict
 import os
 
+__version__ = None
 exec(open("spinnaker_graph_front_end/_version.py").read())
+assert __version__
 
 # Build a list of all project modules, as well as supplementary files
 main_package = "spinnaker_graph_front_end"
 data_extensions = {".aplx", ".xml"}
-config_extensions = {".cfg",".template"}
+config_extensions = {".cfg", ".template"}
 main_package_dir = os.path.join(os.path.dirname(__file__), main_package)
 start = len(main_package_dir)
 packages = []
@@ -32,10 +34,13 @@ for dirname, dirnames, filenames in os.walk(main_package_dir):
 setup(
     name="SpiNNakerGraphFrontEnd",
     version=__version__,
-    description="Front end to the SpiNNaker tool chain which uses a basic graph",
+    description="Front end to the SpiNNaker tool chain which uses a "
+                "basic graph",
     url="https://github.com/SpiNNakerManchester/SpiNNakerGraphFrontEnd",
     packages=packages,
     package_data=package_data,
-    install_requires=['SpiNNFrontEndCommon >= 3.0.0, < 4.0.0',
+    install_requires=['SpiNNaker_PACMAN >= 1!4.0.0a5, < 1!5.0.0',
+                      'SpiNNaker_DataSpecification >= 1!4.0.0a5, < 1!5.0.0',
+                      'SpiNNFrontEndCommon >= 1!4.0.0a5, < 1!5.0.0',
                       'numpy', 'lxml', 'six']
 )
