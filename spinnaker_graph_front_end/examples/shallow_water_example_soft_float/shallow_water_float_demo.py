@@ -44,22 +44,6 @@ CORES_PER_CHIP = 16
 #RUNTIME = 4000
 RUNTIME = 30
 
-# random state variable inits
-DT = 90.0
-TDT = DT
-DX = 100000.0
-DY = 100000.0
-FSDX = 4.0 / DX
-FSDY = 4.0 / DY
-A = 1000000.0
-ALPHA = 0.001
-EL = MAX_Y_SIZE_OF_FABRIC * DX
-PI = 3.1415926535897931
-TPI = PI + PI
-DI = TPI / MAX_X_SIZE_OF_FABRIC
-DJ = TPI / MAX_Y_SIZE_OF_FABRIC
-PCF = PI * PI * A * A / (EL * EL)
-
 
 class WeatherRun(object):
     """
@@ -70,13 +54,22 @@ class WeatherRun(object):
 
         self._debug_calls = DebugCalls()
 
+        self._DT, self._TDT, self._DX, self._DY, self._FSDX, self._FSDY,\
+        self._A, self._ALPHA, self._EL, self._PI, self._TPI, self._DI, \
+        self._DJ, self._PCF, self._tdts8, self._tdtsdx, self._tdtsdy, \
+        self._tdt2s8, self._tdt2sdx, self._tdt2sdy = \
+            self._debug_calls.read_in_constants()
+
         if RUN_FROM_SCRIPT:
             self._debug_calls.run_orginial_c_code(
                 MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC)
 
         # print the constants
         self._debug_calls.print_constants(
-            DT, TDT, DX, DY, FSDX, FSDY, A, ALPHA, EL, PI, TPI, DI, DJ, PCF)
+            self._DT, self._TDT, self._DX, self._DY, self._FSDX, self._FSDY,
+            self._A, self._ALPHA, self._EL, self._PI, self._TPI, self._DI,
+            self._DJ, self._PCF, self._tdts8, self._tdtsdx, self._tdtsdy,
+            self._tdt2s8, self._tdt2sdx, self._tdt2sdy)
 
         # figure machine size needed at a min
         min_chips = \
@@ -140,14 +133,28 @@ class WeatherRun(object):
 
                 vert = ShallowWaterVertex(
                     p=p, u=u, v=v, x=x, y=y,
-                    tdt=TDT, dx=DX, dy=DY, fsdx=FSDX, fsdy=FSDY,
-                    alpha=ALPHA, label="weather_vertex{}:{}".format(x, y))
+                    tdt=self._TDT, dx=self._DX, dy=self._DY, fsdx=self._FSDX,
+                    fsdy=self._FSDY, alpha=self._ALPHA, tdts8=self._tdts8,
+                    tdtsdx=self._tdt2sdx, tdtsdy=self._tdt2sdy,
+                    tdt2s8=self._tdt2s8, tdt2sdx=self._tdt2sdx,
+                    tdt2sdy=self._tdt2sdy,
+                    label="weather_vertex{}:{}".format(x, y))
 
                 self._vertices[x][y] = vert
                 front_end.add_machine_vertex_instance(vert)
 
+        #logger.info("vertex bits before periodic")
+
         self._debug_calls.print_vertex_bits(
             MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC, self._vertices)
+
+        #self._do_periodic_continuation(
+        #    MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC, self._vertices)
+
+        #logger.info("vertex bits after periodic")
+
+        #self._debug_calls.print_vertex_bits(
+        #    MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC, self._vertices)
 
         # build edges
         for x in range(0, MAX_X_SIZE_OF_FABRIC):
@@ -158,11 +165,36 @@ class WeatherRun(object):
             self._vertices, MAX_X_SIZE_OF_FABRIC,
             MAX_Y_SIZE_OF_FABRIC)
 
-        #self._debug_calls.periodic_continuation(
-        #    MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC, self._vertices)
-
         self._debug_calls.print_vertex_bits(
             MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC, self._vertices)
+
+    def _do_periodic_continuation(
+            self, max_x_size_of_fabric, max_y_size_of_fabric, vertices):
+        """ does the wrap around functionality. needed as the first u and vs 
+        are wrapped before the evolution
+        
+        :param max_x_size_of_fabric: size of fabric in x axis
+        :param max_y_size_of_fabric: size of fabric in y axis
+        :param vertices: array of vertices
+        :return: None
+        """
+        for j in range(0, max_y_size_of_fabric - 1):
+            vertices[0][j].u = vertices[
+                max_x_size_of_fabric - 1][j].u
+            vertices[max_y_size_of_fabric - 1][
+                (j + 1) % max_y_size_of_fabric].v = \
+                vertices[0][(j + 1) % max_y_size_of_fabric].v
+        for i in range(0, max_x_size_of_fabric - 1):
+            vertices[(i + 1) % max_y_size_of_fabric][
+                max_x_size_of_fabric - 1].u = vertices[
+                (i + 1) % max_y_size_of_fabric][0].u
+            vertices[i][0].v = vertices[0][
+                max_y_size_of_fabric - 1].v
+
+        vertices[0][max_y_size_of_fabric - 1].u = vertices[
+            max_x_size_of_fabric - 1][0].u
+        vertices[max_x_size_of_fabric - 1][0].v = vertices[
+            0][max_y_size_of_fabric - 1].v
 
     def _sort_out_psi(self):
         """ calculates the psi values for each atom
@@ -238,8 +270,7 @@ class WeatherRun(object):
             self._vertices[x][y].set_direction_vertex(
                 direction=compass, vertex=self._vertices[dest_x][dest_y])
 
-    @staticmethod
-    def _psi_calculation(x, y):
+    def _psi_calculation(self, x, y):
         """ creates the psi calculation
 
         :param x: the x coord of the vertex to make a psi of
@@ -248,13 +279,14 @@ class WeatherRun(object):
         """
         # a * sin((i + .5) * di) * sin((j + .5) * dj);
 
-        sinx = math.sin((x + 0.5) * DI)
-        siny = math.sin((y + 0.5) * DJ)
-        total = A * sinx * siny
+        sinx = math.sin((x + 0.5) * self._DI)
+        siny = math.sin((y + 0.5) * self._DJ)
+        total = self._A * sinx * siny
         logger.info(
             "psi {}{}, sinx {} siny {:20.16f} total {}".format(
                 x, y, sinx, siny, total))
-        return A * math.sin((x + 0.5) * DI) * math.sin((y + 0.5) * DJ)
+        return self._A * math.sin((x + 0.5) * self._DI) * \
+               math.sin((y + 0.5) * self._DJ)
 
     def _pressure_calculation(self, x, y):
         """ creates the p calculation
@@ -266,11 +298,10 @@ class WeatherRun(object):
         if READ_IN_FROM_FILE:
             return self._read_in_p[x][y]
         else:
-            return PCF * (math.cos(2.0 * x * DI) +
-                          math.cos(2.0 * y * DJ)) + 50000.0
+            return self._PCF * (math.cos(2.0 * x * self._DI) +
+                          math.cos(2.0 * y * self._DJ)) + 50000.0
 
-    @staticmethod
-    def _mass_flux_u_calculation(x, y, psi):
+    def _mass_flux_u_calculation(self, x, y, psi):
         """ creates the u calculation
 
         :param x: the x coord of the vertex to make a u of
@@ -282,10 +313,9 @@ class WeatherRun(object):
                  [((y + 1) % MAX_Y_SIZE_OF_FABRIC)] -
                  psi
                  [(x % MAX_X_SIZE_OF_FABRIC)]
-                 [(y % MAX_Y_SIZE_OF_FABRIC)]) / DY
+                 [(y % MAX_Y_SIZE_OF_FABRIC)]) / self._DY
 
-    @staticmethod
-    def _mass_flux_v_calculation(x, y, psi):
+    def _mass_flux_v_calculation(self, x, y, psi):
         """ creates the v calculation
 
         :param x: the x coord of the vertex to make a v of
@@ -297,7 +327,7 @@ class WeatherRun(object):
                 [(y % MAX_Y_SIZE_OF_FABRIC)] -
                 psi
                 [(x % MAX_X_SIZE_OF_FABRIC)]
-                [(y % MAX_Y_SIZE_OF_FABRIC)]) / DX
+                [(y % MAX_Y_SIZE_OF_FABRIC)]) / self._DX
 
     @staticmethod
     def run(runtime):
@@ -316,7 +346,8 @@ class WeatherRun(object):
         :return: None
         """
         self._debug_calls.print_diagonal_data(
-            MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC, RUNTIME, DT)
+            recorded_data, MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC,
+            RUNTIME, self._DT)
 
     def extract_data(self):
         """ extracts data from the machine
@@ -338,7 +369,7 @@ class WeatherRun(object):
     def print_init_states(self):
         self._debug_calls.print_init_states(
             MAX_X_SIZE_OF_FABRIC, MAX_Y_SIZE_OF_FABRIC,
-            DX, DY, DT, ALPHA, self._vertices)
+            self._DX, self._DY, self._DT, self._ALPHA, self._vertices)
 
     def print_all_data(self, recorded_data):
         self._debug_calls.print_all_data(

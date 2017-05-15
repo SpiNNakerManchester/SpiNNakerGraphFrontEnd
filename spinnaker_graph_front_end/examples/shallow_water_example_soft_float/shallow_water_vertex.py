@@ -110,7 +110,8 @@ class ShallowWaterVertex(
 
     def __init__(
             self, label, u, v, p, tdt, dx, x, y,
-            dy, fsdx, fsdy, alpha, constraints=None):
+            dy, fsdx, fsdy, alpha, tdts8, tdtsdx, tdtsdy, tdt2s8, tdt2sdx,
+            tdt2sdy, constraints=None):
 
         # resources used by a shallow water element vertex
         sdram = SDRAMResource(
@@ -154,6 +155,12 @@ class ShallowWaterVertex(
         self._fsdx = fsdx
         self._fsdy = fsdy
         self._alpha = alpha
+        self._tdts8 = tdts8
+        self._tdtsdx = tdtsdx
+        self._tdtsdy = tdtsdy
+        self._tdt2s8 = tdt2s8
+        self._tdt2sdx = tdt2sdx
+        self._tdt2sdy = tdt2sdy
 
         # buffered data items (used for buffered recording)
         self._buffer_size_before_receive = None
@@ -301,15 +308,15 @@ class ShallowWaterVertex(
         logger.info("vertex {}:{}".format(self.x, self.y))
         byte_array = struct.pack("<f", self._u)
         data = struct.unpack("<I", byte_array)[0]
-        spec.write_value(data=data, data_type=self.DATA_TYPE_OF_FLOAT)
+        spec.write_value(data=self._u, data_type=self.DATA_TYPE_OF_FLOAT)
         logger.info("u = 0x{:08x}".format(data))
         byte_array = struct.pack("<f", self._v)
         data = struct.unpack("<I", byte_array)[0]
-        spec.write_value(data=data, data_type=self.DATA_TYPE_OF_FLOAT)
+        spec.write_value(data=self._v, data_type=self.DATA_TYPE_OF_FLOAT)
         logger.info("v = 0x{:08x}".format(data))
         byte_array = struct.pack("<f", self._p)
         data = struct.unpack("<I", byte_array)[0]
-        spec.write_value(data=data, data_type=self.DATA_TYPE_OF_FLOAT)
+        spec.write_value(data=self._p, data_type=self.DATA_TYPE_OF_FLOAT)
         logger.info("p = 0x{:08x}".format(data))
 
         edges = machine_graph.get_edges_ending_at_vertex(self)
@@ -322,17 +329,11 @@ class ShallowWaterVertex(
                 if isinstance(edge, ShallowWaterEdge):
                     if edge.compass == self.ORDER_OF_DIRECTIONS[position]:
                         # U = 0, V = 1, P = 2, Z = 3, H = 4, CV = 5, CU = 6
-                        byte_array = struct.pack("<f", edge.pre_vertex.u)
-                        data = struct.unpack("<I", byte_array)[0]
-                        spec.write_value(data=data,
+                        spec.write_value(data=edge.pre_vertex.u,
                                          data_type=self.DATA_TYPE_OF_FLOAT)
-                        byte_array = struct.pack("<f", edge.pre_vertex.v)
-                        data = struct.unpack("<I", byte_array)[0]
-                        spec.write_value(data=data,
+                        spec.write_value(data=edge.pre_vertex.v,
                                          data_type=self.DATA_TYPE_OF_FLOAT)
-                        byte_array = struct.pack("<f", edge.pre_vertex.p)
-                        data = struct.unpack("<I", byte_array)[0]
-                        spec.write_value(data=data,
+                        spec.write_value(data=edge.pre_vertex.p,
                                          data_type=self.DATA_TYPE_OF_FLOAT)
                         found = True
             if not found:
@@ -343,20 +344,16 @@ class ShallowWaterVertex(
         # constant elements
         spec.write_value(self._dx, data_type=self.DATA_TYPE_OF_FLOAT)
         spec.write_value(self._dy, data_type=self.DATA_TYPE_OF_FLOAT)
+        print self._fsdx
         spec.write_value(self._fsdx, data_type=self.DATA_TYPE_OF_FLOAT)
         spec.write_value(self._fsdy, data_type=self.DATA_TYPE_OF_FLOAT)
         spec.write_value(self._alpha, data_type=self.DATA_TYPE_OF_FLOAT)
-        spec.write_value(self._tdt / 8.0, data_type=self.DATA_TYPE_OF_FLOAT)
-        spec.write_value(self._tdt / self._dx,
-                         data_type=self.DATA_TYPE_OF_FLOAT)
-        spec.write_value(self._tdt / self._dy,
-                         data_type=self.DATA_TYPE_OF_FLOAT)
-        spec.write_value((self._tdt + self._tdt) / 8.0,
-                         data_type=self.DATA_TYPE_OF_FLOAT)
-        spec.write_value((self._tdt + self._tdt) / self._dx,
-                         data_type=self.DATA_TYPE_OF_FLOAT)
-        spec.write_value((self._tdt + self._tdt) / self._dy,
-                         data_type=self.DATA_TYPE_OF_FLOAT)
+        spec.write_value(self._tdts8, data_type=self.DATA_TYPE_OF_FLOAT)
+        spec.write_value(self._tdtsdx, data_type=self.DATA_TYPE_OF_FLOAT)
+        spec.write_value(self._tdtsdy, data_type=self.DATA_TYPE_OF_FLOAT)
+        spec.write_value(self._tdt2s8, data_type=self.DATA_TYPE_OF_FLOAT)
+        spec.write_value(self._tdt2sdx, data_type=self.DATA_TYPE_OF_FLOAT)
+        spec.write_value(self._tdt2sdy, data_type=self.DATA_TYPE_OF_FLOAT)
 
     def get_provenance_data_from_machine(self, transceiver, placement):
         provenance_data = self._read_provenance_data(transceiver, placement)

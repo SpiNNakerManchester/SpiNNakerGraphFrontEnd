@@ -29,8 +29,7 @@ import struct
 
 @supports_injection
 class ConwayBasicCell(
-        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-        NeedsNMachineTimeSteps):
+        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
     """ Cell which represents a cell within the 2d fabric
     """
 
@@ -54,9 +53,8 @@ class ConwayBasicCell(
             sdram=SDRAMResource(0), dtcm=DTCMResource(0),
             cpu_cycles=CPUCyclesPerTickResource(0))
 
-        MachineVertex.__init__(self, resources, label)
         MachineVertex.__init__(self, label)
-        NeedsNMachineTimeSteps.__init__(self)
+        MachineDataSpecableVertex.__init__(self)
 
         # app specific elements
         self._state = state
@@ -92,7 +90,7 @@ class ConwayBasicCell(
             size=8, label="neighour_states")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.RESULTS.value,
-            size=(self._n_machine_time_steps * 4) + 4, label="results")
+            size=(50 * 4) + 4, label="results")
 
         # simulation .c requirements
         spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
@@ -130,16 +128,17 @@ class ConwayBasicCell(
                     " please fix.")
 
         # write key needed to transmit with
-        key = routing_info.get_first_key_from_partition(partitions[0])
+        for partition in partitions:
+            key = routing_info.get_first_key_from_partition(partition)
 
-        spec.switch_write_focus(
-            region=self.DATA_REGIONS.TRANSMISSIONS.value)
-        if key is None:
-            spec.write_value(0)
-            spec.write_value(0)
-        else:
-            spec.write_value(1)
-            spec.write_value(key)
+            spec.switch_write_focus(
+                region=self.DATA_REGIONS.TRANSMISSIONS.value)
+            if key is None:
+                spec.write_value(0)
+                spec.write_value(0)
+            else:
+                spec.write_value(1)
+                spec.write_value(key)
 
         # write state value
         spec.switch_write_focus(
@@ -184,7 +183,7 @@ class ConwayBasicCell(
             struct.unpack("<I", number_of_bytes_to_read)[0]
 
         # read the bytes
-        if number_of_bytes_to_read != (self._n_machine_time_steps * 4):
+        if number_of_bytes_to_read != (50 * 4):
             raise exceptions.ConfigurationException(
                 "number of bytes seems wrong")
         else:
@@ -194,7 +193,7 @@ class ConwayBasicCell(
 
         # convert to ints
         elements = struct.unpack(
-            "<{}I".format(self._n_machine_time_steps), raw_data)
+            "<{}I".format(50), raw_data)
         for element in elements:
             if element == 0:
                 data.append(False)
@@ -217,16 +216,11 @@ class ConwayBasicCell(
     def state(self):
         return self._state
 
-    @requires_injection(["TotalMachineTimeSteps"])
     def _calculate_sdram_requirement(self):
         return (constants.SYSTEM_BYTES_REQUIREMENT +
                 self.TRANSMISSION_DATA_SIZE + self.STATE_DATA_SIZE +
                 self.NEIGHBOUR_INITIAL_STATES_SIZE +
-                self._n_machine_time_steps + 4)
+                50 + 4)
 
     def __repr__(self):
         return self.label
-
-    @inject("TotalMachineTimeSteps")
-    def set_n_machine_time_steps(self, n_machine_time_steps):
-        self._n_machine_time_steps = n_machine_time_steps

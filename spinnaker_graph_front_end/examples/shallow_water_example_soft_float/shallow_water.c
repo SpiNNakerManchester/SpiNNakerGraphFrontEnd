@@ -153,7 +153,7 @@ typedef struct init_data_t{
     float west_u; float west_v; float west_p;
     float north_west_u; float north_west_v; float north_west_p;
     // constants
-    uint32_t dx; uint32_t dy; float fsdx; float fsdy;
+    float dx; float dy; float fsdx; float fsdy;
     float alpha; float tdts8; float tdtsdx; float tdtsdy; float tdt2s8;
     float tdt2sdx; float tdt2sdy;
     // offset fix
@@ -189,14 +189,17 @@ static inline int float_to_int( float data){
 
 //! \brief print the constants of the vertex
 void print_constants(){
-    /*
+/*
     log_info("doing constants");
-    
+
     // create list of things to print
-    float to_print_items[] = {
-        dx, dy, fsdx, fsdy, alpha, tdts8, tdtsdx, tdtsdy, tdt2s8, tdt2sdx, 
-        tdt2sdy};
-        
+    int to_print_items[] = {
+        float_to_int(dx), float_to_int(dy), float_to_int(fsdx), float_to_int
+        (fsdy), float_to_int(alpha), float_to_int(tdts8),
+        float_to_int(tdtsdx), float_to_int(tdtsdy),
+        float_to_int(tdt2s8), float_to_int(tdt2sdx),
+        float_to_int(tdt2sdy)};
+
     // create list of names of params
     const char *to_print_strings[11];
     to_print_strings[0] = "dx";
@@ -210,15 +213,15 @@ void print_constants(){
     to_print_strings[8] = "tdt2s8";
     to_print_strings[9] = "tdt2sdx";
     to_print_strings[10] = "tdt2sdy";
-    
-    
+
+
     for(int position = 0; position < 11; position ++){
         log_info(
             "%s = %x", to_print_strings[position],
-            (int) to_print_items[position]);
+            to_print_items[position]);
     }
-    log_info("end constants");
-    */
+    log_info("end constants");*/
+
 }
 
 void force_exit_function(address_t provenance_region){
@@ -232,6 +235,10 @@ void print_my_states(){
     log_info("my_current_v = %x", float_to_int(my_current_v));
     log_info("my_current_p = %x", float_to_int(my_current_p));
     log_info("my key = %d", my_key);
+    log_info("my_old_p = %x", float_to_int(my_old_p));
+    log_info("my_old_u = %x", float_to_int(my_old_u));
+    log_info("my_old_v = %x", float_to_int(my_old_v));
+
 }
 
 //! \brief print a set of elements for u,v,p
@@ -311,10 +318,10 @@ void process_key_payload(float *elements, uint32_t *has_flag_elements,
     uint32_t offset = current_key & 0x00000007;
 
     if (offset > 6){
-        log_error(
-            "got wrong offset. The offset i got from key %d is %d The "
-            "payload assocated with this key was %d",
-            current_key, offset, current_payload);
+        log_error("failed");
+            //"got wrong offset. The offset i got from key %d is %d The "
+            //"payload assocated with this key was %d",
+            //current_key, offset, current_payload);
         rt_error(RTE_SWERR);
     }
 
@@ -568,18 +575,30 @@ void send_p_u_v_states(){
 //! \brief calculates the cu for this atom
 void calculate_cu(){
     my_cu = POINT_5 * (my_current_p + south_elements[P]) * my_current_u;
-    log_info("cu bits %x, %x, %x",
+    /*log_info("cu bits %x, %x, %x",
              float_to_int(my_current_p), float_to_int(south_elements[P]),
-             float_to_int(my_current_u));
+             float_to_int(my_current_u));*/
 }
 
 //! \brief calculates the cv for this atom
 void calculate_cv(){
     my_cv = POINT_5 * (my_current_p + west_elements[P]) * my_current_v;
+    /*log_info("cv bits %x, %x, %x",
+             float_to_int(my_current_p), float_to_int(west_elements[P]),
+             float_to_int(my_current_v));*/
 }
 
 //! \brief calculates the z for this atom
 void calculate_z(){
+
+    /*printf(
+         "z: %d, %d, %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x %08x\n",
+         i+1, j + 1, float_to_int(fsdx), float_to_int(v[i + 1][j + 1]),
+         float_to_int(v[i][j + 1]), float_to_int(fsdy), float_to_int(u[i + 1][j + 1]),
+         float_to_int(u[i + 1][j]), float_to_int(p[i][j]), float_to_int(p[i + 1][j]),
+         float_to_int(p[i + 1][j + 1]), float_to_int(p[i][j + 1]),
+         float_to_int(top_bit), float_to_int(bottom));*/
+
     float numerator_bit =
         (fsdx * (my_current_v - south_elements[V]) - fsdy *
         (my_current_u - west_elements[U]));
@@ -587,6 +606,12 @@ void calculate_z(){
         (south_west_elements[P] + west_elements[P] + my_current_p +
          south_elements[P]);
     my_z = numerator_bit / denominator_bit;
+    /*log_info("z bits %x %x %x %x %x %x %x %x %x %x %x %x",
+             float_to_int(fsdx), float_to_int(my_current_v), float_to_int(south_elements[V]),
+             float_to_int(fsdy), float_to_int(my_current_u), float_to_int(west_elements[U]),
+             float_to_int(south_west_elements[P]), float_to_int(west_elements[P]), float_to_int(my_current_p),
+             float_to_int(south_elements[P]), float_to_int(numerator_bit),
+             float_to_int(denominator_bit));*/
 }
 
 //! \brief calculates the h for this atom
@@ -594,35 +619,68 @@ void calculate_h(){
     my_h = my_current_p + POINT_025 * (
         north_elements[U] * north_elements[U] + my_current_u * my_current_u +
         east_elements[V] * east_elements[V] + my_current_v * my_current_v);
+    /*log_info("h bits %x %x %x %x %x", float_to_int(my_current_p)
+    , float_to_int(north_elements[U]), float_to_int(my_current_u),
+    float_to_int(east_elements[V]), float_to_int(my_current_v));*/
 }
 
 //! \brief calculates the new p value based off other values
 void calculate_new_p(float current_tdtsdx, float current_tdtsdy){
     my_new_p = my_old_p - current_tdtsdx * (north_elements[CU] - my_cu) -
         current_tdtsdy * (east_elements[CV] - my_cv);
+    log_info("new p %x, %x, %x, %x, %x, %x, %x \n", float_to_int(my_old_p),
+    float_to_int(current_tdtsdx), float_to_int(north_elements[CU]),
+    float_to_int(my_cu), float_to_int(current_tdtsdy), float_to_int
+    (east_elements[CV]), float_to_int(my_cv));
 }
 
 
 //! \brief calculates the new v value based off other values
 void calculate_new_v(float current_tdts_8, float current_tdtsdy){
-    my_new_v = my_old_v - current_tdts_8 * (north_elements[Z] + my_z) *
-        (north_elements[CU] + my_cu + west_elements[CU] +
-         north_west_elements[CU]) -
-         current_tdtsdy * (my_h - west_elements[H]);
-    //log_info("%x, %x, %x, %x, %x, %x, %x, %x, %x", float_to_int(my_old_v),
-    //    float_to_int(north_elements[Z]), float_to_int(my_z),
-    //    float_to_int(north_elements[CU]), float_to_int(my_cu),
-    //    float_to_int(west_elements[CU]),
-    //    float_to_int(north_west_elements[CU]), float_to_int(my_h),
-    //    float_to_int(west_elements[H]));
+    float part1 = north_east_elements[Z] + my_z;
+    log_info("part1 = %x", float_to_int(part1));
+    float part2 = north_elements[CU] + my_cu + west_elements[CU] +
+    north_west_elements[CU];
+    log_info("part2 = %x", float_to_int(part2));
+    float part3 = my_h - west_elements[H];
+    log_info("part3 = %x", float_to_int(part3));
+    // x * y * z - a * b
+    float part4 = current_tdts_8 * part1 * part2 * part3;
+    log_info("part4 = %x", float_to_int(part4));
+    float part5 = current_tdtsdy * part5;
+    log_info("part5 = %x", float_to_int(part5));
+    float part6 = my_old_v - part4;
+    log_info("part6 = %x", float_to_int(part6));
+    float part7 = part6 - part5;
+    log_info("part7 = %x", float_to_int(part7));
+
+
+    my_new_v = my_old_v -
+        current_tdts_8 * (north_east_elements[Z] + my_z) *
+        (north_elements[CU] + my_cu + west_elements[CU] + north_west_elements[CU]) -
+        current_tdtsdy * (my_h - west_elements[H]);
+    log_info("newv %x, %x, %x, %x, %x, %x, %x, %x, %x %x %x",
+        float_to_int(my_old_v), float_to_int(current_tdts_8),
+        float_to_int(north_elements[Z]), float_to_int(my_z),
+        float_to_int(north_elements[CU]), float_to_int(my_cu),
+        float_to_int(west_elements[CU]),
+        float_to_int(north_west_elements[CU]), float_to_int(current_tdtsdy),
+        float_to_int(my_h),
+        float_to_int(west_elements[H]));
 }
 
 
 //! \brief calculates the new u value based off other values
 void calculate_new_u(float current_tdts_8, float current_tdtsdx){
-    my_new_u = my_old_u + current_tdts_8 * (east_elements[Z] + my_z) *
+    my_new_u = my_old_u + current_tdts_8 * (north_east_elements[Z] + my_z) *
         (east_elements[CV] + south_east_elements[CV] + south_elements[CV] +
          my_cv) - current_tdtsdx * (my_h - south_elements[H]);
+    log_info("newu %x, %x, %x, %x, %x, %x, %x, %x, %x, %x, %x", float_to_int
+    (my_old_u), float_to_int(current_tdts_8), float_to_int(east_elements[Z])
+    , float_to_int(my_z), float_to_int(east_elements[CV]), float_to_int
+    (south_east_elements[CV]), float_to_int(south_elements[CV]),
+    float_to_int(my_cv), float_to_int(current_tdtsdx), float_to_int(my_h),
+    float_to_int(south_elements[H]));
 }
 
 //! \brief moves values from new to current sets
@@ -708,8 +766,8 @@ void update(uint ticks, uint b) {
         // calculate new parameters values
         calculate_cu();
         calculate_cv();
-        calculate_z();
         calculate_h();
+        calculate_z();
 
         send_cu_cv_h_z_states();
         is_cv_or_p_calculation = P_U_V;
@@ -721,7 +779,8 @@ void update(uint ticks, uint b) {
         print_my_states();
         print_elements();
 
-        calculate_new_internal_states(time == 0);
+        log_info("the result of logic is %d when t is %d", time ==1, time);
+        calculate_new_internal_states(time == 1);
 
         // if first timer, no smoothing needed, just do transfer
         if (time == 0){
@@ -843,6 +902,8 @@ void set_init_states(address_t address){
     print_my_states();
     print_elements();
     print_constants();
+        log_info("tdts8 %x\n", float_to_int(tdts8));
+    log_info("tdt2s8 %x\n", float_to_int(tdt2s8));
 }
 
 
@@ -860,7 +921,7 @@ void set_neighbour_keys(address_t address){
     west_key = my_neighbour_state_region_address[WEST];
     north_west_key = my_neighbour_state_region_address[NORTH_WEST];
     key_mask = my_neighbour_state_region_address[KEY_MASK];
-
+    /*
     log_info("north key = %d", north_key);
     log_info("north_east key = %d", north_east_key);
     log_info("east key = %d", east_key);
@@ -870,7 +931,7 @@ void set_neighbour_keys(address_t address){
     log_info("west key = %d", west_key);
     log_info("north_west key = %d", north_west_key);
     log_info("mask = %d", key_mask);
-
+    */
 }
 
 

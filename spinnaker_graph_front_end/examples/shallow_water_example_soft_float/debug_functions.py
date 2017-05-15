@@ -25,6 +25,11 @@ class DebugCalls(object):
         result = hex((val + (1 << 32)) % (1 << 32))
         return result
 
+    @staticmethod
+    def convert_hex(val):
+        result = hex((val + (1 << 32)) % (1 << 32))
+        return result
+
 
 
     def verify_graph_setup_properly(
@@ -40,6 +45,92 @@ class DebugCalls(object):
         for x in range(0, max_x_size_of_fabric):
             for y in range(0, max_y_size_of_fabric):
                 self._handle_vertex_check(vertices[x][y])
+                self._print_out_neirghbours_p(
+                    vertices, x, y, max_x_size_of_fabric,
+                    max_y_size_of_fabric)
+        for x in range(0, max_x_size_of_fabric):
+            for y in range(0, max_y_size_of_fabric):
+                self._handle_vertex_check(vertices[x][y])
+                self._print_out_nerbouring_v(
+                    vertices, x, y, max_x_size_of_fabric,
+                    max_y_size_of_fabric)
+        for x in range(0, max_x_size_of_fabric):
+            for y in range(0, max_y_size_of_fabric):
+                self._print_out_nerbouring_u(
+                    vertices, x, y, max_x_size_of_fabric,
+                    max_y_size_of_fabric)
+
+    @staticmethod
+    def _print_out_nerbouring_v(vertices, x, y, max_x_coord, max_y_coord):
+        logger.info("neibours v for {}{}".format(x, y))
+        logger.info(
+            "{}    {}    {}\n                          {}    {}    {}\n"
+            "                          {}    {}    {}\n\n".format(
+                DebugCalls.convert_hex(
+                    vertices[(x - 1) % max_x_coord][(y + 1) % max_y_coord].v),
+                DebugCalls.convert_hex(
+                    vertices[x % max_x_coord][(y + 1) % max_y_coord].v),
+                DebugCalls.convert_hex(
+                    vertices[(x + 1) % max_x_coord][(y + 1) % max_y_coord].v),
+                DebugCalls.convert_hex(
+                    vertices[(x - 1) % max_x_coord][y % max_y_coord].v),
+                DebugCalls.convert_hex(vertices[x][y].v),
+                DebugCalls.convert_hex(
+                    vertices[(x + 1) % max_x_coord][y].v),
+                DebugCalls.convert_hex(
+                    vertices[(x - 1) % max_x_coord][(y - 1) % max_y_coord].v),
+                DebugCalls.convert_hex(
+                    vertices[x][(y - 1) % max_y_coord].v),
+                DebugCalls.convert_hex(
+                    vertices[(x + 1) % max_x_coord][(y - 1) % max_y_coord].v)))
+
+    @staticmethod
+    def _print_out_nerbouring_u(vertices, x, y, max_x_coord, max_y_coord):
+        logger.info("neibours u for {}{}".format(x, y))
+        logger.info(
+            "{}    {}    {}\n                          {}    {}    {}\n"
+            "                          {}    {}    {}\n\n".format(
+                DebugCalls.convert_hex(
+                    vertices[(x - 1) % max_x_coord][(y + 1) % max_y_coord].u),
+                DebugCalls.convert_hex(
+                    vertices[x % max_x_coord][(y + 1) % max_y_coord].u),
+                DebugCalls.convert_hex(
+                    vertices[(x + 1) % max_x_coord][(y + 1) % max_y_coord].u),
+                DebugCalls.convert_hex(
+                    vertices[(x - 1) % max_x_coord][y % max_y_coord].u),
+                DebugCalls.convert_hex(vertices[x][y].u),
+                DebugCalls.convert_hex(
+                    vertices[(x + 1) % max_x_coord][y].u),
+                DebugCalls.convert_hex(
+                    vertices[(x - 1) % max_x_coord][(y - 1) % max_y_coord].u),
+                DebugCalls.convert_hex(
+                    vertices[x][(y - 1) % max_y_coord].u),
+                DebugCalls.convert_hex(
+                    vertices[(x + 1) % max_x_coord][(y - 1) % max_y_coord].u)))
+
+    @staticmethod
+    def _print_out_neirghbours_p(vertices, x, y, max_x_coord, max_y_coord):
+        logger.info("neibours p for {}{}".format(x, y))
+        logger.info(
+            "{}    {}    {}\n                          {}    {}    {}\n"
+            "                          {}    {}    {}\n\n".format(
+                DebugCalls.convert_hex(
+                    vertices[(x - 1) % max_x_coord][(y + 1) % max_y_coord].p),
+                DebugCalls.convert_hex(
+                    vertices[x % max_x_coord][(y + 1) % max_y_coord].p),
+                DebugCalls.convert_hex(
+                    vertices[(x + 1) % max_x_coord][(y +1) % max_y_coord].p),
+                DebugCalls.convert_hex(
+                    vertices[(x - 1) % max_x_coord][y % max_y_coord].p),
+                DebugCalls.convert_hex(vertices[x][y].p),
+                DebugCalls.convert_hex(
+                    vertices[(x + 1) % max_x_coord][y].p),
+                DebugCalls.convert_hex(
+                    vertices[(x - 1) % max_x_coord][(y - 1) % max_y_coord].p),
+                DebugCalls.convert_hex(
+                    vertices[x][(y - 1) % max_y_coord].p),
+                DebugCalls.convert_hex(
+                    vertices[(x + 1) % max_x_coord][(y - 1) % max_y_coord].p)))
 
     @staticmethod
     def _handle_vertex_check(vertex):
@@ -88,8 +179,9 @@ class DebugCalls(object):
         child.wait()
 
     @staticmethod
-    def print_constants(dt, tdt, dx, dy, fsdx, fsdy, a, alpha, el, pi, tpi,
-                         di, dj, pcf):
+    def print_constants(
+            dt, tdt, dx, dy, fsdx, fsdy, a, alpha, el, pi, tpi, di, dj, pcf,
+            tdts8, tdtsdx, tdtsdy, tdt2s8, tdt2sdx, tdt2sdy):
         """ prints and checks constants from c and python
         
         :param dt: ?????
@@ -108,26 +200,38 @@ class DebugCalls(object):
         :param pcf: ????
         :return: 
         """
-        logger.info("constant dt    = {}".format(DebugCalls.convert(dt)))
-        logger.info("constant tdt   = {}".format(DebugCalls.convert(
+        logger.info("constant dt    = {}".format(DebugCalls.convert_hex(dt)))
+        logger.info("constant tdt   = {}".format(DebugCalls.convert_hex(
             tdt)))
-        logger.info("constant dx    = {}".format(DebugCalls.convert(dx)))
-        logger.info("constant dy    = {}".format(DebugCalls.convert(dy)))
-        logger.info("constant fsdx  = {}".format(DebugCalls.convert(
+        logger.info("constant dx    = {}".format(DebugCalls.convert_hex(dx)))
+        logger.info("constant dy    = {}".format(DebugCalls.convert_hex(dy)))
+        logger.info("constant fsdx  = {}".format(DebugCalls.convert_hex(
             fsdx)))
-        logger.info("constant fsdy  = {}".format(DebugCalls.convert(
+        logger.info("constant fsdy  = {}".format(DebugCalls.convert_hex(
             fsdy)))
-        logger.info("constant a     = {}".format(DebugCalls.convert(a)))
-        logger.info("constant alpha = {}".format(DebugCalls.convert(
+        logger.info("constant a     = {}".format(DebugCalls.convert_hex(a)))
+        logger.info("constant alpha = {}".format(DebugCalls.convert_hex(
             alpha)))
-        logger.info("constant el    = {}".format(DebugCalls.convert(el)))
-        logger.info("constant pi    = {}".format(DebugCalls.convert(pi)))
-        logger.info("constant tpi   = {}".format(DebugCalls.convert(
+        logger.info("constant el    = {}".format(DebugCalls.convert_hex(el)))
+        logger.info("constant pi    = {}".format(DebugCalls.convert_hex(pi)))
+        logger.info("constant tpi   = {}".format(DebugCalls.convert_hex(
             tpi)))
-        logger.info("constant di    = {}".format(DebugCalls.convert(di)))
-        logger.info("constant dj    = {}".format(DebugCalls.convert(dj)))
-        logger.info("constant pcf   = {}".format(DebugCalls.convert(
+        logger.info("constant di    = {}".format(DebugCalls.convert_hex(di)))
+        logger.info("constant dj    = {}".format(DebugCalls.convert_hex(dj)))
+        logger.info("constant pcf   = {}".format(DebugCalls.convert_hex(
             pcf)))
+        logger.info("constant tdts8 = {}".format(DebugCalls.convert_hex(
+            tdts8)))
+        logger.info("constant tdtsdx = {}".format(DebugCalls.convert_hex(
+            tdtsdx)))
+        logger.info("constant tdtsdy = {}".format(DebugCalls.convert_hex(
+            tdtsdy)))
+        logger.info("constant tdt2s8 = {}".format(DebugCalls.convert_hex(
+            tdt2s8)))
+        logger.info("constant tdt2sdx = {}".format(DebugCalls.convert_hex(
+            tdt2sdx)))
+        logger.info("constant tdt2sdy = {}".format(DebugCalls.convert_hex(
+            tdt2sdy)))
 
     @staticmethod
     def print_initial_values(
@@ -143,7 +247,7 @@ class DebugCalls(object):
         for x in range(0, max_x_size_of_fabric):
             for y in range(0, max_y_size_of_fabric):
                 logger.info("psi for {}:{} is {}".format(
-                    x, y, DebugCalls.convert(psi[x][y])))
+                    x, y, DebugCalls.convert_hex(psi[x][y])))
 
     @staticmethod
     def read_in_p_from_file(max_x_size_of_fabric, max_y_size_of_fabric):
@@ -164,7 +268,7 @@ class DebugCalls(object):
             bits = line.split(",")
             final_number_bits = bits[2].split("\n")
             read_in_data[int(bits[0])][int(bits[1])] = \
-                float(final_number_bits[0])
+                int(final_number_bits[0], 16)
 
         return read_in_data
 
@@ -187,7 +291,7 @@ class DebugCalls(object):
             bits = line.split(",")
             final_number_bits = bits[2].split(" \n")
             read_in_data[int(bits[0])][int(bits[1])] = \
-                float(final_number_bits[0])
+                int(final_number_bits[0], 16)
         return read_in_data
 
     @staticmethod
@@ -214,33 +318,8 @@ class DebugCalls(object):
             bits = line.split(",")
             final_number_bits = bits[2].split("\n")
             read_in_data[int(bits[0])][int(bits[1])] = \
-                float(final_number_bits[0])
+                int(final_number_bits[0], 16)
         return read_in_data
-
-    @staticmethod
-    def periodic_continuation(
-            max_y_size_of_fabric, max_x_size_of_fabric, vertices):
-        """ does some boundary case switching
-
-        :return: none
-        """
-        for j in range(0, max_y_size_of_fabric - 1):
-            vertices[0][j].u = vertices[
-                max_x_size_of_fabric - 1][j].u
-            vertices[max_y_size_of_fabric - 1][
-                (j + 1) % max_y_size_of_fabric].v = \
-                vertices[0][(j + 1) % max_y_size_of_fabric].v
-        for i in range(0, max_x_size_of_fabric - 1):
-            vertices[(i + 1) % max_y_size_of_fabric][
-                max_x_size_of_fabric - 1].u = vertices[
-                (i + 1) % max_y_size_of_fabric][0].u
-            vertices[i][0].v = vertices[0][
-                max_y_size_of_fabric - 1].v
-
-        vertices[0][max_y_size_of_fabric - 1].u = vertices[
-            max_x_size_of_fabric - 1][0].u
-        vertices[max_x_size_of_fabric - 1][0].v = vertices[
-            0][max_y_size_of_fabric - 1].v
 
     @staticmethod
     def read_in_v_from_file(max_x_size_of_fabric, max_y_size_of_fabric):
@@ -262,8 +341,22 @@ class DebugCalls(object):
             bits = line.split(",")
             final_number_bits = bits[2].split("\n")
             read_in_data[int(bits[0])][int(bits[1])] = \
-                float(final_number_bits[0])
+                int(final_number_bits[0], 16)
         return read_in_data
+
+    @staticmethod
+    def read_in_constants():
+        data = list()
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        dir_path = os.path.join(dir_path, "initial_constants.txt")
+
+        reader = open(dir_path)
+
+        for line in reader:
+            bits = line.split("\n")
+            data.append(int(bits[0], 16))
+
+        return tuple(data)
 
     @staticmethod
     def print_vertex_bits(max_x_size_of_fabric, max_y_size_of_fabric,
@@ -282,9 +375,9 @@ class DebugCalls(object):
                 logger.info(
                     "for vertex {}:{} p = {} \t\t v = {} \t\t "
                     "u = {}".format(
-                        x_coord, y_coord, DebugCalls.convert(vertex.p),
-                        DebugCalls.convert(vertex.v),
-                        DebugCalls.convert(vertex.u)))
+                        x_coord, y_coord, DebugCalls.convert_hex(vertex.p),
+                        DebugCalls.convert_hex(vertex.v),
+                        DebugCalls.convert_hex(vertex.u)))
 
     @staticmethod
     def print_init_states(max_x_size_of_fabric, max_y_size_of_fabric,
