@@ -637,8 +637,9 @@ void calculate_new_p(float current_tdtsdx, float current_tdtsdy){
 
 //! \brief calculates the new v value based off other values
 void calculate_new_v(float current_tdts_8, float current_tdtsdy){
-    float part1 = north_east_elements[Z] + my_z;
-    log_info("part1 = %x", float_to_int(part1));
+    float part1 = north_elements[Z] + my_z;
+    log_info("part1 = %x which is %x + %x", float_to_int(part1),
+    float_to_int(north_elements[Z]), float_to_int(my_z));
     float part2 = north_elements[CU] + my_cu + west_elements[CU] +
     north_west_elements[CU];
     log_info("part2 = %x", float_to_int(part2));
@@ -656,7 +657,7 @@ void calculate_new_v(float current_tdts_8, float current_tdtsdy){
 
 
     my_new_v = my_old_v -
-        current_tdts_8 * (north_east_elements[Z] + my_z) *
+        current_tdts_8 * (north_elements[Z] + my_z) *
         (north_elements[CU] + my_cu + west_elements[CU] + north_west_elements[CU]) -
         current_tdtsdy * (my_h - west_elements[H]);
     log_info("newv %x, %x, %x, %x, %x, %x, %x, %x, %x %x %x",
@@ -672,7 +673,7 @@ void calculate_new_v(float current_tdts_8, float current_tdtsdy){
 
 //! \brief calculates the new u value based off other values
 void calculate_new_u(float current_tdts_8, float current_tdtsdx){
-    my_new_u = my_old_u + current_tdts_8 * (north_east_elements[Z] + my_z) *
+    my_new_u = my_old_u + current_tdts_8 * (east_elements[Z] + my_z) *
         (east_elements[CV] + south_east_elements[CV] + south_elements[CV] +
          my_cv) - current_tdtsdx * (my_h - south_elements[H]);
     log_info("newu %x, %x, %x, %x, %x, %x, %x, %x, %x, %x, %x", float_to_int
