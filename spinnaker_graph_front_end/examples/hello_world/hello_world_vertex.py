@@ -1,3 +1,5 @@
+import spinn_utilities.conf_loader as conf_loader
+
 from pacman.model.decorators.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
@@ -17,7 +19,6 @@ from spinn_front_end_common.utilities.utility_objs.executable_start_type \
     import ExecutableStartType
 
 
-from spinnaker_graph_front_end.utilities.conf import config
 
 from enum import Enum
 import logging
@@ -39,6 +40,7 @@ class HelloWorldVertex(
     def __init__(self, label, constraints=None):
         MachineVertex.__init__(self, label=label, constraints=constraints)
 
+        config = conf_loader.get_config()
         self._buffer_size_before_receive = None
         if config.getboolean("Buffers", "enable_buffered_recording"):
             self._buffer_size_before_receive = config.getint(
