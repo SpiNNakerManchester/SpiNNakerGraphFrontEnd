@@ -1,5 +1,3 @@
-import spinn_utilities.conf_loader as conf_loader
-
 # pacman imports
 from pacman.model.decorators.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
@@ -21,6 +19,9 @@ from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
     import AbstractHasAssociatedBinary
 from spinn_front_end_common.utilities.utility_objs.executable_start_type \
     import ExecutableStartType
+
+# GFE imports
+from spinnaker_graph_front_end.utilities.conf import config
 
 # general imports
 from enum import Enum
@@ -49,7 +50,6 @@ class ConwayBasicCell(
     def __init__(self, label, state):
         MachineVertex .__init__(self, label)
 
-        config = conf_loader.get_config()
         self._buffer_size_before_receive = None
         if config.getboolean("Buffers", "enable_buffered_recording"):
             self._buffer_size_before_receive = config.getint(
