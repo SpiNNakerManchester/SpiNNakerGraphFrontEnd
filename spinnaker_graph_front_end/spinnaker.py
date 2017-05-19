@@ -1,16 +1,19 @@
+import spinn_utilities.conf_loader as conf_loader
 
 # common front end imports
 from spinn_front_end_common.interface.spinnaker_main_interface import \
     SpinnakerMainInterface
 
 # graph front end imports
-from spinnaker_graph_front_end.utilities.conf import config
+import spinnaker_graph_front_end
 
 # general imports
 import logging
 
 
 logger = logging.getLogger(__name__)
+
+CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
 
 
 class SpiNNaker(SpinnakerMainInterface):
@@ -21,6 +24,12 @@ class SpiNNaker(SpinnakerMainInterface):
             n_chips_required=None, extra_pre_run_algorithms=None,
             extra_post_run_algorithms=None, time_scale_factor=None,
             machine_time_step=None):
+
+        global CONFIG_FILE_NAME
+        # Read config file
+        conf_loader.load_config(spinnaker_graph_front_end,
+                                         CONFIG_FILE_NAME)
+        config = conf_loader.get_config()
 
         # dsg algorithm store for user defined algorithms
         self._user_dsg_algorithm = dsg_algorithm
