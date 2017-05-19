@@ -1,4 +1,4 @@
-import spinn_utilities.conf_loader as conf_loader
+from spinn_front_end_common.utilities import globals_variables
 
 from pacman.model.decorators.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
@@ -17,8 +17,6 @@ from spinn_front_end_common.interface.buffer_management\
     import recording_utilities
 from spinn_front_end_common.utilities.utility_objs.executable_start_type \
     import ExecutableStartType
-
-
 
 from enum import Enum
 import logging
@@ -40,7 +38,7 @@ class HelloWorldVertex(
     def __init__(self, label, constraints=None):
         MachineVertex.__init__(self, label=label, constraints=constraints)
 
-        config = conf_loader.get_config()
+        config = globals_variables.get_simulator().config
         self._buffer_size_before_receive = None
         if config.getboolean("Buffers", "enable_buffered_recording"):
             self._buffer_size_before_receive = config.getint(

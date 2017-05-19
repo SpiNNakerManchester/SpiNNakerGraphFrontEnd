@@ -1,4 +1,4 @@
-import spinn_utilities.conf_loader as conf_loader
+from spinn_front_end_common.utilities import globals_variables
 
 # dsg imports
 from data_specification.enums.data_type import DataType
@@ -62,7 +62,7 @@ class HeatDemoVertex(
     def __init__(self, label, machine_time_step, time_scale_factor,
                  heat_temperature=0, constraints=None):
 
-        config = conf_loader.get_config()
+        config = globals_variables.get_simulator().config
         # resources used by a heat element vertex
         sdram = SDRAMResource(
             23 + config.getint("Buffers", "minimum_buffer_sdram"))

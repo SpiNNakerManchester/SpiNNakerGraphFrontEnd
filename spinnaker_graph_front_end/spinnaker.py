@@ -3,20 +3,26 @@ import spinn_utilities.conf_loader as conf_loader
 # common front end imports
 from spinn_front_end_common.interface.spinnaker_main_interface import \
     SpinnakerMainInterface
+from spinn_front_end_common.utilities import globals_variables
 
 # graph front end imports
 import spinnaker_graph_front_end
+from spinnaker_graph_front_end.utilities.graph_front_end_failed_state \
+    import GraphFrontEndFailedState
+from spinnaker_graph_front_end.graph_front_end_simulator_interface \
+    import GraphFrontEndSimulatorInterface
 
 # general imports
 import logging
-
 
 logger = logging.getLogger(__name__)
 
 CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
 
+# At import time change the default FailedState
+globals_variables.set_failed_state(GraphFrontEndFailedState())
 
-class SpiNNaker(SpinnakerMainInterface):
+class SpiNNaker(SpinnakerMainInterface, GraphFrontEndSimulatorInterface):
 
     def __init__(
             self, executable_finder, host_name=None, graph_label=None,
@@ -27,9 +33,8 @@ class SpiNNaker(SpinnakerMainInterface):
 
         global CONFIG_FILE_NAME
         # Read config file
-        conf_loader.load_config(spinnaker_graph_front_end,
+        config = conf_loader.load_config(spinnaker_graph_front_end,
                                          CONFIG_FILE_NAME)
-        config = conf_loader.get_config()
 
         # dsg algorithm store for user defined algorithms
         self._user_dsg_algorithm = dsg_algorithm

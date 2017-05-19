@@ -1,4 +1,4 @@
-import spinn_utilities.conf_loader as conf_loader
+from spinn_front_end_common.utilities import globals_variables
 
 from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex\
     import MachineDataSpecableVertex
@@ -53,7 +53,7 @@ class Vertex(
             n_machine_time_steps=1000, buffered_sdram_per_timestep=[1000],
             minimum_sdram_for_buffering=1024)
 
-        config = conf_loader.get_config()
+        config = globals_variables.get_simulator().config
         self._buffer_size_before_receive = None
         if config.getboolean("Buffers", "enable_buffered_recording"):
             self._buffer_size_before_receive = config.getint(

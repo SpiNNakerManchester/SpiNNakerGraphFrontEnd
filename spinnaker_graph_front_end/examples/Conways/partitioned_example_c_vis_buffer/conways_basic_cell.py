@@ -1,4 +1,4 @@
-import spinn_utilities.conf_loader as conf_loader
+from spinn_front_end_common.utilities import globals_variables
 
 # pacman imports
 from pacman.model.decorators.overrides import overrides
@@ -49,7 +49,7 @@ class ConwayBasicCell(
     def __init__(self, label, state):
         MachineVertex .__init__(self, label)
 
-        config = conf_loader.get_config()
+        config = globals_variables.get_simulator().config
         self._buffer_size_before_receive = None
         if config.getboolean("Buffers", "enable_buffered_recording"):
             self._buffer_size_before_receive = config.getint(
