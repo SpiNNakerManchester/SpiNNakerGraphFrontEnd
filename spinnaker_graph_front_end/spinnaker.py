@@ -20,8 +20,15 @@ logger = logging.getLogger(__name__)
 # christian check if can be inside
 CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
 
+SPALLOC_CORES = 48
+
 # At import time change the default FailedState
 globals_variables.set_failed_state(GraphFrontEndFailedState())
+
+
+def _is_allocated_machine(config):
+    return (config.get("Machine", "spalloc_server") != "None" or
+            config.get("Machine", "remote_spinnaker_url") != "None")
 
 
 class SpiNNaker(SpinnakerMainInterface, GraphFrontEndSimulatorInterface):
@@ -33,7 +40,7 @@ class SpiNNaker(SpinnakerMainInterface, GraphFrontEndSimulatorInterface):
             extra_post_run_algorithms=None, time_scale_factor=None,
             machine_time_step=None):
 
-        global CONFIG_FILE_NAME
+        global CONFIG_FILE_NAME, SPALLOC_CORES
         # Read config file
         config = conf_loader.load_config(spinnaker_graph_front_end,
                                          CONFIG_FILE_NAME)
@@ -48,6 +55,9 @@ class SpiNNaker(SpinnakerMainInterface, GraphFrontEndSimulatorInterface):
         extra_mapping_inputs = dict()
         extra_mapping_inputs["CreateAtomToEventIdMapping"] = config.getboolean(
             "Database", "create_routing_info_to_atom_id_mapping")
+
+        if n_chips_required is None and _is_allocated_machine(config):
+            n_chips_required = SPALLOC_CORES
 
         SpinnakerMainInterface.__init__(
             self, config,
@@ -93,13 +103,9 @@ class SpiNNaker(SpinnakerMainInterface, GraphFrontEndSimulatorInterface):
 
         return {'x': machine.max_chip_x, 'y': machine.max_chip_y}
 
-    @staticmethod
     @property
-    def is_allocated_machine():
-        return (
-            config.get("Machine", "spalloc_server") != "None" or
-            config.get("Machine", "remote_spinnaker_url") != "None"
-        )
+    def is_allocated_machine(self):
+        return _is_allocated_machine(self.config)
 
     def add_socket_address(self, socket_address):
         """ Add a socket address to the list to be checked by the\

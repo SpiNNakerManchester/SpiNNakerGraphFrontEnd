@@ -6,10 +6,13 @@ from spinnaker_graph_front_end.examples.Conways.\
     import ConwayBasicCell
 
 
-# Broken at least using spalloc
+# Broken Script
+# pacman.exceptions.PacmanInvalidParameterException:
+#  ('constraint', 'c', 'Must be a
+# pacman.model.constraints.abstract_constraint.AbstractConstraint')
 def run_broken():
     runtime = 50
-    machine_time_step = 100
+    # machine_time_step = 100
     MAX_X_SIZE_OF_FABRIC = 7
     MAX_Y_SIZE_OF_FABRIC = 7
 
@@ -102,6 +105,7 @@ def run_broken():
 
     # clear the machine
     front_end.stop()
+
 
 if __name__ == '__main__':
     run_broken()
