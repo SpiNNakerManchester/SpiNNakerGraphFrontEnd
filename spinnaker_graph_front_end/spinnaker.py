@@ -17,10 +17,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# christian check if can be inside
 CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
 
 # At import time change the default FailedState
 globals_variables.set_failed_state(GraphFrontEndFailedState())
+
 
 class SpiNNaker(SpinnakerMainInterface, GraphFrontEndSimulatorInterface):
 
