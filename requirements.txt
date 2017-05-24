@@ -1,4 +1,6 @@
-SpiNNFrontEndCommon >= 3.0.0, < 4.0.0
+SpiNNaker_PACMAN >= 1!4.0.0a5, < 1!5.0.0
+SpiNNaker_DataSpecification >= 1!4.0.0a5, < 1!5.0.0
+SpiNNFrontEndCommon >= 1!4.0.0a5, < 1!5.0.0
 numpy
 lxml
 six

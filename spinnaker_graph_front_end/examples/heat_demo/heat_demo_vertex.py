@@ -1,20 +1,17 @@
+from spinn_front_end_common.utilities import globals_variables
 
 # dsg imports
 from data_specification.enums.data_type import DataType
 
 # pacman imports
 from pacman.model.decorators.overrides import overrides
-from pacman.model.graphs.machine.impl.machine_vertex \
-    import MachineVertex
-from pacman.model.resources.cpu_cycles_per_tick_resource import \
-    CPUCyclesPerTickResource
-from pacman.model.resources.dtcm_resource import DTCMResource
-from pacman.model.resources.resource_container import ResourceContainer
-from pacman.model.resources.sdram_resource import SDRAMResource
+from pacman.model.graphs.machine import MachineVertex
+from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
+from pacman.model.resources import ResourceContainer, SDRAMResource
 
 # graph front end imports
 from .heat_demo_edge import HeatDemoEdge
-from spinnaker_graph_front_end.utilities.conf import config
+
 
 # FEC imports
 from spinn_front_end_common.interface.simulation import simulation_utilities
@@ -22,8 +19,7 @@ from spinn_front_end_common.utility_models.live_packet_gather import \
     LivePacketGather
 from spinn_front_end_common.utility_models.\
     reverse_ip_tag_multi_cast_source import ReverseIpTagMultiCastSource
-from spinn_front_end_common.utilities import constants
-from spinn_front_end_common.utilities import exceptions
+from spinn_front_end_common.utilities import constants, exceptions
 from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
     import MachineDataSpecableVertex
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
@@ -66,6 +62,7 @@ class HeatDemoVertex(
     def __init__(self, label, machine_time_step, time_scale_factor,
                  heat_temperature=0, constraints=None):
 
+        config = globals_variables.get_simulator().config
         # resources used by a heat element vertex
         sdram = SDRAMResource(
             23 + config.getint("Buffers", "minimum_buffer_sdram"))

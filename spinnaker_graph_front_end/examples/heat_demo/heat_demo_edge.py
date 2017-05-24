@@ -1,7 +1,5 @@
 from enum import Enum
-
-# front end common imports
-from pacman.model.graphs.machine.impl.machine_edge import MachineEdge
+from pacman.model.graphs.machine import MachineEdge
 
 
 class HeatDemoEdge(MachineEdge):
@@ -28,4 +26,4 @@ class HeatDemoEdge(MachineEdge):
         return self.__repr__()
 
     def __repr__(self):
-        return "HeatDemoEdge:{}:{}".format(self._label, self._direction)
+        return "HeatDemoEdge:{}:{}".format(self.label, self._direction)

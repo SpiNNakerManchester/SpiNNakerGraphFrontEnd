@@ -1,20 +1,18 @@
+from spinn_front_end_common.utilities import globals_variables
+
 # pacman imports
 from pacman.model.decorators.overrides import overrides
-from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
-from pacman.model.resources.resource_container import ResourceContainer
-from pacman.model.resources.cpu_cycles_per_tick_resource import \
-    CPUCyclesPerTickResource
-from pacman.model.resources.dtcm_resource import DTCMResource
-from pacman.model.resources.sdram_resource import SDRAMResource
+from pacman.model.graphs.machine import MachineVertex
+from pacman.model.resources import ResourceContainer, CPUCyclesPerTickResource
+from pacman.model.resources import DTCMResource, SDRAMResource
 from pacman.utilities import utility_calls
 
 # spinn front end common imports
-from spinn_front_end_common.utilities import constants
-from spinn_front_end_common.utilities import exceptions
+from spinn_front_end_common.utilities \
+    import constants, exceptions, helpful_functions
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.interface.buffer_management.buffer_models\
     .abstract_receive_buffers_to_host import AbstractReceiveBuffersToHost
-from spinn_front_end_common.utilities import helpful_functions
 from spinn_front_end_common.interface.buffer_management \
     import recording_utilities
 from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
@@ -23,9 +21,6 @@ from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
     import AbstractHasAssociatedBinary
 from spinn_front_end_common.utilities.utility_objs.executable_start_type \
     import ExecutableStartType
-
-# GFE imports
-from spinnaker_graph_front_end.utilities.conf import config
 
 # general imports
 from enum import Enum
@@ -54,6 +49,7 @@ class ConwayBasicCell(
     def __init__(self, label, state):
         MachineVertex .__init__(self, label)
 
+        config = globals_variables.get_simulator().config
         self._buffer_size_before_receive = None
         if config.getboolean("Buffers", "enable_buffered_recording"):
             self._buffer_size_before_receive = config.getint(
@@ -231,7 +227,7 @@ class ConwayBasicCell(
                 constants.MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP)
 
     def __repr__(self):
-        return self._label
+        return self.label
 
     @overrides(AbstractReceiveBuffersToHost.get_minimum_buffer_sdram_usage)
     def get_minimum_buffer_sdram_usage(self):
