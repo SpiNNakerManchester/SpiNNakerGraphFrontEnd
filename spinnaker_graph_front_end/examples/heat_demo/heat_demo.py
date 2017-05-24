@@ -2,16 +2,15 @@
 heat demo main entrance allows users to run the heat demo on the tool chain
 """
 
+from spinn_utilities.socket_address import SocketAddress
+
 from pacman.model.constraints.placer_constraints\
     import PlacerChipAndCoreConstraint
 
 # spinn front end common imports
-from spinn_front_end_common.utility_models.\
-    live_packet_gather_machine_vertex import \
-    LivePacketGatherMachineVertex
+from spinn_front_end_common.utility_models.live_packet_gather_machine_vertex \
+    import LivePacketGatherMachineVertex
 from threading import Condition
-from spinn_front_end_common.utilities.notification_protocol.socket_address \
-    import SocketAddress
 from spinn_front_end_common.utilities.connections.live_event_connection \
     import LiveEventConnection
 
@@ -45,7 +44,6 @@ def run_broken():
     if front_end.is_allocated_machine():
         n_chips_required = 2
 
-
     # set up the front end and ask for the detected machines dimensions
     front_end.setup(
         graph_label="heat_demo_graph", model_binary_module=sys.modules[__name__],
@@ -68,7 +66,6 @@ def run_broken():
         }
     )
     live_gatherer.add_constraint(PlacerChipAndCoreConstraint(0, 0, 1))
-
     # Create a list of lists of vertices (x * 4) by (y * 4)
     # (for 16 cores on a chip - missing cores will have missing vertices)
     max_x_element_id = 2 * 4
@@ -103,7 +100,6 @@ def run_broken():
                     vertices[x][y] = element
                     vertices[x][y].add_constraint(PlacerChipAndCoreConstraint(
                         chip_x, chip_y, core_p))
-
     # build edges
     receive_labels = list()
     for x in range(0, max_x_element_id):
