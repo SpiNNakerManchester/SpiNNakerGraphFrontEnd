@@ -15,18 +15,16 @@ from spinnaker_graph_front_end.examples.hello_world.hello_world_vertex\
 import logging
 import os
 
+
 def do_run():
     logger = logging.getLogger(__name__)
 
-    n_chips_required = None
-    if front_end.is_allocated_machine():
-        n_chips_required = 2
-    front_end.setup(n_chips_required=n_chips_required)
+    front_end.setup(n_chips_required=None)
 
     machine = front_end.machine()
 
-    machine_time_step = 1000
-    time_scale_factor = 1
+    # machine_time_step = 1000
+    # time_scale_factor = 1
 
     # calculate total number of 'free' cores for the given board
     # (i.e. does not include those busy with SARK or reinjection)
@@ -46,7 +44,8 @@ def do_run():
     placements = front_end.placements()
     buffer_manager = front_end.buffer_manager()
 
-    for placement in sorted(placements.placements, key=lambda p: (p.x, p.y, p.p)):
+    for placement in sorted(placements.placements,
+                            key=lambda p: (p.x, p.y, p.p)):
         hello_world = placement.vertex.read(placement, buffer_manager)
         logger.info("{}, {}, {} > {}".format(
             placement.x, placement.y, placement.p, hello_world))
