@@ -88,8 +88,8 @@ for x in range(0, MAX_X_SIZE_OF_FABRIC):
 for time in range(0, runtime):
     print "at time {}".format(time)
     output = ""
-    for y in range(MAX_X_SIZE_OF_FABRIC - 1, 0, -1):
-        for x in range(0, MAX_Y_SIZE_OF_FABRIC):
+    for y in range(MAX_Y_SIZE_OF_FABRIC - 1, -1, -1):
+        for x in range(0, MAX_X_SIZE_OF_FABRIC):
             if recorded_data[(x, y)][time]:
                 output += "X"
             else:

@@ -159,8 +159,8 @@ for x in range(0, MAX_X_SIZE_OF_FABRIC):
 # visualise it in text form (bad but no vis this time)
 for time in range(0, runtime):
     output = ""
-    for y in range(MAX_X_SIZE_OF_FABRIC - 1, 0, -1):
-        for x in range(0, MAX_Y_SIZE_OF_FABRIC):
+    for y in range(MAX_Y_SIZE_OF_FABRIC - 1, -1, -1):
+        for x in range(0, MAX_X_SIZE_OF_FABRIC):
             if recorded_data[(x, y)][time]:
                 output += "X"
             else:
