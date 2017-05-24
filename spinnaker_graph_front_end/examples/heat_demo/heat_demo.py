@@ -2,16 +2,15 @@
 heat demo main entrance allows users to run the heat demo on the tool chain
 """
 
+from spinn_utilities.socket_address import SocketAddress
+
 from pacman.model.constraints.placer_constraints\
     import PlacerChipAndCoreConstraint
 
 # spinn front end common imports
-from spinn_front_end_common.utility_models.\
-    live_packet_gather_machine_vertex import \
-    LivePacketGatherMachineVertex
+from spinn_front_end_common.utility_models.live_packet_gather_machine_vertex \
+    import LivePacketGatherMachineVertex
 from threading import Condition
-from spinn_front_end_common.utilities.notification_protocol.socket_address \
-    import SocketAddress
 from spinn_front_end_common.utilities.connections.live_event_connection \
     import LiveEventConnection
 
@@ -42,7 +41,6 @@ database_listen_port = 19998
 n_chips_required = None
 if front_end.is_allocated_machine():
     n_chips_required = 2
-
 
 # set up the front end and ask for the detected machines dimensions
 front_end.setup(
@@ -77,7 +75,6 @@ vertices = [
 ]
 for x in range(0, max_x_element_id):
     for y in range(0, max_y_element_id):
-
         chip_x = x / 4
         chip_y = y / 4
         core_x = x % 4
@@ -106,7 +103,6 @@ for x in range(0, max_x_element_id):
 receive_labels = list()
 for x in range(0, max_x_element_id):
     for y in range(0, max_y_element_id):
-
         if vertices[x][y] is not None:
 
             # add a link from the heat element to the live packet gatherer

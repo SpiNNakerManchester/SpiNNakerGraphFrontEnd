@@ -1,13 +1,11 @@
 language: python
-matrix:
-  include:
-    - python: "2.7"
-    - pytest
-
+python:
+  - "2.7"
 virtualenv:
   system_site_packages: true
 
 env:
+  # Need this environment if we're doing tests without a config file
   - READTHEDOCS=True
 
 cache: pip

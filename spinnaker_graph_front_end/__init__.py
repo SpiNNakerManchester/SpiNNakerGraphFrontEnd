@@ -5,8 +5,7 @@ from spinnaker_graph_front_end.spinnaker import SpiNNaker
 from spinnaker_graph_front_end import spinnaker
 
 # front end common imports
-from spinn_front_end_common.utilities.notification_protocol.socket_address \
-    import SocketAddress
+from spinn_utilities.socket_address import SocketAddress
 from spinn_front_end_common.utilities.utility_objs.executable_finder \
     import ExecutableFinder
 
