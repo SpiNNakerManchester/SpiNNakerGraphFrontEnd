@@ -3,6 +3,7 @@ import spinnaker_graph_front_end as front_end
 from spinnaker_graph_front_end.examples.Conways.no_edges_examples.\
     conways_basic_cell import ConwayBasicCell
 
+
 # Can't instantiate abstract class ConwayBasicCell with abstract methods
 # resources_required
 def run_broken():
