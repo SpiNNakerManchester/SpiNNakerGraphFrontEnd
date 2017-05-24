@@ -2,16 +2,15 @@
 heat demo main entrance allows users to run the heat demo on the tool chain
 """
 
+from spinn_utilities.socket_address import SocketAddress
+
 from pacman.model.constraints.placer_constraints\
     import PlacerChipAndCoreConstraint
 
 # spinn front end common imports
-from spinn_front_end_common.utility_models.\
-    live_packet_gather_machine_vertex import \
-    LivePacketGatherMachineVertex
+from spinn_front_end_common.utility_models.live_packet_gather_machine_vertex \
+    import LivePacketGatherMachineVertex
 from threading import Condition
-from spinn_front_end_common.utilities.notification_protocol.socket_address \
-    import SocketAddress
 from spinn_front_end_common.utilities.connections.live_event_connection \
     import LiveEventConnection
 
@@ -31,23 +30,26 @@ from spinnaker_graph_front_end.examples.heat_demo.heat_demo_edge\
 import sys
 
 
-# Script broken Suspected reinjector issue
 def run_broken():
     machine_time_step = 1000
     time_scale_factor = 1
-    # machine_port = 11111
+    machine_port = 11111
     machine_receive_port = 22222
     machine_host = "0.0.0.0"
     live_gatherer_label = "LiveHeatGatherer"
     notify_port = 19999
     database_listen_port = 19998
 
+    n_chips_required = None
+    if front_end.is_allocated_machine():
+        n_chips_required = 2
+
     # set up the front end and ask for the detected machines dimensions
     front_end.setup(
-        graph_label="heat_demo_graph",
-        model_binary_module=sys.modules[__name__],
+        graph_label="heat_demo_graph", model_binary_module=sys.modules[__name__],
         database_socket_addresses={SocketAddress(
-            "127.0.0.1", notify_port, database_listen_port)})
+            "127.0.0.1", notify_port, database_listen_port)},
+        n_chips_required=n_chips_required)
     machine = front_end.machine()
 
     # Create a gatherer to read the heat values
@@ -64,7 +66,6 @@ def run_broken():
         }
     )
     live_gatherer.add_constraint(PlacerChipAndCoreConstraint(0, 0, 1))
-
     # Create a list of lists of vertices (x * 4) by (y * 4)
     # (for 16 cores on a chip - missing cores will have missing vertices)
     max_x_element_id = 2 * 4
@@ -99,7 +100,6 @@ def run_broken():
                     vertices[x][y] = element
                     vertices[x][y].add_constraint(PlacerChipAndCoreConstraint(
                         chip_x, chip_y, core_p))
-
     # build edges
     receive_labels = list()
     for x in range(0, max_x_element_id):
@@ -119,8 +119,7 @@ def run_broken():
                 receive_labels.append(vertices[x][y].label)
 
                 # Add a north link if not at the top
-                if (y + 1) < max_y_element_id and \
-                        vertices[x][y + 1] is not None:
+                if (y + 1) < max_y_element_id and vertices[x][y + 1] is not None:
                     front_end.add_machine_edge(
                         HeatDemoEdge,
                         {
@@ -133,8 +132,7 @@ def run_broken():
                         semantic_label="TRANSMISSION")
 
                 # Add an east link if not at the right
-                if (x + 1) < max_y_element_id and \
-                        vertices[x + 1][y] is not None:
+                if (x + 1) < max_y_element_id and vertices[x + 1][y] is not None:
                     front_end.add_machine_edge(
                         HeatDemoEdge,
                         {
@@ -172,17 +170,19 @@ def run_broken():
                             x, y, x - 1, y),
                         semantic_label="TRANSMISSION")
 
+
     # Set up the live connection for receiving heat elements
     live_heat_connection = LiveEventConnection(
-        live_gatherer_label, receive_labels=receive_labels,
-        local_port=notify_port,
+        live_gatherer_label, receive_labels=receive_labels, local_port=notify_port,
         machine_vertices=True)
     condition = Condition()
+
 
     def receive_heat(label, atom, value):
         condition.acquire()
         print "{}: {}".format(label, value / 65536.0)
         condition.release()
+
 
     # Set up callbacks to occur when spikes are received
     for label in receive_labels:
