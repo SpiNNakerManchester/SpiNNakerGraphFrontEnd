@@ -8,19 +8,23 @@ from spinnaker_graph_front_end.examples.Conways.\
     import ConwayBasicCell
 
 
-# NEEDS fixing to run on a spalloc machine
+# NEEDS fixing reinjector clash
 def run_broken():
 
     runtime = 500
-    machine_time_step = 1000
+    # machine_time_step = 1000
     time_scale_factor = 1000
     MAX_X_SIZE_OF_FABRIC = 7
     MAX_Y_SIZE_OF_FABRIC = 7
 
-    # set up the front end and ask for the detected machines dimensions
-    front_end.setup(time_scale_factor=time_scale_factor)
+    # Set number of cores required in case using a spalloc server.
+    n_chips_required = MAX_X_SIZE_OF_FABRIC * MAX_Y_SIZE_OF_FABRIC / 15.0
 
-    # figure out if machine can handle simulation
+    # set up the front end and ask for the detected machines dimensions
+    front_end.setup(time_scale_factor=time_scale_factor,
+                    n_chips_required=n_chips_required)
+
+    # figure out if machine (none Spalloc can handle simulation
     cores = front_end.get_number_of_cores_on_machine()
     if cores <= (MAX_X_SIZE_OF_FABRIC * MAX_Y_SIZE_OF_FABRIC):
         raise KeyError("Don't have enough cores to run simulation")
@@ -135,7 +139,8 @@ def run_broken():
             for (dest_x, dest_y, compass) in positions:
                 front_end.add_machine_edge_instance(
                     MachineEdge(
-                        vertices[x][y], vertices[dest_x][dest_y], label=compass),
+                        vertices[x][y], vertices[dest_x][dest_y],
+                        label=compass),
                     "STATE")
 
     # set up vis
@@ -158,7 +163,8 @@ def run_broken():
         for y in range(0, MAX_Y_SIZE_OF_FABRIC):
             recorded_data[(x, y)] = vertices[x][y].get_data(
                 front_end.buffer_manager(),
-                front_end.placements().get_placement_of_subvertex(vertices[x][y]))
+                front_end.placements().get_placement_of_subvertex(
+                    vertices[x][y]))
 
     # visualise it in text form (bad but no vis this time)
     for time in range(0, runtime):
@@ -178,6 +184,7 @@ def run_broken():
 
     # wait till vis is stopped
     # child.wait()
+
 
 if __name__ == '__main__':
     run_broken()

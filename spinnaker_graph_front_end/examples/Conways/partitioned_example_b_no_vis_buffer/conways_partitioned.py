@@ -6,10 +6,15 @@ from spinnaker_graph_front_end.examples.Conways.\
     import ConwayBasicCell
 
 
-def do_broken():
+# .../SpiNNakerGraphFrontEnd/spinnaker_graph_front_end/examples/Conways/
+# partitioned_example_b_no_vis_buffer/conways_basic_cell.py", line 142,
+# in generate_machine_data_specification
+#    key = routing_info.get_first_key_from_partition(partitions[0])
+# TypeError: 'OrderedSet' object does not support indexing
+def run_broken():
     runtime = 50
-    machine_time_step = 100
-    time_scale_factor = 2
+    # machine_time_step = 100
+    # time_scale_factor = 2
     MAX_X_SIZE_OF_FABRIC = 7
     MAX_Y_SIZE_OF_FABRIC = 7
 
@@ -70,7 +75,8 @@ def do_broken():
             for (dest_x, dest_y, compass) in positions:
                 front_end.add_machine_edge_instance(
                     MachineEdge(
-                        vertices[x][y], vertices[dest_x][dest_y], label=compass),
+                        vertices[x][y], vertices[dest_x][dest_y],
+                        label=compass),
                     "STATE",)
 
     # run the simulation
@@ -105,4 +111,4 @@ def do_broken():
 
 
 if __name__ == '__main__':
-    do_broken()
+    run_broken()

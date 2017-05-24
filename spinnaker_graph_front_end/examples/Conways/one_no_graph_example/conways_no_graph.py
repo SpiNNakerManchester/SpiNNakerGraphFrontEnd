@@ -1,8 +1,10 @@
 import spinnaker_graph_front_end as front_end
 
 
-# Does not work with a spalloc machine
-def do_broken():
+# spinn_front_end_common.utilities.exceptions.ConfigurationException:
+# There needs to be a graph which contains at least one vertex for
+# the tool chain to map anything.
+def run_broken():
     # set up the front end and ask for the detected machines dimensions
     front_end.setup()
 
@@ -11,4 +13,4 @@ def do_broken():
 
 
 if __name__ == '__main__':
-    do_broken()
+    run_broken()
