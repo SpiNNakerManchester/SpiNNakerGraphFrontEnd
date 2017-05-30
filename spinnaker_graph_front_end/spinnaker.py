@@ -1,8 +1,8 @@
 import spinn_utilities.conf_loader as conf_loader
 
 # common front end imports
-from spinn_front_end_common.interface.spinnaker_main_interface import \
-    SpinnakerMainInterface
+from spinn_front_end_common.interface.abstract_spinnaker_base \
+    import AbstractSpinnakerBase
 from spinn_front_end_common.utilities import globals_variables
 
 # graph front end imports
@@ -31,7 +31,7 @@ def _is_allocated_machine(config):
             config.get("Machine", "remote_spinnaker_url") != "None")
 
 
-class SpiNNaker(SpinnakerMainInterface, GraphFrontEndSimulatorInterface):
+class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
     def __init__(
             self, executable_finder, host_name=None, graph_label=None,
@@ -59,7 +59,7 @@ class SpiNNaker(SpinnakerMainInterface, GraphFrontEndSimulatorInterface):
         if n_chips_required is None and _is_allocated_machine(config):
             n_chips_required = SPALLOC_CORES
 
-        SpinnakerMainInterface.__init__(
+        AbstractSpinnakerBase.__init__(
             self, config,
             graph_label=graph_label,
             executable_finder=executable_finder,
@@ -126,7 +126,7 @@ class SpiNNaker(SpinnakerMainInterface, GraphFrontEndSimulatorInterface):
             self.dsg_algorithm = self._user_dsg_algorithm
 
         # run normal procedure
-        SpinnakerMainInterface.run(self, run_time)
+        AbstractSpinnakerBase.run(self, run_time)
 
     def __repr__(self):
         return "SpiNNaker Graph Front End object for machine {}"\
