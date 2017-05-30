@@ -1,3 +1,5 @@
+from spinn_front_end_common.utilities import globals_variables
+
 from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex\
     import MachineDataSpecableVertex
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary\
@@ -16,7 +18,6 @@ from pacman.model.resources import ResourceContainer, SDRAMResource
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utilities.utility_objs.executable_start_type \
     import ExecutableStartType
-from spinnaker_graph_front_end.utilities.conf import config
 
 from enum import Enum
 
@@ -52,6 +53,7 @@ class Vertex(
             n_machine_time_steps=1000, buffered_sdram_per_timestep=[1000],
             minimum_sdram_for_buffering=1024)
 
+        config = globals_variables.get_simulator().config
         self._buffer_size_before_receive = None
         if config.getboolean("Buffers", "enable_buffered_recording"):
             self._buffer_size_before_receive = config.getint(

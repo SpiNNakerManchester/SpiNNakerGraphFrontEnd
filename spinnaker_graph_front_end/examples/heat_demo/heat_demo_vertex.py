@@ -1,3 +1,4 @@
+from spinn_front_end_common.utilities import globals_variables
 
 # dsg imports
 from data_specification.enums.data_type import DataType
@@ -10,7 +11,7 @@ from pacman.model.resources import ResourceContainer, SDRAMResource
 
 # graph front end imports
 from .heat_demo_edge import HeatDemoEdge
-from spinnaker_graph_front_end.utilities.conf import config
+
 
 # FEC imports
 from spinn_front_end_common.interface.simulation import simulation_utilities
@@ -61,6 +62,7 @@ class HeatDemoVertex(
     def __init__(self, label, machine_time_step, time_scale_factor,
                  heat_temperature=0, constraints=None):
 
+        config = globals_variables.get_simulator().config
         # resources used by a heat element vertex
         sdram = SDRAMResource(
             23 + config.getint("Buffers", "minimum_buffer_sdram"))
