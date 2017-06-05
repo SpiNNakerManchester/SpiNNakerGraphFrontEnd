@@ -4,7 +4,7 @@ heat demo main entrance allows users to run the heat demo on the tool chain
 
 from pacman.model.constraints.placer_constraints\
     .placer_chip_and_core_constraint import PlacerChipAndCoreConstraint
-from pacman.model.graphs.machine.impl.machine_vertex import MachineVertex
+from pacman.model.graphs.machine.machine_vertex import MachineVertex
 from pacman.model.resources.resource_container import ResourceContainer
 from pacman.model.resources.iptag_resource import IPtagResource
 from pacman.executor.injection_decorator import inject_items
@@ -16,6 +16,9 @@ import os
 import platform
 import subprocess
 from threading import Thread
+from spinn_front_end_common.utility_models.live_packet_gather_machine_vertex \
+    import LivePacketGatherMachineVertex
+from spinnman.messages.eieio.eieio_type import EIEIOType
 from spinn_front_end_common.utilities.utility_objs.executable_start_type \
     import ExecutableStartType
 from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
@@ -43,10 +46,13 @@ class HeatDemoVertex(
         AbstractGeneratesDataSpecification):
 
     def __init__(
-            self, is_northernmost=False, is_southernmost=False,
+            self, heat_x, heat_y, is_northernmost=False, is_southernmost=False,
             is_easternmost=False, is_westernmost=False, tag=None,
             ip_address="localhost", port=None):
-        MachineVertex.__init__(self)
+        MachineVertex.__init__(self, label="{}, {}".format(heat_x, heat_y))
+
+        self._heat_x = heat_x
+        self._heat_y = heat_y
 
         self._is_northernmost = is_northernmost
         self._is_southernmost = is_southernmost
@@ -190,6 +196,11 @@ vertices = [
     [None for j in range(max_y_element_id)]
     for i in range(max_x_element_id)
 ]
+
+live_output_vertex = LivePacketGatherMachineVertex(
+    label="LiveOutput", message_type=EIEIOType.KEY_PAYLOAD_32_BIT,
+    payload_as_time_stamps=False, use_payload_prefix=False,
+    ip_address="localhost")
 
 control_vertex = None
 for x in range(0, max_x_element_id):
