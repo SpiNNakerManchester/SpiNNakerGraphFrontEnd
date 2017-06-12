@@ -5,10 +5,10 @@ from spinnaker_graph_front_end.spinnaker import SpiNNaker
 from spinnaker_graph_front_end import spinnaker
 
 # front end common imports
-from spinn_front_end_common.utilities.notification_protocol.socket_address \
-    import SocketAddress
+from spinn_utilities.socket_address import SocketAddress
 from spinn_front_end_common.utilities.utility_objs.executable_finder \
     import ExecutableFinder
+from spinn_front_end_common.utilities import globals_variables
 
 # utility models for graph front ends
 from spinn_front_end_common.utility_models.live_packet_gather \
@@ -23,7 +23,6 @@ import sys
 
 logger = logging.getLogger(__name__)
 
-_spinnaker = None
 _none_labelled_vertex_count = None
 _none_labelled_edge_count = None
 
@@ -89,7 +88,6 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         could be post processing of generated data on the machine for example.
     :type extra_pre_run_algorithms: list of str
     """
-    global _spinnaker
     global _none_labelled_vertex_count
     global _none_labelled_edge_count
 
@@ -114,7 +112,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         executable_finder.add_path(file_dir)
 
     # set up the spinnaker object
-    _spinnaker = SpiNNaker(
+    SpiNNaker(
         host_name=hostname, graph_label=graph_label,
         executable_finder=executable_finder,
         database_socket_addresses=database_socket_addresses,
@@ -132,19 +130,15 @@ def run(duration=None):
     :param duration: the number of microseconds the application should run for
     :type duration: int
     """
-    global _spinnaker
-
-    _spinnaker.run(duration)
+    globals_variables.get_simulator().run(duration)
 
 
 def stop():
     """ Do any necessary cleaning up before exiting. Unregisters the controller
     """
-    global _spinnaker
     global _executable_finder
 
-    _spinnaker.stop()
-    _spinnaker = None
+    globals_variables.get_simulator().stop()
     _executable_finder = None
 
 
@@ -155,9 +149,8 @@ def read_xml_file(file_path):
     :param file_path: the file path in absolute form
     :rtype: None
     """
-    global _spinnaker
     logger.warn("This functionality is not yet supported")
-    _spinnaker.read_xml_file(file_path)
+    globals_variables.get_simulator().read_xml_file(file_path)
 
 
 def add_vertex(cellclass, cellparams, label=None, constraints=None):
@@ -173,16 +166,16 @@ def add_vertex(cellclass, cellparams, label=None, constraints=None):
     :type label: str
     :return: the vertex instance object
     """
-    global _spinnaker
+    spinnaker = globals_variables.get_simulator()
 
     # correct label if needed
     if label is None and 'label' not in cellparams:
-        label = "Vertex {}".format(_spinnaker.none_labelled_vertex_count)
-        _spinnaker.increment_none_labelled_vertex_count()
+        label = "Vertex {}".format(spinnaker.none_labelled_vertex_count)
+        spinnaker.increment_none_labelled_vertex_count()
         cellparams['label'] = label
     elif 'label' in cellparams and cellparams['label'] is None:
-        label = "Vertex {}".format(_spinnaker.none_labelled_vertex_count)
-        _spinnaker.increment_none_labelled_vertex_count()
+        label = "Vertex {}".format(spinnaker.none_labelled_vertex_count)
+        spinnaker.increment_none_labelled_vertex_count()
         cellparams['label'] = label
     elif label is not None:
         cellparams['label'] = label
@@ -190,7 +183,7 @@ def add_vertex(cellclass, cellparams, label=None, constraints=None):
     # add vertex
     cellparams['constraints'] = constraints
     vertex = cellclass(**cellparams)
-    _spinnaker.add_application_vertex(vertex)
+    spinnaker.add_application_vertex(vertex)
     return vertex
 
 
@@ -200,8 +193,7 @@ def add_vertex_instance(vertex_to_add):
     :type vertex_to_add: instance of AbstractPartitionabelVertex
     :rtype: None
     """
-    global _spinnaker
-    _spinnaker.add_application_vertex(vertex_to_add)
+    globals_variables.get_simulator().add_application_vertex(vertex_to_add)
 
 
 def add_machine_vertex(
@@ -218,16 +210,16 @@ def add_machine_vertex(
     :type label: str
     :return: the vertex instance object
     """
-    global _spinnaker
+    spinnaker = globals_variables.get_simulator()
 
     # correct label if needed
     if label is None and 'label' not in cellparams:
-        label = "Vertex {}".format(_spinnaker.none_labelled_vertex_count)
-        _spinnaker.increment_none_labelled_vertex_count()
+        label = "Vertex {}".format(spinnaker.none_labelled_vertex_count)
+        spinnaker.increment_none_labelled_vertex_count()
         cellparams['label'] = label
     elif 'label' in cellparams and cellparams['label'] is None:
-        label = "Vertex {}".format(_spinnaker.none_labelled_vertex_count)
-        _spinnaker.increment_none_labelled_vertex_count()
+        label = "Vertex {}".format(spinnaker.none_labelled_vertex_count)
+        spinnaker.increment_none_labelled_vertex_count()
         cellparams['label'] = label
     elif label is not None:
         cellparams['label'] = label
@@ -235,7 +227,7 @@ def add_machine_vertex(
     # add vertex
     cellparams['constraints'] = constraints
     vertex = cellclass(**cellparams)
-    _spinnaker.add_machine_vertex(vertex)
+    spinnaker.add_machine_vertex(vertex)
     return vertex
 
 
@@ -245,57 +237,56 @@ def add_machine_vertex_instance(vertex_to_add):
     :param vertex_to_add: the vertex to add to the partitioned graph
     :rtype: None
     """
-    global _spinnaker
-    _spinnaker.add_machine_vertex(vertex_to_add)
+    globals_variables.get_simulator().add_machine_vertex(vertex_to_add)
 
 
 def add_edge(cell_type, cellparams, semantic_label, label=None):
-    global _spinnaker
+    spinnaker = globals_variables.get_simulator()
 
     # correct label if needed
     if label is None and 'label' not in cellparams:
-        label = "Edge {}".format(_spinnaker.none_labelled_edge_count)
-        _spinnaker.increment_none_labelled_edge_count()
+        label = "Edge {}".format(spinnaker.none_labelled_edge_count)
+        spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif 'label' in cellparams and cellparams['label'] is None:
-        label = "Edge {}".format(_spinnaker.none_labelled_edge_count)
-        _spinnaker.increment_none_labelled_edge_count()
+        label = "Edge {}".format(spinnaker.none_labelled_edge_count)
+        spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif label is not None:
         cellparams['label'] = label
 
     # add edge
     edge = cell_type(**cellparams)
-    _spinnaker.add_application_edge(edge, semantic_label)
+    spinnaker.add_application_edge(edge, semantic_label)
     return edge
 
 
 def add_application_edge_instance(edge, partition_id):
-    _spinnaker.add_application_edge(edge, partition_id)
+    globals_variables.get_simulator().add_application_edge(edge, partition_id)
 
 
 def add_machine_edge_instance(edge, partition_id):
-    _spinnaker.add_machine_edge(edge, partition_id)
+    globals_variables.get_simulator().add_machine_edge(edge, partition_id)
 
 
 def add_machine_edge(cellclass, cellparams, semantic_label, label=None):
-    global _spinnaker
+    spinnaker = globals_variables.get_simulator()
 
     # correct label if needed
     if label is None and 'label' not in cellparams:
-        label = "Edge {}".format(_spinnaker.none_labelled_edge_count)
-        _spinnaker.increment_none_labelled_edge_count()
+        label = "Edge {}".format(spinnaker.none_labelled_edge_count)
+        spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif 'label' in cellparams and cellparams['label'] is None:
-        label = "Edge {}".format(_spinnaker.none_labelled_edge_count)
-        _spinnaker.increment_none_labelled_edge_count()
+        label = "Edge {}".format(spinnaker.none_labelled_edge_count)
+        spinnaker.increment_none_labelled_edge_count()
         cellparams['label'] = label
     elif label is not None:
         cellparams['label'] = label
 
     # add edge
     edge = cellclass(**cellparams)
-    _spinnaker.add_machine_edge(edge, semantic_label)
+    spinnaker.add_machine_edge(edge, semantic_label)
     return edge
 
 
@@ -309,90 +300,75 @@ def add_socket_address(
     :param database_notify_port_num: port that the external device will be\
         notified on.
     """
-    global _spinnaker
-
     database_socket = SocketAddress(
         listen_port=database_ack_port_num,
         notify_host_name=database_notify_host,
         notify_port_no=database_notify_port_num)
 
-    _spinnaker.add_socket_address(database_socket)
+    globals_variables.get_simulator().add_socket_address(database_socket)
 
 
 def get_txrx():
     """
     returns the transceiver used by the tool chain
     """
-    global _spinnaker
-    return _spinnaker.transceiver
+    return globals_variables.get_simulator().transceiver
 
 
 def get_machine_dimensions():
     """
     returns the x and y dimension of the machine
     """
-    global _spinnaker
-    return _spinnaker.get_machine_dimensions()
+    return globals_variables.get_simulator().get_machine_dimensions()
 
 
 def get_number_of_cores_on_machine():
     """
     returns the number of cores on this machine
     """
-    global _spinnaker
-    this_machine = _spinnaker.machine
+    this_machine = globals_variables.get_simulator().machine
     cores, _ = this_machine.get_cores_and_link_count()
     return cores
 
 
 def has_ran():
-    global _spinnaker
-    return _spinnaker.has_ran
+    return globals_variables.get_simulator().has_ran
 
 
 def machine_time_step():
-    global _spinnaker
-    return _spinnaker.machine_time_step
+    return globals_variables.get_simulator().machine_time_step
 
 
 def no_machine_time_steps():
-    global _spinnaker
-    return _spinnaker.no_machine_time_steps
+    return globals_variables.get_simulator().no_machine_time_steps
 
 
 def timescale_factor():
-    global _spinnaker
-    return _spinnaker.time_scale_factor
+    return globals_variables.get_simulator().time_scale_factor
 
 
 def machine_graph():
-    global _spinnaker
-    return _spinnaker.machine_graph
+    return globals_variables.get_simulator().machine_graph
 
 
 def application_graph():
-    global _spinnaker
-    return _spinnaker.application_graph
+    return globals_variables.get_simulator().application_graph
 
 
 def routing_infos():
-    global _spinnaker
-    return _spinnaker.routing_infos
+    return globals_variables.get_simulator().routing_infos
 
 
 def placements():
-    global _spinnaker
-    return _spinnaker.placements
+    return globals_variables.get_simulator().placements
 
 
 def transceiver():
-    global _spinnaker
-    return _spinnaker.transceiver
+    return globals_variables.get_simulator().transceiver
 
 
 def graph_mapper():
-    global _spinnaker
-    return _spinnaker.graph_mapper
+    return globals_variables.get_simulator().graph_mapper
 
 
 def buffer_manager():
@@ -400,14 +376,12 @@ def buffer_manager():
     :return: the buffer manager being used for loading/extracting buffers
 
     """
-    global _spinnaker
-    return _spinnaker.buffer_manager
+    return globals_variables.get_simulator().buffer_manager
 
 
 def machine():
-    global _spinnaker
-    return _spinnaker.machine
+    return globals_variables.get_simulator().machine
 
 
 def is_allocated_machine():
-    return SpiNNaker.is_allocated_machine
+    return globals_variables.get_simulator().is_allocated_machine
