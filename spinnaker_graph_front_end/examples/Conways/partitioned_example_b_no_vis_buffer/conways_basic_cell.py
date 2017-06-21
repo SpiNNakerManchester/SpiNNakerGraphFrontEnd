@@ -11,7 +11,7 @@ from spinn_front_end_common.utilities \
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.interface.buffer_management.buffer_models\
-    .abstract_receive_buffers_to_host import AbstractReceiveBuffersToHost
+    import AbstractReceiveBuffersToHost
 from spinn_front_end_common.interface.buffer_management \
     import recording_utilities
 from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
