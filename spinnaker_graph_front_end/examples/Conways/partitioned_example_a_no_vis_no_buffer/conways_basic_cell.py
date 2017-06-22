@@ -1,5 +1,5 @@
 # pacman imports
-from pacman.model.decorators.overrides import overrides
+from pacman.model.decorators import overrides
 
 from pacman.executor.injection_decorator import requires_injection, \
     supports_injection, inject
