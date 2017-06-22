@@ -15,7 +15,7 @@ from spinn_front_end_common.utilities.connections.live_event_connection \
     import LiveEventConnection
 
 # SpiNNMan imports
-from spinnman.messages.eieio.eieio_type import EIEIOType
+from spinnman.messages.eieio import EIEIOType
 
 # graph front end imports
 import spinnaker_graph_front_end as front_end
