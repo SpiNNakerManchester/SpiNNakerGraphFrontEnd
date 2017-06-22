@@ -8,11 +8,9 @@ from pacman.model.constraints.placer_constraints\
     import PlacerChipAndCoreConstraint
 
 # spinn front end common imports
-from spinn_front_end_common.utility_models.live_packet_gather_machine_vertex \
+from spinn_front_end_common.utility_models \
     import LivePacketGatherMachineVertex
-from threading import Condition
-from spinn_front_end_common.utilities.connections.live_event_connection \
-    import LiveEventConnection
+from spinn_front_end_common.utilities.connections import LiveEventConnection
 
 # SpiNNMan imports
 from spinnman.messages.eieio import EIEIOType
@@ -28,6 +26,7 @@ from spinnaker_graph_front_end.examples.heat_demo.heat_demo_edge\
     import HeatDemoEdge
 
 import sys
+from threading import Condition
 
 
 # Script borken Suspected reinjector problem

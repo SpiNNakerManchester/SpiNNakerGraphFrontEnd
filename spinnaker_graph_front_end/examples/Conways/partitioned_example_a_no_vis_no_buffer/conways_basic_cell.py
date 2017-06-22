@@ -12,14 +12,11 @@ from pacman.utilities import utility_calls
 from spinn_front_end_common.utilities \
     import constants, exceptions, helpful_functions
 from spinn_front_end_common.interface.simulation import simulation_utilities
-from spinn_front_end_common.abstract_models.impl.needs_n_machine_time_steps\
-    import NeedsNMachineTimeSteps
-from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
+from spinn_front_end_common.abstract_models.impl import NeedsNMachineTimeSteps
+from spinn_front_end_common.abstract_models.impl \
     import MachineDataSpecableVertex
-from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
-    import AbstractHasAssociatedBinary
-from spinn_front_end_common.utilities.utility_objs.executable_start_type \
-    import ExecutableStartType
+from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
+from spinn_front_end_common.utilities.utility_objs import ExecutableStartType
 
 
 # general imports

@@ -14,12 +14,10 @@ from spinn_front_end_common.interface.buffer_management.buffer_models\
     import AbstractReceiveBuffersToHost
 from spinn_front_end_common.interface.buffer_management \
     import recording_utilities
-from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
+from spinn_front_end_common.abstract_models.impl \
     import MachineDataSpecableVertex
-from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
-    import AbstractHasAssociatedBinary
-from spinn_front_end_common.utilities.utility_objs.executable_start_type \
-    import ExecutableStartType
+from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
+from spinn_front_end_common.utilities.utility_objs import ExecutableStartType
 
 # general imports
 from enum import Enum

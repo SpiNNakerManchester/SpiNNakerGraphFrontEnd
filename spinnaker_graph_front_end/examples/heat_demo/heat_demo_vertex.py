@@ -1,5 +1,3 @@
-from spinn_front_end_common.utilities import globals_variables
-
 # dsg imports
 from data_specification.enums.data_type import DataType
 
@@ -12,20 +10,16 @@ from pacman.model.resources import ResourceContainer, SDRAMResource
 # graph front end imports
 from .heat_demo_edge import HeatDemoEdge
 
-
 # FEC imports
+from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.interface.simulation import simulation_utilities
-from spinn_front_end_common.utility_models.live_packet_gather import \
-    LivePacketGather
-from spinn_front_end_common.utility_models.\
-    reverse_ip_tag_multi_cast_source import ReverseIpTagMultiCastSource
+from spinn_front_end_common.utility_models import LivePacketGather
+from spinn_front_end_common.utility_models import ReverseIpTagMultiCastSource
 from spinn_front_end_common.utilities import constants, exceptions
-from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex \
+from spinn_front_end_common.abstract_models.impl \
     import MachineDataSpecableVertex
-from spinn_front_end_common.abstract_models.abstract_has_associated_binary \
-    import AbstractHasAssociatedBinary
-from spinn_front_end_common.utilities.utility_objs.executable_start_type \
-    import ExecutableStartType
+from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
+from spinn_front_end_common.utilities.utility_objs import ExecutableStartType
 
 # general imports
 from enum import Enum
