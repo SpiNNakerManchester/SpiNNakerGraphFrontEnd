@@ -1,5 +1,5 @@
 # dsg imports
-from data_specification.enums.data_type import DataType
+from data_specification.enums import DataType
 
 # pacman imports
 from pacman.model.decorators.overrides import overrides
