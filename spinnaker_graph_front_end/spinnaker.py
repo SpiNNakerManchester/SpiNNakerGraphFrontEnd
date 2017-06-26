@@ -1,7 +1,8 @@
 import spinn_utilities.conf_loader as conf_loader
 
 # common front end imports
-from spinn_front_end_common.interface import AbstractSpinnakerBase
+from spinn_front_end_common.interface.abstract_spinnaker_base \
+    import AbstractSpinnakerBase
 from spinn_front_end_common.utilities import globals_variables
 
 # graph front end imports
