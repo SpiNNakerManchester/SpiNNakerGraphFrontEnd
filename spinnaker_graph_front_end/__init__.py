@@ -2,7 +2,7 @@
 from spinnaker_graph_front_end._version import \
     __version__, __version_name__, __version_month__, __version_year__
 from spinnaker_graph_front_end.spinnaker import SpiNNaker
-from spinnaker_graph_front_end import spinnaker
+from spinnaker_graph_front_end import spinnaker as gfe_file
 
 from spinn_utilities.socket_address import SocketAddress
 
@@ -92,7 +92,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
     logger.info(
         "SpiNNaker graph front end (c) {}, "
         "University of Manchester".format(__version_year__))
-    parent_dir = os.path.split(os.path.split(spinnaker.__file__)[0])[0]
+    parent_dir = os.path.split(os.path.split(gfe_file.__file__)[0])[0]
     logger.info(
         "Release version {}({}) - {} {}. Installed in folder {}".format(
             __version__, __version_name__, __version_month__, __version_year__,
