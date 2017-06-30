@@ -133,6 +133,12 @@ def run(duration=None):
     globals_variables.get_simulator().run(duration)
 
 
+def run_until_complete():
+    """ Run until the application is complete
+    """
+    globals_variables.get_simulator().run_until_complete()
+
+
 def stop():
     """ Do any necessary cleaning up before exiting. Unregisters the controller
     """
