@@ -49,6 +49,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
         AbstractSpinnakerBase.__init__(
             self,
+            configfile=CONFIG_FILE_NAME,
             executable_finder=executable_finder,
             graph_label=graph_label,
             database_socket_addresses=database_socket_addresses,
@@ -56,8 +57,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             n_chips_required=n_chips_required,
             default_config_paths=[
                 os.path.join(os.path.dirname(__file__),
-                             CONFIG_FILE_NAME)],
-            configfile=CONFIG_FILE_NAME)
+                             CONFIG_FILE_NAME)])
 
         extra_mapping_inputs = dict()
         extra_mapping_inputs["CreateAtomToEventIdMapping"] = self.config.\
