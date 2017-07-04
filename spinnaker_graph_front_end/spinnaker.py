@@ -14,6 +14,7 @@ from spinnaker_graph_front_end.graph_front_end_simulator_interface \
 
 # general imports
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -41,9 +42,6 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             machine_time_step=None):
 
         global CONFIG_FILE_NAME, SPALLOC_CORES
-        # Read config file
-        config = conf_loader.load_config(spinnaker_graph_front_end,
-                                         CONFIG_FILE_NAME)
 
         # dsg algorithm store for user defined algorithms
         self._user_dsg_algorithm = dsg_algorithm
@@ -52,28 +50,33 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         # using auto pause and resume
         extra_xml_path = list()
 
-        extra_mapping_inputs = dict()
-        extra_mapping_inputs["CreateAtomToEventIdMapping"] = config.getboolean(
-            "Database", "create_routing_info_to_atom_id_mapping")
-
-        if n_chips_required is None and _is_allocated_machine(config):
-            n_chips_required = SPALLOC_CORES
-
         AbstractSpinnakerBase.__init__(
-            self, config,
-            graph_label=graph_label,
+            self,
             executable_finder=executable_finder,
+            graph_label=graph_label,
             database_socket_addresses=database_socket_addresses,
             extra_algorithm_xml_paths=extra_xml_path,
-            extra_mapping_inputs=extra_mapping_inputs,
             n_chips_required=n_chips_required,
-            extra_pre_run_algorithms=extra_pre_run_algorithms,
-            extra_post_run_algorithms=extra_post_run_algorithms)
+            default_config_paths=[
+                os.path.join(os.path.dirname(__file__),
+                             CONFIG_FILE_NAME)],
+            configfile=CONFIG_FILE_NAME)
+
+        extra_mapping_inputs = dict()
+        extra_mapping_inputs["CreateAtomToEventIdMapping"] = self.config.\
+            getboolean("Database", "create_routing_info_to_atom_id_mapping")
+
+        self.update_extra_mapping_inputs(extra_mapping_inputs)
+        self.prepend_extra_pre_run_algorithms(extra_pre_run_algorithms)
+        self.extend_extra_post_run_algorithms(extra_post_run_algorithms)
+
+        if n_chips_required is None and _is_allocated_machine(self.config):
+            self.set_n_chips_required(SPALLOC_CORES)
 
         # set up machine targeted data
         if machine_time_step is None:
             self._machine_time_step = \
-                config.getint("Machine", "machineTimeStep")
+                self.config.getint("Machine", "machineTimeStep")
         else:
             self._machine_time_step = machine_time_step
 
@@ -81,7 +84,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
         if time_scale_factor is None:
             self._time_scale_factor = \
-                config.get("Machine", "timeScaleFactor")
+                self.config.get("Machine", "timeScaleFactor")
             if self._time_scale_factor == "None":
                 self._time_scale_factor = 1
             else:
