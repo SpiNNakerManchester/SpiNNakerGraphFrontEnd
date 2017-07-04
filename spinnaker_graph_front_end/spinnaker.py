@@ -1,12 +1,9 @@
-import spinn_utilities.conf_loader as conf_loader
-
 # common front end imports
 from spinn_front_end_common.interface.abstract_spinnaker_base \
     import AbstractSpinnakerBase
 from spinn_front_end_common.utilities import globals_variables
 
 # graph front end imports
-import spinnaker_graph_front_end
 from spinnaker_graph_front_end.utilities.graph_front_end_failed_state \
     import GraphFrontEndFailedState
 from spinnaker_graph_front_end.graph_front_end_simulator_interface \
