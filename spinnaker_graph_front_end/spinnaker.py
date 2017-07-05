@@ -73,7 +73,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         # set up machine targeted data
         if machine_time_step is None:
             self._machine_time_step = \
-                self.config.getint("Machine", "machineTimeStep")
+                self.config.getint("Machine", "machine_time_step")
         else:
             self._machine_time_step = machine_time_step
 
@@ -81,7 +81,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
         if time_scale_factor is None:
             self._time_scale_factor = \
-                self.config.get("Machine", "timeScaleFactor")
+                self.config.get("Machine", "time_scale_factor")
             if self._time_scale_factor == "None":
                 self._time_scale_factor = 1
             else:
