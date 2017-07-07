@@ -2,19 +2,17 @@
 from spinnaker_graph_front_end._version import \
     __version__, __version_name__, __version_month__, __version_year__
 from spinnaker_graph_front_end.spinnaker import SpiNNaker
-from spinnaker_graph_front_end import spinnaker
+from spinnaker_graph_front_end import spinnaker as gfe_file
+
+from spinn_utilities.socket_address import SocketAddress
 
 # front end common imports
-from spinn_utilities.socket_address import SocketAddress
-from spinn_front_end_common.utilities.utility_objs.executable_finder \
-    import ExecutableFinder
+from spinn_front_end_common.utilities.utility_objs import ExecutableFinder
 from spinn_front_end_common.utilities import globals_variables
-
 # utility models for graph front ends
-from spinn_front_end_common.utility_models.live_packet_gather \
-    import LivePacketGather
-from spinn_front_end_common.utility_models.reverse_ip_tag_multi_cast_source \
-    import ReverseIpTagMultiCastSource
+from spinn_front_end_common.utility_models import LivePacketGather
+from spinn_front_end_common.utility_models import ReverseIpTagMultiCastSource
+
 from pacman.model.graphs.machine import MachineEdge
 
 import os
@@ -94,7 +92,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
     logger.info(
         "SpiNNaker graph front end (c) {}, "
         "University of Manchester".format(__version_year__))
-    parent_dir = os.path.split(os.path.split(spinnaker.__file__)[0])[0]
+    parent_dir = os.path.split(os.path.split(gfe_file.__file__)[0])[0]
     logger.info(
         "Release version {}({}) - {} {}. Installed in folder {}".format(
             __version__, __version_name__, __version_month__, __version_year__,
