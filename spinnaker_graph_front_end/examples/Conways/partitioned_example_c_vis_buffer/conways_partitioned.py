@@ -2,7 +2,7 @@ import spinnaker_graph_front_end as front_end
 
 from pacman.model.graphs.machine import MachineEdge
 from pacman.model.constraints.placer_constraints\
-    import PlacerChipAndCoreConstraint
+    import ChipAndCoreConstraint
 from spinnaker_graph_front_end.examples.Conways.\
     partitioned_example_c_vis_buffer.conways_basic_cell \
     import ConwayBasicCell
@@ -99,7 +99,7 @@ def run_broken():
             vert = ConwayBasicCell(
                 "cell{}".format((x * MAX_X_SIZE_OF_FABRIC) + y),
                 (x, y) in active_states)
-            vert.add_constraint(PlacerChipAndCoreConstraint(
+            vert.add_constraint(ChipAndCoreConstraint(
                 placement_to_make_tubogrid_work_correctly[(x, y)][0],
                 placement_to_make_tubogrid_work_correctly[(x, y)][1],
                 placement_to_make_tubogrid_work_correctly[(x, y)][2]))
