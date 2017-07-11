@@ -1,23 +1,20 @@
-from spinn_front_end_common.utilities import globals_variables
-
-from spinn_front_end_common.abstract_models.impl.machine_data_specable_vertex\
+from spinn_front_end_common.abstract_models.impl\
     import MachineDataSpecableVertex
-from spinn_front_end_common.abstract_models.abstract_has_associated_binary\
+from spinn_front_end_common.abstract_models\
     import AbstractHasAssociatedBinary
 from spinn_front_end_common.interface.buffer_management.buffer_models\
-    .abstract_receive_buffers_to_host import AbstractReceiveBuffersToHost
+    import AbstractReceiveBuffersToHost
+from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities import constants, helpful_functions
 from spinn_front_end_common.interface.buffer_management \
     import recording_utilities
+from spinn_front_end_common.interface.simulation import simulation_utilities
+from spinn_front_end_common.utilities.utility_objs import ExecutableStartType
 
-from pacman.model.decorators.overrides import overrides
+from pacman.model.decorators import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
 from pacman.model.resources import ResourceContainer, SDRAMResource
-
-from spinn_front_end_common.interface.simulation import simulation_utilities
-from spinn_front_end_common.utilities.utility_objs.executable_start_type \
-    import ExecutableStartType
 
 from enum import Enum
 
