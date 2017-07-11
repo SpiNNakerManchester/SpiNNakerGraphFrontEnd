@@ -5,17 +5,15 @@ heat demo main entrance allows users to run the heat demo on the tool chain
 from spinn_utilities.socket_address import SocketAddress
 
 from pacman.model.constraints.placer_constraints\
-    import PlacerChipAndCoreConstraint
+    import ChipAndCoreConstraint
 
 # spinn front end common imports
-from spinn_front_end_common.utility_models.live_packet_gather_machine_vertex \
+from spinn_front_end_common.utility_models \
     import LivePacketGatherMachineVertex
-from threading import Condition
-from spinn_front_end_common.utilities.connections.live_event_connection \
-    import LiveEventConnection
+from spinn_front_end_common.utilities.connections import LiveEventConnection
 
 # SpiNNMan imports
-from spinnman.messages.eieio.eieio_type import EIEIOType
+from spinnman.messages.eieio import EIEIOType
 
 # graph front end imports
 import spinnaker_graph_front_end as front_end
@@ -28,6 +26,7 @@ from spinnaker_graph_front_end.examples.heat_demo.heat_demo_edge\
     import HeatDemoEdge
 
 import sys
+from threading import Condition
 
 
 # Script borken Suspected reinjector problem
@@ -62,7 +61,7 @@ def run_broken():
             'message_type': EIEIOType.KEY_PAYLOAD_32_BIT
         }
     )
-    live_gatherer.add_constraint(PlacerChipAndCoreConstraint(0, 0, 1))
+    live_gatherer.add_constraint(ChipAndCoreConstraint(0, 0, 1))
     # Create a list of lists of vertices (x * 4) by (y * 4)
     # (for 16 cores on a chip - missing cores will have missing vertices)
     max_x_element_id = 2 * 4
@@ -95,7 +94,7 @@ def run_broken():
                         label="Heat Element {}, {}".format(
                             x, y))
                     vertices[x][y] = element
-                    vertices[x][y].add_constraint(PlacerChipAndCoreConstraint(
+                    vertices[x][y].add_constraint(ChipAndCoreConstraint(
                         chip_x, chip_y, core_p))
     # build edges
     receive_labels = list()

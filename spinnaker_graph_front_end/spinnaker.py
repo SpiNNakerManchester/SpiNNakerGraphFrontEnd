@@ -120,9 +120,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
     def run(self, run_time):
 
         # set up the correct dsg algorithm
-        if self._user_dsg_algorithm is None:
-            self.dsg_algorithm = "FrontEndCommonGraphDataSpecificationWriter"
-        else:
+        if self._user_dsg_algorithm is not None:
             self.dsg_algorithm = self._user_dsg_algorithm
 
         # run normal procedure
