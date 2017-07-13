@@ -15,9 +15,6 @@ import os
 
 logger = logging.getLogger(__name__)
 
-# christian check if can be inside
-CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
-
 SPALLOC_CORES = 48
 
 # At import time change the default FailedState
@@ -30,6 +27,9 @@ def _is_allocated_machine(config):
 
 
 class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
+
+    CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
+    VALIDATION_CONFIG_NAME = "validation_config.cfg"
 
     def __init__(
             self, executable_finder, host_name=None, graph_label=None,
@@ -49,7 +49,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
         AbstractSpinnakerBase.__init__(
             self,
-            configfile=CONFIG_FILE_NAME,
+            configfile=self.CONFIG_FILE_NAME,
             executable_finder=executable_finder,
             graph_label=graph_label,
             database_socket_addresses=database_socket_addresses,
@@ -57,7 +57,9 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             n_chips_required=n_chips_required,
             default_config_paths=[
                 os.path.join(os.path.dirname(__file__),
-                             CONFIG_FILE_NAME)])
+                             self.CONFIG_FILE_NAME)],
+            validation_cfg=os.path.join(os.path.dirname(__file__),
+                                        self.VALIDATION_CONFIG_NAME))
 
         extra_mapping_inputs = dict()
         extra_mapping_inputs["CreateAtomToEventIdMapping"] = self.config.\
