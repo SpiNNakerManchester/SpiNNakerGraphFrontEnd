@@ -2,6 +2,7 @@ import struct
 import traceback
 
 import spinnaker_graph_front_end as sim
+from pacman.model.constraints.placer_constraints import ChipAndCoreConstraint
 from pacman.model.graphs.machine import MachineEdge
 from spinnaker_graph_front_end.examples.speed_tracker.packt_gatherer import \
     PacketGatherer
@@ -12,13 +13,14 @@ import time
 from spinnaker_graph_front_end.examples import speed_tracker
 
 # data to write
-mbs = 50.0
+mbs = 20.0
 
 # setup system
 sim.setup(model_binary_module=speed_tracker)
 
 # build verts
 reader = SDRAMReaderAndTransmitter(mbs)
+reader.add_constraint(ChipAndCoreConstraint(x=7, y=7))
 receiver = PacketGatherer()
 
 # add verts to graph
@@ -40,6 +42,7 @@ end = None
 data = None
 
 try:
+    print "starting data gathering"
     start = float(time.time())
     data = receiver.get_data(
         sim.transceiver(),
@@ -59,7 +62,8 @@ try:
     start_value = 0
     for value in ints:
         if value != start_value:
-            raise Exception("wrong data")
+            print "should be getting {}, but got {}".format(start_value, value)
+            start_value = value + 1
         else:
             start_value += 1
 
@@ -67,6 +71,5 @@ try:
 except Exception as e:
     # if boomed. end so that we can get iobuf
     traceback.print_exc()
-    sim.stop()
 
 

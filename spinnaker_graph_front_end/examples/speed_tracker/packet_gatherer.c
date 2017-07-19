@@ -37,18 +37,24 @@ void resume_callback() {
 }
 
 void send_data(){
-   spin1_memcpy(my_msg.data, (void *)data, position_in_store * 4);
-   my_msg.length = position_in_store * 4;
-   (void) spin1_send_sdp_msg (&my_msg, 100);
+   //log_info("last element is %d", data[position_in_store - 1]);
+   //log_info("first element is %d", data[0]);
+   spin1_memcpy(&my_msg.cmd_rc, (void *)data, position_in_store * 4);
+   my_msg.length = 8 + (position_in_store * 4);
+   while(!spin1_send_sdp_msg (&my_msg, 100)){
+
+   }
    position_in_store = 0;
 }
 
 void receive_data(uint key, uint payload){
-
     data[position_in_store] = payload;
     position_in_store += 1;
+    //log_info("payload is %d", payload);
 
-    if(position_in_store == ITEMS_PER_DATA_PACKET){
+    if (payload == 0xFFFFFFFF){
+        send_data();
+    }else if(position_in_store == ITEMS_PER_DATA_PACKET){
         send_data();
     }
 
@@ -100,7 +106,7 @@ static bool initialize(uint32_t *timer_period) {
  * SOURCE
  */
 void c_main() {
-    log_info("starting heat_demo\n");
+    log_info("starting packet gatherer\n");
 
     // Load DTCM data
     uint32_t timer_period;

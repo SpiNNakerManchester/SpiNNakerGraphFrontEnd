@@ -83,7 +83,6 @@ class PacketGatherer(
         transceiver.send_sdp_message(message=message)
 
         # receive
-        print "starting receive"
         output = None
         finished = False
         first = True
@@ -92,7 +91,6 @@ class PacketGatherer(
             data = connection.receive()
             length_of_data = len(data)
             if first:
-                print "received first packet"
                 length = struct.unpack_from("<I", data, 0)[0]
                 first = False
                 output = bytearray(length)
@@ -103,14 +101,13 @@ class PacketGatherer(
 
             else:
                 last_mc_packet = struct.unpack_from(
-                    "<I", output, length_of_data - 4)[0]
+                    "<I", data, length_of_data - 4)[0]
                 if last_mc_packet == 0xFFFFFFFF:
-                    print "received last packet"
                     self._view[offset:offset + length_of_data - 4] = \
                         data[0:0 + length_of_data - 4]
                     offset += length_of_data - 4
+                    finished = True
                 else:
-                    print "received packet"
                     self._view[offset:offset + length_of_data] = \
                         data[0:0 + length_of_data]
                     offset += length_of_data

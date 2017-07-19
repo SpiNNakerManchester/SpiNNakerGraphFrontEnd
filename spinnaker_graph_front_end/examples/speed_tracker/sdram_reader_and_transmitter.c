@@ -13,6 +13,7 @@ static uint32_t time = 0;
 
 //! int as a bool to represent if this simulation should run forever
 static uint32_t infinite_run;
+static uint32_t timer_period;
 
 //! The recording flags
 static uint32_t recording_flags = 0;
@@ -23,13 +24,17 @@ static uint32_t position = 0;
 
 static uint32_t key;
 static uint32_t bytes_to_write;
+address_t dsg_main_address;
+static address_t *store_address = NULL;
+
+
+#define TDMA_WAIT_PERIOD 30
 
 #define ITEMS_PER_DATA_PACKET 64
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
     SYSTEM_REGION,
-    RECORDED_DATA,
     CONFIG,
 } regions_e;
 
@@ -39,9 +44,9 @@ typedef enum callback_priorities{
 } callback_priorities;
 
 //! human readable definitions of each element in the transmission region
-typedef enum transmission_region_elements {
+typedef enum config_region_elements {
     MY_KEY, MB
-} transmission_region_elements;
+} config_region_elements;
 
 void resume_callback() {
     time = UINT32_MAX;
@@ -50,29 +55,37 @@ void resume_callback() {
 void sdp(uint mailbox, uint port){
     sdp_msg_t *msg = (sdp_msg_t *) mailbox;
     spin1_msg_free(msg);
+
+    // send length as first element.
+    while(!spin1_send_mc_packet(key, bytes_to_write, WITH_PAYLOAD)){
+    }
+    log_info("starting transfer");
     read();
 }
 
 
 void read(){
-
-    // send length as first element.
-    spin1_send_mc_packet(key, bytes_to_write, WITH_PAYLOAD);
-
     // set off dma
-    address_t address = data_specification_get_data_address();
-    address_t recorded_data =
-        data_specification_get_region(RECORDED_DATA, address);
+    dma_pointer = (dma_pointer + 1) % 2;
 
-    address_t data_sdram_position = &recorded_data[position];
+    address_t data_sdram_position = &store_address[position];
+
     position += ITEMS_PER_DATA_PACKET;
     while (!spin1_dma_transfer(0, data_sdram_position, data[dma_pointer],
                                DMA_READ, ITEMS_PER_DATA_PACKET * 4)){
-        log_info("stuck in here!");
     }
-    dma_pointer = (dma_pointer + 1) % 2;
 }
 
+void send_data_block(uint32_t current_dma_pointer, uint32_t current_position){
+    // send data
+   for (uint data_position = 0; data_position < ITEMS_PER_DATA_PACKET;
+        data_position++)
+   {
+        uint32_t current_data = data[current_dma_pointer][data_position];
+        while(!spin1_send_mc_packet(key, current_data, WITH_PAYLOAD)){
+        }
+   }
+}
 
 void send_data(uint unused, uint tag){
    use(unused);
@@ -80,35 +93,32 @@ void send_data(uint unused, uint tag){
 
    // do dma
    uint32_t current_dma_pointer = dma_pointer;
+   uint32_t current_position = position;
 
    // stopping procedure
    if (position < (uint)bytes_to_write / 4){
-      read();
+       read();
+       send_data_block(current_dma_pointer, current_position);
    }
-
-   // send data
-   for (uint data_position = 0; data_position < ITEMS_PER_DATA_PACKET;
-            data_position ++)
-   {
-        uint32_t current_data = data[current_dma_pointer][data_position];
-        spin1_send_mc_packet(key, current_data, WITH_PAYLOAD);
-   }
-
-   // if end, send end flag
-   if (position >= (uint)bytes_to_write / 4){
+   else{
+       send_data_block(current_dma_pointer, current_position);
        spin1_send_mc_packet(key, 0xFFFFFFFF, WITH_PAYLOAD);
    }
 
+   sark_delay_us(16);
 }
 
 void write_data(){
     // write data into sdram for reading later
-    address_t address = data_specification_get_data_address();
-    address_t recorded_data =
-        data_specification_get_region(RECORDED_DATA, address);
+    store_address = sark_xalloc(
+        sv->sdram_heap, bytes_to_write, 0,
+        ALLOC_LOCK + ALLOC_ID + (sark_vec->app_id << 8));
+
     uint iterations = (uint)(bytes_to_write / 4);
-    for( uint count = 0; count < iterations; count++){
-        recorded_data[count] = count;
+    log_info("iterations = %d", iterations - 1);
+
+    for(uint count = 0; count < iterations; count++){
+        store_address[count] = count;
     }
 }
 
@@ -116,26 +126,28 @@ static bool initialize(uint32_t *timer_period) {
     log_info("Initialise: started\n");
 
     // Get the address this core's DTCM data starts at from SRAM
-    address_t address = data_specification_get_data_address();
+    address_t dsg_main_address = data_specification_get_data_address();
 
     // Read the header
-    if (!data_specification_read_header(address)) {
+    if (!data_specification_read_header(dsg_main_address)) {
         log_error("failed to read the data spec header");
         return false;
     }
 
     // Get the timing details and set up the simulation interface
     if (!simulation_initialise(
-            data_specification_get_region(SYSTEM_REGION, address),
+            data_specification_get_region(SYSTEM_REGION, dsg_main_address),
             APPLICATION_NAME_HASH, timer_period, &simulation_ticks,
             &infinite_run, SDP, DMA)) {
         return false;
     }
 
-    address_t config_address = data_specification_get_region(CONFIG, address);
+    address_t config_address = data_specification_get_region(
+        CONFIG, dsg_main_address);
     key = config_address[MY_KEY];
     bytes_to_write = config_address[MB];
-    log_info("bytes to write is %d", bytes_to_write);
+    log_info("bytes to write is %u", bytes_to_write);
+    log_info("my key is %u", key);
 
     for (uint32_t i = 0; i < 2; i++) {
         data[i] = (uint32_t*) spin1_malloc(
@@ -160,7 +172,6 @@ void c_main() {
     log_info("starting heat_demo\n");
 
     // Load DTCM data
-    uint32_t timer_period;
 
     // initialise the model
     if (!initialize(&timer_period)) {
@@ -172,7 +183,6 @@ void c_main() {
 
     simulation_dma_transfer_done_callback_on(0, send_data);
     simulation_sdp_callback_on(2, sdp);
-
 
     // start execution
     log_info("Starting\n");

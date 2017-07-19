@@ -22,8 +22,7 @@ class SDRAMReaderAndTransmitter(
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
-               ('STORE', 1),
-               ('CONFIG', 2)])
+               ('CONFIG', 1)])
 
     def __init__(self, mbs):
         self._mbs = mbs * self.SDRAM_READING_SIZE_IN_BYTES_CONVERTER
@@ -63,7 +62,9 @@ class SDRAMReaderAndTransmitter(
             routing_info.get_routing_info_from_pre_vertex(self, "TRANSMIT")
 
         spec.switch_write_focus(self.DATA_REGIONS.CONFIG.value)
-        spec.write_value(local_routing_info.first_key)
+        first_key = local_routing_info.first_key
+        print "first key is {}".format(first_key)
+        spec.write_value(first_key)
         spec.write_value(self._mbs)
 
         # End-of-Spec:
@@ -73,10 +74,6 @@ class SDRAMReaderAndTransmitter(
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.SYSTEM.value, size=system_size,
             label='systemInfo')
-        spec.reserve_memory_region(
-            region=self.DATA_REGIONS.STORE.value,
-            size=int(self._mbs),
-            label="reading data")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.CONFIG.value,
             size=self.KEY_REGION_SIZE,
