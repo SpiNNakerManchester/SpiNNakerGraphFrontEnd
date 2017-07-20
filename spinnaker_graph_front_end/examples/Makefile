@@ -1,4 +1,4 @@
-BUILD_DIRS = heat_demo hello_world Conways speed_tracker
+BUILD_DIRS = heat_demo hello_world Conways speed_tracker speed_test_solo
 
 all: $(BUILD_DIRS)
 	for d in $(BUILD_DIRS); do (cd $$d; "$(MAKE)") || exit $$?; done
