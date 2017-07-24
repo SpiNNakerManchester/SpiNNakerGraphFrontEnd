@@ -72,29 +72,11 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         if n_chips_required is None and _is_allocated_machine(self.config):
             self.set_n_chips_required(SPALLOC_CORES)
 
-        # set up machine targeted data
-        if machine_time_step is None:
-            self._machine_time_step = \
-                self.config.getint("Machine", "machine_time_step")
-        else:
-            self._machine_time_step = machine_time_step
-
         self.set_up_machine_specifics(host_name)
-
-        if time_scale_factor is None:
-            self._time_scale_factor = \
-                self.config.get("Machine", "time_scale_factor")
-            if self._time_scale_factor == "None":
-                self._time_scale_factor = 1
-            else:
-                self._time_scale_factor = int(self._time_scale_factor)
-        else:
-            self._time_scale_factor = time_scale_factor
+        self.set_up_timings(machine_time_step, time_scale_factor)
 
         logger.info("Setting time scale factor to {}."
                     .format(self._time_scale_factor))
-
-        # get the machine time step
         logger.info("Setting machine time step to {} micro-seconds."
                     .format(self._machine_time_step))
 
