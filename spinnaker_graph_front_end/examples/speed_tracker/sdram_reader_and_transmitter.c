@@ -28,7 +28,7 @@ address_t dsg_main_address;
 static address_t *store_address = NULL;
 
 
-#define TDMA_WAIT_PERIOD 30
+#define TDMA_WAIT_PERIOD 0
 
 #define ITEMS_PER_DATA_PACKET 64
 
@@ -105,7 +105,9 @@ void send_data(uint unused, uint tag){
        spin1_send_mc_packet(key, 0xFFFFFFFF, WITH_PAYLOAD);
    }
 
-   sark_delay_us(16);
+    if (TDMA_WAIT_PERIOD != 0){
+        sark_delay_us(TDMA_WAIT_PERIOD);
+    }
 }
 
 void write_data(){

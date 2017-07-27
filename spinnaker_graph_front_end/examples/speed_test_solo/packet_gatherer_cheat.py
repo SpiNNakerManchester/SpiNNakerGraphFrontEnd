@@ -123,8 +123,8 @@ class PacketGathererCheat(
                 last_mc_packet = struct.unpack_from(
                     "<I", data, length_of_data - 4)[0]
                 if self._add_seq:
-                    #if first_packet_element != seq_num:
-                    #    print "missing seq {}".format(seq_num)
+                    if first_packet_element != seq_num:
+                        print "missing seq {}".format(seq_num)
                     seq_num = first_packet_element
                     seq_nums.append(seq_num)
 
