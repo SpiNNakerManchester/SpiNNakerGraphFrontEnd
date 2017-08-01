@@ -28,8 +28,12 @@ def _is_allocated_machine(config):
 
 class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
-    CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
-    VALIDATION_CONFIG_NAME = "validation_config.cfg"
+    CONFIG_FILE = "spiNNakerGraphFrontEnd.cfg"
+    DEFAULT_CONFIG_PATH = os.path.join(os.path.dirname(__file__), CONFIG_FILE)
+    DEFAULT_CONFIG_PATHS = [AbstractSpinnakerBase.DEFAULT_CONFIG_PATH,
+                            DEFAULT_CONFIG_PATH, ]
+    VALIDATION_CONFIGS = [os.path.join(os.path.dirname(__file__),
+                                       "validation_config.cfg")]
 
     def __init__(
             self, executable_finder, host_name=None, graph_label=None,
@@ -38,7 +42,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             extra_post_run_algorithms=None, time_scale_factor=None,
             machine_time_step=None):
 
-        global CONFIG_FILE_NAME, SPALLOC_CORES
+        global CONFIG_FILE, SPALLOC_CORES
 
         # dsg algorithm store for user defined algorithms
         self._user_dsg_algorithm = dsg_algorithm
@@ -49,17 +53,12 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
         AbstractSpinnakerBase.__init__(
             self,
-            configfile=self.CONFIG_FILE_NAME,
+            configfile=self.CONFIG_FILE,
             executable_finder=executable_finder,
             graph_label=graph_label,
             database_socket_addresses=database_socket_addresses,
             extra_algorithm_xml_paths=extra_xml_path,
-            n_chips_required=n_chips_required,
-            default_config_paths=[
-                os.path.join(os.path.dirname(__file__),
-                             self.CONFIG_FILE_NAME)],
-            validation_cfg=os.path.join(os.path.dirname(__file__),
-                                        self.VALIDATION_CONFIG_NAME))
+            n_chips_required=n_chips_required)
 
         extra_mapping_inputs = dict()
         extra_mapping_inputs["CreateAtomToEventIdMapping"] = self.config.\
