@@ -51,11 +51,6 @@ class ConwayBasicCell(
         # app specific elements
         self._state = state
 
-    @property
-    @overrides(MachineVertex.resources_required)
-    def resources_required(self):
-        return ResourceContainer()
-
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
         return "conways_cell.aplx"
