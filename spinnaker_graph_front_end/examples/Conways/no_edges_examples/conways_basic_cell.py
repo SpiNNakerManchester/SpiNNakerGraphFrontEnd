@@ -8,7 +8,8 @@ class ConwayBasicCell(MachineVertex):
     """
 
     def __init__(self, label):
-        resources = ResourceContainer(sdram=SDRAMResource(0),
-                                      dtcm=DTCMResource(0),
-                                      cpu_cycles=CPUCyclesPerTickResource(0))
-        MachineVertex.__init__(self, resources, label)
+        MachineVertex.__init__(self, label)
+
+    @property
+    def resources_required(self):
+        return ResourceContainer()
