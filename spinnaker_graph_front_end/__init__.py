@@ -385,8 +385,8 @@ def buffer_manager():
 def machine():
     logger.warning(
         "If you are getting the machine object to locate how many cores "
-        "you can use. Please use the following function call, as it is more "
-        "reliable and takes into account software resources as well. \n\n\n"
+        "you can use, \nplease use the following function call, as it is "
+        "more reliable and takes into account software resources as well:\n\n"
         "get_number_of_available_cores_on_machine()")
     return globals_variables.get_simulator().machine
 
