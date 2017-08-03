@@ -12,6 +12,7 @@ from spinn_front_end_common.utilities.utility_objs import ExecutableStartType
 from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinnman.connections.udp_packet_connections import UDPConnection
+from spinnman.exceptions import SpinnmanTimeoutException
 from spinnman.messages.sdp import SDPMessage, SDPHeader, SDPFlag
 
 
@@ -101,43 +102,51 @@ class PacketGathererCheat(
         output = None
         finished = False
         first = True
-        offset = 0
         seq_num = 0
         seq_nums = list()
         while not finished:
-            data = connection.receive()
-            length_of_data = len(data)
-            if first:
-                length = struct.unpack_from("<I", data, 0)[0]
-                print "length = {}".format(length)
-                first = False
-                output = bytearray(length)
-                self._view = memoryview(output)
+            try:
+                data = connection.receive(timeout=5)
+                first, seq_num, seq_nums, finished= \
+                    self._process_data(
+                        data, first, seq_num, seq_nums, finished)
+            except SpinnmanTimeoutException:
+                pass
+
+        self._check(seq_nums)
+        return output
+
+    def _process_data(self, data, first, seq_num, seq_nums, finished):
+        length_of_data = len(data)
+        if first:
+            length = struct.unpack_from("<I", data, 0)[0]
+            print "length = {}".format(length)
+            first = False
+            output = bytearray(length)
+            self._view = memoryview(output)
+            self._view[0: length_of_data - 4] = data[4:4 + length_of_data - 4]
+
+        else:
+            first_packet_element = struct.unpack_from(
+                "<I", data, 0)[0]
+            last_mc_packet = struct.unpack_from(
+                "<I", data, length_of_data - 4)[0]
+            if self._add_seq:
+                if first_packet_element != seq_num:
+                    print "missing seq {}".format(seq_num)
+                seq_num = first_packet_element
+                seq_nums.append(seq_num)
+
+            if last_mc_packet == 0xFFFFFFFF:
                 self._view[offset:offset + length_of_data - 4] = \
-                    data[4:4 + length_of_data - 4]
-                offset += length_of_data - 4
-
+                    data[0:0 + length_of_data - 4]
+                finished = True
             else:
-                first_packet_element = struct.unpack_from(
-                    "<I", data, 0)[0]
-                last_mc_packet = struct.unpack_from(
-                    "<I", data, length_of_data - 4)[0]
-                if self._add_seq:
-                    if first_packet_element != seq_num:
-                        print "missing seq {}".format(seq_num)
-                    seq_num = first_packet_element
-                    seq_nums.append(seq_num)
+                self._view[offset:offset + length_of_data] = \
+                    data[0:0 + length_of_data]
+        return first, seq_num, seq_nums, finished
 
-                if last_mc_packet == 0xFFFFFFFF:
-                    self._view[offset:offset + length_of_data - 4] = \
-                        data[0:0 + length_of_data - 4]
-                    offset += length_of_data - 4
-                    finished = True
-                else:
-                    self._view[offset:offset + length_of_data] = \
-                        data[0:0 + length_of_data]
-                    offset += length_of_data
-
+    def _check(self, seq_nums):
         # hand back
         seq_nums = sorted(seq_nums)
         last_seq_num = 0
@@ -147,4 +156,3 @@ class PacketGathererCheat(
             if seq_num != last_seq_num:
                 print "missing seq num {}".format(seq_num)
             last_seq_num = seq_num
-        return output
