@@ -1,8 +1,8 @@
 # pacman imports
 from pacman.model.decorators import overrides
 
-from pacman.executor.injection_decorator import requires_injection, \
-    supports_injection, inject
+from pacman.executor.injection_decorator import supports_injection, \
+    inject_items
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, CPUCyclesPerTickResource
 from pacman.model.resources import DTCMResource, SDRAMResource
@@ -12,7 +12,6 @@ from pacman.utilities import utility_calls
 from spinn_front_end_common.utilities \
     import constants, exceptions, helpful_functions
 from spinn_front_end_common.interface.simulation import simulation_utilities
-from spinn_front_end_common.abstract_models.impl import NeedsNMachineTimeSteps
 from spinn_front_end_common.abstract_models.impl \
     import MachineDataSpecableVertex
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
@@ -26,10 +25,11 @@ import struct
 
 @supports_injection
 class ConwayBasicCell(
-        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-        NeedsNMachineTimeSteps):
+        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
     """ Cell which represents a cell within the 2d fabric
     """
+
+    PARTITION_ID = "STATE"
 
     TRANSMISSION_DATA_SIZE = 2 * 4  # has key and key
     STATE_DATA_SIZE = 1 * 4  # 1 or 2 based off dead or alive
@@ -46,14 +46,7 @@ class ConwayBasicCell(
 
     def __init__(self, label, state):
 
-        # resources used by the system.
-        resources = ResourceContainer(
-            sdram=SDRAMResource(0), dtcm=DTCMResource(0),
-            cpu_cycles=CPUCyclesPerTickResource(0))
-
-        MachineVertex.__init__(self, resources, label)
         MachineVertex.__init__(self, label)
-        NeedsNMachineTimeSteps.__init__(self)
 
         # app specific elements
         self._state = state
@@ -66,10 +59,14 @@ class ConwayBasicCell(
     def get_binary_start_type(self):
         return ExecutableStartType.USES_SIMULATION_INTERFACE
 
-    @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
+    @inject_items({"n_machine_time_steps": "TotalMachineTimeSteps"})
+    @overrides(
+        MachineDataSpecableVertex.generate_machine_data_specification,
+        additional_arguments={"n_machine_time_steps"})
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
-            reverse_iptags, machine_time_step, time_scale_factor):
+            reverse_iptags, machine_time_step, time_scale_factor,
+            n_machine_time_steps):
 
         # Setup words + 1 for flags + 1 for recording size
         setup_size = constants.SYSTEM_BYTES_REQUIREMENT
@@ -89,7 +86,7 @@ class ConwayBasicCell(
             size=8, label="neighour_states")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.RESULTS.value,
-            size=(self._n_machine_time_steps * 4) + 4, label="results")
+            size=(n_machine_time_steps * 4) + 4, label="results")
 
         # simulation .c requirements
         spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
@@ -127,7 +124,8 @@ class ConwayBasicCell(
                     " please fix.")
 
         # write key needed to transmit with
-        key = routing_info.get_first_key_from_partition(partitions[0])
+        key = routing_info.get_first_key_from_pre_vertex(
+            self, self.PARTITION_ID)
 
         spec.switch_write_focus(
             region=self.DATA_REGIONS.TRANSMISSIONS.value)
@@ -165,7 +163,7 @@ class ConwayBasicCell(
         # End-of-Spec:
         spec.end_specification()
 
-    def get_data(self, transceiver, placement):
+    def get_data(self, transceiver, placement, n_machine_time_steps):
         data = list()
 
         # Get the data region base address where results are stored for the
@@ -181,7 +179,7 @@ class ConwayBasicCell(
             struct.unpack("<I", number_of_bytes_to_read)[0]
 
         # read the bytes
-        if number_of_bytes_to_read != (self._n_machine_time_steps * 4):
+        if number_of_bytes_to_read != (n_machine_time_steps * 4):
             raise exceptions.ConfigurationException(
                 "number of bytes seems wrong")
         else:
@@ -191,7 +189,7 @@ class ConwayBasicCell(
 
         # convert to ints
         elements = struct.unpack(
-            "<{}I".format(self._n_machine_time_steps), raw_data)
+            "<{}I".format(n_machine_time_steps), raw_data)
         for element in elements:
             if element == 0:
                 data.append(False)
@@ -214,16 +212,12 @@ class ConwayBasicCell(
     def state(self):
         return self._state
 
-    @requires_injection(["TotalMachineTimeSteps"])
-    def _calculate_sdram_requirement(self):
+    @inject_items({"n_machine_time_steps": "TotalMachineTimeSteps"})
+    def _calculate_sdram_requirement(self, n_machine_time_steps):
         return (constants.SYSTEM_BYTES_REQUIREMENT +
                 self.TRANSMISSION_DATA_SIZE + self.STATE_DATA_SIZE +
                 self.NEIGHBOUR_INITIAL_STATES_SIZE +
-                self._n_machine_time_steps + 4)
+                n_machine_time_steps + 4)
 
     def __repr__(self):
         return self.label
-
-    @inject("TotalMachineTimeSteps")
-    def set_n_machine_time_steps(self, n_machine_time_steps):
-        self._n_machine_time_steps = n_machine_time_steps

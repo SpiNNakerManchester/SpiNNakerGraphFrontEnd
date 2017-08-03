@@ -75,7 +75,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         your graph, then fill this in with a general idea of the number of\
         chips you need so that the spalloc system can allocate you a machine\
         big enough for your needs.
-    :type n_chips_required: int
+    :type n_chips_required: int or None
     :param extra_pre_run_algorithms:\
         algorithms which need to be ran after mapping and loading has occurred\
         but before the system has ran. These are plugged directly into the\
@@ -326,13 +326,12 @@ def get_machine_dimensions():
     return globals_variables.get_simulator().get_machine_dimensions()
 
 
-def get_number_of_cores_on_machine():
+def get_number_of_available_cores_on_machine():
     """
     returns the number of cores on this machine
     """
-    this_machine = globals_variables.get_simulator().machine
-    cores, _ = this_machine.get_cores_and_link_count()
-    return cores
+    return globals_variables.get_simulator().\
+        get_number_of_available_cores_on_machine
 
 
 def has_ran():
@@ -384,6 +383,11 @@ def buffer_manager():
 
 
 def machine():
+    logger.warning(
+        "If you are getting the machine object to locate how many cores "
+        "you can use, \nplease use the following function call, as it is "
+        "more reliable and takes into account software resources as well:\n\n"
+        "get_number_of_available_cores_on_machine()")
     return globals_variables.get_simulator().machine
 
 

@@ -6,7 +6,7 @@ from spinnaker_graph_front_end.examples.Conways.no_edges_examples.\
 
 # Can't instantiate abstract class ConwayBasicCell with abstract methods
 # resources_required
-def run_broken():
+def do_run():
     # set up the front end and ask for the detected machines dimensions
     front_end.setup()
 
@@ -19,4 +19,4 @@ def run_broken():
 
 
 if __name__ == '__main__':
-    run_broken()
+    do_run()

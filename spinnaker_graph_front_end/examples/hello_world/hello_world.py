@@ -21,16 +21,10 @@ def do_run():
 
     front_end.setup(n_chips_required=None)
 
-    machine = front_end.machine()
-
-    # machine_time_step = 1000
-    # time_scale_factor = 1
-
     # calculate total number of 'free' cores for the given board
     # (i.e. does not include those busy with SARK or reinjection)
-    total_number_of_cores = len([
-        processor for chip in machine.chips for processor in chip.processors
-        if not processor.is_monitor])
+    total_number_of_cores = \
+        front_end.get_number_of_available_cores_on_machine()
 
     # fill all cores with a HelloWorldVertex each
     for x in range(0, total_number_of_cores):
@@ -46,9 +40,11 @@ def do_run():
 
     for placement in sorted(placements.placements,
                             key=lambda p: (p.x, p.y, p.p)):
-        hello_world = placement.vertex.read(placement, buffer_manager)
-        logger.info("{}, {}, {} > {}".format(
-            placement.x, placement.y, placement.p, hello_world))
+
+        if isinstance(placement.vertex, HelloWorldVertex):
+            hello_world = placement.vertex.read(placement, buffer_manager)
+            logger.info("{}, {}, {} > {}".format(
+                placement.x, placement.y, placement.p, hello_world))
 
     front_end.stop()
 
