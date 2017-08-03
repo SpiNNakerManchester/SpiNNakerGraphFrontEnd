@@ -44,8 +44,8 @@ def run_broken():
     front_end.setup(
         graph_label="heat_demo_graph",
         model_binary_module=sys.modules[__name__],
-        database_socket_addresses={SocketAddress(
-            "127.0.0.1", notify_port, database_listen_port)})
+        database_socket_addresses=[SocketAddress(
+            "127.0.0.1", notify_port, database_listen_port)])
     machine = front_end.machine()
 
     # Create a gatherer to read the heat values
@@ -53,7 +53,7 @@ def run_broken():
         LivePacketGatherMachineVertex,
         {
             'label': live_gatherer_label,
-            'ip_address': machine_host,
+            'hostname': machine_host,
             'port': machine_receive_port,
             'payload_as_time_stamps': False,
             'use_payload_prefix': False,
