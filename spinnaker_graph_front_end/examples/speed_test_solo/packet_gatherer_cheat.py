@@ -26,6 +26,7 @@ class PacketGathererCheat(
     PORT = 11111
     SDRAM_READING_SIZE_IN_BYTES_CONVERTER = 1024*1024
     CONFIG_SIZE = 8
+    DATA_PER_FULL_PACKET = 124
 
     def __init__(self, mbs, add_seq):
         self._mbs = mbs * self.SDRAM_READING_SIZE_IN_BYTES_CONVERTER
@@ -111,7 +112,7 @@ class PacketGathererCheat(
                     self._process_data(
                         data, first, seq_num, seq_nums, finished)
             except SpinnmanTimeoutException:
-                pass
+                self._transmit_missing_seq_nums(seq_nums, transceiver)
 
         self._check(seq_nums)
         return output
@@ -137,6 +138,7 @@ class PacketGathererCheat(
                 seq_num = first_packet_element
                 seq_nums.append(seq_num)
 
+            offset = seq_num * self.DATA_PER_FULL_PACKET
             if last_mc_packet == 0xFFFFFFFF:
                 self._view[offset:offset + length_of_data - 4] = \
                     data[0:0 + length_of_data - 4]
