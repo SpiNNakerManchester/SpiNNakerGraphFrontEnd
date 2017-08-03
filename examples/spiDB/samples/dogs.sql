@@ -1,0 +1,10 @@
+CREATE TABLE Dogs(name varchar(10), owner varchar(35), age integer);
+INSERT INTO Dogs(name,owner,age) VALUES ("Biggy","Virr",2);
+INSERT INTO Dogs(name,owner,age) VALUES ("Toddy","Tuca",8);
+INSERT INTO Dogs(name,owner,age) VALUES ("Guto","Tuca",10);
+INSERT INTO Dogs(name,owner,age) VALUES ("Bobby","Amanda",1);
+INSERT INTO Dogs(name,owner,age) VALUES ("Mimi","Arnold",4);
+INSERT INTO Dogs(name,owner,age) VALUES ("Lili","Gabriela",8);
+INSERT INTO Dogs(name,owner,age) VALUES ("Loli","Amanda",9);
+INSERT INTO Dogs(name,owner,age) VALUES ("Gugu","Amanda",5);
+INSERT INTO Dogs(name,owner,age) VALUES ("Wendy","Wendy",12);
