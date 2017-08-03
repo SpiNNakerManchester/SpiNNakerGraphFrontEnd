@@ -77,8 +77,16 @@ void start_data(){
 void sdp(uint mailbox, uint port){
     log_info("packet received");
     sdp_msg_t *msg = (sdp_msg_t *) mailbox;
-    spin1_msg_free(msg);
-    start_data();
+    if(msg.data[0] == 100){
+        spin1_msg_free(msg);
+        start_data();
+    }
+    else if(msg.data[0] == 1000){
+        store_missing_seq_nums(msg.data)
+        spin1_msg_free(msg);
+
+
+    }
 
 }
 

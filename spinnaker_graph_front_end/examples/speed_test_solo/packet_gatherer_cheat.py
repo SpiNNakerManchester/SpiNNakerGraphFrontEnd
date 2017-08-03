@@ -15,6 +15,8 @@ from spinnman.connections.udp_packet_connections import UDPConnection
 from spinnman.exceptions import SpinnmanTimeoutException
 from spinnman.messages.sdp import SDPMessage, SDPHeader, SDPFlag
 
+import math
+
 
 class PacketGathererCheat(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
@@ -26,7 +28,7 @@ class PacketGathererCheat(
     PORT = 11111
     SDRAM_READING_SIZE_IN_BYTES_CONVERTER = 1024*1024
     CONFIG_SIZE = 8
-    DATA_PER_FULL_PACKET = 124
+    DATA_PER_FULL_PACKET = 63
 
     def __init__(self, mbs, add_seq):
         self._mbs = mbs * self.SDRAM_READING_SIZE_IN_BYTES_CONVERTER
@@ -112,10 +114,53 @@ class PacketGathererCheat(
                     self._process_data(
                         data, first, seq_num, seq_nums, finished)
             except SpinnmanTimeoutException:
-                self._transmit_missing_seq_nums(seq_nums, transceiver)
+                self._transmit_missing_seq_nums(
+                    seq_nums, transceiver, placement)
 
         self._check(seq_nums)
         return output
+
+    def _transmit_missing_seq_nums(self, seq_nums, transceiver, placement):
+
+        # locate missing seq nums from pile
+        missing_seq_nums = list()
+        seq_nums = sorted(seq_nums)
+        last_seq_num = 0
+        for seq_num in seq_nums:
+            if seq_num != last_seq_num:
+                missing_seq_nums.append(seq_num)
+            last_seq_num = seq_num
+
+        # transmit request for more info to sender.
+        n_packets = int(math.ceil(
+            (len(missing_seq_nums) * 4) / self.DATA_PER_FULL_PACKET - 1))
+
+        # transmit missing seq as a new sdp packet
+        first = True
+        for packet_count in range(0, n_packets):
+
+            data = struct.pack("<I", 1000)
+            offset = 4
+
+            # add n packets to packet, so c code can build SDRAM request
+            if first:
+                data = struct.pack_into("<I", data, offset, n_packets)
+                offset += 4
+
+            #
+
+
+
+
+            message = SDPMessage(
+                sdp_header=SDPHeader(
+                    destination_chip_x=placement.x,
+                    destination_chip_y=placement.y,
+                    destination_cpu=placement.p,
+                    destination_port=2,
+                    flags=SDPFlag.REPLY_NOT_EXPECTED),
+                data=data)
+            transceiver.send_sdp_message(message=message)
 
     def _process_data(self, data, first, seq_num, seq_nums, finished):
         length_of_data = len(data)
@@ -148,7 +193,8 @@ class PacketGathererCheat(
                     data[0:0 + length_of_data]
         return first, seq_num, seq_nums, finished
 
-    def _check(self, seq_nums):
+    @staticmethod
+    def _check(seq_nums):
         # hand back
         seq_nums = sorted(seq_nums)
         last_seq_num = 0
