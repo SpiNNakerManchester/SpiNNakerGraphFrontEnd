@@ -26,7 +26,7 @@ void c_main() {
     if (!simulation_initialise(
             data_specification_get_region(0, address), APPLICATION_NAME_HASH,
             &timer_period, &simulation_ticks,
-            &infinite_run, 1, NULL, NULL)) {
+            &infinite_run, 1, 1)) {
         rt_error(RTE_SWERR);
     }
 
