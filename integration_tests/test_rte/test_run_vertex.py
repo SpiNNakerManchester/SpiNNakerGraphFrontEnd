@@ -1,10 +1,7 @@
 from pacman.model.graphs.machine import SimpleMachineVertex
-from pacman.model.resources.resource_container import ResourceContainer
-from spinn_front_end_common.abstract_models.abstract_has_associated_binary\
-    import AbstractHasAssociatedBinary
-from spinn_front_end_common.abstract_models\
-    .abstract_generates_data_specification \
-    import AbstractGeneratesDataSpecification
+from pacman.model.resources import ResourceContainer
+from spinn_front_end_common.abstract_models \
+    import AbstractHasAssociatedBinary, AbstractGeneratesDataSpecification
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utilities import constants
 
