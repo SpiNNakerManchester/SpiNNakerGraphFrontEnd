@@ -4,7 +4,9 @@ from spinnaker_graph_front_end.examples.Conways.no_edges_examples.\
     conways_basic_cell import ConwayBasicCell
 
 
-def do_broken():
+# Can't instantiate abstract class ConwayBasicCell with abstract methods
+# resources_required
+def run_broken():
     # set up the front end and ask for the detected machines dimensions
     front_end.setup()
 
@@ -17,4 +19,4 @@ def do_broken():
 
 
 if __name__ == '__main__':
-    do_broken()
+    run_broken()

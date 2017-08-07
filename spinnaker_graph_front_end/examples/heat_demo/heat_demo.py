@@ -4,52 +4,47 @@ heat demo main entrance allows users to run the heat demo on the tool chain
 
 from spinn_utilities.socket_address import SocketAddress
 
-from pacman.model.constraints.placer_constraints\
-    import PlacerChipAndCoreConstraint
+from pacman.model.constraints.placer_constraints import ChipAndCoreConstraint
 
 # spinn front end common imports
-from spinn_front_end_common.utility_models.live_packet_gather_machine_vertex \
+from spinn_front_end_common.utility_models \
     import LivePacketGatherMachineVertex
-from spinn_front_end_common.utilities.connections.live_event_connection \
-    import LiveEventConnection
+from spinn_front_end_common.utilities.connections import LiveEventConnection
 
 # SpiNNMan imports
-from spinnman.messages.eieio.eieio_type import EIEIOType
+from spinnman.messages.eieio import EIEIOType
 
 # graph front end imports
 import spinnaker_graph_front_end as front_end
 from spinnaker_graph_front_end import MachineEdge
 
 # example imports
-from spinnaker_graph_front_end.examples.heat_demo.heat_demo_vertex\
-    import HeatDemoVertex
-from spinnaker_graph_front_end.examples.heat_demo.heat_demo_edge\
-    import HeatDemoEdge
+from .heat_demo_vertex import HeatDemoVertex
+from .heat_demo_edge import HeatDemoEdge
 
+# Python system imports
+from collections import defaultdict
 import sys
-from _collections import defaultdict
+from threading import Condition
 
 
+# Script borken Suspected reinjector problem
 def run_broken():
     machine_time_step = 1000
     time_scale_factor = 1
+    # machine_port = 11111
     machine_receive_port = 22222
     machine_host = "0.0.0.0"
     live_gatherer_label = "LiveHeatGatherer"
     notify_port = 19999
     database_listen_port = 19998
 
-    n_chips_required = None
-    if front_end.is_allocated_machine():
-        n_chips_required = (5 * 48) + 1
-
     # set up the front end and ask for the detected machines dimensions
     front_end.setup(
         graph_label="heat_demo_graph",
         model_binary_module=sys.modules[__name__],
         database_socket_addresses={SocketAddress(
-            "127.0.0.1", notify_port, database_listen_port)},
-        n_chips_required=n_chips_required)
+            "127.0.0.1", notify_port, database_listen_port)})
     machine = front_end.machine()
 
     # create a live gatherer vertex for each board
@@ -115,7 +110,7 @@ def run_broken():
                             x, y))
                     vertices[x][y] = element
                     vertices[x][y].add_constraint(
-                        PlacerChipAndCoreConstraint(chip_x, chip_y, core_p))
+                        ChipAndCoreConstraint(chip_x, chip_y, core_p))
 
                     # add a link from the heat element to the live packet
                     # gatherer
@@ -139,8 +134,7 @@ def run_broken():
             if vertices[x][y] is not None:
 
                 # Add a north link if not at the top
-                if ((y + 1) < max_y_element_id and
-                        vertices[x][y + 1] is not None):
+                if y+1 < max_y_element_id and vertices[x][y+1] is not None:
                     front_end.add_machine_edge(
                         HeatDemoEdge,
                         {
@@ -153,8 +147,7 @@ def run_broken():
                         semantic_label="TRANSMISSION")
 
                 # Add an east link if not at the right
-                if ((x + 1) < max_x_element_id and
-                        vertices[x + 1][y] is not None):
+                if x+1 < max_y_element_id and vertices[x+1][y] is not None:
                     front_end.add_machine_edge(
                         HeatDemoEdge,
                         {
@@ -197,9 +190,11 @@ def run_broken():
         live_gatherer_label, receive_labels=receive_labels,
         local_port=notify_port, machine_vertices=True)
     heat_values = defaultdict(list)
+    condition = Condition()
 
     def receive_heat(label, atom, value):
-        heat_values[label].append(value / 65536.0)
+        with condition:
+            print "{}: {}".format(label, value / 65536.0)
 
     # Set up callbacks to occur when spikes are received
     for label in receive_labels:
