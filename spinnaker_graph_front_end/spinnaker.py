@@ -1,12 +1,9 @@
-import spinn_utilities.conf_loader as conf_loader
-
 # common front end imports
 from spinn_front_end_common.interface.abstract_spinnaker_base \
     import AbstractSpinnakerBase
 from spinn_front_end_common.utilities import globals_variables
 
 # graph front end imports
-import spinnaker_graph_front_end
 from spinnaker_graph_front_end.utilities.graph_front_end_failed_state \
     import GraphFrontEndFailedState
 from spinnaker_graph_front_end.graph_front_end_simulator_interface \
@@ -14,11 +11,9 @@ from spinnaker_graph_front_end.graph_front_end_simulator_interface \
 
 # general imports
 import logging
+import os
 
 logger = logging.getLogger(__name__)
-
-# christian check if can be inside
-CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
 
 SPALLOC_CORES = 48
 
@@ -33,6 +28,9 @@ def _is_allocated_machine(config):
 
 class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
+    CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
+    VALIDATION_CONFIG_NAME = "validation_config.cfg"
+
     def __init__(
             self, executable_finder, host_name=None, graph_label=None,
             database_socket_addresses=None, dsg_algorithm=None,
@@ -41,9 +39,6 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             machine_time_step=None):
 
         global CONFIG_FILE_NAME, SPALLOC_CORES
-        # Read config file
-        config = conf_loader.load_config(spinnaker_graph_front_end,
-                                         CONFIG_FILE_NAME)
 
         # dsg algorithm store for user defined algorithms
         self._user_dsg_algorithm = dsg_algorithm
@@ -52,47 +47,40 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         # using auto pause and resume
         extra_xml_path = list()
 
-        extra_mapping_inputs = dict()
-        extra_mapping_inputs["CreateAtomToEventIdMapping"] = config.getboolean(
-            "Database", "create_routing_info_to_atom_id_mapping")
-
-        if n_chips_required is None and _is_allocated_machine(config):
-            n_chips_required = SPALLOC_CORES
-
         AbstractSpinnakerBase.__init__(
-            self, config,
-            graph_label=graph_label,
+            self,
+            configfile=self.CONFIG_FILE_NAME,
             executable_finder=executable_finder,
+            graph_label=graph_label,
             database_socket_addresses=database_socket_addresses,
             extra_algorithm_xml_paths=extra_xml_path,
-            extra_mapping_inputs=extra_mapping_inputs,
             n_chips_required=n_chips_required,
-            extra_pre_run_algorithms=extra_pre_run_algorithms,
-            extra_post_run_algorithms=extra_post_run_algorithms)
+            default_config_paths=[
+                os.path.join(os.path.dirname(__file__),
+                             self.CONFIG_FILE_NAME)],
+            validation_cfg=os.path.join(os.path.dirname(__file__),
+                                        self.VALIDATION_CONFIG_NAME))
 
-        # set up machine targeted data
-        if machine_time_step is None:
-            self._machine_time_step = \
-                config.getint("Machine", "machineTimeStep")
-        else:
-            self._machine_time_step = machine_time_step
+        extra_mapping_inputs = dict()
+        extra_mapping_inputs["CreateAtomToEventIdMapping"] = self.config.\
+            getboolean("Database", "create_routing_info_to_atom_id_mapping")
+
+        self.update_extra_mapping_inputs(extra_mapping_inputs)
+        self.prepend_extra_pre_run_algorithms(extra_pre_run_algorithms)
+        self.extend_extra_post_run_algorithms(extra_post_run_algorithms)
+
+        if n_chips_required is None and _is_allocated_machine(self.config):
+            self.set_n_chips_required(SPALLOC_CORES)
 
         self.set_up_machine_specifics(host_name)
+        self.set_up_timings(machine_time_step, time_scale_factor)
 
-        if time_scale_factor is None:
-            self._time_scale_factor = \
-                config.get("Machine", "timeScaleFactor")
-            if self._time_scale_factor == "None":
-                self._time_scale_factor = 1
-            else:
-                self._time_scale_factor = int(self._time_scale_factor)
-        else:
-            self._time_scale_factor = time_scale_factor
+        # if not set at all, set to 1 for real time execution.
+        if self._time_scale_factor is None:
+            self._time_scale_factor = 1
 
         logger.info("Setting time scale factor to {}."
                     .format(self._time_scale_factor))
-
-        # get the machine time step
         logger.info("Setting machine time step to {} micro-seconds."
                     .format(self._machine_time_step))
 
