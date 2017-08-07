@@ -1,12 +1,8 @@
 from pacman.model.resources import ResourceContainer
 from pacman.model.graphs.machine import SimpleMachineVertex
-from spinn_front_end_common.abstract_models.abstract_has_associated_binary\
-    import AbstractHasAssociatedBinary
-from spinn_front_end_common.abstract_models\
-    .abstract_generates_data_specification \
-    import AbstractGeneratesDataSpecification
-from spinn_front_end_common.utilities.utility_objs.executable_start_type \
-    import ExecutableStartType
+from spinn_front_end_common.abstract_models \
+    import AbstractHasAssociatedBinary, AbstractGeneratesDataSpecification
+from spinn_front_end_common.utilities.utility_objs import ExecutableStartType
 
 
 class TestNormalVertex(
