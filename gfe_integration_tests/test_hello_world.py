@@ -10,7 +10,4 @@ class TestHelloWorld(unittest.TestCase):
         path = os.path.dirname(os.path.abspath(class_file))
         print path
         os.chdir(path)
-        import spinnaker_graph_front_end.examples.hello_world.hello_world\
-            as hw
-        hw.__file__
-
+        import spinnaker_graph_front_end.examples.hello_world.hello_world   # NOQA
