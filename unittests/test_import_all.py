@@ -19,6 +19,7 @@ EXCLUSIONS = ["spinnaker_graph_front_end.examples.Conways."
 
               "spinnaker_graph_front_end.examples.hello_world.hello_world"]
 
+
 class ImportAllModule(unittest.TestCase):
 
     def test_import_all(self):
