@@ -9,7 +9,7 @@ from spinnaker_graph_front_end.examples import speed_test_solo
 from spinnaker_graph_front_end.examples.speed_test_solo.\
     packet_gatherer_cheat import PacketGathererCheat
 
-mbs = 20.0
+mbs = 2.0
 
 # setup system
 sim.setup(model_binary_module=speed_test_solo)
@@ -30,6 +30,8 @@ placements = sim.placements()
 start = None
 end = None
 data = None
+
+sim.transceiver().set_watch_dog_mode_global(False)
 
 try:
     print "starting data gathering"

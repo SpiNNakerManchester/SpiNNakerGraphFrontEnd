@@ -20,7 +20,7 @@ sim.setup(model_binary_module=speed_tracker)
 
 # build verts
 reader = SDRAMReaderAndTransmitter(mbs)
-reader.add_constraint(ChipAndCoreConstraint(x=7, y=7))
+reader.add_constraint(ChipAndCoreConstraint(x=1, y=1))
 receiver = PacketGatherer()
 
 # add verts to graph

@@ -16,7 +16,7 @@ from spinnman.exceptions import SpinnmanTimeoutException
 from spinnman.messages.sdp import SDPMessage, SDPHeader, SDPFlag
 
 import math
-
+import time
 
 class PacketGathererCheat(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
@@ -28,7 +28,15 @@ class PacketGathererCheat(
     PORT = 11111
     SDRAM_READING_SIZE_IN_BYTES_CONVERTER = 1024*1024
     CONFIG_SIZE = 8
-    DATA_PER_FULL_PACKET = 63
+    DATA_PER_FULL_PACKET = 68  # 272 bytes as removed scp header
+    WORD_TO_BYTE_CONVERTER = 4
+
+    SDP_PACKET_START_SENDING_COMMAND_ID = 100
+    SDP_PACKET_START_MISSING_SEQ_COMMAND_ID = 1000
+    SDP_PACKET_MISSING_SEQ_COMMAND_ID = 1001
+    SDP_PACKET_PORT = 2
+
+    END_FLAG = 0xFFFFFFFF
 
     def __init__(self, mbs, add_seq):
         self._mbs = mbs * self.SDRAM_READING_SIZE_IN_BYTES_CONVERTER
@@ -37,6 +45,8 @@ class PacketGathererCheat(
         AbstractHasAssociatedBinary.__init__(self)
         self._view = None
         self._add_seq = add_seq
+        self._max_seq_num = None
+        self._output = None
 
     @property
     def resources_required(self):
@@ -83,7 +93,7 @@ class PacketGathererCheat(
         return "packet_gatherer_cheat.aplx"
 
     def get_data(self, transceiver, placement):
-        data = struct.pack("<I", 100)
+        data = struct.pack("<I", self.SDP_PACKET_START_SENDING_COMMAND_ID)
         print "sending to core {}:{}:{}".format(
             placement.x, placement.y, placement.p)
         message = SDPMessage(
@@ -91,7 +101,7 @@ class PacketGathererCheat(
                 destination_chip_x=placement.x,
                 destination_chip_y=placement.y,
                 destination_cpu=placement.p,
-                destination_port=2,
+                destination_port=self.SDP_PACKET_PORT,
                 flags=SDPFlag.REPLY_NOT_EXPECTED),
             data=data)
 
@@ -102,105 +112,199 @@ class PacketGathererCheat(
         transceiver.send_sdp_message(message=message)
 
         # receive
-        output = None
         finished = False
         first = True
-        seq_num = 0
+        seq_num = 1
         seq_nums = list()
         while not finished:
             try:
                 data = connection.receive(timeout=5)
-                first, seq_num, seq_nums, finished= \
+                first, seq_num, seq_nums, finished = \
                     self._process_data(
-                        data, first, seq_num, seq_nums, finished)
+                        data, first, seq_num, seq_nums, finished, placement,
+                        transceiver)
             except SpinnmanTimeoutException:
-                self._transmit_missing_seq_nums(
-                    seq_nums, transceiver, placement)
+                if not finished:
+                    print "trying to reclaim missing sdp packets"
+                    self._transmit_missing_seq_nums(
+                        seq_nums, transceiver, placement)
 
         self._check(seq_nums)
-        return output
+        return self._output
 
     def _transmit_missing_seq_nums(self, seq_nums, transceiver, placement):
+
+        # transmit request for more info to sender.
+        self._check(seq_nums)
+        self._print_missing(seq_nums)
 
         # locate missing seq nums from pile
         missing_seq_nums = list()
         seq_nums = sorted(seq_nums)
         last_seq_num = 0
         for seq_num in seq_nums:
-            if seq_num != last_seq_num:
+            if seq_num != last_seq_num + 1:
                 missing_seq_nums.append(seq_num)
             last_seq_num = seq_num
+        if last_seq_num < self._max_seq_num:
+            for missing_seq_num in range(last_seq_num, self._max_seq_num):
+                missing_seq_nums.append(missing_seq_num)
+                print "im missing seq num {}".format(missing_seq_num)
 
-        # transmit request for more info to sender.
+        print "missing seq total is {} out of {}".format(
+            len(missing_seq_nums), self._max_seq_num)
         n_packets = int(math.ceil(
-            (len(missing_seq_nums) * 4) / self.DATA_PER_FULL_PACKET - 1))
+            (len(missing_seq_nums) * self.WORD_TO_BYTE_CONVERTER) /
+            ((self.DATA_PER_FULL_PACKET - 1) * self.WORD_TO_BYTE_CONVERTER)))
+        print "have to send {} packets for all seq nums missing".format(
+            n_packets)
 
         # transmit missing seq as a new sdp packet
         first = True
+        seq_num_offset = 0
         for packet_count in range(0, n_packets):
+            length_left_in_packet = self.DATA_PER_FULL_PACKET
+            offset = 0
 
-            data = struct.pack("<I", 1000)
-            offset = 4
+            # get left over space / data size
+            size_of_data_left_to_transmit = min(
+                length_left_in_packet, len(missing_seq_nums) - seq_num_offset)
 
-            # add n packets to packet, so c code can build SDRAM request
+            # build data holder accordingly
+            data = bytearray(
+                size_of_data_left_to_transmit * self.WORD_TO_BYTE_CONVERTER)
+
+            # if first, add n packets to list
             if first:
-                data = struct.pack_into("<I", data, offset, n_packets)
-                offset += 4
+                # pack flag and n packets
+                struct.pack_into(
+                    "<I", data, offset,
+                    self.SDP_PACKET_START_MISSING_SEQ_COMMAND_ID)
+                struct.pack_into(
+                    "<I", data, self.WORD_TO_BYTE_CONVERTER, n_packets)
 
-            #
+                # update state
+                offset += 2 * self.WORD_TO_BYTE_CONVERTER
+                length_left_in_packet -= 2
+                first = False
 
+            else: # just add data
+                # pack flag
+                struct.pack_into(
+                    "<I", data, offset, self.SDP_PACKET_MISSING_SEQ_COMMAND_ID)
+                offset += 1 * self.WORD_TO_BYTE_CONVERTER
+                length_left_in_packet -= 1
 
+            # fill data field
+            struct.pack_into(
+                "<{}I".format(length_left_in_packet), data, offset,
+                *missing_seq_nums[
+                    seq_num_offset:
+                    seq_num_offset + length_left_in_packet])
+            seq_num_offset += length_left_in_packet
 
-
+            # build sdp message
             message = SDPMessage(
                 sdp_header=SDPHeader(
                     destination_chip_x=placement.x,
                     destination_chip_y=placement.y,
                     destination_cpu=placement.p,
-                    destination_port=2,
+                    destination_port=self.SDP_PACKET_PORT,
                     flags=SDPFlag.REPLY_NOT_EXPECTED),
-                data=data)
+                data=str(data))
+
+            # send message to core
             transceiver.send_sdp_message(message=message)
 
-    def _process_data(self, data, first, seq_num, seq_nums, finished):
+            # debug
+            reread_data = struct.unpack("<{}I".format(
+                int(math.ceil(len(data) / self.WORD_TO_BYTE_CONVERTER))),
+                str(data))
+            print "converted data back into readable form is {}".format(
+                reread_data)
+
+            # sleep for ensuring core doesnt lose packets
+            time.sleep(0.01)
+            print("send sdp packet with missing seq nums: {} of {}".format(
+                packet_count, n_packets))
+
+    def _process_data(self, data, first, seq_num, seq_nums, finished,
+                      placement, transceiver):
         length_of_data = len(data)
         if first:
             length = struct.unpack_from("<I", data, 0)[0]
             print "length = {}".format(length)
             first = False
-            output = bytearray(length)
-            self._view = memoryview(output)
-            self._view[0: length_of_data - 4] = data[4:4 + length_of_data - 4]
+            self._output = bytearray(length)
+            self._view = memoryview(self._output)
+            self._write_into_view(0, length_of_data - 4, data,
+                                  4, 4 + length_of_data - 4)
 
-        else:
+            # deduce max seq num for future use
+            self._max_seq_num = int(math.ceil(
+                length / (self.DATA_PER_FULL_PACKET *
+                          self.WORD_TO_BYTE_CONVERTER)))
+            print "max seq num is {}".format(self._max_seq_num)
+
+        else:  # some data packet
             first_packet_element = struct.unpack_from(
                 "<I", data, 0)[0]
             last_mc_packet = struct.unpack_from(
                 "<I", data, length_of_data - 4)[0]
+
+            # this flag can be dropped at some point
             if self._add_seq:
-                if first_packet_element != seq_num:
-                    print "missing seq {}".format(seq_num)
                 seq_num = first_packet_element
                 seq_nums.append(seq_num)
 
+            # write excess data as required
             offset = seq_num * self.DATA_PER_FULL_PACKET
-            if last_mc_packet == 0xFFFFFFFF:
-                self._view[offset:offset + length_of_data - 4] = \
-                    data[0:0 + length_of_data - 4]
-                finished = True
+            print "offset = {} from seq num {}".format(offset, seq_num)
+            if last_mc_packet == self.END_FLAG:
+                self._write_into_view(offset, offset + length_of_data - 4,
+                                      data, 0, 0 + length_of_data - 4)
+                if not self._check(seq_nums):
+                    self._transmit_missing_seq_nums(
+                        placement=placement, transceiver=transceiver,
+                        seq_nums=seq_nums)
+                else:
+                    finished = True
+
             else:
-                self._view[offset:offset + length_of_data] = \
-                    data[0:0 + length_of_data]
+                self._write_into_view(offset, offset + length_of_data,
+                                      data, 0, 0 + length_of_data)
         return first, seq_num, seq_nums, finished
 
-    @staticmethod
-    def _check(seq_nums):
+    def _write_into_view(
+            self, view_start_position, view_end_position,
+            data, data_start_position, data_end_position):
+        """ puts data into the view
+        
+        :param view_start_position: where in view to start
+        :param view_end_position: where in view to end
+        :param data: the data holder to write from
+        :param data_start_position: where in data holder to start from
+        :param data_end_position: where in data holder to end
+        :return: 
+        """
+        self._view[view_start_position: view_end_position] = \
+            data[data_start_position:data_end_position]
+
+    def _check(self, seq_nums):
         # hand back
         seq_nums = sorted(seq_nums)
+        max_needed = int(math.ceil((self._mbs / (
+            self.DATA_PER_FULL_PACKET * self.WORD_TO_BYTE_CONVERTER))))
+        if len(seq_nums) != max_needed:
+            print "should have received {} sequence numbers, but received " \
+                  "{} sequence numbers".format(max_needed, len(seq_nums))
+            return False
+        return True
+
+    @staticmethod
+    def _print_missing(seq_nums):
         last_seq_num = 0
-        if len(seq_nums) != 4096:
-            print len(seq_nums)
         for seq_num in seq_nums:
-            if seq_num != last_seq_num:
-                print "missing seq num {}".format(seq_num)
+            if seq_num != last_seq_num + 1:
+                print "from list im missing seq num {}".format(seq_num)
             last_seq_num = seq_num
