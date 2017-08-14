@@ -80,10 +80,13 @@ static uint32_t infinite_run;
 //! transmission stuff
 static uint32_t data[ITEMS_PER_DATA_PACKET];
 static uint32_t position_in_store = 0;
+static uint32_t total_position = 0;
+static bool check = false;
 
 //! retransmission stuff
 static uint32_t use_seq;
 static uint32_t missing_sdp_packets = 0;
+static uint32_t final_seq_num = 0;
 static uint32_t data_written = 0;
 address_t missing_sdp_seq_num_sdram_address = NULL;
 
@@ -119,6 +122,10 @@ typedef enum config_region_elements {
 void send_data(uint32_t * data_to_send, uint32_t size_in_bytes){
    //log_info("last element is %d", data[position_in_store - 1]);
    //log_info("first element is %d", data[0]);
+   if(check){
+      log_info("data being sent is %x", data_to_send[0]);
+      check = false;
+   }
    spin1_memcpy(&my_msg.data, (void *)data_to_send, size_in_bytes);
    my_msg.length = LENGTH_OF_SDP_HEADER + size_in_bytes;
    while(!spin1_send_sdp_msg (&my_msg, SDP_TIMEOUT)){
@@ -175,10 +182,11 @@ void write_missing_sdp_seq_nums_into_sdram(
         uint32_t data[], ushort length, uint32_t start_offset){
 
     for(ushort offset=start_offset; offset < length; offset ++){
-        missing_sdp_seq_num_sdram_address[offset] = data[offset];
-        log_info("data writing into sdram is %d", data[offset]);
+        missing_sdp_seq_num_sdram_address[
+            data_written + (offset - start_offset)] = data[offset];
+        //log_info("data writing into sdram is %d", data[offset]);
     }
-    data_written += length;
+    data_written += (length - start_offset);
 }
 
 //! entrance method for storing SDP seq nums into SDRAM
@@ -186,31 +194,43 @@ void store_missing_seq_nums(uint32_t data[], ushort length, bool first){
     uint32_t start_reading_offset = 1;
     if (first){
         missing_sdp_packets = data[1];
+        final_seq_num = (
+            (ITEMS_PER_DATA_PACKET - 2) +
+            ((missing_sdp_packets  - 1) * (ITEMS_PER_DATA_PACKET - 1)));
+        log_info("final seq num count is %d", final_seq_num);
+
         uint32_t size_of_data =
             ((missing_sdp_packets * ITEMS_PER_DATA_PACKET) *
             WORD_TO_BYTE_MULTIPLIER) + END_FLAG_SIZE;
-        log_info("doing first with xalloc of %d bytes", size_of_data);
 
+        //log_info("doing first with xalloc of %d bytes", size_of_data);
+        if(missing_sdp_seq_num_sdram_address != NULL){
+            sark_xfree(sv->sdram_heap, missing_sdp_seq_num_sdram_address,
+                       ALLOC_LOCK + ALLOC_ID + (sark_vec->app_id << 8));
+            missing_sdp_seq_num_sdram_address = NULL;
+        }
         missing_sdp_seq_num_sdram_address = sark_xalloc(
             sv->sdram_heap, size_of_data, 0,
             ALLOC_LOCK + ALLOC_ID + (sark_vec->app_id << 8));
         start_reading_offset = 2;
+        log_info("address to write to is %d",
+                 missing_sdp_seq_num_sdram_address);
     }
     
     // write data to sdram and update packet counter
     write_missing_sdp_seq_nums_into_sdram(data, length, start_reading_offset);
     missing_sdp_packets -= 1;
-    if (missing_sdp_packets % 10 == 0){
-        log_info("left over packets is %d", missing_sdp_packets);
-    }
 }
 
 //! does the regeneration of data
 void regenerate_data_for_seq_num(uint32_t seq_num){
     uint32_t start_value = seq_num * (ITEMS_PER_DATA_PACKET -1);
-    log_info("starting number for retransmission is %d for seq num %d",
-             start_value, seq_num);
     data[0] = seq_num;
+
+    if( final_seq_num == total_position){
+        log_info("sending last seq num");
+    }
+
     for (uint32_t position = 1; position < ITEMS_PER_DATA_PACKET; position++){
         data[position] = start_value;
         start_value +=1;
@@ -228,14 +248,20 @@ void retransmission_dma_read(){
         (position_for_retransmission * ITEMS_PER_DATA_PACKET);
     address_t data_sdram_position =
         &missing_sdp_seq_num_sdram_address[position_to_read_from];
+    //log_info(" address to dma from is %d", data_sdram_position);
+    //log_info(" dma pointer = %d", dma_pointer);
+    //log_info("size to read is %d",
+    //         ITEMS_PER_DATA_PACKET * WORD_TO_BYTE_MULTIPLIER);
 
     // set off dma
+    //log_info("setting off dma");
     while (!spin1_dma_transfer(
             DMA_TAG_READ_FOR_RETRANSMISSION, data_sdram_position,
-            (void *)data[dma_pointer], DMA_READ,
+            (void *)dma_data[dma_pointer], DMA_READ,
             ITEMS_PER_DATA_PACKET * WORD_TO_BYTE_MULTIPLIER)){
         // do nothing when failing, just keep retrying. it'll work at
         // some point
+        log_info("failing to set off dma transfer!");
     }
 }
 
@@ -243,38 +269,49 @@ void the_dma_complete_callback(uint unused, uint tag){
     use(unused);
 
     // check tag and work accordingly
+    //log_info("dma complete callback");
     if(tag == DMA_TAG_READ_FOR_RETRANSMISSION){
-    
+
+        //log_info("in retransmission mode of dma");
+        uint32_t current_dma_buffer = dma_pointer;
+
         // set up next dma if needed
         position_for_retransmission += 1;
-        uint32_t current_dma_buffer = dma_pointer;
         uint32_t data_read =
             position_for_retransmission * ITEMS_PER_DATA_PACKET;
+        //log_info("position for retransmission = %d",
+        //         position_for_retransmission);
+        log_info("read %d data, out of %d data", data_read, data_written);
         if (data_written > data_read){
             retransmission_dma_read();
         }
         
         // build flag for iterating through dma stuff and 
         bool finished = false;
+        //log_info("read for regeneration and transmission");
         uint32_t position_in_read_data = 0;
-        
+
         // iterate till we either find a end flag, or run out of dma buffer
-        while(!finished & (position_in_read_data < ITEMS_PER_DATA_PACKET)){
-            
+        while(!finished && (position_in_read_data < ITEMS_PER_DATA_PACKET)){
+
             // get next seq num to regenerate
-            uint32_t missing_seq_num = (uint32_t)dma_data[current_dma_buffer];
+            uint32_t missing_seq_num =
+                (uint32_t)dma_data[current_dma_buffer][position_in_read_data];
             if(missing_seq_num != END_FLAG){
 
                 // regenerate data
                 regenerate_data_for_seq_num(missing_seq_num);
-
+                position_in_read_data += 1;
+                total_position += 1;
                 // send new data back to host
-                send_data(
-                    data, ITEMS_PER_DATA_PACKET * WORD_TO_BYTE_MULTIPLIER);
+                send_data(data,
+                          ITEMS_PER_DATA_PACKET * WORD_TO_BYTE_MULTIPLIER);
             }
             else{ // finished data send, tell host its done
                uint32_t end_data = END_FLAG;
-               send_data(end_data, 4);
+               check=true;
+               send_data(&end_data, 4);
+               finished = true;
             }
         }
     }
@@ -307,6 +344,15 @@ void sdp(uint mailbox, uint port){
             msg->data[0] == SDP_COMMAND_FOR_MORE_MISSING_SDP_PACKETS){
         //log_info("starting resend mode");
 
+        // reset state, as could be here from multiple attempts
+        if(msg->data[0] == SDP_COMMAND_FOR_START_OF_MISSING_SDP_PACKETS){
+            data_written= 0;
+            missing_sdp_packets = 0;
+            total_position = 0;
+            position_for_retransmission = 0;
+        }
+
+
         store_missing_seq_nums(
             msg->data,
             ((msg->length - LENGTH_OF_SDP_HEADER) / WORD_TO_BYTE_MULTIPLIER),
@@ -318,7 +364,7 @@ void sdp(uint mailbox, uint port){
         if(missing_sdp_packets == 0){
         
             // packets all received, add finish flag for dma stoppage
-            missing_sdp_seq_num_sdram_address[data_written+1] = END_FLAG;
+            missing_sdp_seq_num_sdram_address[data_written + 1] = END_FLAG;
             data_written += 1;
 
             log_info("create dma buffers");
@@ -365,7 +411,7 @@ static bool initialize(uint32_t *timer_period) {
         return false;
     }
 
-    // add callback for dma when dealing with
+    // add callback for dma when dealing with retransmissions
     simulation_dma_transfer_done_callback_on(
         DMA_TAG_READ_FOR_RETRANSMISSION,
         the_dma_complete_callback);

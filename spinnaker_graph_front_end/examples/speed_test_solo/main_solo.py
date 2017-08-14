@@ -9,7 +9,7 @@ from spinnaker_graph_front_end.examples import speed_test_solo
 from spinnaker_graph_front_end.examples.speed_test_solo.\
     packet_gatherer_cheat import PacketGathererCheat
 
-mbs = 2.0
+mbs = 1.0
 
 # setup system
 sim.setup(model_binary_module=speed_test_solo)
@@ -52,13 +52,13 @@ try:
     elements = len(data) / 4
     ints = struct.unpack("<{}I".format(elements), data)
     start_value = 0
+   # print ints
     for value in ints:
         if value != start_value:
-            #print "should be getting {}, but got {}".format(start_value, value)
+            print "should be getting {}, but got {}".format(start_value, value)
             start_value = value + 1
         else:
             start_value += 1
-
 
 except Exception as e:
     # if boomed. end so that we can get iobuf
