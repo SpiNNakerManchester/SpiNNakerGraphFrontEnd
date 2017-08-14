@@ -80,7 +80,7 @@ class SDRAMReaderAndTransmitterWithProtocol(
             label="config")
 
     def get_binary_file_name(self):
-        return "sdram_reader_and_transmitter.aplx"
+        return "sdram_reader_and_transmitter_with_protocol.aplx"
 
     def get_n_keys_for_partition(self, partition, graph_mapper):
         return 31457280
