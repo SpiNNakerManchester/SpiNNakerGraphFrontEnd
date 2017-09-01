@@ -6,6 +6,11 @@
 #include <simulation.h>
 #include <debug.h>
 
+
+#define ITEMS_PER_DATA_PACKET 64
+
+#define FIRST_SEQ_NUM 1
+
 //! control value, which says how many timer ticks to run for before exiting
 static uint32_t simulation_ticks = 0;
 static uint32_t infinite_run = 0;
@@ -14,8 +19,14 @@ static uint32_t time = 0;
 //! int as a bool to represent if this simulation should run forever
 static uint32_t infinite_run;
 
-#define ITEMS_PER_DATA_PACKET 64
+//! the key that causes sequence number to be processed
+static uint32_t new_sequence_key = 0;
+static uint32_t first_data_key = 0;
 
+//! default seq num
+static uint32_t seq_num = FIRST_SEQ_NUM;
+
+//! data holders for the sdp packet
 static uint32_t data[ITEMS_PER_DATA_PACKET];
 static uint32_t position_in_store = 0;
 sdp_msg_t my_msg;
@@ -23,8 +34,13 @@ sdp_msg_t my_msg;
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
-    SYSTEM_REGION,
+    SYSTEM_REGION, CONFIG
 } regions_e;
+
+//! human readable definitions of the data in each region
+typedef enum config_elements {
+    NEW_SEQ_KEY, FIRST_DATA_KEY
+} config_elements;
 
 //! values for the priority for each callback
 typedef enum callback_priorities{
@@ -44,22 +60,30 @@ void send_data(){
    while(!spin1_send_sdp_msg (&my_msg, 100)){
 
    }
-   position_in_store = 0;
+   position_in_store = 1;
+   seq_num += 1;
+   data[0] = seq_num;
 }
 
 void receive_data(uint key, uint payload){
-    data[position_in_store] = payload;
-    position_in_store += 1;
-    //log_info("payload is %d", payload);
-
-    if (payload == 0xFFFFFFFF){
-        send_data();
-    }else if(position_in_store == ITEMS_PER_DATA_PACKET){
-        send_data();
+    if(key == new_sequence_key){
+        seq_num = payload;
     }
+    else{
+        if (key == first_data_key){
+            seq_num = FIRST_SEQ_NUM;
+        }
 
-   // check key seq num for missing things if required.
-   use(key);
+        data[position_in_store] = payload;
+        position_in_store += 1;
+        //log_info("payload is %d", payload);
+
+        if (payload == 0xFFFFFFFF){
+            send_data();
+        }else if(position_in_store == ITEMS_PER_DATA_PACKET){
+            send_data();
+        }
+    }
 }
 
 static bool initialize(uint32_t *timer_period) {
@@ -81,6 +105,10 @@ static bool initialize(uint32_t *timer_period) {
             &infinite_run, SDP, DMA)) {
         return false;
     }
+
+    address_t config_address = data_specification_get_region(CONFIG, address);
+    new_sequence_key = config_address[NEW_SEQ_KEY];
+    first_data_key = config_address[FIRST_DATA_KEY];
 
     my_msg.tag = 1;                    // IPTag 1
     my_msg.dest_port = PORT_ETH;       // Ethernet

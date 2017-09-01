@@ -11,13 +11,13 @@ from spinnaker_graph_front_end.examples.speed_tracker_with_protocol.\
     sdram_reader_and_transmitter_with_protocol import \
     SDRAMReaderAndTransmitterWithProtocol
 import time
-from spinnaker_graph_front_end.examples import speed_tracker
+from spinnaker_graph_front_end.examples import speed_tracker_with_protocol
 
 # data to write
 mbs = 20.0
 
 # setup system
-sim.setup(model_binary_module=speed_tracker)
+sim.setup(model_binary_module=speed_tracker_with_protocol)
 
 # build verts
 reader = SDRAMReaderAndTransmitterWithProtocol(mbs)

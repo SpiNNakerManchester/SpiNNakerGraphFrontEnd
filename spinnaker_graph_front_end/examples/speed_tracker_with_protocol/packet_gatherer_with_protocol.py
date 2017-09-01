@@ -24,7 +24,8 @@ class PacketGathererWithProtocol(
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
-        names=[('SYSTEM', 0)])
+        names=[('SYSTEM', 0),
+               ('CONFIG', 1)])
     PORT = 11111
     SDRAM_READING_SIZE_IN_BYTES_CONVERTER = 1024*1024
     CONFIG_SIZE = 8
@@ -58,7 +59,8 @@ class PacketGathererWithProtocol(
     @property
     def resources_required(self):
         return ResourceContainer(
-            sdram=SDRAMResource(constants.SYSTEM_BYTES_REQUIREMENT),
+            sdram=SDRAMResource(
+                constants.SYSTEM_BYTES_REQUIREMENT + self.CONFIG_SIZE),
             iptags=[IPtagResource(port=self.PORT, strip_sdp=True,
                                   ip_address="localhost")])
 
@@ -79,6 +81,11 @@ class PacketGathererWithProtocol(
         spec.write_array(simulation_utilities.get_simulation_header_array(
             self.get_binary_file_name(), machine_time_step,
             time_scale_factor))
+        spec.switch_write_focus(self.DATA_REGIONS.CONFIG.value)
+        base_key = routing_info.get_first_key_for_edge(
+            list(machine_graph.get_edges_ending_at_vertex(self))[0])
+        spec.write_value(base_key + 1)
+        spec.write_value(base_key + 2)
 
         # End-of-Spec:
         spec.end_specification()
@@ -87,6 +94,10 @@ class PacketGathererWithProtocol(
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.SYSTEM.value, size=system_size,
             label='systemInfo')
+        spec.reserve_memory_region(
+            region=self.DATA_REGIONS.CONFIG.value,
+            size=self.CONFIG_SIZE,
+            label="config")
 
     def get_binary_file_name(self):
         return "packet_gatherer.aplx"
@@ -269,11 +280,10 @@ class PacketGathererWithProtocol(
                         seq_nums=seq_nums)
             else:
                 # this flag can be dropped at some point
-                if self._add_seq:
-                    seq_num = first_packet_element
-                    if seq_num > self._max_seq_num:
-                        raise Exception("got an insane sequence number")
-                    seq_nums.add(seq_num)
+                seq_num = first_packet_element
+                if seq_num > self._max_seq_num:
+                    raise Exception("got an insane sequence number")
+                seq_nums.add(seq_num)
 
                 # figure offset for where data is to be put
                 offset = self._calculate_offset(seq_num)
@@ -348,7 +358,7 @@ class PacketGathererWithProtocol(
 
     def calculate_max_seq_num(self):
         n_sequence_numbers = 1
-        data_left = self._mbs - (
+        data_left = len(self._output) - (
             (self.DATA_PER_FULL_PACKET -
              self.SDP_RETRANSMISSION_HEADER_SIZE) *
             self.WORD_TO_BYTE_CONVERTER)

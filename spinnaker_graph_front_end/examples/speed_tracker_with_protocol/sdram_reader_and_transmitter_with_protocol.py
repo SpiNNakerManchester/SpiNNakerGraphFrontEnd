@@ -83,4 +83,4 @@ class SDRAMReaderAndTransmitterWithProtocol(
         return "sdram_reader_and_transmitter_with_protocol.aplx"
 
     def get_n_keys_for_partition(self, partition, graph_mapper):
-        return 31457280
+        return 3
