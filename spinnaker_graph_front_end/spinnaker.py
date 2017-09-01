@@ -8,6 +8,7 @@ from spinnaker_graph_front_end.utilities.graph_front_end_failed_state \
     import GraphFrontEndFailedState
 from spinnaker_graph_front_end.graph_front_end_simulator_interface \
     import GraphFrontEndSimulatorInterface
+from _version import __version__ as version
 
 # general imports
 import logging
@@ -59,7 +60,8 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
                 os.path.join(os.path.dirname(__file__),
                              self.CONFIG_FILE_NAME)],
             validation_cfg=os.path.join(os.path.dirname(__file__),
-                                        self.VALIDATION_CONFIG_NAME))
+                                        self.VALIDATION_CONFIG_NAME),
+            front_end_name="SpiNNakerGraphFrontEnd version {}".format(version))
 
         extra_mapping_inputs = dict()
         extra_mapping_inputs["CreateAtomToEventIdMapping"] = self.config.\
