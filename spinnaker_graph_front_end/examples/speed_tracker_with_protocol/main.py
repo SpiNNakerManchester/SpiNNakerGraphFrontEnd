@@ -21,7 +21,7 @@ sim.setup(model_binary_module=speed_tracker_with_protocol)
 
 # build verts
 reader = SDRAMReaderAndTransmitterWithProtocol(mbs)
-reader.add_constraint(ChipAndCoreConstraint(x=1, y=1))
+reader.add_constraint(ChipAndCoreConstraint(x=7, y=7))
 receiver = PacketGathererWithProtocol()
 
 # add verts to graph
@@ -41,6 +41,8 @@ placements = sim.placements()
 start = None
 end = None
 data = None
+
+sim.transceiver().set_watch_dog(False)
 
 try:
     print "starting data gathering"

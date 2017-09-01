@@ -31,7 +31,7 @@ start = None
 end = None
 data = None
 
-sim.transceiver().set_watch_dog_mode_global(False)
+sim.transceiver().set_watch_dog(False)
 
 try:
     print "starting data gathering"
