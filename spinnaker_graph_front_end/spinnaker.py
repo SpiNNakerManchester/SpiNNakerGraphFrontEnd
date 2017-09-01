@@ -48,6 +48,8 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         # using auto pause and resume
         extra_xml_path = list()
 
+        front_end_versions = [("SpiNNakerGraphFrontEnd", version)]
+
         AbstractSpinnakerBase.__init__(
             self,
             configfile=self.CONFIG_FILE_NAME,
@@ -61,7 +63,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
                              self.CONFIG_FILE_NAME)],
             validation_cfg=os.path.join(os.path.dirname(__file__),
                                         self.VALIDATION_CONFIG_NAME),
-            front_end_name="SpiNNakerGraphFrontEnd version {}".format(version))
+            front_end_versions=front_end_versions)
 
         extra_mapping_inputs = dict()
         extra_mapping_inputs["CreateAtomToEventIdMapping"] = self.config.\
