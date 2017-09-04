@@ -10,8 +10,8 @@ import os
 runtime = 50
 # machine_time_step = 100
 # time_scale_factor = 2
-MAX_X_SIZE_OF_FABRIC = 7
-MAX_Y_SIZE_OF_FABRIC = 7
+MAX_X_SIZE_OF_FABRIC = 24
+MAX_Y_SIZE_OF_FABRIC = 24
 
 # set up the front end and ask for the detected machines dimensions
 front_end.setup(n_chips_required=2, model_binary_folder=os.getcwd())
