@@ -6,10 +6,40 @@
 #include <simulation.h>
 #include <debug.h>
 
-
+//! How many mc packets are to be received per sdp packet
 #define ITEMS_PER_DATA_PACKET 64
 
+//! first sequence number to use and reset to
 #define FIRST_SEQ_NUM 1
+
+//! extra length adjustment for the sdp header
+#define LENGTH_OF_SDP_HEADER 8
+
+//! convert between words to bytes
+#define WORD_TO_BYTE_MULTIPLIER 4
+
+//! flag for saying stuff has ended
+#define END_FLAG 0xFFFFFFFF
+
+//! struct for a SDP message with pure data, no scp header
+typedef struct sdp_msg_pure_data {	// SDP message (=292 bytes)
+    struct sdp_msg *next;		// Next in free list
+    uint16_t length;		// length
+    uint16_t checksum;		// checksum (if used)
+
+    // sdp_hdr_t
+    uint8_t flags;	    	// SDP flag byte
+    uint8_t tag;		      	// SDP IPtag
+    uint8_t dest_port;		// SDP destination port/CPU
+    uint8_t srce_port;		// SDP source port/CPU
+    uint16_t dest_addr;		// SDP destination address
+    uint16_t srce_addr;		// SDP source address
+
+    // User data (272 bytes when no scp header)
+    uint32_t data[ITEMS_PER_DATA_PACKET];
+
+    uint32_t _PAD;		// Private padding
+} sdp_msg_pure_data;
 
 //! control value, which says how many timer ticks to run for before exiting
 static uint32_t simulation_ticks = 0;
@@ -29,7 +59,9 @@ static uint32_t seq_num = FIRST_SEQ_NUM;
 //! data holders for the sdp packet
 static uint32_t data[ITEMS_PER_DATA_PACKET];
 static uint32_t position_in_store = 0;
-sdp_msg_t my_msg;
+
+//! sdp message holder for transmissions
+sdp_msg_pure_data my_msg;
 
 
 //! human readable definitions of each region in SDRAM
@@ -55,9 +87,11 @@ void resume_callback() {
 void send_data(){
    //log_info("last element is %d", data[position_in_store - 1]);
    //log_info("first element is %d", data[0]);
-   spin1_memcpy(&my_msg.cmd_rc, (void *)data, position_in_store * 4);
-   my_msg.length = 8 + (position_in_store * 4);
-   while(!spin1_send_sdp_msg (&my_msg, 100)){
+   spin1_memcpy(&my_msg.data, data,
+                position_in_store * WORD_TO_BYTE_MULTIPLIER);
+   my_msg.length =
+       LENGTH_OF_SDP_HEADER + (position_in_store * WORD_TO_BYTE_MULTIPLIER);
+   while(!spin1_send_sdp_msg ((sdp_msg_t *) &my_msg, 100)){
 
    }
    position_in_store = 1;
@@ -78,7 +112,8 @@ void receive_data(uint key, uint payload){
         position_in_store += 1;
         //log_info("payload is %d", payload);
 
-        if (payload == 0xFFFFFFFF){
+        if (payload == END_FLAG){
+            log_info("position = %d", position_in_store);
             send_data();
         }else if(position_in_store == ITEMS_PER_DATA_PACKET){
             send_data();
