@@ -103,6 +103,7 @@ class PacketGathererWithProtocol(
         return "packet_gatherer.aplx"
 
     def get_data(self, transceiver, placement):
+
         data = struct.pack("<I", self.SDP_PACKET_START_SENDING_COMMAND_ID)
         print "sending to core {}:{}:{}".format(
             placement.x, placement.y, placement.p)
@@ -119,6 +120,7 @@ class PacketGathererWithProtocol(
         connection = UDPConnection(local_host=None, local_port=self.PORT)
 
         # send
+        transceiver.set_reinjection_router_timeout(15, 15)
         transceiver.send_sdp_message(message=message)
 
         # receive
@@ -253,6 +255,7 @@ class PacketGathererWithProtocol(
         length_of_data = len(data)
         if first:
             length = struct.unpack_from("<I", data, 0)[0]
+            print "length = {}".format(length)
             first = False
             self._output = bytearray(length)
             self._view = memoryview(self._output)

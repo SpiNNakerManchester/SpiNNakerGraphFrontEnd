@@ -7,7 +7,7 @@
 #include <debug.h>
 
 //! How many mc packets are to be received per sdp packet
-#define ITEMS_PER_DATA_PACKET 64
+#define ITEMS_PER_DATA_PACKET 68
 
 //! first sequence number to use and reset to
 #define FIRST_SEQ_NUM 1
@@ -63,6 +63,8 @@ static uint32_t position_in_store = 0;
 //! sdp message holder for transmissions
 sdp_msg_pure_data my_msg;
 
+static bool starting_again = true;
+
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
@@ -85,12 +87,15 @@ void resume_callback() {
 }
 
 void send_data(){
-   //log_info("last element is %d", data[position_in_store - 1]);
-   //log_info("first element is %d", data[0]);
+   log_info("last element is %d", data[position_in_store - 1]);
+   log_info("first element is %d", data[0]);
+
    spin1_memcpy(&my_msg.data, data,
                 position_in_store * WORD_TO_BYTE_MULTIPLIER);
    my_msg.length =
        LENGTH_OF_SDP_HEADER + (position_in_store * WORD_TO_BYTE_MULTIPLIER);
+   //log_info("my length is %d with position %d", my_msg.length, position_in_store);
+
    while(!spin1_send_sdp_msg ((sdp_msg_t *) &my_msg, 100)){
 
    }
@@ -100,6 +105,11 @@ void send_data(){
 }
 
 void receive_data(uint key, uint payload){
+    if (starting_again){
+        log_info("payload is %d", payload);
+        starting_again = false;
+    }
+
     if(key == new_sequence_key){
         seq_num = payload;
     }
@@ -108,6 +118,7 @@ void receive_data(uint key, uint payload){
             seq_num = FIRST_SEQ_NUM;
         }
 
+        log_info(" payload = %d posiiton = %d", payload, position_in_store);
         data[position_in_store] = payload;
         position_in_store += 1;
         //log_info("payload is %d", payload);
@@ -115,8 +126,11 @@ void receive_data(uint key, uint payload){
         if (payload == END_FLAG){
             log_info("position = %d", position_in_store);
             send_data();
+            starting_again = true;
         }else if(position_in_store == ITEMS_PER_DATA_PACKET){
+            log_info("position = %d", position_in_store);
             send_data();
+            starting_again = true;
         }
     }
 }

@@ -14,14 +14,14 @@ import time
 from spinnaker_graph_front_end.examples import speed_tracker_with_protocol
 
 # data to write
-mbs = 20.0
+mbs = 1.0
 
 # setup system
 sim.setup(model_binary_module=speed_tracker_with_protocol)
 
 # build verts
 reader = SDRAMReaderAndTransmitterWithProtocol(mbs)
-reader.add_constraint(ChipAndCoreConstraint(x=7, y=7))
+reader.add_constraint(ChipAndCoreConstraint(x=0, y=0))
 receiver = PacketGathererWithProtocol()
 
 # add verts to graph

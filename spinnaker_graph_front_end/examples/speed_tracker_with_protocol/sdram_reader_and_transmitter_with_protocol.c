@@ -104,7 +104,6 @@ address_t missing_sdp_seq_num_sdram_address = NULL;
 static uint32_t *retransmit_seq_nums[N_DMA_BUFFERS];
 static uint32_t current_dma_pointer = 0;
 static uint32_t position_for_retransmission = 0;
-static uint32_t position = 0;
 static uint32_t missing_seq_num_being_processed = 0;
 static uint32_t position_in_read_data = 0;
 
@@ -138,17 +137,21 @@ void send_data_block(
         uint32_t current_dma_pointer, uint32_t number_of_elements_to_send,
         uint32_t first_packet_key){
 
+   log_info("first data is %d", data_to_transmit[current_dma_pointer][0]);
+
    // send data
    for (uint data_position = 0; data_position < number_of_elements_to_send;
         data_position++)
    {
         uint32_t current_data =
             data_to_transmit[current_dma_pointer][data_position];
+        log_info("transmit key %d and payload %d", first_packet_key, current_data);
         while(!spin1_send_mc_packet(first_packet_key, current_data,
                                     WITH_PAYLOAD)){
         }
         first_packet_key = key;
    }
+   log_info("last data is %d", data_to_transmit[current_dma_pointer][number_of_elements_to_send]);
 }
 
 //! \brief sets off a dma reading a block of SDRAM for dara
@@ -156,15 +159,17 @@ void send_data_block(
 //! \param[in] dma_tag the dma tag assocated with this read.
 //!            transmission or retransmission
 //! \param[in] offset where in the data array to start writing to
-void read(uint32_t position_in_sdram, uint32_t dma_tag, uint32_t offset,
-          uint32_t size_in_bytes_to_read){
+void read(uint32_t dma_tag, uint32_t offset, uint32_t size_in_bytes_to_read){
     // set off dma
     transmit_dma_pointer = (transmit_dma_pointer + 1) % N_DMA_BUFFERS;
 
     address_t data_sdram_position =
-        (address_t)&store_address[position_in_sdram];
+        (address_t)&store_address[position_in_store];
 
-    position += ITEMS_PER_DATA_PACKET - SEQUENCE_NUMBER_SIZE;
+    // update position as needed
+    position_in_store += (size_in_bytes_to_read / WORD_TO_BYTE_MULTIPLIER);
+
+    //log_info("reading %d bytes", size_in_bytes_to_read);
     while (!spin1_dma_transfer(
         dma_tag, data_sdram_position,
         &(data_to_transmit[transmit_dma_pointer][offset]),
@@ -178,31 +183,51 @@ void dma_complete_reading_for_original_transmission(uint unused, uint unused2){
     use(unused2);
 
     // do dma
-    uint32_t current_dma_pointer = current_dma_pointer;
+    uint32_t current_dma_pointer = transmit_dma_pointer;
     uint32_t key_to_transmit = key;
 
     // put size in bytes if first send
+    //log_info("in original read complete callback");
     if(first_transmission){
+        log_info("in first");
         data_to_transmit[current_dma_pointer][0] = bytes_to_write;
-        first_transmission = false;
         key_to_transmit = key + 2;
     }
 
     // stopping procedure
     // if a full packet, read another and try again
-    if (position < (uint)bytes_to_write / WORD_TO_BYTE_MULTIPLIER){
-        read(position, DMA_TAG_READ_FOR_TRANSMISSION, 0,
+    //log_info("position_in_store = %d, to get to %d", position_in_store, (uint)bytes_to_write / WORD_TO_BYTE_MULTIPLIER);
+    if (position_in_store < (uint)bytes_to_write / WORD_TO_BYTE_MULTIPLIER){
+        //log_info("setting off another dma");
+        uint32_t num_items_to_transmit =
+            ITEMS_PER_DATA_PACKET - SEQUENCE_NUMBER_SIZE;
+
+        //difference in items to send for first time vs rest
+        if (first_transmission){
+            first_transmission = false;
+            num_items_to_transmit = ITEMS_PER_DATA_PACKET;
+        }
+
+        // reread and transmit
+        read(DMA_TAG_READ_FOR_TRANSMISSION, 0,
              (ITEMS_PER_DATA_PACKET - SEQUENCE_NUMBER_SIZE) *
               WORD_TO_BYTE_MULTIPLIER);
-        send_data_block(current_dma_pointer, ITEMS_PER_DATA_PACKET,
-                        key_to_transmit);
+        //log_info("sending data");
+        send_data_block(
+            current_dma_pointer, num_items_to_transmit, key_to_transmit);
+        //log_info("finished sending data");
     }
     else{
+        //log_info("sending data");
+        uint32_t n_elements_to_trasnmit = (
+            (uint)(bytes_to_write / WORD_TO_BYTE_MULTIPLIER)) -
+            (position_in_store - (ITEMS_PER_DATA_PACKET - SEQUENCE_NUMBER_SIZE));
+        log_info("trasnmitting %d elements", n_elements_to_trasnmit);
         send_data_block(
-            current_dma_pointer,
-            (uint)((bytes_to_write / WORD_TO_BYTE_MULTIPLIER) - position),
-            key_to_transmit);
+            current_dma_pointer, n_elements_to_trasnmit, key_to_transmit);
+        //log_info("finished sending data");
         spin1_send_mc_packet(key, END_FLAG, WITH_PAYLOAD);
+        //log_info("finished sending original data with end flag");
     }
 
     if (TDMA_WAIT_PERIOD != 0){
@@ -255,25 +280,14 @@ void store_missing_seq_nums(uint32_t data[], ushort length, bool first){
     missing_sdp_packets -= 1;
 }
 
-//! does the regeneration of data
-void regenerate_data_for_seq_num(uint32_t seq_num){
-    uint32_t position_in_sdram_to_read_from =
-        seq_num * (ITEMS_PER_DATA_PACKET - SEQUENCE_NUMBER_SIZE);
-    read(position_in_sdram_to_read_from, DMA_TAG_RETRANSMISSION_READING, 1,
-         (ITEMS_PER_DATA_PACKET - SEQUENCE_NUMBER_SIZE - 1) *
-          WORD_TO_BYTE_MULTIPLIER);
-}
-
 //! sets off a DMA for retransmission stuff
 void retransmission_dma_read(){
     // update dma pointer for oscillation
     current_dma_pointer = (current_dma_pointer + 1) % N_DMA_BUFFERS;
 
     // locate where we are in sdram
-    uint32_t position_to_read_from =
-        (position_for_retransmission * ITEMS_PER_DATA_PACKET);
     address_t data_sdram_position =
-        &missing_sdp_seq_num_sdram_address[position_to_read_from];
+        &missing_sdp_seq_num_sdram_address[position_for_retransmission];
     //log_info(" address to dma from is %d", data_sdram_position);
     //log_info(" dma pointer = %d", dma_pointer);
     //log_info("size to read is %d",
@@ -297,10 +311,8 @@ void the_dma_complete_read_missing_seqeuence_nums(uint unused, uint unused2){
 
     //! check if at end of read missing seq nums
     if (position_in_read_data > ITEMS_PER_DATA_PACKET){
-        position_for_retransmission += 1;
-        uint32_t data_read =
-            position_for_retransmission * ITEMS_PER_DATA_PACKET;
-        if (data_written > data_read){
+        position_for_retransmission += ITEMS_PER_DATA_PACKET;
+        if (data_written > position_for_retransmission){
             position_in_read_data = 0;
             retransmission_dma_read();
         }
@@ -312,7 +324,12 @@ void the_dma_complete_read_missing_seqeuence_nums(uint unused, uint unused2){
             retransmit_seq_nums[current_dma_pointer][position_in_read_data];
         if(missing_seq_num_being_processed != END_FLAG){
             // regenerate data
-            regenerate_data_for_seq_num(missing_seq_num_being_processed);
+            position_in_store =
+               missing_seq_num_being_processed * (
+                   ITEMS_PER_DATA_PACKET - SEQUENCE_NUMBER_SIZE);
+            read(DMA_TAG_RETRANSMISSION_READING, 1,
+                 (ITEMS_PER_DATA_PACKET - SEQUENCE_NUMBER_SIZE - 1) *
+                  WORD_TO_BYTE_MULTIPLIER);
         }
         else{ // finished data send, tell host its done
            while(!spin1_send_mc_packet(key, END_FLAG, WITH_PAYLOAD)){
@@ -358,6 +375,7 @@ void sdp_reception(uint mailbox, uint port){
     sdp_msg_pure_data *msg = (sdp_msg_pure_data *) mailbox;
 
     //log_info("received packet with code %d", msg->data[0]);
+    log_info("bytes to read = %d", bytes_to_write);
 
     // start the process of sending data
     if(msg->data[0] == SDP_COMMAND_FOR_SENDING_DATA){
@@ -368,15 +386,15 @@ void sdp_reception(uint mailbox, uint port){
         first_transmission = true;
         transmit_dma_pointer = 0;
         position_in_store = 0;
-        read(position, DMA_TAG_READ_FOR_TRANSMISSION, 1,
-             (ITEMS_PER_DATA_PACKET - SEQUENCE_NUMBER_SIZE - 1) *
-              WORD_TO_BYTE_MULTIPLIER);
+        read(DMA_TAG_READ_FOR_TRANSMISSION, 1,
+             (ITEMS_PER_DATA_PACKET - SEQUENCE_NUMBER_SIZE) *
+             WORD_TO_BYTE_MULTIPLIER);
     }
 
     // start or continue to gather missing packet list
     else if(msg->data[0] == SDP_COMMAND_FOR_START_OF_MISSING_SDP_PACKETS ||
             msg->data[0] == SDP_COMMAND_FOR_MORE_MISSING_SDP_PACKETS){
-        //log_info("starting resend mode");
+        log_info("starting resend mode");
 
         // reset state, as could be here from multiple attempts
         if(msg->data[0] == SDP_COMMAND_FOR_START_OF_MISSING_SDP_PACKETS){
@@ -427,7 +445,7 @@ void resume_callback() {
 //! method to make test data in sdram
 void write_data(){
     // write data into sdram for reading later
-    store_address = sark_xalloc(
+    store_address = (address_t) sark_xalloc(
         sv->sdram_heap, bytes_to_write, 0,
         ALLOC_LOCK + ALLOC_ID + (sark_vec->app_id << 8));
 
@@ -500,7 +518,7 @@ static bool initialize(uint32_t *timer_period) {
 void c_main() {
 
     uint32_t timer_period;
-    log_info("starting packet gatherer\n");
+    log_info("starting sdram reader and writer\n");
 
     // initialise the model
     if (!initialize(&timer_period)) {
