@@ -145,13 +145,13 @@ void send_data_block(
    {
         uint32_t current_data =
             data_to_transmit[current_dma_pointer][data_position];
-        log_info("transmit key %d and payload %d", first_packet_key, current_data);
+        //log_info("transmit key %d and payload %d", first_packet_key, current_data);
         while(!spin1_send_mc_packet(first_packet_key, current_data,
                                     WITH_PAYLOAD)){
         }
         first_packet_key = key;
    }
-   log_info("last data is %d", data_to_transmit[current_dma_pointer][number_of_elements_to_send]);
+   log_info("last data is %d", data_to_transmit[current_dma_pointer][number_of_elements_to_send - 1]);
 }
 
 //! \brief sets off a dma reading a block of SDRAM for dara

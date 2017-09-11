@@ -345,8 +345,11 @@ class PacketGathererWithProtocol(
                 "outside my acceptable output positions!!!! max is {} and "
                 "I received request to fill to {}".format(
                     len(self._output), view_end_position))
-        self._view[view_start_position: view_end_position] = \
-            data[data_start_position:data_end_position]
+        try:
+            self._view[view_start_position: view_end_position] = \
+                data[data_start_position:data_end_position]
+        except ValueError:
+            print "ahhh"
 
     def _check(self, seq_nums):
         # hand back
@@ -361,6 +364,7 @@ class PacketGathererWithProtocol(
 
     def calculate_max_seq_num(self):
         n_sequence_numbers = 1
+        print "calc max seq num lenght of ouput = {}".format(len(self._output))
         data_left = len(self._output) - (
             (self.DATA_PER_FULL_PACKET -
              self.SDP_RETRANSMISSION_HEADER_SIZE) *

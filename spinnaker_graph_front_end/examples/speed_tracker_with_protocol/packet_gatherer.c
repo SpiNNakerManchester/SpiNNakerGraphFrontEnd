@@ -10,7 +10,7 @@
 #define ITEMS_PER_DATA_PACKET 68
 
 //! first sequence number to use and reset to
-#define FIRST_SEQ_NUM 1
+#define FIRST_SEQ_NUM 0
 
 //! extra length adjustment for the sdp header
 #define LENGTH_OF_SDP_HEADER 8
@@ -118,7 +118,7 @@ void receive_data(uint key, uint payload){
             seq_num = FIRST_SEQ_NUM;
         }
 
-        log_info(" payload = %d posiiton = %d", payload, position_in_store);
+        //log_info(" payload = %d posiiton = %d", payload, position_in_store);
         data[position_in_store] = payload;
         position_in_store += 1;
         //log_info("payload is %d", payload);
