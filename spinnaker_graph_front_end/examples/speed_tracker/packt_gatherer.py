@@ -114,4 +114,5 @@ class PacketGatherer(
                     offset += length_of_data
 
         # hand back
+        transceiver.set_reinjection_router_timeout(15, 4)
         return output
