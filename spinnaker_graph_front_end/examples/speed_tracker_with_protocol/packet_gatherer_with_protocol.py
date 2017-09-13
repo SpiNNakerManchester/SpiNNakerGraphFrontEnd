@@ -105,8 +105,8 @@ class PacketGathererWithProtocol(
     def get_data(self, transceiver, placement):
 
         data = struct.pack("<I", self.SDP_PACKET_START_SENDING_COMMAND_ID)
-        print "sending to core {}:{}:{}".format(
-            placement.x, placement.y, placement.p)
+        #print "sending to core {}:{}:{}".format(
+        #    placement.x, placement.y, placement.p)
         message = SDPMessage(
             sdp_header=SDPHeader(
                 destination_chip_x=placement.x,
@@ -252,10 +252,10 @@ class PacketGathererWithProtocol(
 
     def _process_data(self, data, first, seq_num, seq_nums, finished,
                       placement, transceiver):
+        #self._print_out_packet_data(data)
         length_of_data = len(data)
         if first:
             length = struct.unpack_from("<I", data, 0)[0]
-            print "length = {}".format(length)
             first = False
             self._output = bytearray(length)
             self._view = memoryview(self._output)
@@ -272,6 +272,8 @@ class PacketGathererWithProtocol(
                 "<I", data, 0)[0]
             last_mc_packet = struct.unpack_from(
                 "<I", data, length_of_data - self.END_FLAG_SIZE)[0]
+
+
 
             # if received a last flag on its own, its during retransmission.
             #  check and try again if required
@@ -345,11 +347,9 @@ class PacketGathererWithProtocol(
                 "outside my acceptable output positions!!!! max is {} and "
                 "I received request to fill to {}".format(
                     len(self._output), view_end_position))
-        try:
-            self._view[view_start_position: view_end_position] = \
-                data[data_start_position:data_end_position]
-        except ValueError:
-            print "ahhh"
+        #print "view_start={} view_end={} data_start={} data_end={}".format(view_start_position, view_end_position, data_start_position, data_end_position)
+        self._view[view_start_position: view_end_position] = \
+            data[data_start_position:data_end_position]
 
     def _check(self, seq_nums):
         # hand back
@@ -364,7 +364,6 @@ class PacketGathererWithProtocol(
 
     def calculate_max_seq_num(self):
         n_sequence_numbers = 1
-        print "calc max seq num lenght of ouput = {}".format(len(self._output))
         data_left = len(self._output) - (
             (self.DATA_PER_FULL_PACKET -
              self.SDP_RETRANSMISSION_HEADER_SIZE) *
@@ -385,7 +384,7 @@ class PacketGathererWithProtocol(
                 print "from list im missing seq num {}".format(seq_num)
             last_seq_num = seq_num
 
-    def _print_out_missing_seq_packets_data(self, data):
+    def _print_out_packet_data(self, data):
         reread_data = struct.unpack("<{}I".format(
             int(math.ceil(len(data) / self.WORD_TO_BYTE_CONVERTER))),
             str(data))

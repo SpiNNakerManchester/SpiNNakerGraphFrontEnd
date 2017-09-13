@@ -14,14 +14,14 @@ import time
 from spinnaker_graph_front_end.examples import speed_tracker_with_protocol
 
 # data to write
-mbs = 1.0
+mbs = 20.0
 
 # setup system
 sim.setup(model_binary_module=speed_tracker_with_protocol)
 
 # build verts
 reader = SDRAMReaderAndTransmitterWithProtocol(mbs)
-reader.add_constraint(ChipAndCoreConstraint(x=0, y=0))
+reader.add_constraint(ChipAndCoreConstraint(x=1, y=1))
 receiver = PacketGathererWithProtocol()
 
 # add verts to graph
@@ -44,6 +44,7 @@ data = None
 
 sim.transceiver().set_watch_dog(False)
 
+
 try:
     print "starting data gathering"
     start = float(time.time())
@@ -53,11 +54,6 @@ try:
     end = float(time.time())
     # end sim
     sim.stop()
-
-    # print data
-    seconds = float(end - start)
-    speed = (mbs * 8) / seconds
-    print ("Read {} MB in {} seconds ({} Mb/s)".format(mbs, seconds, speed))
 
     # check data is correct here
     elements = len(data) / 4
@@ -69,6 +65,11 @@ try:
             start_value = value + 1
         else:
             start_value += 1
+
+    # print data
+    seconds = float(end - start)
+    speed = (mbs * 8) / seconds
+    print ("Read {} MB in {} seconds ({} Mb/s)".format(mbs, seconds, speed))
 
 
 except Exception as e:

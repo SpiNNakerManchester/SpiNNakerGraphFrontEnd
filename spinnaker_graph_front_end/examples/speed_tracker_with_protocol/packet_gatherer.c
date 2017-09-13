@@ -87,8 +87,8 @@ void resume_callback() {
 }
 
 void send_data(){
-   log_info("last element is %d", data[position_in_store - 1]);
-   log_info("first element is %d", data[0]);
+   //log_info("last element is %d", data[position_in_store - 1]);
+   //log_info("first element is %d", data[0]);
 
    spin1_memcpy(&my_msg.data, data,
                 position_in_store * WORD_TO_BYTE_MULTIPLIER);
@@ -106,7 +106,7 @@ void send_data(){
 
 void receive_data(uint key, uint payload){
     if (starting_again){
-        log_info("payload is %d", payload);
+        //log_info("payload is %d", payload);
         starting_again = false;
     }
 
@@ -123,12 +123,12 @@ void receive_data(uint key, uint payload){
         position_in_store += 1;
         //log_info("payload is %d", payload);
 
-        if (payload == END_FLAG){
-            log_info("position = %d", position_in_store);
+        if (payload == 0xFFFFFFFF){
+            //log_info("position of end flag = %d", position_in_store);
             send_data();
             starting_again = true;
         }else if(position_in_store == ITEMS_PER_DATA_PACKET){
-            log_info("position = %d", position_in_store);
+            //log_info("position = %d", position_in_store);
             send_data();
             starting_again = true;
         }

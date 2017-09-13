@@ -137,7 +137,7 @@ void send_data_block(
         uint32_t current_dma_pointer, uint32_t number_of_elements_to_send,
         uint32_t first_packet_key){
 
-   log_info("first data is %d", data_to_transmit[current_dma_pointer][0]);
+   //log_info("first data is %d", data_to_transmit[current_dma_pointer][0]);
 
    // send data
    for (uint data_position = 0; data_position < number_of_elements_to_send;
@@ -151,7 +151,7 @@ void send_data_block(
         }
         first_packet_key = key;
    }
-   log_info("last data is %d", data_to_transmit[current_dma_pointer][number_of_elements_to_send - 1]);
+   //log_info("last data is %d", data_to_transmit[current_dma_pointer][number_of_elements_to_send - 1]);
 }
 
 //! \brief sets off a dma reading a block of SDRAM for dara
@@ -189,7 +189,7 @@ void dma_complete_reading_for_original_transmission(uint unused, uint unused2){
     // put size in bytes if first send
     //log_info("in original read complete callback");
     if(first_transmission){
-        log_info("in first");
+        //log_info("in first");
         data_to_transmit[current_dma_pointer][0] = bytes_to_write;
         key_to_transmit = key + 2;
     }
@@ -212,6 +212,7 @@ void dma_complete_reading_for_original_transmission(uint unused, uint unused2){
         read(DMA_TAG_READ_FOR_TRANSMISSION, 0,
              (ITEMS_PER_DATA_PACKET - SEQUENCE_NUMBER_SIZE) *
               WORD_TO_BYTE_MULTIPLIER);
+
         //log_info("sending data");
         send_data_block(
             current_dma_pointer, num_items_to_transmit, key_to_transmit);
@@ -222,11 +223,13 @@ void dma_complete_reading_for_original_transmission(uint unused, uint unused2){
         uint32_t n_elements_to_trasnmit = (
             (uint)(bytes_to_write / WORD_TO_BYTE_MULTIPLIER)) -
             (position_in_store - (ITEMS_PER_DATA_PACKET - SEQUENCE_NUMBER_SIZE));
-        log_info("trasnmitting %d elements", n_elements_to_trasnmit);
+        //log_info("trasnmitting %d elements", n_elements_to_trasnmit);
         send_data_block(
             current_dma_pointer, n_elements_to_trasnmit, key_to_transmit);
         //log_info("finished sending data");
-        spin1_send_mc_packet(key, END_FLAG, WITH_PAYLOAD);
+
+        while(!spin1_send_mc_packet(key, END_FLAG, WITH_PAYLOAD)){
+        }
         //log_info("finished sending original data with end flag");
     }
 
@@ -255,7 +258,7 @@ void store_missing_seq_nums(uint32_t data[], ushort length, bool first){
         uint32_t total_missing_seq_nums = (
             (ITEMS_PER_DATA_PACKET - 2) +
             ((missing_sdp_packets  - 1) * (ITEMS_PER_DATA_PACKET - 1)));
-        log_info("final seq num count is %d", total_missing_seq_nums);
+        //log_info("final seq num count is %d", total_missing_seq_nums);
 
         uint32_t size_of_data =
             ((missing_sdp_packets * ITEMS_PER_DATA_PACKET) *
@@ -271,8 +274,8 @@ void store_missing_seq_nums(uint32_t data[], ushort length, bool first){
             sv->sdram_heap, size_of_data, 0,
             ALLOC_LOCK + ALLOC_ID + (sark_vec->app_id << 8));
         start_reading_offset = 2;
-        log_info("address to write to is %d",
-                 missing_sdp_seq_num_sdram_address);
+        //log_info("address to write to is %d",
+        //         missing_sdp_seq_num_sdram_address);
     }
     
     // write data to sdram and update packet counter
@@ -301,7 +304,7 @@ void retransmission_dma_read(){
             ITEMS_PER_DATA_PACKET * WORD_TO_BYTE_MULTIPLIER)){
         // do nothing when failing, just keep retrying. it'll work at
         // some point
-        log_info("failing to set off dma transfer!");
+        //log_info("failing to set off dma transfer!");
     }
 }
 
@@ -342,7 +345,7 @@ void the_dma_complete_read_missing_seqeuence_nums(uint unused, uint unused2){
 void dma_complete_writing_missing_seq_to_sdram(uint unused, uint unused2){
     use(unused);
     use(unused2);
-    log_info("Need to figure what to do here");
+    //log_info("Need to figure what to do here");
 }
 
 
@@ -351,7 +354,7 @@ void dma_complete_reading_retransmission_data(uint unused, uint unused2){
     use(unused);
     use(unused2);
 
-    log_info("just read data for a given missing sequence number");
+    //log_info("just read data for a given missing sequence number");
 
     // set seq number as first element
     data_to_transmit[transmit_dma_pointer][0] =
@@ -375,7 +378,7 @@ void sdp_reception(uint mailbox, uint port){
     sdp_msg_pure_data *msg = (sdp_msg_pure_data *) mailbox;
 
     //log_info("received packet with code %d", msg->data[0]);
-    log_info("bytes to read = %d", bytes_to_write);
+    //log_info("bytes to read = %d", bytes_to_write);
 
     // start the process of sending data
     if(msg->data[0] == SDP_COMMAND_FOR_SENDING_DATA){
@@ -394,7 +397,7 @@ void sdp_reception(uint mailbox, uint port){
     // start or continue to gather missing packet list
     else if(msg->data[0] == SDP_COMMAND_FOR_START_OF_MISSING_SDP_PACKETS ||
             msg->data[0] == SDP_COMMAND_FOR_MORE_MISSING_SDP_PACKETS){
-        log_info("starting resend mode");
+        //log_info("starting resend mode");
 
         // reset state, as could be here from multiple attempts
         if(msg->data[0] == SDP_COMMAND_FOR_START_OF_MISSING_SDP_PACKETS){
@@ -419,14 +422,14 @@ void sdp_reception(uint mailbox, uint port){
             missing_sdp_seq_num_sdram_address[data_written + 1] = END_FLAG;
             data_written += 1;
 
-            log_info("create dma buffers");
+            //log_info("create dma buffers");
             // create the dma buffers when needed
             for (uint32_t i = 0; i < N_DMA_BUFFERS; i++) {
                 retransmit_seq_nums[i] = (uint32_t*) spin1_malloc(
                     ITEMS_PER_DATA_PACKET * sizeof(uint32_t));
             }
 
-            log_info("start retransmission");
+            //log_info("start retransmission");
             // start dma off  
             retransmission_dma_read();
         }
@@ -450,7 +453,7 @@ void write_data(){
         ALLOC_LOCK + ALLOC_ID + (sark_vec->app_id << 8));
 
     uint iterations = (uint)(bytes_to_write / 4);
-    log_info("iterations = %d", iterations - 1);
+    //log_info("iterations = %d", iterations - 1);
 
     for(uint count = 0; count < iterations; count++){
         store_address[count] = count;
