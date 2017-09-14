@@ -223,19 +223,19 @@ void dma_complete_reading_for_original_transmission(uint unused, uint unused2){
         //log_info("finished sending data");
     }
     else{
-        log_info("sending last data");
-        log_info("position_in_store = %d, to get to %d. seq num = %d", position_in_store, (uint)bytes_to_write / WORD_TO_BYTE_MULTIPLIER, possible_seq_num);
+        //log_info("sending last data");
+        //log_info("position_in_store = %d, to get to %d. seq num = %d", position_in_store, (uint)bytes_to_write / WORD_TO_BYTE_MULTIPLIER, possible_seq_num);
         uint32_t n_elements_to_trasnmit = (
             (uint)(bytes_to_write / WORD_TO_BYTE_MULTIPLIER)) -
             (position_in_store - (ITEMS_PER_DATA_PACKET - SEQUENCE_NUMBER_SIZE));
-        log_info("trasnmitting %d elements", n_elements_to_trasnmit);
+        //log_info("trasnmitting %d elements", n_elements_to_trasnmit);
         send_data_block(
             current_dma_pointer, n_elements_to_trasnmit, key_to_transmit);
-        log_info("finished sending data");
+        //log_info("finished sending data");
 
         while(!spin1_send_mc_packet(key, END_FLAG, WITH_PAYLOAD)){
         }
-        log_info("finished sending original data with end flag");
+        //log_info("finished sending original data with end flag");
     }
 
     if (TDMA_WAIT_PERIOD != 0){
@@ -387,7 +387,7 @@ void sdp_reception(uint mailbox, uint port){
 
     // start the process of sending data
     if(msg->data[0] == SDP_COMMAND_FOR_SENDING_DATA){
-        log_info("starting the send of orginial data");
+        //log_info("starting the send of orginial data");
         spin1_msg_free((sdp_msg_t *) msg);
 
         // reset states

@@ -106,7 +106,7 @@ void send_data(){
 
 void receive_data(uint key, uint payload){
     if (starting_again){
-        log_info("starting again");
+        //log_info("starting again");
         starting_again = false;
     }
 
@@ -128,7 +128,7 @@ void receive_data(uint key, uint payload){
             send_data();
             starting_again = true;
         }else if(position_in_store == ITEMS_PER_DATA_PACKET){
-            log_info("position = %d", position_in_store);
+            //log_info("position = %d", position_in_store);
             send_data();
             starting_again = true;
         }
