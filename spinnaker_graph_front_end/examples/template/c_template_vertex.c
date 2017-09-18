@@ -17,7 +17,7 @@ static uint32_t infinite_run;
 
 //! The recording flags
 static uint32_t recording_flags = 0;
-//static bool initialise_recording();
+static bool initialise_recording();
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
@@ -56,7 +56,7 @@ static uint32_t my_key;
 //! \param[in] payload is the payload of packet [none].
 //! \return None
 void receive_data_no_payload(uint key, uint payload) {
-	use(payload);
+    use(payload);
 
     // TODO: Handle a received multicast packet without a payload
 }
@@ -84,9 +84,9 @@ static void do_update(uint ticks, uint32_t time) {
 
     // TODO: Handle a timer tick
 
-	// TODO: Add any other functionality e.g. recording, iobuf etc.
-	//       For further useful functions e.g. recording_record,
-	//       recording_do_timestep_update, see other graph_front_end examples
+    // TODO: Add any other functionality e.g. recording, iobuf etc.
+    //       For further useful functions e.g. recording_record,
+    //       recording_do_timestep_update, see other graph_front_end examples
 
 }
 
@@ -113,10 +113,10 @@ static bool initialise_recording() {
 
     // TODO: Update with the recording region ids
     address_t regions_addresses_to_record = data_specification_get_region(
-    		RECORDED_DATA, address);
+            RECORDED_DATA, address);
 
     bool success = recording_initialize(regions_addresses_to_record,
-    		&recording_flags);
+            &recording_flags);
     log_info("Recording flags = 0x%08x", recording_flags);
     return success;
 }
@@ -154,7 +154,7 @@ void update(uint ticks, uint unused) {
 //! \brief sets up state variables for the system
 //! \param[in] timer_period: pointer to the time between timer tick callbacks
 //! \return: bool which states if it succeed or not
-static bool initialize(uint32_t *timer_period)) {
+static bool initialize(uint32_t *timer_period) {
     log_info("Initialise: started\n");
 
     // Get the address this core's DTCM data starts at from SRAM

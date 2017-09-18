@@ -37,16 +37,11 @@ class TemplateVertex(
                ('TRANSMISSION', 1),
                ('RECORDED_DATA', 2)])
 
-    def __init__(self, label, machine_time_step, time_scale_factor,
-                 constraints=None):
+    def __init__(self, label, constraints=None):
 
         self._recording_size = 5000
 
         MachineVertex.__init__(self, label=label, constraints=constraints)
-
-        self.activate_buffering_output(
-            n_machine_time_steps=1000, buffered_sdram_per_timestep=[1000],
-            minimum_sdram_for_buffering=1024)
 
         config = globals_variables.get_simulator().config
         self._buffer_size_before_receive = None
@@ -78,7 +73,7 @@ class TemplateVertex(
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
-        return "c_code.aplx"
+        return "c_template_vertex.aplx"
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):
