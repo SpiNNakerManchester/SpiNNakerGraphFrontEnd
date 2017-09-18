@@ -1,23 +1,21 @@
-from spinn_front_end_common.abstract_models.impl\
-    import MachineDataSpecableVertex
-from spinn_front_end_common.abstract_models\
-    import AbstractHasAssociatedBinary
-from spinn_front_end_common.interface.buffer_management.buffer_models\
-    import AbstractReceiveBuffersToHost
-from spinn_front_end_common.utilities import globals_variables
-from spinn_front_end_common.utilities import constants, helpful_functions
-from spinn_front_end_common.interface.buffer_management \
-    import recording_utilities
-from spinn_front_end_common.interface.simulation import simulation_utilities
-from spinn_front_end_common.utilities.utility_objs import ExecutableStartType
-
 from pacman.model.decorators import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
 from pacman.model.resources import ResourceContainer, SDRAMResource
 
-from enum import Enum
+from spinn_front_end_common.utilities import globals_variables
+from spinn_front_end_common.utilities import constants, helpful_functions
+from spinn_front_end_common.interface.simulation import simulation_utilities
+from spinn_front_end_common.abstract_models.impl \
+    import MachineDataSpecableVertex
+from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
+from spinn_front_end_common.interface.buffer_management.buffer_models\
+    import AbstractReceiveBuffersToHost
+from spinn_front_end_common.interface.buffer_management\
+    import recording_utilities
+from spinn_front_end_common.utilities.utility_objs import ExecutableStartType
 
+from enum import Enum
 import logging
 
 logger = logging.getLogger(__name__)
@@ -25,7 +23,7 @@ logger = logging.getLogger(__name__)
 PARTITION_ID = "DATA"
 
 
-class Vertex(
+class TemplateVertex(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
         AbstractReceiveBuffersToHost):
 
@@ -157,7 +155,8 @@ class Vertex(
         if is_missing_data:
             logger.warn("Some data was lost when recording")
         record_raw = data_pointer.read_all()
-        return record_raw
+        output = str(record_raw)
+        return output
 
     @overrides(AbstractReceiveBuffersToHost.get_minimum_buffer_sdram_usage)
     def get_minimum_buffer_sdram_usage(self):
