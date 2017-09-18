@@ -9,7 +9,6 @@ from spinnaker_graph_front_end.examples.template.template_vertex\
 
 import logging
 import os
-from multiprocessing.sharedctypes import template
 
 
 logger = logging.getLogger(__name__)
