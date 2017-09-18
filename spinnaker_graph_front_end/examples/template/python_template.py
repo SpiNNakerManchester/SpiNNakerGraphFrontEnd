@@ -40,8 +40,8 @@ for placement in sorted(placements.placements,
                         key=lambda p: (p.x, p.y, p.p)):
 
     if isinstance(placement.vertex, TemplateVertex):
-        template = placement.vertex.read(placement, buffer_manager)
+        template_info = placement.vertex.read(placement, buffer_manager)
         logger.info("{}, {}, {} > {}".format(
-            placement.x, placement.y, placement.p, template))
+            placement.x, placement.y, placement.p, template_info))
 
 front_end.stop()
