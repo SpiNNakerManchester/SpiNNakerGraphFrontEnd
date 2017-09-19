@@ -157,9 +157,11 @@ class PacketGathererWithProtocol(
         # locate missing seq nums from pile
 
         missing_seq_nums = self._calculate_missing_seq_nums(seq_nums)
+        self._print_missing(seq_nums)
         if len(missing_seq_nums) == 0:
             return True
 
+        print "doing retransmission"
         # figure n packets given the 2 formats
         n_packets = 1
         length_via_format2 = \
@@ -240,7 +242,7 @@ class PacketGathererWithProtocol(
                 data=str(data))
 
             # debug
-            # self.print_out_missing_seq_packets_data(data)
+            #self.print_out_missing_seq_packets_data(data)
 
             # send message to core
             transceiver.send_sdp_message(message=message)
@@ -285,8 +287,11 @@ class PacketGathererWithProtocol(
             else:
                 # this flag can be dropped at some point
                 seq_num = first_packet_element
+                #print "seq num = {}".format(seq_num)
                 if seq_num > self._max_seq_num:
-                    raise Exception("got an insane sequence number")
+                    raise Exception(
+                        "got an insane sequence number. got {} when "
+                        "the max is {}".format(seq_num, self._max_seq_num))
                 seq_nums.add(seq_num)
 
                 # figure offset for where data is to be put

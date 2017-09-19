@@ -63,8 +63,6 @@ static uint32_t position_in_store = 0;
 //! sdp message holder for transmissions
 sdp_msg_pure_data my_msg;
 
-static bool starting_again = true;
-
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
@@ -105,13 +103,11 @@ void send_data(){
 }
 
 void receive_data(uint key, uint payload){
-    if (starting_again){
-        //log_info("starting again");
-        starting_again = false;
-    }
 
     if(key == new_sequence_key){
-        seq_num = payload;
+        log_info("finding new seq num %d", payload);
+        log_info("position in store is %d", position_in_store);
+        data[0] = payload;
     }
     else{
         if (key == first_data_key){
@@ -124,13 +120,13 @@ void receive_data(uint key, uint payload){
         //log_info("payload is %d", payload);
 
         if (payload == 0xFFFFFFFF){
-            log_info("position of end flag = %d", position_in_store);
+            //log_info("position = %d with seq num %d", position_in_store, seq_num);
+            //log_info("last payload was %d", payload);
             send_data();
-            starting_again = true;
         }else if(position_in_store == ITEMS_PER_DATA_PACKET){
-            //log_info("position = %d", position_in_store);
+            //log_info("position = %d with seq num %d", position_in_store, seq_num);
+            //log_info("last payload was %d", payload);
             send_data();
-            starting_again = true;
         }
     }
 }
