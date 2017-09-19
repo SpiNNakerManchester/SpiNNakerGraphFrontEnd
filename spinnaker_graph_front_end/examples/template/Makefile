@@ -4,12 +4,12 @@ ifndef SPINN_DIRS
 endif
 
 # TODO: Rename to suit your application 
-APP = c_code
+APP = c_template_vertex
 
 BUILD_DIR = build/
 
 # TODO: Replace with your source code files
-SOURCES = c_code.c
+SOURCES = c_template_vertex.c
 
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 CURRENT_DIR := $(dir $(MAKEFILE_PATH))
