@@ -63,7 +63,6 @@ class SDRAMReaderAndTransmitterWithProtocol(
 
         spec.switch_write_focus(self.DATA_REGIONS.CONFIG.value)
         first_key = local_routing_info.first_key
-        print "first key is {}".format(first_key)
         spec.write_value(first_key)
         spec.write_value(self._mbs)
 
