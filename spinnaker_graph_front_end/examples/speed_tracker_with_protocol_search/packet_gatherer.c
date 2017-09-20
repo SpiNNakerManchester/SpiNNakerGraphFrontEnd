@@ -120,6 +120,10 @@ void receive_data(uint key, uint payload){
         //log_info("payload is %d", payload);
 
         if (payload == 0xFFFFFFFF){
+            if (position_in_store == 2){
+                data[0] = 0xFFFFFFFF;
+                position_in_store = 1;
+            }
             //log_info("position = %d with seq num %d", position_in_store, seq_num);
             //log_info("last payload was %d", payload);
             send_data();
