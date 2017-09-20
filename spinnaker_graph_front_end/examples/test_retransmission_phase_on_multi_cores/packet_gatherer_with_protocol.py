@@ -264,7 +264,7 @@ class PacketGathererWithProtocol(
                 data=str(data))
 
             # debug
-            #self.print_out_missing_seq_packets_data(data)
+            self._print_out_packet_data(data)
 
             # send message to core
             transceiver.send_sdp_message(message=message)
@@ -301,7 +301,7 @@ class PacketGathererWithProtocol(
             # if received a last flag on its own, its during retransmission.
             #  check and try again if required
             if (last_mc_packet == self.END_FLAG and
-                        length_of_data == self.END_FLAG_SIZE):
+                    length_of_data == self.END_FLAG_SIZE):
                 if not self._check(seq_nums):
                     finished = self._transmit_missing_seq_nums(
                         placement=placement, transceiver=transceiver,
@@ -313,7 +313,7 @@ class PacketGathererWithProtocol(
                 if seq_num > self._max_seq_num:
                     raise Exception(
                         "got an insane sequence number. got {} when "
-                        "the max is {}".format(seq_num, self._max_seq_num))
+                        "the max is {} with a length of {}".format(seq_num, self._max_seq_num, length_of_data))
                 seq_nums.add(seq_num)
 
                 # figure offset for where data is to be put

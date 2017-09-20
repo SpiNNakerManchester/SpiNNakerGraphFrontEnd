@@ -335,13 +335,14 @@ void the_dma_complete_read_missing_seqeuence_nums(uint unused, uint unused2){
         // get next seq num to regenerate
         missing_seq_num_being_processed = (uint32_t)
             retransmit_seq_nums[position_in_read_data];
+        log_info("handling missing seq num %d", missing_seq_num_being_processed);
         if(missing_seq_num_being_processed != END_FLAG){
             // regenerate data
             position_in_store =
                missing_seq_num_being_processed * (
                    ITEMS_PER_DATA_PACKET - SEQUENCE_NUMBER_SIZE);
             read(DMA_TAG_RETRANSMISSION_READING, 1,
-                 (ITEMS_PER_DATA_PACKET - SEQUENCE_NUMBER_SIZE - 1));
+                 (ITEMS_PER_DATA_PACKET - SEQUENCE_NUMBER_SIZE));
         }
         else{ // finished data send, tell host its done
            while(!spin1_send_mc_packet(key, END_FLAG, WITH_PAYLOAD)){
@@ -426,7 +427,7 @@ void sdp_reception(uint mailbox, uint port){
         if(missing_sdp_packets == 0){
         
             // packets all received, add finish flag for dma stoppage
-            missing_sdp_seq_num_sdram_address[data_written + 1] = END_FLAG;
+            missing_sdp_seq_num_sdram_address[data_written] = END_FLAG;
             data_written += 1;
 
             //log_info("start retransmission");
