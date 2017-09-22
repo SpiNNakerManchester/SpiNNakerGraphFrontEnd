@@ -18,7 +18,8 @@ import os
 
 logger = logging.getLogger(__name__)
 
-front_end.setup(n_chips_required=None, model_binary_folder=os.getcwd())
+front_end.setup(
+    n_chips_required=None, model_binary_folder=os.path.dirname(__file__))
 
 # calculate total number of 'free' cores for the given board
 # (i.e. does not include those busy with SARK or reinjection)
