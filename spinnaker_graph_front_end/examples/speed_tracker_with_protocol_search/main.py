@@ -184,6 +184,8 @@ if __name__ == "__main__":
             writer.write(str(sd))
             writer.write("\n")
             writer.write(retry_data)
+            writer.flush()
+            writer.close()
 
     # average
     average = numpy.average(overall_data_times)
