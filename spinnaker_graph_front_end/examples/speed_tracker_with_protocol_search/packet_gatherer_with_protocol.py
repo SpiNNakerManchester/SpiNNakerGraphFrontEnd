@@ -20,7 +20,7 @@ import time
 
 
 class PacketGathererWithProtocol(
-    MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
+        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
@@ -54,6 +54,7 @@ class PacketGathererWithProtocol(
         self._view = None
         self._max_seq_num = None
         self._output = None
+        self._lost_seq_nums = list()
 
     @property
     def resources_required(self):
@@ -143,7 +144,7 @@ class PacketGathererWithProtocol(
 
         # self._check(seq_nums)
         transceiver.set_reinjection_router_timeout(15, 4)
-        return self._output
+        return self._output, self._lost_seq_nums
 
     def _calculate_missing_seq_nums(self, seq_nums):
         missing_seq_nums = list()
@@ -157,11 +158,12 @@ class PacketGathererWithProtocol(
         # locate missing seq nums from pile
 
         missing_seq_nums = self._calculate_missing_seq_nums(seq_nums)
-        self._print_missing(seq_nums)
+        self._lost_seq_nums.append(len(missing_seq_nums))
+        #self._print_missing(seq_nums)
         if len(missing_seq_nums) == 0:
             return True
 
-        print "doing retransmission"
+        #print "doing retransmission"
         # figure n packets given the 2 formats
         n_packets = 1
         length_via_format2 = \
@@ -291,7 +293,8 @@ class PacketGathererWithProtocol(
                 if seq_num > self._max_seq_num:
                     raise Exception(
                         "got an insane sequence number. got {} when "
-                        "the max is {} with a length of {}".format(seq_num, self._max_seq_num, length_of_data))
+                        "the max is {} with a length of {}".format(
+                            seq_num, self._max_seq_num, length_of_data))
                 seq_nums.add(seq_num)
 
                 # figure offset for where data is to be put

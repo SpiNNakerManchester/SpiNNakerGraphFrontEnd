@@ -43,7 +43,7 @@ class Runner(object):
             return self._do_run(reader, receiver, mbs)
         else:
             sim.stop()
-            return None, False, False, ""
+            return None, False, False, "", 0
 
     @staticmethod
     def _do_run(reader, receiver, mbs):
@@ -59,7 +59,7 @@ class Runner(object):
         try:
             print "starting data gathering"
             start = float(time.time())
-            data = receiver.get_data(
+            data, lost_seq_data = receiver.get_data(
                 sim.transceiver(),
                 placements.get_placement_of_vertex(reader))
             end = float(time.time())
@@ -83,35 +83,41 @@ class Runner(object):
             speed = (mbs * 8) / seconds
             print ("Read {} MB in {} seconds ({} Mb/s)".format(
                 mbs, seconds, speed))
-            return speed, True, False, ""
+            return speed, True, False, "", lost_seq_data
 
         except Exception as e:
             # if boomed. end so that we can get iobuf
             traceback.print_exc()
             sim.stop()
-            return None, True, True, e.message
+            return None, True, True, e.message, 0
 
 
 if __name__ == "__main__":
 
     # entry point for doing speed search
-    data_sizes = [1, 2, 5, 10, 20, 30, 50, 100]
-    locations = [(0, 0), (1, 1), (0, 3), (2, 4), (4, 0), (7, 7)]
+    data_sizes = [1, 2, 5, 10, 20, 30, 50]
+    #data_sizes = [1, 2, 5, 10, 20, 30, 50, 100]
+    locations = [(0, 0), (1, 1)]
+    #locations = [(0, 0), (1, 1), (0, 3), (2, 4), (4, 0), (7, 7)]
     iterations_per_type = 100
     runner = Runner()
 
     data_times = dict()
     overall_data_times = list()
     failed_to_run_states = list()
+    lost_data_pattern = dict()
 
     for mbs_to_run in data_sizes:
         for x_coord, y_coord in locations:
             for iteration in range(0, iterations_per_type):
-                print "######################################################################"
-                print "running {}:{}:{}:{}".format(mbs_to_run, x_coord, y_coord, iteration)
-                print "######################################################################"
-                speed_of_data_extraction, ran, blew_up, bang_message = \
-                    runner.run(mbs_to_run, x_coord, y_coord)
+                print "###########################################" \
+                      "###########################"
+                print "running {}:{}:{}:{}".format(
+                    mbs_to_run, x_coord, y_coord, iteration)
+                print "##################################################" \
+                      "####################"
+                speed_of_data_extraction, ran, blew_up, bang_message, \
+                    lost_seq_nums = runner.run(mbs_to_run, x_coord, y_coord)
                 if ran:
                     if blew_up:
                         print "sim for iteration {} for {} msb on chip " \
@@ -121,10 +127,18 @@ if __name__ == "__main__":
                     else:
                         if mbs_to_run not in data_times:
                             data_times[mbs_to_run] = dict()
+                        if mbs_to_run not in lost_data_pattern:
+                            lost_data_pattern[mbs_to_run] = dict()
                         if (x_coord, y_coord) not in data_times[mbs_to_run]:
                             data_times[mbs_to_run][(x_coord, y_coord)] = list()
+                        if (x_coord, y_coord) not in \
+                                lost_data_pattern[mbs_to_run]:
+                            lost_data_pattern[mbs_to_run][
+                                (x_coord, y_coord)] = list()
                         data_times[mbs_to_run][(x_coord, y_coord)].append(
                             speed_of_data_extraction)
+                        lost_data_pattern[mbs_to_run][
+                                (x_coord, y_coord)].append(lost_seq_nums)
                         overall_data_times.append(speed_of_data_extraction)
                 else:
                     failed_to_run_states.append((x_coord, y_coord))
@@ -148,14 +162,32 @@ if __name__ == "__main__":
             # sd
             sd = numpy.std(speed_times)
 
-            print "for msb = {}, from chip {}:{} average speed = {} " \
-                  "max speed = {} min speed = {} std = {}".format(
-                mbs_to_run, x_coord, y_coord, total, max, min, sd)
+            # retries
+            retry_data = lost_data_pattern[mbs_to_run][(x_coord, y_coord)]
 
-    # total
+            print "for msb = {}, from chip {}:{} average speed = {} " \
+                  "max speed = {} min speed = {} std = {} " \
+                  "number of retires = {} n missing per retry = {}".format(
+                mbs_to_run, x_coord, y_coord, total, max, min, sd,
+                len(retry_data), retry_data)
+
+            # write raw data to file
+            writer = open("{}_{}_{}".format(mbs_to_run, x_coord, y_coord), "w")
+            writer.write(speed_times)
+            writer.write("\n")
+            writer.write(total)
+            writer.write("\n")
+            writer.write(str(max))
+            writer.write("\n")
+            writer.write(str(min))
+            writer.write("\n")
+            writer.write(str(sd))
+            writer.write("\n")
+            writer.write(retry_data)
 
     # average
     average = numpy.average(overall_data_times)
+
     # max
     max = numpy.max(overall_data_times)
 
