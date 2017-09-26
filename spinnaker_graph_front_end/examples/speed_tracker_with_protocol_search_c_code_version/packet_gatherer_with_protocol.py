@@ -106,7 +106,7 @@ class PacketGathererWithProtocol(
     def get_binary_file_name(self):
         return "packet_gatherer.aplx"
 
-    def get_data(self, transceiver, placement, port):
+    def get_data(self, transceiver, placement):
 
         data = struct.pack("<I", self.SDP_PACKET_START_SENDING_COMMAND_ID)
         # print "sending to core {}:{}:{}".format(

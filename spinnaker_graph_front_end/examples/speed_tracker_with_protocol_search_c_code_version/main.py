@@ -56,10 +56,6 @@ class Runner(object):
 
         # get placements for extraction
         placements = sim.placements()
-        tags = sim.tags()
-
-        # get tag for this connection
-        tag = tags.get_ip_tags_for_vertex(receiver)[0]
 
         sim.transceiver().set_watch_dog(False)
 
@@ -68,7 +64,7 @@ class Runner(object):
             start = float(time.time())
             data, lost_seq_data = receiver.get_data(
                 sim.transceiver(),
-                placements.get_placement_of_vertex(reader), tag.port)
+                placements.get_placement_of_vertex(reader))
             end = float(time.time())
             # end sim
             sim.stop()
