@@ -6,17 +6,18 @@ from pacman.executor.injection_decorator import supports_injection, \
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, CPUCyclesPerTickResource
 from pacman.model.resources import DTCMResource, SDRAMResource
-from pacman.utilities import utility_calls
+from pacman.utilities.utility_calls import is_single
 
 # spinn front end common imports
-from spinn_front_end_common.utilities \
-    import constants, exceptions, helpful_functions
+from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT
+from spinn_front_end_common.utilities.exceptions import ConfigurationException
+from spinn_front_end_common.utilities.helpful_functions \
+    import locate_memory_region_for_placement
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.abstract_models.impl \
     import MachineDataSpecableVertex
-from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
-from spinn_front_end_common.utilities.utility_objs import ExecutableStartType
 
+from spinnaker_graph_front_end.utilities import SimulationBinary
 
 # general imports
 from enum import Enum
@@ -25,7 +26,7 @@ import struct
 
 @supports_injection
 class ConwayBasicCell(
-        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
+        MachineVertex, MachineDataSpecableVertex, SimulationBinary):
     """ Cell which represents a cell within the 2d fabric
     """
 
@@ -45,19 +46,11 @@ class ConwayBasicCell(
                ('RESULTS', 4)])
 
     def __init__(self, label, state):
-
         MachineVertex.__init__(self, label)
+        SimulationBinary.__init__(self, "conways_cell.aplx")
 
         # app specific elements
         self._state = state
-
-    @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
-    def get_binary_file_name(self):
-        return "conways_cell.aplx"
-
-    @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
-    def get_binary_start_type(self):
-        return ExecutableStartType.USES_SIMULATION_INTERFACE
 
     @inject_items({"n_machine_time_steps": "TotalMachineTimeSteps"})
     @overrides(
@@ -69,7 +62,7 @@ class ConwayBasicCell(
             n_machine_time_steps):
 
         # Setup words + 1 for flags + 1 for recording size
-        setup_size = constants.SYSTEM_BYTES_REQUIREMENT
+        setup_size = SYSTEM_BYTES_REQUIREMENT
 
         # reserve memory regions
         spec.reserve_memory_region(
@@ -97,29 +90,22 @@ class ConwayBasicCell(
         # check got right number of keys and edges going into me
         partitions = \
             machine_graph.get_outgoing_edge_partitions_starting_at_vertex(self)
-        if not utility_calls.is_single(partitions):
-            raise exceptions.ConfigurationException(
-                "Can only handle one type of partition. ")
+        if not is_single(partitions):
+            raise ConfigurationException(
+                "Can only handle one type of partition.")
 
-        # check for duplicates
-        edges = list(machine_graph.get_edges_ending_at_vertex(self))
-        if len(set(edges)) != 8:
-            output = ""
-            for edge in edges:
-                output += edge.pre_subvertex.label + " : "
-            raise exceptions.ConfigurationException(
-                "I've got duplicate edges. This is a error. The edges are "
-                "connected to these vertices \n {}".format(output))
-
+        # check for misconfigured connections; note that the underlying model
+        # of a machine graph's connections is based on an ordered set, so we
+        # can assume that we have no duplicates.
+        edges = machine_graph.get_edges_ending_at_vertex(self)
         if len(edges) != 8:
-            raise exceptions.ConfigurationException(
+            raise ConfigurationException(
                 "I've not got the right number of connections. I have {} "
-                "instead of 9".format(
+                "instead of 8".format(
                     len(machine_graph.incoming_subedges_from_subvertex(self))))
-
         for edge in edges:
             if edge.pre_vertex == self:
-                raise exceptions.ConfigurationException(
+                raise ConfigurationException(
                     "I'm connected to myself, this is deemed an error"
                     " please fix.")
 
@@ -129,21 +115,13 @@ class ConwayBasicCell(
 
         spec.switch_write_focus(
             region=self.DATA_REGIONS.TRANSMISSIONS.value)
-        if key is None:
-            spec.write_value(0)
-            spec.write_value(0)
-        else:
-            spec.write_value(1)
-            spec.write_value(key)
+        spec.write_value(0 if key is None else 1)
+        spec.write_value(0 if key is None else key)
 
         # write state value
         spec.switch_write_focus(
             region=self.DATA_REGIONS.STATE.value)
-
-        if self._state:
-            spec.write_value(1)
-        else:
-            spec.write_value(0)
+        spec.write_value(1 if self._state else 0)
 
         # write neighbours data state
         spec.switch_write_focus(
@@ -164,13 +142,10 @@ class ConwayBasicCell(
         spec.end_specification()
 
     def get_data(self, transceiver, placement, n_machine_time_steps):
-        data = list()
-
         # Get the data region base address where results are stored for the
         # core
-        record_region_base_address = \
-            helpful_functions.locate_memory_region_for_placement(
-                placement, self.DATA_REGIONS.RESULTS.value, transceiver)
+        record_region_base_address = locate_memory_region_for_placement(
+            placement, self.DATA_REGIONS.RESULTS.value, transceiver)
 
         # find how many bytes are needed to be read
         number_of_bytes_to_read = str(transceiver.read_memory(
@@ -179,25 +154,16 @@ class ConwayBasicCell(
             struct.unpack("<I", number_of_bytes_to_read)[0]
 
         # read the bytes
-        if number_of_bytes_to_read != (n_machine_time_steps * 4):
-            raise exceptions.ConfigurationException(
-                "number of bytes seems wrong")
-        else:
-            raw_data = str(transceiver.read_memory(
-                placement.x, placement.y, record_region_base_address + 4,
-                number_of_bytes_to_read))
+        if number_of_bytes_to_read != n_machine_time_steps * 4:
+            raise ConfigurationException("number of bytes seems wrong")
 
-        # convert to ints
-        elements = struct.unpack(
-            "<{}I".format(n_machine_time_steps), raw_data)
-        for element in elements:
-            if element == 0:
-                data.append(False)
-            else:
-                data.append(True)
+        raw_data = str(transceiver.read_memory(
+            placement.x, placement.y, record_region_base_address + 4,
+            number_of_bytes_to_read))
 
-        # return the data
-        return data
+        # convert to booleans
+        return [elem != 0 for elem in struct.unpack(
+            "<{}I".format(n_machine_time_steps), raw_data)]
 
     @property
     @overrides(MachineVertex.resources_required)
@@ -214,7 +180,7 @@ class ConwayBasicCell(
 
     @inject_items({"n_machine_time_steps": "TotalMachineTimeSteps"})
     def _calculate_sdram_requirement(self, n_machine_time_steps):
-        return (constants.SYSTEM_BYTES_REQUIREMENT +
+        return (SYSTEM_BYTES_REQUIREMENT +
                 self.TRANSMISSION_DATA_SIZE + self.STATE_DATA_SIZE +
                 self.NEIGHBOUR_INITIAL_STATES_SIZE +
                 n_machine_time_steps + 4)
