@@ -19,16 +19,16 @@ import unittest
 class TestConwayExamples(unittest.TestCase):
 
     def test_one_no_graph(self):
-        conways_no_graph.run_broken()
+        conways_no_graph.do_run()
 
     def test_conways_no_edges(self):
-        conways_no_edges.run_broken()
+        conways_no_edges.do_run()
 
     def test_conways_partitioned_a(self):
-        conways_partitioned_a.run_broken()
+        conways_partitioned_a.do_run()
 
     def test_conways_partitioned_b(self):
-        conways_partitioned_b.run_broken()
+        conways_partitioned_b.do_run()
 
     def test_conways_partitioned_c(self):
         conways_partitioned_c.run_broken()

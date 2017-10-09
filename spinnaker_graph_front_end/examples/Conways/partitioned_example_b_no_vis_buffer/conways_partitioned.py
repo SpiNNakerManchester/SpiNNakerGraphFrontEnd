@@ -11,7 +11,7 @@ from spinnaker_graph_front_end.examples.Conways.\
 # in generate_machine_data_specification
 #    key = routing_info.get_first_key_from_partition(partitions[0])
 # TypeError: 'OrderedSet' object does not support indexing
-def run_broken():
+def do_run():
     runtime = 50
     # machine_time_step = 100
     # time_scale_factor = 2
@@ -22,7 +22,7 @@ def run_broken():
     front_end.setup(n_chips_required=2)
 
     # figure out if machine can handle simulation
-    cores = front_end.get_number_of_cores_on_machine()
+    cores = front_end.get_number_of_available_cores_on_machine()
     if cores <= (MAX_X_SIZE_OF_FABRIC * MAX_Y_SIZE_OF_FABRIC):
         raise KeyError("Don't have enough cores to run simulation")
 
@@ -77,7 +77,7 @@ def run_broken():
                     MachineEdge(
                         vertices[x][y], vertices[dest_x][dest_y],
                         label=compass),
-                    "STATE",)
+                    ConwayBasicCell.PARTITION_ID)
 
     # run the simulation
     front_end.run(runtime)
@@ -111,4 +111,4 @@ def run_broken():
 
 
 if __name__ == '__main__':
-    run_broken()
+    do_run()

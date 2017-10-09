@@ -10,7 +10,7 @@ from spinnaker_graph_front_end.examples.Conways.\
 # pacman.exceptions.PacmanInvalidParameterException:
 #  ('constraint', 'c', 'Must be a
 # pacman.model.constraints.abstract_constraint.AbstractConstraint')
-def run_broken():
+def do_run():
     runtime = 50
     # machine_time_step = 100
     MAX_X_SIZE_OF_FABRIC = 7
@@ -20,7 +20,7 @@ def run_broken():
     front_end.setup(n_chips_required=2)
 
     # figure out if machine can handle simulation
-    cores = front_end.get_number_of_cores_on_machine()
+    cores = front_end.get_number_of_available_cores_on_machine()
     if cores <= (MAX_X_SIZE_OF_FABRIC * MAX_Y_SIZE_OF_FABRIC):
         raise KeyError("Don't have enough cores to run simulation")
 
@@ -74,7 +74,7 @@ def run_broken():
                 front_end.add_machine_edge_instance(
                     MachineEdge(
                         vertices[x][y], vertices[dest_x][dest_y],
-                        label=compass), "STATE")
+                        label=compass), ConwayBasicCell.PARTITION_ID)
 
     # run the simulation
     front_end.run(runtime)
@@ -87,7 +87,8 @@ def run_broken():
         for y in range(0, MAX_Y_SIZE_OF_FABRIC):
             recorded_data[(x, y)] = vertices[x][y].get_data(
                 front_end.transceiver(),
-                front_end.placements().get_placement_of_vertex(vertices[x][y]))
+                front_end.placements().get_placement_of_vertex(vertices[x][y]),
+                front_end.no_machine_time_steps())
 
     # visualise it in text form (bad but no vis this time)
     for time in range(0, runtime):
@@ -108,4 +109,4 @@ def run_broken():
 
 
 if __name__ == '__main__':
-    run_broken()
+    do_run()

@@ -30,6 +30,8 @@ class ConwayBasicCell(
     """ Cell which represents a cell within the 2d fabric
     """
 
+    PARTITION_ID = "STATE"
+
     TRANSMISSION_DATA_SIZE = 2 * 4  # has key and key
     STATE_DATA_SIZE = 1 * 4  # 1 or 2 based off dead or alive
     NEIGHBOUR_INITIAL_STATES_SIZE = 2 * 4  # alive states, dead states
@@ -137,7 +139,8 @@ class ConwayBasicCell(
                     " please fix.")
 
         # write key needed to transmit with
-        key = routing_info.get_first_key_from_partition(next(iter(partitions)))
+        key = routing_info.get_first_key_from_pre_vertex(
+            self, self.PARTITION_ID)
 
         spec.switch_write_focus(
             region=self.DATA_REGIONS.TRANSMISSIONS.value)
@@ -233,7 +236,7 @@ class ConwayBasicCell(
     @overrides(AbstractReceiveBuffersToHost.get_n_timesteps_in_buffer_space)
     def get_n_timesteps_in_buffer_space(self, buffer_space, machine_time_step):
         return recording_utilities.get_n_timesteps_in_buffer_space(
-            buffer_space, 100)
+            buffer_space, [100])
 
     @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)
     def get_recorded_region_ids(self):

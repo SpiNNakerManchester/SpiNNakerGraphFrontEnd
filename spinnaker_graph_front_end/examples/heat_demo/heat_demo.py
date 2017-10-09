@@ -43,37 +43,24 @@ def run_broken():
     front_end.setup(
         graph_label="heat_demo_graph",
         model_binary_module=sys.modules[__name__],
-        database_socket_addresses={SocketAddress(
-            "127.0.0.1", notify_port, database_listen_port)})
+        database_socket_addresses=[SocketAddress(
+            "127.0.0.1", notify_port, database_listen_port)])
     machine = front_end.machine()
 
-    # create a live gatherer vertex for each board
-    default_gatherer = None
-    live_gatherers = dict()
-    used_cores = set()
-    for chip in machine.ethernet_connected_chips:
-
-        # Try to use core 17 if one is available as it is outside the grid
-        processor = chip.get_processor_with_id(17)
-        if processor is None or processor.is_monitor:
-            processor = chip.get_first_none_monitor_processor()
-        if processor is not None:
-            live_gatherer = front_end.add_machine_vertex(
-                LivePacketGatherMachineVertex,
-                {
-                    'label': live_gatherer_label,
-                    'ip_address': machine_host,
-                    'port': machine_receive_port,
-                    'payload_as_time_stamps': False,
-                    'use_payload_prefix': False,
-                    'strip_sdp': True,
-                    'message_type': EIEIOType.KEY_PAYLOAD_32_BIT
-                }
-            )
-            live_gatherers[chip.x, chip.y] = live_gatherer
-            used_cores.add((chip.x, chip.y, processor.processor_id))
-            if default_gatherer is None:
-                default_gatherer = live_gatherer
+    # Create a gatherer to read the heat values
+    live_gatherer = front_end.add_machine_vertex(
+        LivePacketGatherMachineVertex,
+        {
+            'label': live_gatherer_label,
+            'hostname': machine_host,
+            'port': machine_receive_port,
+            'payload_as_time_stamps': False,
+            'use_payload_prefix': False,
+            'strip_sdp': True,
+            'message_type': EIEIOType.KEY_PAYLOAD_32_BIT
+        }
+    )
+    live_gatherer.add_constraint(ChipAndCoreConstraint(0, 0, 1))
 
     # Create a list of lists of vertices (x * 4) by (y * 4)
     # (for 16 cores on a chip - missing cores will have missing vertices)
@@ -98,8 +85,7 @@ def run_broken():
             chip = machine.get_chip_at(chip_x, chip_y)
             if chip is not None:
                 core = chip.get_processor_with_id(core_p)
-                if (core is not None and not core.is_monitor and
-                        (chip_x, chip_y, core_p) not in used_cores):
+                if core is not None and not core.is_monitor:
                     element = front_end.add_machine_vertex(
                         HeatDemoVertex,
                         {
@@ -114,9 +100,6 @@ def run_broken():
 
                     # add a link from the heat element to the live packet
                     # gatherer
-                    live_gatherer = live_gatherers.get(
-                        (chip.nearest_ethernet_x, chip.nearest_ethernet_y),
-                        default_gatherer)
                     front_end.add_machine_edge(
                         MachineEdge,
                         {
