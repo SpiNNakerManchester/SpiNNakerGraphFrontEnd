@@ -3,6 +3,7 @@ from pacman.model.decorators import overrides
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.utilities.utility_objs import ExecutableStartType
 
+
 class SimulationBinary(AbstractHasAssociatedBinary):
     """This is a simple helper class that handles the case where the vertex
     to which it is mixed in only handles a single binary that supports the
