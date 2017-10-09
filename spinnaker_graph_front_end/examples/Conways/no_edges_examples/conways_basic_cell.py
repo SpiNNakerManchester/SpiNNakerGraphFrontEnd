@@ -1,6 +1,5 @@
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, CPUCyclesPerTickResource
-from pacman.model.resources import DTCMResource, SDRAMResource
+from pacman.model.resources import ResourceContainer
 
 
 class ConwayBasicCell(MachineVertex):

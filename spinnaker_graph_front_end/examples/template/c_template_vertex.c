@@ -28,7 +28,7 @@ typedef enum regions_e {
 
 //! values for the priority for each callback
 typedef enum callback_priorities{
-    MC_PACKET = -1, SDP = 0, USER = 3, TIMER = 2
+    MC_PACKET = -1, SDP = 0, USER = 3, TIMER = 2, DMA = 1
 } callback_priorities;
 
 //! human readable definitions of each element in the transmission region
@@ -70,6 +70,8 @@ void receive_data_payload(uint key, uint payload) {
     // TODO: Handle a received multicast packet with a payload
 }
 
+//! \brief
+
 //=============================================================================
 // timer tick interface
 
@@ -81,6 +83,10 @@ void receive_data_payload(uint key, uint payload) {
 static void do_update(uint ticks, uint32_t time) {
 
     // TODO: Handle a timer tick
+
+    // TODO: Add any other functionality e.g. recording, iobuf etc.
+    //       For further useful functions e.g. recording_record,
+    //       recording_do_timestep_update, see other graph_front_end examples
 
 }
 
@@ -104,18 +110,13 @@ void resume_callback() {
 //! \return True if recording initialisation is successful, false otherwise
 static bool initialise_recording() {
     address_t address = data_specification_get_data_address();
-    address_t system_region = data_specification_get_region(
-        SYSTEM_REGION, address);
-    uint32_t *recording_flags_from_system_conf =
-        &system_region[SIMULATION_N_TIMING_DETAIL_WORDS];
 
     // TODO: Update with the recording region ids
-    address_t regions_addresses_to_record[] = {
-        data_specification_get_region(RECORDED_DATA, address)};
+    address_t regions_addresses_to_record = data_specification_get_region(
+            RECORDED_DATA, address);
 
-    bool success = recording_initialize(
-        N_REGIONS_TO_RECORD, regions_addresses_to_record,
-        recording_flags_from_system_conf, &recording_flags);
+    bool success = recording_initialize(regions_addresses_to_record,
+            &recording_flags);
     log_info("Recording flags = 0x%08x", recording_flags);
     return success;
 }
@@ -135,13 +136,13 @@ void update(uint ticks, uint unused) {
     if ((infinite_run != TRUE) && (time >= simulation_ticks)) {
         log_info("Simulation complete.\n");
 
-        // falls into the pause resume mode of operating
-        simulation_handle_pause_resume(resume_callback);
-
         if (recording_flags > 0) {
             log_info("updating recording regions");
             recording_finalise();
         }
+
+        // falls into the pause resume mode of operating
+        simulation_handle_pause_resume(resume_callback);
 
         return;
     }
@@ -153,7 +154,7 @@ void update(uint ticks, uint unused) {
 //! \brief sets up state variables for the system
 //! \param[in] timer_period: pointer to the time between timer tick callbacks
 //! \return: bool which states if it succeed or not
-static bool initialize(uint32_t *timer_period)) {
+static bool initialize(uint32_t *timer_period) {
     log_info("Initialise: started\n");
 
     // Get the address this core's DTCM data starts at from SRAM
@@ -169,7 +170,7 @@ static bool initialize(uint32_t *timer_period)) {
     if (!simulation_initialise(
             data_specification_get_region(SYSTEM_REGION, address),
             APPLICATION_NAME_HASH, timer_period, &simulation_ticks,
-            &infinite_run, SDP)) {
+            &infinite_run, SDP, DMA)) {
         return false;
     }
 
@@ -185,13 +186,13 @@ static bool initialize(uint32_t *timer_period)) {
 }
 
 //! \brief main entrance method for the model
+//!        Used to register event callbacks and begin the simulation
 //! return None
 void c_main() {
     log_info("starting %s\n", app_name);
 
     // Load DTCM data
     uint32_t timer_period;
-    uint32_t simulation_sdp_port;
 
     // initialise the model
     if (!initialize(&timer_period)) {
