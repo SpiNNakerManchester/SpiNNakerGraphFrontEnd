@@ -1,7 +1,3 @@
-import struct
-
-from enum import Enum
-
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, SDRAMResource, \
     IPtagResource
@@ -17,6 +13,9 @@ from spinnman.messages.sdp import SDPMessage, SDPHeader, SDPFlag
 
 import math
 import time
+import struct
+from enum import Enum
+import subprocess
 
 
 class PacketGathererWithProtocol(
@@ -107,8 +106,14 @@ class PacketGathererWithProtocol(
         return "packet_gatherer.aplx"
 
     def get_data(self, transceiver, placement):
+        # set time out
+        transceiver.set_reinjection_router_timeout(15, 15)
+
+        # spur off a c code version
+        subprocess.call(("host_"))
 
         data = struct.pack("<I", self.SDP_PACKET_START_SENDING_COMMAND_ID)
+
         # print "sending to core {}:{}:{}".format(
         #    placement.x, placement.y, placement.p)
         message = SDPMessage(
@@ -121,7 +126,6 @@ class PacketGathererWithProtocol(
             data=data)
 
         # send
-        transceiver.set_reinjection_router_timeout(15, 15)
         transceiver.send_sdp_message(message=message)
 
         # receive
