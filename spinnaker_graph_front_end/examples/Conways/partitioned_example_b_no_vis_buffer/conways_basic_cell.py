@@ -12,7 +12,6 @@ from spinn_front_end_common.utilities.exceptions import ConfigurationException
 from spinn_front_end_common.utilities.helpful_functions \
     import locate_memory_region_for_placement, read_config_int
 from spinn_front_end_common.utilities import globals_variables
-from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.interface.buffer_management.buffer_models\
     import AbstractReceiveBuffersToHost
 from spinn_front_end_common.interface.buffer_management \
@@ -21,6 +20,8 @@ from spinn_front_end_common.abstract_models.impl \
     import MachineDataSpecableVertex
 
 from spinnaker_graph_front_end.utilities import SimulationBinary
+from spinnaker_graph_front_end.utilities.data_utils \
+    import generate_system_data_region
 
 # general imports
 from enum import Enum
@@ -71,14 +72,11 @@ class ConwayBasicCell(
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
             reverse_iptags, machine_time_step, time_scale_factor):
-
-        # Setup words + 1 for flags + 1 for recording size
-        setup_size = SYSTEM_BYTES_REQUIREMENT + 8
+        # Generate the system data region for simulation .c requirements
+        generate_system_data_region(spec, self.DATA_REGIONS.SYSTEM.value,
+                                    self, machine_time_step, time_scale_factor)
 
         # reserve memory regions
-        spec.reserve_memory_region(
-            region=self.DATA_REGIONS.SYSTEM.value,
-            size=setup_size, label='systemInfo')
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.TRANSMISSIONS.value,
             size=self.TRANSMISSION_DATA_SIZE, label="inputs")
@@ -91,12 +89,6 @@ class ConwayBasicCell(
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.RESULTS.value,
             size=recording_utilities.get_recording_header_size(1))
-
-        # simulation.c requirements
-        spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
-        spec.write_array(simulation_utilities.get_simulation_header_array(
-            self.get_binary_file_name(), machine_time_step,
-            time_scale_factor))
 
         # get recorded buffered regions sorted
         spec.switch_write_focus(self.DATA_REGIONS.RESULTS.value)
