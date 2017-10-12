@@ -1,6 +1,7 @@
 import struct
 import traceback
 import numpy
+import gc
 
 import spinnaker_graph_front_end as sim
 from pacman.model.constraints.placer_constraints import ChipAndCoreConstraint
@@ -23,7 +24,8 @@ class Runner(object):
     def run(self, mbs, x, y):
 
         # setup system
-        sim.setup(model_binary_module=speed_tracker_with_protocol_search)
+        sim.setup(model_binary_module=speed_tracker_with_protocol_search,
+                  n_chips_required=2)
 
         # build verts
         reader = SDRAMReaderAndTransmitterWithProtocol(mbs)
@@ -83,6 +85,7 @@ class Runner(object):
             speed = (mbs * 8) / seconds
             print ("Read {} MB in {} seconds ({} Mb/s)".format(
                 mbs, seconds, speed))
+            del data
             return speed, True, False, "", lost_seq_data
 
         except Exception as e:
@@ -118,6 +121,7 @@ if __name__ == "__main__":
                       "####################"
                 speed_of_data_extraction, ran, blew_up, bang_message, \
                     lost_seq_nums = runner.run(mbs_to_run, x_coord, y_coord)
+                gc.collect()
                 if ran:
                     if blew_up:
                         print "sim for iteration {} for {} msb on chip " \

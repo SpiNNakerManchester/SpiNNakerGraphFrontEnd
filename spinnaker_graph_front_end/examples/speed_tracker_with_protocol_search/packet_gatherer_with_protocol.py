@@ -144,6 +144,7 @@ class PacketGathererWithProtocol(
 
         # self._check(seq_nums)
         transceiver.set_reinjection_router_timeout(15, 4)
+        connection.close()
         return self._output, self._lost_seq_nums
 
     def _calculate_missing_seq_nums(self, seq_nums):
