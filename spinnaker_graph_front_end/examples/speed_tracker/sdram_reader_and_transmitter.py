@@ -7,7 +7,7 @@ from spinn_front_end_common.abstract_models import \
     AbstractProvidesNKeysForPartition
 from spinn_front_end_common.abstract_models.impl import \
     MachineDataSpecableVertex
-from spinn_front_end_common.utilities.utility_objs import ExecutableStartType
+from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.interface.simulation import simulation_utilities
 
@@ -37,7 +37,7 @@ class SDRAMReaderAndTransmitter(
             self.KEY_REGION_SIZE))
 
     def get_binary_start_type(self):
-        return ExecutableStartType.USES_SIMULATION_INTERFACE
+        return ExecutableType.USES_SIMULATION_INTERFACE
 
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,

@@ -130,7 +130,7 @@ typedef enum regions_e {
 
 //! values for the priority for each callback
 typedef enum callback_priorities{
-    MC_PACKET = -1, SDP = 0, DMA = 0
+   SDP = 0, DMA = 0
 } callback_priorities;
 
 //! human readable definitions of each element in the transmission region

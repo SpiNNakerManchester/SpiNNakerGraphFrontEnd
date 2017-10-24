@@ -8,7 +8,7 @@ from pacman.model.resources import ResourceContainer, SDRAMResource, \
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models.impl import \
     MachineDataSpecableVertex
-from spinn_front_end_common.utilities.utility_objs import ExecutableStartType
+from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinnman.connections.udp_packet_connections import UDPConnection
@@ -65,7 +65,7 @@ class PacketGathererWithProtocol(
                                   ip_address="localhost")])
 
     def get_binary_start_type(self):
-        return ExecutableStartType.USES_SIMULATION_INTERFACE
+        return ExecutableType.USES_SIMULATION_INTERFACE
 
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
