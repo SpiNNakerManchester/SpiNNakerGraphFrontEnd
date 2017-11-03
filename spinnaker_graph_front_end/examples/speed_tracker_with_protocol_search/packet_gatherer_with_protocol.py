@@ -102,7 +102,8 @@ class PacketGathererWithProtocol(
     def get_binary_file_name(self):
         return "packet_gatherer.aplx"
 
-    def get_data(self, transceiver, placement):
+    def get_data(
+            self, transceiver, placement, extra_monitor_vertices, placements):
 
         data = struct.pack("<I", self.SDP_PACKET_START_SENDING_COMMAND_ID)
         # print "sending to core {}:{}:{}".format(
@@ -119,8 +120,11 @@ class PacketGathererWithProtocol(
         # create socket
         connection = UDPConnection(local_host=None, local_port=self.PORT)
 
-        # send
-        transceiver.set_reinjection_router_timeout(15, 15)
+        # set router time out
+        extra_monitor_vertices[0].set_router_time_outs(
+            15, 15, transceiver, placements, extra_monitor_vertices)
+
+        # send message
         transceiver.send_sdp_message(message=message)
 
         # receive
@@ -143,7 +147,9 @@ class PacketGathererWithProtocol(
                         seq_nums, transceiver, placement)
 
         # self._check(seq_nums)
-        transceiver.set_reinjection_router_timeout(15, 4)
+        # set router time out
+        extra_monitor_vertices[0].set_router_time_outs(
+            15, 4, transceiver, placements, extra_monitor_vertices)
         connection.close()
         return self._output, self._lost_seq_nums
 
