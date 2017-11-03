@@ -105,9 +105,12 @@ class PacketGathererWithProtocol(
     def get_binary_file_name(self):
         return "packet_gatherer.aplx"
 
-    def get_data(self, transceiver, placement):
-        # set time out
-        transceiver.set_reinjection_router_timeout(15, 15)
+    def get_data(self, transceiver, placement, extra_monitor_vertices,
+                 placements):
+
+        # set router time out
+        extra_monitor_vertices[0].set_router_time_outs(
+            15, 15, transceiver, placements, extra_monitor_vertices)
 
         # spur off a c code version
         subprocess.call(("host_"))
@@ -148,7 +151,9 @@ class PacketGathererWithProtocol(
                         seq_nums, transceiver, placement)
 
         # self._check(seq_nums)
-        transceiver.set_reinjection_router_timeout(15, 4)
+        # set router time out
+        extra_monitor_vertices[0].set_router_time_outs(
+            15, 4, transceiver, placements, extra_monitor_vertices)
 
         return self._output, self._lost_seq_nums
 

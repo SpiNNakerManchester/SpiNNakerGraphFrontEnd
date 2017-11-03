@@ -65,7 +65,8 @@ class PacketGatherer(
     def get_binary_file_name(self):
         return "packet_gatherer.aplx"
 
-    def get_data(self, transceiver, placement):
+    def get_data(self, transceiver, placement, extra_monitor_vertices,
+                 placements):
         data = struct.pack("<I", 100)
         message = SDPMessage(
             sdp_header=SDPHeader(
@@ -80,7 +81,9 @@ class PacketGatherer(
         connection = UDPConnection(local_host=None, local_port=self.PORT)
 
         # send
-        transceiver.set_reinjection_router_timeout(15, 15)
+        # set router time out
+        extra_monitor_vertices[0].set_router_time_outs(
+            15, 15, transceiver, placements, extra_monitor_vertices)
         transceiver.send_sdp_message(message=message)
 
         # receive
@@ -114,5 +117,7 @@ class PacketGatherer(
                     offset += length_of_data
 
         # hand back
-        transceiver.set_reinjection_router_timeout(15, 4)
+        # set router time out
+        extra_monitor_vertices[0].set_router_time_outs(
+            15, 4, transceiver, placements, extra_monitor_vertices)
         return output

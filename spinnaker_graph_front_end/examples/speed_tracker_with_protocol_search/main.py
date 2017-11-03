@@ -55,8 +55,6 @@ class Runner(object):
 
         # get placements for extraction
         placements = sim.placements()
-        machine = sim.machine()
-
         sim.transceiver().set_watch_dog(False)
 
         # set time outs using new interface (

@@ -41,12 +41,18 @@ start = None
 end = None
 data = None
 
+# set time outs using new interface (
+# clunky, but will be hidden in interface at later date)
+extra_monitor_vertices = sim.globals_variables. \
+    get_simulator()._last_run_outputs['MemoryExtraMonitorVertices']
+
 try:
     print "starting data gathering"
     start = float(time.time())
     data = receiver.get_data(
         sim.transceiver(),
-        placements.get_placement_of_vertex(reader))
+        placements.get_placement_of_vertex(reader),
+        extra_monitor_vertices, placements)
     end = float(time.time())
     # end sim
     sim.stop()
