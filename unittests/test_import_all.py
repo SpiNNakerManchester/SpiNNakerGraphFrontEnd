@@ -17,7 +17,8 @@ EXCLUSIONS = ["spinnaker_graph_front_end.examples.Conways."
               "spinnaker_graph_front_end.examples.Conways."
               "partitioned_example_b_no_vis_buffer.conways_partitioned",
 
-              "spinnaker_graph_front_end.examples.hello_world.hello_world"]
+              "spinnaker_graph_front_end.examples.hello_world.hello_world",
+              "spinnaker_graph_front_end.examples.template.python_template"]
 
 
 class ImportAllModule(unittest.TestCase):

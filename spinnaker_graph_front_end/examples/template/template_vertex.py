@@ -1,23 +1,21 @@
-from spinn_front_end_common.abstract_models.impl\
-    import MachineDataSpecableVertex
-from spinn_front_end_common.abstract_models\
-    import AbstractHasAssociatedBinary
-from spinn_front_end_common.interface.buffer_management.buffer_models\
-    import AbstractReceiveBuffersToHost
-from spinn_front_end_common.utilities import globals_variables
-from spinn_front_end_common.utilities import constants, helpful_functions
-from spinn_front_end_common.interface.buffer_management \
-    import recording_utilities
-from spinn_front_end_common.interface.simulation import simulation_utilities
-from spinn_front_end_common.utilities.utility_objs import ExecutableType
-
 from pacman.model.decorators import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
 from pacman.model.resources import ResourceContainer, SDRAMResource
 
-from enum import Enum
+from spinn_front_end_common.utilities import globals_variables
+from spinn_front_end_common.utilities import constants, helpful_functions
+from spinn_front_end_common.abstract_models.impl \
+    import MachineDataSpecableVertex
+from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
+from spinn_front_end_common.interface.buffer_management.buffer_models\
+    import AbstractReceiveBuffersToHost
+from spinn_front_end_common.interface.buffer_management\
+    import recording_utilities
+from spinn_front_end_common.interface.simulation import simulation_utilities
+from spinn_front_end_common.utilities.utility_objs import ExecutableType
 
+from enum import Enum
 import logging
 
 logger = logging.getLogger(__name__)
@@ -25,7 +23,7 @@ logger = logging.getLogger(__name__)
 PARTITION_ID = "DATA"
 
 
-class Vertex(
+class TemplateVertex(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
         AbstractReceiveBuffersToHost):
 
@@ -39,16 +37,11 @@ class Vertex(
                ('TRANSMISSION', 1),
                ('RECORDED_DATA', 2)])
 
-    def __init__(self, label, machine_time_step, time_scale_factor,
-                 constraints=None):
+    def __init__(self, label, constraints=None):
 
         self._recording_size = 5000
 
         MachineVertex.__init__(self, label=label, constraints=constraints)
-
-        self.activate_buffering_output(
-            n_machine_time_steps=1000, buffered_sdram_per_timestep=[1000],
-            minimum_sdram_for_buffering=1024)
 
         config = globals_variables.get_simulator().config
         self._buffer_size_before_receive = None
@@ -80,7 +73,7 @@ class Vertex(
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
-        return "c_code.aplx"
+        return "c_template_vertex.aplx"
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):
@@ -157,7 +150,8 @@ class Vertex(
         if is_missing_data:
             logger.warn("Some data was lost when recording")
         record_raw = data_pointer.read_all()
-        return record_raw
+        output = str(record_raw)
+        return output
 
     @overrides(AbstractReceiveBuffersToHost.get_minimum_buffer_sdram_usage)
     def get_minimum_buffer_sdram_usage(self):

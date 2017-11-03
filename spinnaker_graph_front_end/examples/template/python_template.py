@@ -1,16 +1,11 @@
 """
-Hello World program on Spinnaker
-
-Each core stores into its region in SDRAM the string:
-"Hello World from $chip.x, $chip.y, $core"
-
-We then fetch the written data and print it on the python console.
+Template for a Graph Front End program on Spinnaker
 """
 
 import spinnaker_graph_front_end as front_end
 
-from spinnaker_graph_front_end.examples.hello_world.hello_world_vertex\
-    import HelloWorldVertex
+from spinnaker_graph_front_end.examples.template.template_vertex\
+    import TemplateVertex
 
 import logging
 import os
@@ -26,24 +21,27 @@ front_end.setup(
 total_number_of_cores = \
     front_end.get_number_of_available_cores_on_machine()
 
-# fill all cores with a HelloWorldVertex each
+# fill all cores with a Vertex each
 for x in range(0, total_number_of_cores):
     front_end.add_machine_vertex(
-        HelloWorldVertex,
+        TemplateVertex,
         {},
-        label="Hello World at x {}".format(x))
+        label="Template program at x {}".format(x))
 
+# run for a specified length of time
 front_end.run(10)
 
+# set up placements (this is a simple example based on hello_world example
+# that should be edited to suit the application)
 placements = front_end.placements()
 buffer_manager = front_end.buffer_manager()
 
 for placement in sorted(placements.placements,
                         key=lambda p: (p.x, p.y, p.p)):
 
-    if isinstance(placement.vertex, HelloWorldVertex):
-        hello_world = placement.vertex.read(placement, buffer_manager)
+    if isinstance(placement.vertex, TemplateVertex):
+        template_info = placement.vertex.read(placement, buffer_manager)
         logger.info("{}, {}, {} > {}".format(
-            placement.x, placement.y, placement.p, hello_world))
+            placement.x, placement.y, placement.p, template_info))
 
 front_end.stop()
