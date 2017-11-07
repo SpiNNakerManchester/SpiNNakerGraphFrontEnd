@@ -49,6 +49,7 @@ void write_data(){
     // write data into sdram for reading later
     address_t address = data_specification_get_data_address();
     store_address = data_specification_get_region(DATA_REGION, address);
+    log_info("address is %d", store_address);
 
     uint iterations = (uint)(bytes_to_write / WORD_TO_BYTE_MULTIPLIER);
     //log_info("iterations = %d", iterations - 1);
