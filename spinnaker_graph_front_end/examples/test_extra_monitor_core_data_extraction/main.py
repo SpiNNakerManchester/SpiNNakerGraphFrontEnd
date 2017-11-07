@@ -39,13 +39,13 @@ class Runner(object):
 
         extra_monitor_vertices = sim.globals_variables.\
             get_simulator()._last_run_outputs['MemoryExtraMonitorVertices']
-        extra_monitor_gatherers = sim.globals_variables.\
+        extra_monitor_ethernet_chips = sim.globals_variables.\
             get_simulator()._last_run_outputs[
-            'MemoryMCGatherVertexToEthernetConnectedChipMapping']
+            'MemoryExtraMonitorVertexToEthernetConnectedChipMapping']
 
         receiver = None
-        gatherer = extra_monitor_gatherers[(writer_nearest_ethernet.x,
-                                            writer_nearest_ethernet.y)]
+        gatherer = extra_monitor_ethernet_chips[
+            (writer_nearest_ethernet.x, writer_nearest_ethernet.y)]
         for vertex in extra_monitor_vertices:
             placement = placements.get_placement_of_vertex(vertex)
             if (placement.x == writer_placement.x and
