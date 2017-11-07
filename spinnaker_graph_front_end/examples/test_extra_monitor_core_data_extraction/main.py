@@ -52,7 +52,7 @@ class Runner(object):
                     placement.y == writer_placement.y):
                 receiver = vertex
 
-        data = gatherer.get_data(
+        data, _ = gatherer.get_data(
             sim.transceiver(), placements.get_placement_of_vertex(receiver),
             self._get_data_region_address(sim.transceiver(), writer_placement),
             writer.mbs_in_bytes, extra_monitor_vertices, placements)
