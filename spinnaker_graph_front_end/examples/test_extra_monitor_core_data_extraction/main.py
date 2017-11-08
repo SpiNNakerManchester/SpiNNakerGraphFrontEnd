@@ -2,6 +2,7 @@ import struct
 
 import spinnaker_graph_front_end as sim
 from data_specification.utility_calls import get_region_base_address_offset
+from pacman.model.constraints.placer_constraints import ChipAndCoreConstraint
 from spinnaker_graph_front_end.examples import \
     test_extra_monitor_core_data_extraction
 from spinnaker_graph_front_end.examples.\
@@ -20,7 +21,8 @@ class Runner(object):
                   n_chips_required=2)
 
         # build verts
-        writer = SDRAMWriter(mbs)
+        writer = SDRAMWriter(
+            mbs, constraints=[ChipAndCoreConstraint(x=1, y=1)])
 
         # add verts to graph
         sim.add_machine_vertex_instance(writer)
