@@ -1,5 +1,5 @@
 import struct
-
+import time
 import spinnaker_graph_front_end as sim
 from data_specification.utility_calls import get_region_base_address_offset
 from spinnaker_graph_front_end.examples import \
@@ -52,10 +52,20 @@ class Runner(object):
                     placement.y == writer_placement.y):
                 receiver = vertex
 
-        data, _ = gatherer.get_data(
+        start = float(time.time())
+
+        gatherer.set_cores_for_data_extraction(
+            sim.transceiver(), extra_monitor_vertices, placements)
+        data = gatherer.get_data(
             sim.transceiver(), placements.get_placement_of_vertex(receiver),
             self._get_data_region_address(sim.transceiver(), writer_placement),
-            writer.mbs_in_bytes, extra_monitor_vertices, placements)
+            writer.mbs_in_bytes)
+        gatherer.unset_cores_for_data_extraction(
+            sim.transceiver(), extra_monitor_vertices, placements)
+        end = float(time.time())
+
+        print "time taken to extract {} MB is {}. MBS of {}".format(
+            mbs, end - start, (mbs * 8) / (end - start))
 
         self._check_data(data)
 
