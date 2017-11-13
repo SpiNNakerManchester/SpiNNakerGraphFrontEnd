@@ -19,7 +19,12 @@ EXCLUSIONS = ["spinnaker_graph_front_end.examples.Conways."
 
               "spinnaker_graph_front_end.examples.hello_world.hello_world",
               "spinnaker_graph_front_end.examples.template.python_template",
-              "spinnaker_graph_front_end.examples"]
+
+              "spinnaker_graph_front_end.examples.test_fixed_router."
+              "hello_world",
+
+              "spinnaker_graph_front_end.examples."
+              "test_fixed_router_transmitter_reciever.hello_world"]
 
 
 class ImportAllModule(unittest.TestCase):
