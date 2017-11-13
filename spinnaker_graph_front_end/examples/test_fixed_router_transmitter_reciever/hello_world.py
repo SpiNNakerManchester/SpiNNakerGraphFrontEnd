@@ -28,7 +28,7 @@ front_end.globals_variables.get_simulator().update_extra_mapping_inputs(
 # fill all cores with a HelloWorldVertex each
 front_end.add_machine_vertex_instance(
     HelloWorldVertex(
-    label="transmitter", constraints=[ChipAndCoreConstraint(x=2, y=1)]))
+        label="transmitter", constraints=[ChipAndCoreConstraint(x=2, y=1)]))
 front_end.add_machine_vertex_instance(
     HelloWorldVertexClone(label="the clone!", constraints=[
         ChipAndCoreConstraint(x=0, y=0)]))
