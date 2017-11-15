@@ -15,7 +15,7 @@ from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.abstract_models.impl \
     import MachineDataSpecableVertex
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
-from spinn_front_end_common.utilities.utility_objs import ExecutableStartType
+from spinn_front_end_common.utilities.utility_objs import ExecutableType
 
 
 # general imports
@@ -57,7 +57,7 @@ class ConwayBasicCell(
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):
-        return ExecutableStartType.USES_SIMULATION_INTERFACE
+        return ExecutableType.USES_SIMULATION_INTERFACE
 
     @inject_items({"n_machine_time_steps": "TotalMachineTimeSteps"})
     @overrides(

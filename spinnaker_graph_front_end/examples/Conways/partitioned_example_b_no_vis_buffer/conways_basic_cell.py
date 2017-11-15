@@ -17,7 +17,7 @@ from spinn_front_end_common.interface.buffer_management \
 from spinn_front_end_common.abstract_models.impl \
     import MachineDataSpecableVertex
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
-from spinn_front_end_common.utilities.utility_objs import ExecutableStartType
+from spinn_front_end_common.utilities.utility_objs import ExecutableType
 
 # general imports
 from enum import Enum
@@ -69,7 +69,7 @@ class ConwayBasicCell(
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):
-        return ExecutableStartType.USES_SIMULATION_INTERFACE
+        return ExecutableType.USES_SIMULATION_INTERFACE
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
