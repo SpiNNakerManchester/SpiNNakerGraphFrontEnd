@@ -52,7 +52,8 @@ try:
     elements = len(data) / 4
     ints = struct.unpack("<{}I".format(elements), data)
     start_value = 0
-   # print ints
+
+    # print ints
     for value in ints:
         if value != start_value:
             print "should be getting {}, but got {}".format(start_value, value)
@@ -63,5 +64,3 @@ try:
 except Exception as e:
     # if boomed. end so that we can get iobuf
     traceback.print_exc()
-
-

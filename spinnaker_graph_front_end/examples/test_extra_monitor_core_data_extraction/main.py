@@ -41,7 +41,7 @@ class Runner(object):
             get_simulator()._last_run_outputs['MemoryExtraMonitorVertices']
         extra_monitor_gatherers = sim.globals_variables.\
             get_simulator()._last_run_outputs[
-            'MemoryMCGatherVertexToEthernetConnectedChipMapping']
+                'MemoryMCGatherVertexToEthernetConnectedChipMapping']
 
         receiver = None
         gatherer = extra_monitor_gatherers[(writer_nearest_ethernet.x,

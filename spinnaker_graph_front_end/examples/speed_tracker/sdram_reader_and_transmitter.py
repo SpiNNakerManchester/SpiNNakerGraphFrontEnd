@@ -18,7 +18,7 @@ class SDRAMReaderAndTransmitter(
 
     SDRAM_READING_SIZE_IN_BYTES_CONVERTER = 1024*1024
     KEY_REGION_SIZE = 8
-    
+
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),

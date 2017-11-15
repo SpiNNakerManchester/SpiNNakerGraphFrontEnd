@@ -369,6 +369,7 @@ def placements():
 def transceiver():
     return globals_variables.get_simulator().transceiver
 
+
 def tags():
     return globals_variables.get_simulator().tags
 

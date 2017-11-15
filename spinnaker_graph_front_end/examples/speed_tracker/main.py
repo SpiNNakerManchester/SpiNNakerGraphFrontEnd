@@ -77,5 +77,3 @@ try:
 except Exception as e:
     # if boomed. end so that we can get iobuf
     traceback.print_exc()
-
-

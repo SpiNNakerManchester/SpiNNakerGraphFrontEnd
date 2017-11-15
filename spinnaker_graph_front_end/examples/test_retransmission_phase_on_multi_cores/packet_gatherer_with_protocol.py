@@ -20,7 +20,8 @@ import time
 
 
 class PacketGathererWithProtocol(
-    MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
+        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
+
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
@@ -309,11 +310,12 @@ class PacketGathererWithProtocol(
             else:
                 # this flag can be dropped at some point
                 seq_num = first_packet_element
-                #print "seq num = {}".format(seq_num)
+                # print "seq num = {}".format(seq_num)
                 if seq_num > self._max_seq_num:
                     raise Exception(
                         "got an insane sequence number. got {} when "
-                        "the max is {} with a length of {}".format(seq_num, self._max_seq_num, length_of_data))
+                        "the max is {} with a length of {}".format(
+                            seq_num, self._max_seq_num, length_of_data))
                 seq_nums.add(seq_num)
 
                 # figure offset for where data is to be put
@@ -331,7 +333,7 @@ class PacketGathererWithProtocol(
                     self._write_into_view(
                         offset, offset + true_data_length,
                         data, self.SEQUENCE_NUMBER_SIZE,
-                                length_of_data - self.END_FLAG_SIZE, seq_num,
+                        length_of_data - self.END_FLAG_SIZE, seq_num,
                         length_of_data, True)
 
                     # check if need to retry
@@ -368,7 +370,7 @@ class PacketGathererWithProtocol(
         :param data_start_position: where in data holder to start from
         :param data_end_position: where in data holder to end
         :param seq_num: the seq number to figure
-        :return: 
+        :rtype: None
         """
         if view_end_position > len(self._output):
             raise Exception(
@@ -378,7 +380,9 @@ class PacketGathererWithProtocol(
                 "seq num {} length of packet {} and final {}".format(
                     len(self._output), view_end_position, seq_num,
                     self._max_seq_num, packet_length, is_final))
-        # print "view_start={} view_end={} data_start={} data_end={}".format(view_start_position, view_end_position, data_start_position, data_end_position)
+        # print "view_start={} view_end={} data_start={} data_end={}".format(
+        #   view_start_position, view_end_position, data_start_position,
+        #   data_end_position)
         self._view[view_start_position: view_end_position] = \
             data[data_start_position:data_end_position]
 

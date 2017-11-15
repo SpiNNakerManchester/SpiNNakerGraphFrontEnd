@@ -3,8 +3,7 @@ from enum import Enum
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, SDRAMResource
 from spinn_front_end_common.abstract_models import \
-    AbstractHasAssociatedBinary, \
-    AbstractProvidesNKeysForPartition
+    AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models.impl import \
     MachineDataSpecableVertex
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
@@ -17,7 +16,7 @@ class SDRAMWriter(
 
     SDRAM_READING_SIZE_IN_BYTES_CONVERTER = 1024*1024
     CONFIG_REGION_SIZE = 4
-    
+
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
