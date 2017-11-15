@@ -34,7 +34,7 @@ class PacketGatherer(
         return ResourceContainer(
             sdram=SDRAMResource(constants.SYSTEM_BYTES_REQUIREMENT),
             iptags=[IPtagResource(port=self.PORT, strip_sdp=True,
-                                 ip_address="localhost")])
+                                  ip_address="localhost")])
 
     def get_binary_start_type(self):
         return ExecutableType.USES_SIMULATION_INTERFACE

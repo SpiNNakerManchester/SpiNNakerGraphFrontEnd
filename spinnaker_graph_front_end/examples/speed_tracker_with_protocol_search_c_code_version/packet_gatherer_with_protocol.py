@@ -170,11 +170,11 @@ class PacketGathererWithProtocol(
 
         missing_seq_nums = self._calculate_missing_seq_nums(seq_nums)
         self._lost_seq_nums.append(len(missing_seq_nums))
-        #self._print_missing(seq_nums)
+        # self._print_missing(seq_nums)
         if len(missing_seq_nums) == 0:
             return True
 
-        #print "doing retransmission"
+        # print "doing retransmission"
         # figure n packets given the 2 formats
         n_packets = 1
         length_via_format2 = \
@@ -255,7 +255,7 @@ class PacketGathererWithProtocol(
                 data=str(data))
 
             # debug
-            #self._print_out_packet_data(data)
+            # self._print_out_packet_data(data)
 
             # send message to core
             transceiver.send_sdp_message(message=message)
@@ -300,7 +300,7 @@ class PacketGathererWithProtocol(
             else:
                 # this flag can be dropped at some point
                 seq_num = first_packet_element
-                #print "seq num = {}".format(seq_num)
+                # print "seq num = {}".format(seq_num)
                 if seq_num > self._max_seq_num:
                     raise Exception(
                         "got an insane sequence number. got {} when "
@@ -323,7 +323,7 @@ class PacketGathererWithProtocol(
                     self._write_into_view(
                         offset, offset + true_data_length,
                         data, self.SEQUENCE_NUMBER_SIZE,
-                                length_of_data - self.END_FLAG_SIZE, seq_num,
+                        length_of_data - self.END_FLAG_SIZE, seq_num,
                         length_of_data, True)
 
                     # check if need to retry
@@ -360,7 +360,7 @@ class PacketGathererWithProtocol(
         :param data_start_position: where in data holder to start from
         :param data_end_position: where in data holder to end
         :param seq_num: the seq number to figure
-        :return: 
+        :rtype: None
         """
         if view_end_position > len(self._output):
             raise Exception(
@@ -370,7 +370,9 @@ class PacketGathererWithProtocol(
                 "seq num {} length of packet {} and final {}".format(
                     len(self._output), view_end_position, seq_num,
                     self._max_seq_num, packet_length, is_final))
-        # print "view_start={} view_end={} data_start={} data_end={}".format(view_start_position, view_end_position, data_start_position, data_end_position)
+        # print "view_start={} view_end={} data_start={} data_end={}".format(
+        #   view_start_position, view_end_position, data_start_position,
+        #   data_end_position)
         self._view[view_start_position: view_end_position] = \
             data[data_start_position:data_end_position]
 

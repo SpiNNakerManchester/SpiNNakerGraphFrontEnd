@@ -106,7 +106,7 @@ class PacketGathererWithProtocol(
                  placements):
 
         data = struct.pack("<I", self.SDP_PACKET_START_SENDING_COMMAND_ID)
-        #print "sending to core {}:{}:{}".format(
+        # print "sending to core {}:{}:{}".format(
         #    placement.x, placement.y, placement.p)
         message = SDPMessage(
             sdp_header=SDPHeader(
@@ -146,7 +146,7 @@ class PacketGathererWithProtocol(
                     finished = self._transmit_missing_seq_nums(
                         seq_nums, transceiver, placement)
 
-        #self._check(seq_nums)
+        # self._check(seq_nums)
         # set router time out
         extra_monitor_vertices[0].set_router_time_outs(
             15, 4, transceiver, placements, extra_monitor_vertices)
@@ -259,7 +259,7 @@ class PacketGathererWithProtocol(
 
     def _process_data(self, data, first, seq_num, seq_nums, finished,
                       placement, transceiver):
-        #self._print_out_packet_data(data)
+        # self._print_out_packet_data(data)
         length_of_data = len(data)
         if first:
             length = struct.unpack_from("<I", data, 0)[0]
@@ -279,8 +279,6 @@ class PacketGathererWithProtocol(
                 "<I", data, 0)[0]
             last_mc_packet = struct.unpack_from(
                 "<I", data, length_of_data - self.END_FLAG_SIZE)[0]
-
-
 
             # if received a last flag on its own, its during retransmission.
             #  check and try again if required
@@ -340,13 +338,13 @@ class PacketGathererWithProtocol(
             self, view_start_position, view_end_position,
             data, data_start_position, data_end_position):
         """ puts data into the view
-        
+
         :param view_start_position: where in view to start
         :param view_end_position: where in view to end
         :param data: the data holder to write from
         :param data_start_position: where in data holder to start from
         :param data_end_position: where in data holder to end
-        :return: 
+        :rtype: None
         """
         if view_end_position > len(self._output):
             raise Exception(
@@ -354,7 +352,9 @@ class PacketGathererWithProtocol(
                 "outside my acceptable output positions!!!! max is {} and "
                 "I received request to fill to {}".format(
                     len(self._output), view_end_position))
-        #print "view_start={} view_end={} data_start={} data_end={}".format(view_start_position, view_end_position, data_start_position, data_end_position)
+        # print "view_start={} view_end={} data_start={} data_end={}".format(
+        #   view_start_position, view_end_position, data_start_position,
+        #   data_end_position)
         self._view[view_start_position: view_end_position] = \
             data[data_start_position:data_end_position]
 
@@ -365,7 +365,7 @@ class PacketGathererWithProtocol(
         if len(seq_nums) > max_needed:
             raise Exception("I've received more data than i was expecting!!")
         if len(seq_nums) != max_needed:
-            #self._print_length_of_received_seq_nums(seq_nums, max_needed)
+            # self._print_length_of_received_seq_nums(seq_nums, max_needed)
             return False
         return True
 

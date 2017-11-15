@@ -329,14 +329,15 @@ class PacketGathererCheat(
             self, view_start_position, view_end_position,
             data, data_start_position, data_end_position):
         """ puts data into the view
-        
+
         :param view_start_position: where in view to start
         :param view_end_position: where in view to end
         :param data: the data holder to write from
         :param data_start_position: where in data holder to start from
         :param data_end_position: where in data holder to end
-        :return: 
+        :rtype: None
         """
+
         if view_end_position > len(self._output):
             raise Exception(
                 "I'm trying to add to my output data, but am trying to add "
@@ -353,7 +354,7 @@ class PacketGathererCheat(
         if len(seq_nums) > max_needed:
             raise Exception("I've received more data than i was expecting!!")
         if len(seq_nums) != max_needed:
-            #self._print_length_of_received_seq_nums(seq_nums, max_needed)
+            # self._print_length_of_received_seq_nums(seq_nums, max_needed)
             return False
         return True
 
