@@ -25,12 +25,12 @@ start = float(time.time())
 receiver = extra_monitor_gatherers[0, 0]
 receiver.set_cores_for_data_extraction(
                     transceiver=transceiver, placements=placements,
-                    extra_monitor_cores_for_router_timeout=
-                    extra_monitor_vertices)
+                    extra_monitor_cores_for_router_timeout=(
+                        extra_monitor_vertices))
 receiver.unset_cores_for_data_extraction(
                     transceiver=transceiver, placements=placements,
-                    extra_monitor_cores_for_router_timeout=
-                    extra_monitor_vertices)
+                    extra_monitor_cores_for_router_timeout=(
+                        extra_monitor_vertices))
 end = float(time.time())
 
 print "took {} seconds to set and unset the routing timeout".format(
