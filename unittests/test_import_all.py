@@ -22,6 +22,12 @@ EXCLUSIONS = ["spinnaker_graph_front_end.examples.Conways."
 
               "spinnaker_graph_front_end.examples.test_fixed_router."
               "hello_world",
+              "spinnaker_graph_front_end.examples.test_fixed_router."
+              "hello_world_vertex_clone",
+
+              "spinnaker_graph_front_end.examples.speed_test_solo.main_solo",
+              "spinnaker_graph_front_end.examples."
+              "speed_tracker_with_protocol.main",
 
               "spinnaker_graph_front_end.examples."
               "test_fixed_router_transmitter_reciever.hello_world"]
