@@ -26,11 +26,18 @@ EXCLUSIONS = ["spinnaker_graph_front_end.examples.Conways."
               "hello_world_vertex_clone",
 
               "spinnaker_graph_front_end.examples.speed_test_solo.main_solo",
+
               "spinnaker_graph_front_end.examples."
               "speed_tracker_with_protocol.main",
 
               "spinnaker_graph_front_end.examples."
-              "test_fixed_router_transmitter_reciever.hello_world"]
+              "speed_tracker.main",
+
+              "spinnaker_graph_front_end.examples."
+              "test_fixed_router_transmitter_reciever.hello_world",
+
+              "spinnaker_graph_front_end.examples."
+              "test_retransmission_phase_on_multi_cores.main"]
 
 
 class ImportAllModule(unittest.TestCase):
