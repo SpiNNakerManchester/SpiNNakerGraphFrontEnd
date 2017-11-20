@@ -43,7 +43,7 @@ EXCLUSIONS = ["spinnaker_graph_front_end.examples.Conways."
 class ImportAllModule(unittest.TestCase):
 
     def test_import_all(self):
-        if os.environ.get('CONTINUOUS_INTEGRATION', None) == 'True':
+        if os.environ.get('CONTINUOUS_INTEGRATION', 'false').lower() == 'true':
             package_loader.load_module("spinnaker_graph_front_end",
                                        exclusions=EXCLUSIONS,
                                        remove_pyc_files=False)
