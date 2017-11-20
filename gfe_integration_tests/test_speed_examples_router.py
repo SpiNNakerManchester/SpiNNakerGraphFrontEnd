@@ -38,4 +38,3 @@ class TestSpeedRouter(unittest.TestCase):
         print path
         os.chdir(path)
         import spinnaker_graph_front_end.examples.test_timer_setup_cost.test_timer_setup_cost  # NOQA
-
