@@ -43,7 +43,6 @@ EXCLUSIONS = ["spinnaker_graph_front_end.examples.Conways."
               "test_timer_setup_cost"]
 
 
-
 class ImportAllModule(unittest.TestCase):
 
     def test_import_all(self):
