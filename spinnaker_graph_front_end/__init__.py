@@ -370,6 +370,10 @@ def transceiver():
     return globals_variables.get_simulator().transceiver
 
 
+def tags():
+    return globals_variables.get_simulator().tags
+
+
 def graph_mapper():
     return globals_variables.get_simulator().graph_mapper
 

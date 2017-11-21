@@ -5,7 +5,6 @@ from pacman.model.resources import ResourceContainer, SDRAMResource
 
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities import constants, helpful_functions
-from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.abstract_models.impl \
     import MachineDataSpecableVertex
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
@@ -13,6 +12,7 @@ from spinn_front_end_common.interface.buffer_management.buffer_models\
     import AbstractReceiveBuffersToHost
 from spinn_front_end_common.interface.buffer_management\
     import recording_utilities
+from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 
 from enum import Enum
