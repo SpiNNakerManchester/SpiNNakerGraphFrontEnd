@@ -37,7 +37,10 @@ EXCLUSIONS = ["spinnaker_graph_front_end.examples.Conways."
               "test_fixed_router_transmitter_reciever.hello_world",
 
               "spinnaker_graph_front_end.examples."
-              "test_retransmission_phase_on_multi_cores.main"]
+              "test_retransmission_phase_on_multi_cores.main",
+
+              "spinnaker_graph_front_end.examples.test_timer_setup_cost."
+              "test_timer_setup_cost"]
 
 
 class ImportAllModule(unittest.TestCase):
