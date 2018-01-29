@@ -33,7 +33,8 @@ class HelloWorldVertexClone(
     CORE_APP_IDENTIFIER = 0xBEEF
 
     def __init__(self, label, constraints=None):
-        MachineVertex.__init__(self, label=label, constraints=constraints)
+        super(HelloWorldVertexClone, self).__init__(
+            label=label, constraints=constraints)
 
         config = globals_variables.get_simulator().config
         self._buffer_size_before_receive = None

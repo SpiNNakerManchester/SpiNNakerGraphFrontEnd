@@ -38,10 +38,10 @@ class TemplateVertex(
                ('RECORDED_DATA', 2)])
 
     def __init__(self, label, constraints=None):
+        super(TemplateVertex, self).__init__(
+            label=label, constraints=constraints)
 
         self._recording_size = 5000
-
-        MachineVertex.__init__(self, label=label, constraints=constraints)
 
         config = globals_variables.get_simulator().config
         self._buffer_size_before_receive = None

@@ -6,9 +6,6 @@ class ConwayBasicCell(MachineVertex):
     """ Cell which represents a cell within the 2d fabric
     """
 
-    def __init__(self, label):
-        MachineVertex.__init__(self, label)
-
     @property
     def resources_required(self):
         return ResourceContainer()

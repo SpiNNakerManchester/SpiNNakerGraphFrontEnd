@@ -24,9 +24,7 @@ class PacketGatherer(
     PORT = 11111
 
     def __init__(self):
-        MachineVertex.__init__(self, label="pg", constraints=None)
-        MachineDataSpecableVertex.__init__(self)
-        AbstractHasAssociatedBinary.__init__(self)
+        super(PacketGatherer, self).__init__(label="pg", constraints=None)
         self._view = None
 
     @property

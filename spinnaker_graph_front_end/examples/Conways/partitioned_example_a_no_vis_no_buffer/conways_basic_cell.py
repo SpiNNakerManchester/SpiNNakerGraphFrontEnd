@@ -45,8 +45,7 @@ class ConwayBasicCell(
                ('RESULTS', 4)])
 
     def __init__(self, label, state):
-
-        MachineVertex.__init__(self, label)
+        super(ConwayBasicCell, self).__init__(label)
 
         # app specific elements
         self._state = state
