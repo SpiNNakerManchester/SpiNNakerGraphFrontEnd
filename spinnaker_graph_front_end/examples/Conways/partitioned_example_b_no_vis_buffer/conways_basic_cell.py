@@ -61,7 +61,7 @@ class ConwayBasicCell(
             config, "Buffers", "receive_buffer_port")
 
         # app specific data items
-        self._state = state
+        self._state = bool(state)
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
@@ -129,7 +129,7 @@ class ConwayBasicCell(
         if len(edges) != 8:
             raise exceptions.ConfigurationException(
                 "I've not got the right number of connections. I have {} "
-                "instead of 9".format(
+                "instead of 8".format(
                     len(machine_graph.incoming_subedges_from_vertex(self))))
 
         for edge in edges:
@@ -154,11 +154,7 @@ class ConwayBasicCell(
         # write state value
         spec.switch_write_focus(
             region=self.DATA_REGIONS.STATE.value)
-
-        if self._state:
-            spec.write_value(1)
-        else:
-            spec.write_value(0)
+        spec.write_value(int(self._state))
 
         # write neighbours data state
         spec.switch_write_focus(
@@ -166,8 +162,7 @@ class ConwayBasicCell(
         alive = 0
         dead = 0
         for edge in edges:
-            state = edge.pre_vertex.state
-            if state:
+            if edge.pre_vertex.state:
                 alive += 1
             else:
                 dead += 1
@@ -179,8 +174,6 @@ class ConwayBasicCell(
         spec.end_specification()
 
     def get_data(self, buffer_manager, placement):
-        data = list()
-
         # for buffering output info is taken form the buffer manager
         reader, data_missing = buffer_manager.get_data_for_vertex(placement, 0)
 
@@ -192,16 +185,11 @@ class ConwayBasicCell(
         # get raw data
         raw_data = reader.read_all()
 
-        elements = struct.unpack(
-            "<{}I".format(len(raw_data) / 4), str(raw_data))
-        for element in elements:
-            if element == 0:
-                data.append(False)
-            else:
-                data.append(True)
-
-        # return the data
-        return data
+        # return the data, converted to list of booleans
+        return [
+            bool(element)
+            for element in struct.unpack(
+                "<{}I".format(len(raw_data) / 4), str(raw_data))]
 
     @property
     @overrides(MachineVertex.resources_required)

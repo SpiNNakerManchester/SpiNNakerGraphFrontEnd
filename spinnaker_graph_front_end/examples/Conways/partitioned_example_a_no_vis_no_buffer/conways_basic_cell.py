@@ -138,11 +138,7 @@ class ConwayBasicCell(
         # write state value
         spec.switch_write_focus(
             region=self.DATA_REGIONS.STATE.value)
-
-        if self._state:
-            spec.write_value(1)
-        else:
-            spec.write_value(0)
+        spec.write_value(int(self._state))
 
         # write neighbours data state
         spec.switch_write_focus(
@@ -150,8 +146,7 @@ class ConwayBasicCell(
         alive = 0
         dead = 0
         for edge in edges:
-            state = edge.pre_vertex.state
-            if state:
+            if edge.pre_vertex.state:
                 alive += 1
             else:
                 dead += 1
@@ -163,8 +158,6 @@ class ConwayBasicCell(
         spec.end_specification()
 
     def get_data(self, transceiver, placement, n_machine_time_steps):
-        data = list()
-
         # Get the data region base address where results are stored for the
         # core
         record_region_base_address = \
@@ -178,25 +171,16 @@ class ConwayBasicCell(
             struct.unpack("<I", number_of_bytes_to_read)[0]
 
         # read the bytes
-        if number_of_bytes_to_read != (n_machine_time_steps * 4):
+        if number_of_bytes_to_read != n_machine_time_steps * 4:
             raise exceptions.ConfigurationException(
                 "number of bytes seems wrong")
-        else:
-            raw_data = str(transceiver.read_memory(
-                placement.x, placement.y, record_region_base_address + 4,
-                number_of_bytes_to_read))
+        raw_data = str(transceiver.read_memory(
+            placement.x, placement.y, record_region_base_address + 4,
+            number_of_bytes_to_read))
 
-        # convert to ints
-        elements = struct.unpack(
-            "<{}I".format(n_machine_time_steps), raw_data)
-        for element in elements:
-            if element == 0:
-                data.append(False)
-            else:
-                data.append(True)
-
-        # return the data
-        return data
+        # convert to bools and return
+        return [bool(element) for element in struct.unpack(
+            "<{}I".format(n_machine_time_steps), raw_data)]
 
     @property
     @overrides(MachineVertex.resources_required)
