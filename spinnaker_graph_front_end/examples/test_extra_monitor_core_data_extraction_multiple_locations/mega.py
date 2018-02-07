@@ -21,7 +21,7 @@ class Runner(object):
         sim.setup(
             model_binary_module=
             test_extra_monitor_core_data_extraction_multiple_locations,
-            n_chips_required=2)
+            n_chips_required=49*2)
 
         machine = sim.machine()
 

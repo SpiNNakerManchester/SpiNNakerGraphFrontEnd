@@ -21,13 +21,13 @@ class Runner(object):
         sim.setup(
             model_binary_module=
             test_extra_monitor_core_data_extraction_multiple_locations,
-            n_chips_required=2)
+            n_chips_required=49*2)
 
         # build verts
         locs = [
             (0, 0), (2, 2), (7, 7), (3, 0), (1, 0), (0, 1), (3, 3), (4, 4),
             (5, 5), (3, 5), (4, 0), (7, 4),
-            #(8, 4), (4, 8), (11, 11), (11, 0), (0, 11), (6, 3), (0, 6)
+            (8, 4), (4, 8), (11, 11), (11, 0), (0, 11), (6, 3), (0, 6)
             ]
         writers = list()
 
