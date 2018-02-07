@@ -32,29 +32,20 @@ class Runner(object):
         writers = list()
 
         for chip_x, chip_y in locs:
+            writer2 = SDRAMWriter(
+                mbs, constraint=ChipAndCoreConstraint(chip_x, chip_y))
             writer = SDRAMWriter(
                 mbs, constraint=ChipAndCoreConstraint(chip_x, chip_y))
             # add verts to graph
             sim.add_machine_vertex_instance(writer)
+            sim.add_machine_vertex_instance(writer2)
             writers.append(writer)
-
+            writers.append(writer2)
         sim.run(12)
 
         # get placements for extraction
         placements = sim.placements()
         machine = sim.machine()
-
-        extra_monitor_vertices = sim.globals_variables. \
-            get_simulator()._last_run_outputs[
-            'MemoryExtraMonitorVertices']
-        extra_monitor_gatherers = sim.globals_variables. \
-            get_simulator()._last_run_outputs[
-            'MemoryMCGatherVertexToEthernetConnectedChipMapping']
-        time_out_setter = extra_monitor_gatherers[(0, 0)]
-
-        time_out_setter.set_cores_for_data_extraction(
-            sim.transceiver(), extra_monitor_vertices, placements)
-
         for repeat in range(0, number_of_repeats):
             for writer in writers:
 
@@ -64,6 +55,13 @@ class Runner(object):
                 writer_nearest_ethernet = machine.get_chip_at(
                     writer_chip.nearest_ethernet_x,
                     writer_chip.nearest_ethernet_y)
+
+                extra_monitor_vertices = sim.globals_variables.\
+                    get_simulator()._last_run_outputs[
+                    'MemoryExtraMonitorVertices']
+                extra_monitor_gatherers = sim.globals_variables.\
+                    get_simulator()._last_run_outputs[
+                        'MemoryMCGatherVertexToEthernetConnectedChipMapping']
 
                 receiver = None
                 gatherer = extra_monitor_gatherers[(writer_nearest_ethernet.x,
@@ -75,21 +73,23 @@ class Runner(object):
                         receiver = vertex
 
                 start = float(time.time())
+
+                gatherer.set_cores_for_data_extraction(
+                    sim.transceiver(), extra_monitor_vertices, placements)
                 data = gatherer.get_data(
                     sim.transceiver(),
                     placements.get_placement_of_vertex(receiver),
                     self._get_data_region_address(sim.transceiver(),
                                                   writer_placement),
                     writer.mbs_in_bytes)
+                gatherer.unset_cores_for_data_extraction(
+                    sim.transceiver(), extra_monitor_vertices, placements)
                 end = float(time.time())
 
                 print "time taken to extract {} MB is {}. MBS of {}".format(
                     mbs, end - start, (mbs * 8) / (end - start))
 
                 self._check_data(data)
-
-        time_out_setter.unset_cores_for_data_extraction(
-            sim.transceiver(), extra_monitor_vertices, placements)
 
     @staticmethod
     def _get_data_region_address(transceiver, placement):

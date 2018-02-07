@@ -32,11 +32,15 @@ class Runner(object):
         writers = list()
 
         for chip_x, chip_y in locs:
+            writer2 = SDRAMWriter(
+                mbs, constraint=ChipAndCoreConstraint(chip_x, chip_y))
             writer = SDRAMWriter(
                 mbs, constraint=ChipAndCoreConstraint(chip_x, chip_y))
             # add verts to graph
             sim.add_machine_vertex_instance(writer)
+            sim.add_machine_vertex_instance(writer2)
             writers.append(writer)
+            writers.append(writer2)
 
         sim.run(12)
 

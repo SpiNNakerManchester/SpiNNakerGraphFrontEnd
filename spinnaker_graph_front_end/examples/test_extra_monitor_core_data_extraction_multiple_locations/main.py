@@ -34,12 +34,9 @@ class Runner(object):
         for chip_x, chip_y in locs:
             writer = SDRAMWriter(
                 mbs, constraint=ChipAndCoreConstraint(chip_x, chip_y))
-            writer = SDRAMWriter(
-                mbs, constraint=ChipAndCoreConstraint(chip_x, chip_y))
             # add verts to graph
             sim.add_machine_vertex_instance(writer)
             writers.append(writer)
-
         sim.run(12)
 
         # get placements for extraction
