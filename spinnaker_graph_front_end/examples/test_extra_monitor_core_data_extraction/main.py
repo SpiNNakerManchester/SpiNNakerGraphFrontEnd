@@ -54,13 +54,13 @@ class Runner(object):
 
         start = float(time.time())
 
-        gatherer.set_cores_for_data_extraction(
+        gatherer.set_cores_for_data_streaming(
             sim.transceiver(), extra_monitor_vertices, placements)
         data = gatherer.get_data(
             sim.transceiver(), placements.get_placement_of_vertex(receiver),
             self._get_data_region_address(sim.transceiver(), writer_placement),
             writer.mbs_in_bytes)
-        gatherer.unset_cores_for_data_extraction(
+        gatherer.unset_cores_for_data_streaming(
             sim.transceiver(), extra_monitor_vertices, placements)
         end = float(time.time())
 
