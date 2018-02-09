@@ -68,7 +68,6 @@ class Runner(object):
             print "starting data gathering"
             start = float(time.time())
             data, lost_seq_data = receiver.get_data(
-                sim.transceiver(),
                 placements.get_placement_of_vertex(reader),
                 extra_monitor_vertices, placements)
             end = float(time.time())

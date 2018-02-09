@@ -77,7 +77,6 @@ class Runner(object):
 
                 start = float(time.time())
                 data = gatherer.get_data(
-                    sim.transceiver(),
                     placements.get_placement_of_vertex(receiver),
                     self._get_data_region_address(sim.transceiver(),
                                                   writer_placement),
