@@ -153,7 +153,7 @@ def read_xml_file(file_path):
     :param file_path: the file path in absolute form
     :rtype: None
     """
-    logger.warn("This functionality is not yet supported")
+    logger.warning("This functionality is not yet supported")
     globals_variables.get_simulator().read_xml_file(file_path)
 
 
