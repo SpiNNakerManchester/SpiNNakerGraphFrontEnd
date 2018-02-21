@@ -5,6 +5,7 @@ from spinnaker_graph_front_end.examples.test_data_in_speed_up.\
     large_dsg_data_vertex import LargeDSGDataVertex
 import time
 
+
 class Runner(object):
 
     def __init__(self):

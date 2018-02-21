@@ -69,8 +69,10 @@ class LargeDSGDataVertex(
         # write large data
         spec.switch_write_focus(self.DATA_REGIONS.LARGE_DATA.value)
         iterations = int(math.floor(self._size_of_dsg_region / 4))
+        # print "writing {} numbers\n".format(iterations)
         for value in range(0, iterations):
             spec.write_value(value)
+        # print "written\n"
 
         # write iterations size for c code to know
         spec.switch_write_focus(self.DATA_REGIONS.SIZE_OF_DATA.value)
