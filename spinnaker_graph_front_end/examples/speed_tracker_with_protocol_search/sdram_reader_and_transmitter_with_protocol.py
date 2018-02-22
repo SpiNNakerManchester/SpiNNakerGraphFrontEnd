@@ -26,9 +26,8 @@ class SDRAMReaderAndTransmitterWithProtocol(
 
     def __init__(self, mbs):
         self._mbs = mbs * self.SDRAM_READING_SIZE_IN_BYTES_CONVERTER
-        MachineVertex.__init__(self, label="speed", constraints=None)
-        MachineDataSpecableVertex.__init__(self)
-        AbstractHasAssociatedBinary.__init__(self)
+        super(SDRAMReaderAndTransmitterWithProtocol, self).__init__(
+            label="speed", constraints=None)
 
     @property
     def resources_required(self):

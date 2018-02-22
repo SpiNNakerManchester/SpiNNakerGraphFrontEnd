@@ -1,4 +1,4 @@
-from pacman.model.decorators import overrides
+from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
 from pacman.model.resources import ResourceContainer, SDRAMResource
@@ -38,10 +38,10 @@ class TemplateVertex(
                ('RECORDED_DATA', 2)])
 
     def __init__(self, label, constraints=None):
+        super(TemplateVertex, self).__init__(
+            label=label, constraints=constraints)
 
         self._recording_size = 5000
-
-        MachineVertex.__init__(self, label=label, constraints=constraints)
 
         config = globals_variables.get_simulator().config
         self._buffer_size_before_receive = None

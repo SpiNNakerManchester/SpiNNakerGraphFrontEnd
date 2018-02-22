@@ -48,9 +48,8 @@ class PacketGathererWithProtocol(
     LENGTH_OF_DATA_SIZE = 4
 
     def __init__(self):
-        MachineVertex.__init__(self, label="pg", constraints=None)
-        MachineDataSpecableVertex.__init__(self)
-        AbstractHasAssociatedBinary.__init__(self)
+        super(PacketGathererWithProtocol, self).__init__(
+            label="pg", constraints=None)
         self._view = None
         self._max_seq_num = None
         self._output = None
@@ -183,7 +182,7 @@ class PacketGathererWithProtocol(
         # transmit missing seq as a new sdp packet
         first = True
         seq_num_offset = 0
-        for packet_count in range(0, n_packets):
+        for _packet_count in range(0, n_packets):
             length_left_in_packet = self.DATA_PER_FULL_PACKET
             offset = 0
             data = None

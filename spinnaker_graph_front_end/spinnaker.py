@@ -50,8 +50,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
         front_end_versions = [("SpiNNakerGraphFrontEnd", version)]
 
-        AbstractSpinnakerBase.__init__(
-            self,
+        super(SpiNNaker, self).__init__(
             configfile=self.CONFIG_FILE_NAME,
             executable_finder=executable_finder,
             graph_label=graph_label,
