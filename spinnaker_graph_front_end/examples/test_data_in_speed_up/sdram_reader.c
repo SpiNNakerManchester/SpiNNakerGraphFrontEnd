@@ -43,6 +43,7 @@ void read_data(){
         data_specification_get_region(SIZE_OF_LARGE_DATA, address);
     uint size = store_address[ITERATIONS];
     address_t data = data_specification_get_region(LARGE_DATA, address);
+    log_info("was looking in address %u", data);
 
     for(uint count = 0; count < size; count++){
         if (data[count] != count){
