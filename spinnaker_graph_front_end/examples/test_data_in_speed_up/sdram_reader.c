@@ -45,13 +45,13 @@ void read_data(){
     address_t data = data_specification_get_region(LARGE_DATA, address);
     log_info("was looking in address %u", data);
 
-    for(uint count = 0; count < size; count++){
-        if (data[count] != count){
-            log_error("was looking for value %u, found %u. stopping",
-                      count, data[count]);
-            rt_error(RTE_SWERR);
-        }
-    }
+    //for(uint count = 0; count < size; count++){
+    //    if (data[count] != count){
+    //        log_error("was looking for value %u, found %u. stopping",
+    //                  count, data[count]);
+    //        rt_error(RTE_SWERR);
+    //    }
+    //}
 }
 
 //! setup
