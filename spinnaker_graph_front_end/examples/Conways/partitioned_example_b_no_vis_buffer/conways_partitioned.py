@@ -42,10 +42,7 @@ for x in range(0, MAX_X_SIZE_OF_FABRIC):
 output = ""
 for y in range(MAX_X_SIZE_OF_FABRIC - 1, 0, -1):
     for x in range(0, MAX_Y_SIZE_OF_FABRIC):
-        if vertices[x][y].state:
-            output += "X"
-        else:
-            output += " "
+        output += "X" if vertices[x][y].state else " "
     output += "\n"
 print output
 print "\n\n"
@@ -84,7 +81,7 @@ recorded_data = dict()
 # get the data per vertex
 for x in range(0, MAX_X_SIZE_OF_FABRIC):
     for y in range(0, MAX_Y_SIZE_OF_FABRIC):
-        recorded_data[(x, y)] = vertices[x][y].get_data(
+        recorded_data[x, y] = vertices[x][y].get_data(
             front_end.buffer_manager(),
             front_end.placements().get_placement_of_vertex(vertices[x][y]))
 
@@ -94,10 +91,7 @@ for time in range(0, runtime):
     output = ""
     for y in range(MAX_X_SIZE_OF_FABRIC - 1, 0, -1):
         for x in range(0, MAX_Y_SIZE_OF_FABRIC):
-            if recorded_data[(x, y)][time]:
-                output += "X"
-            else:
-                output += " "
+            output += "X" if recorded_data[x, y][time] else " "
         output += "\n"
     print output
     print "\n\n"
