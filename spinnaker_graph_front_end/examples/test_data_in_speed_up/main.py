@@ -1,9 +1,11 @@
 import spinnaker_graph_front_end as sim
 from pacman.model.constraints.placer_constraints import ChipAndCoreConstraint
+from spinn_front_end_common.utility_models import \
+    DataSpeedUpPacketGatherMachineVertex
 from spinnaker_graph_front_end.examples import test_data_in_speed_up
 from spinnaker_graph_front_end.examples.test_data_in_speed_up.\
     large_dsg_data_vertex import LargeDSGDataVertex
-import time
+from spinn_front_end_common.utilities import globals_variables
 
 
 class Runner(object):
@@ -25,8 +27,30 @@ class Runner(object):
         sim.add_machine_vertex_instance(reader)
 
         sim.run(5)
+        machine_graph = globals_variables.get_simulator()._mapping_outputs[
+            "MemoryMachineGraph"]
+        lpgmv = None
+        for vertex in machine_graph.vertices:
+            if isinstance(vertex, DataSpeedUpPacketGatherMachineVertex):
+                lpgmv = vertex
+
+        path = lpgmv._data_in_report_path
+
+        first = True
+        speed = None
+        missing_seq = None
+        with open(path, "r") as reader:
+            lines = reader.readlines()
+            for line in lines[2:-1]:
+                bits = line.split("\t\t")
+                if int(bits[3]) == mbs * 1024 * 1024:
+                    print "for {} bytes, mbs is {} with missing seqs " \
+                          "of {}".format(mbs * 1024 * 1024, bits[5], bits[6])
+                    speed = bits[5]
+                    missing_seq = bits[6]
 
         sim.stop()
+        return speed, missing_seq
 
 if __name__ == "__main__":
 
@@ -51,4 +75,7 @@ if __name__ == "__main__":
                     mbs_to_run, x_coord, y_coord, iteration)
                 print "##################################################" \
                       "####################"
-                runner.run(mbs_to_run, x_coord, y_coord)
+                data_times[(mbs_to_run, x_coord, y_coord, iteration)] = \
+                    runner.run(mbs_to_run, x_coord, y_coord)
+
+    print data_times
