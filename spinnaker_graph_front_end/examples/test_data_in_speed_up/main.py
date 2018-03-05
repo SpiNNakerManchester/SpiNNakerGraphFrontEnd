@@ -24,13 +24,8 @@ class Runner(object):
         # add verts to graph
         sim.add_machine_vertex_instance(reader)
 
-        start = float(time.time())
         sim.run(5)
-        end = float(time.time())
-        seconds = float(end - start)
-        speed = (mbs * 8) / seconds
-        print ("Read {} MB in {} seconds ({} Mb/s)".format(
-            mbs, seconds, speed))
+
         sim.stop()
 
 if __name__ == "__main__":

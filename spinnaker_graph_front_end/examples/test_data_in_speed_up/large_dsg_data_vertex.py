@@ -72,8 +72,9 @@ class LargeDSGDataVertex(
         spec.switch_write_focus(self.DATA_REGIONS.LARGE_DATA.value)
         iterations = int(math.floor(self._size_of_dsg_region / 4))
 
-        spec.write_array(numpy.arange(0, self._size_of_dsg_region / 4,
-                                      dtype="uint32"))
+        spec.write_array(numpy.arange(
+            start=0, stop=self._size_of_dsg_region / 4, step=1,
+            dtype="uint32"))
 
         # write iterations size for c code to know
         spec.switch_write_focus(self.DATA_REGIONS.SIZE_OF_DATA.value)
