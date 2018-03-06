@@ -34,12 +34,10 @@ class Runner(object):
             if isinstance(vertex, DataSpeedUpPacketGatherMachineVertex):
                 lpgmv = vertex
 
-        path = lpgmv._data_in_report_path
-
         first = True
         speed = None
         missing_seq = None
-        with open(path, "r") as reader:
+        with open(lpgmv._data_in_report_path, "r") as reader:
             lines = reader.readlines()
             for line in lines[2:-1]:
                 bits = line.split("\t\t")
@@ -57,8 +55,9 @@ if __name__ == "__main__":
     # entry point for doing speed search
     # data_sizes = [1, 2, 5, 10, 20, 30, 50]
     data_sizes = [1, 2, 5, 10, 20, 30, 50, 100]
-    locations = [(0, 0), (1, 1), (0, 3), (2, 4), (4, 0), (7, 7)]
-    iterations_per_type = 100
+    #locations = [(0, 0), (1, 1), (0, 3), (2, 4), (4, 0), (7, 7)]
+    locations = [(1, 1), (0, 3), (2, 4), (4, 0), (7, 7)]
+    iterations_per_type = 3
     runner = Runner()
 
     data_times = dict()
