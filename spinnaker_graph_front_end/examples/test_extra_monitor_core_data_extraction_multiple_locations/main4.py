@@ -19,8 +19,8 @@ class Runner(object):
 
         # setup system
         sim.setup(
-            model_binary_module=
-            test_extra_monitor_core_data_extraction_multiple_locations,
+            model_binary_module=(
+                test_extra_monitor_core_data_extraction_multiple_locations),
             n_chips_required=49*2)
 
         # build verts
@@ -50,10 +50,10 @@ class Runner(object):
 
         extra_monitor_vertices = sim.globals_variables. \
             get_simulator()._last_run_outputs[
-            'MemoryExtraMonitorVertices']
+                'MemoryExtraMonitorVertices']
         extra_monitor_gatherers = sim.globals_variables. \
             get_simulator()._last_run_outputs[
-            'MemoryMCGatherVertexToEthernetConnectedChipMapping']
+                'MemoryMCGatherVertexToEthernetConnectedChipMapping']
         time_out_setter = extra_monitor_gatherers[(0, 0)]
 
         time_out_setter.set_cores_for_data_streaming(

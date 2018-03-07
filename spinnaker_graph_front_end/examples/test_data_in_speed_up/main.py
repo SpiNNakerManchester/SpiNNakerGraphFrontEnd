@@ -50,6 +50,7 @@ class Runner(object):
         sim.stop()
         return speed, missing_seq
 
+
 if __name__ == "__main__":
 
     # entry point for doing speed search
