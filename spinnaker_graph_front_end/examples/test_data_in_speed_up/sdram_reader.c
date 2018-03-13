@@ -10,6 +10,8 @@
 static uint32_t simulation_ticks = 0;
 static uint32_t infinite_run = 0;
 static uint32_t time = 0;
+static uint32_t count = 0;
+static uint32_t size = 0;
 
 //! int as a bool to represent if this simulation should run forever
 static uint32_t infinite_run;
@@ -33,6 +35,7 @@ typedef enum config_region_elements {
 //! boiler plate: not really needed
 void resume_callback() {
     time = UINT32_MAX;
+    log_info("was up to count %d out of %d\n", count, size);
 }
 
 //! method to make test data in sdram
@@ -41,11 +44,11 @@ void read_data(){
     address_t address = data_specification_get_data_address();
     address_t store_address =
         data_specification_get_region(SIZE_OF_LARGE_DATA, address);
-    uint size = store_address[ITERATIONS];
+    size = store_address[ITERATIONS];
     address_t data = data_specification_get_region(LARGE_DATA, address);
     log_info("was looking in address %u", data);
 
-    for(uint count = 0; count < size; count++){
+    for(count = 0; count < size; count++){
         if (data[count] != count){
             log_error("was looking for value %u, found %u. stopping",
                       count, data[count]);

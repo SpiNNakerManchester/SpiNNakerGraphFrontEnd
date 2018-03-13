@@ -2,8 +2,10 @@ import spinnaker_graph_front_end as sim
 from pacman.model.constraints.placer_constraints import ChipAndCoreConstraint
 from spinn_front_end_common.utility_models import \
     DataSpeedUpPacketGatherMachineVertex
-from spinnaker_graph_front_end.examples import test_data_in_speed_up
-from spinnaker_graph_front_end.examples.test_data_in_speed_up.\
+from spinnaker_graph_front_end.examples import \
+    test_data_in_speed_up_on_every_chip_at_same_time
+from spinnaker_graph_front_end.examples.\
+    test_data_in_speed_up_on_every_chip_at_same_time.\
     large_dsg_data_vertex import LargeDSGDataVertex
 from spinn_front_end_common.utilities import globals_variables
 import os
@@ -17,8 +19,10 @@ class Runner(object):
     def run(self, mbs):
 
         # setup system
-        sim.setup(model_binary_module=test_data_in_speed_up,
-                  n_chips_required=2)
+        sim.setup(
+            model_binary_module=(
+                test_data_in_speed_up_on_every_chip_at_same_time),
+            n_chips_required=2)
 
         # build verts
         machine = sim.machine()
@@ -29,7 +33,7 @@ class Runner(object):
             # add vertice to graph
             sim.add_machine_vertex_instance(reader)
 
-        sim.run(5)
+        sim.run(5000)
         machine_graph = globals_variables.get_simulator()._mapping_outputs[
             "MemoryMachineGraph"]
 
@@ -56,8 +60,7 @@ class Runner(object):
 if __name__ == "__main__":
 
     # entry point for doing speed search
-    data_sizes = [1, 2, 5, 10, 20, 30, 50, 100]
-    locations = [(0, 0), (1, 1), (0, 3), (2, 4), (4, 0), (7, 7)]
+    data_sizes = [100]
     iterations_per_type = 100
     runner = Runner()
 

@@ -3,7 +3,7 @@ BUILD_DIRS = test_fixed_router test_retransmission_phase_on_multi_cores hello_wo
  speed_tracker_with_protocol_search test_extra_monitor_core_data_extraction \
  test_fixed_router_transmitter_reciever test_timer_setup_cost \
  test_extra_monitor_core_data_extraction_multiple_locations \
- test_data_in_speed_up
+ test_data_in_speed_up test_data_in_speed_up_on_every_chip_at_same_time
 
 all: $(BUILD_DIRS)
 	for d in $(BUILD_DIRS); do (cd $$d; "$(MAKE)") || exit $$?; done
