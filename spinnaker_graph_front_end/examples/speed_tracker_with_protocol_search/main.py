@@ -97,7 +97,7 @@ class Runner(object):
             # if boomed. end so that we can get iobuf
             traceback.print_exc()
             sim.stop()
-            return None, True, True, e.message, 0
+            return None, True, True, str(e), 0
 
 
 if __name__ == "__main__":
