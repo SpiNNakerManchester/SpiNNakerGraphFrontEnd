@@ -9,7 +9,7 @@ class TestSpeedRouter(unittest.TestCase):
             script_dir
         class_file = script_dir.__file__
         path = os.path.dirname(os.path.abspath(class_file))
-        print path
+        print(path)
         os.chdir(path)
         import spinnaker_graph_front_end.examples.speed_test_solo.main_solo    # NOQA
 
@@ -17,7 +17,7 @@ class TestSpeedRouter(unittest.TestCase):
         import spinnaker_graph_front_end.examples.speed_tracker as script_dir
         class_file = script_dir.__file__
         path = os.path.dirname(os.path.abspath(class_file))
-        print path
+        print(path)
         os.chdir(path)
         import spinnaker_graph_front_end.examples.speed_tracker.main  # NOQA
 
@@ -26,7 +26,7 @@ class TestSpeedRouter(unittest.TestCase):
             as script_dir
         class_file = script_dir.__file__
         path = os.path.dirname(os.path.abspath(class_file))
-        print path
+        print(path)
         os.chdir(path)
         import spinnaker_graph_front_end.examples.speed_tracker_with_protocol.main  # NOQA
 
@@ -35,6 +35,6 @@ class TestSpeedRouter(unittest.TestCase):
             as script_dir
         class_file = script_dir.__file__
         path = os.path.dirname(os.path.abspath(class_file))
-        print path
+        print(path)
         os.chdir(path)
         import spinnaker_graph_front_end.examples.test_timer_setup_cost.test_timer_setup_cost  # NOQA

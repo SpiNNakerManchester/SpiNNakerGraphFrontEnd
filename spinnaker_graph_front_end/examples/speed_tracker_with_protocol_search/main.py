@@ -63,7 +63,7 @@ class Runner(object):
             get_simulator()._last_run_outputs['MemoryExtraMonitorVertices']
 
         try:
-            print "starting data gathering"
+            print("starting data gathering")
             start = float(time.time())
 
             data, lost_seq_data = receiver.get_data(
@@ -75,13 +75,12 @@ class Runner(object):
             sim.stop()
 
             # check data is correct here
-            elements = len(data) / 4
-            ints = struct.unpack("<{}I".format(elements), data)
+            ints = struct.unpack("<{}I".format(len(data) // 4), data)
             start_value = 0
             for value in ints:
                 if value != start_value:
-                    print "should be getting {}, but got {}".format(
-                        start_value, value)
+                    print("should be getting {}, but got {}".format(
+                        start_value, value))
                     start_value = value + 1
                 else:
                     start_value += 1
@@ -89,7 +88,7 @@ class Runner(object):
             # print data
             seconds = float(end - start)
             speed = (mbs * 8) / seconds
-            print ("Read {} MB in {} seconds ({} Mb/s)".format(
+            print("Read {} MB in {} seconds ({} Mb/s)".format(
                 mbs, seconds, speed))
             del data
             return speed, True, False, "", lost_seq_data
@@ -119,21 +118,21 @@ if __name__ == "__main__":
     for mbs_to_run in data_sizes:
         for x_coord, y_coord in locations:
             for iteration in range(0, iterations_per_type):
-                print "###########################################" \
-                      "###########################"
-                print "running {}:{}:{}:{}".format(
-                    mbs_to_run, x_coord, y_coord, iteration)
-                print "##################################################" \
-                      "####################"
+                print("###########################################"
+                      "###########################")
+                print("running {}:{}:{}:{}".format(
+                    mbs_to_run, x_coord, y_coord, iteration))
+                print("###########################################"
+                      "###########################")
                 speed_of_data_extraction, ran, blew_up, bang_message, \
                     lost_seq_nums = runner.run(mbs_to_run, x_coord, y_coord)
                 gc.collect()
                 if ran:
                     if blew_up:
-                        print "sim for iteration {} for {} msb on chip " \
+                        print("sim for iteration {} for {} msb on chip "
                               "{}:{} failed with {}".format(
-                                   iteration, mbs_to_run, x_coord, y_coord,
-                                   bang_message)
+                                  iteration, mbs_to_run, x_coord, y_coord,
+                                  bang_message))
                     else:
                         if mbs_to_run not in data_times:
                             data_times[mbs_to_run] = dict()
@@ -153,7 +152,7 @@ if __name__ == "__main__":
                 else:
                     failed_to_run_states.append((x_coord, y_coord))
 
-    print failed_to_run_states
+    print(failed_to_run_states)
 
     # calculate average, max, min, sd per field, then total
     for mbs_to_run in data_sizes:
@@ -175,27 +174,28 @@ if __name__ == "__main__":
             # retries
             retry_data = lost_data_pattern[mbs_to_run][(x_coord, y_coord)]
 
-            print "for msb = {}, from chip {}:{} average speed = {} " \
-                  "max speed = {} min speed = {} std = {} " \
+            print("for msb = {}, from chip {}:{} average speed = {} "
+                  "max speed = {} min speed = {} std = {} "
                   "number of retires = {} n missing per retry = {}".format(
                       mbs_to_run, x_coord, y_coord, total, max, min, sd,
-                      len(retry_data), retry_data)
+                      len(retry_data), retry_data))
 
             # write raw data to file
-            writer = open("{}_{}_{}".format(mbs_to_run, x_coord, y_coord), "w")
-            writer.write(speed_times)
-            writer.write("\n")
-            writer.write(total)
-            writer.write("\n")
-            writer.write(str(max))
-            writer.write("\n")
-            writer.write(str(min))
-            writer.write("\n")
-            writer.write(str(sd))
-            writer.write("\n")
-            writer.write(retry_data)
-            writer.flush()
-            writer.close()
+            with open("{}_{}_{}".format(
+                    mbs_to_run, x_coord, y_coord), "w") as f:
+                f.write(speed_times)
+                f.write("\n")
+                f.write(total)
+                f.write("\n")
+                f.write(str(max))
+                f.write("\n")
+                f.write(str(min))
+                f.write("\n")
+                f.write(str(sd))
+                f.write("\n")
+                f.write(retry_data)
+                f.flush()
+                f.close()
 
     # average
     average = numpy.average(overall_data_times)
@@ -209,5 +209,5 @@ if __name__ == "__main__":
     # sd
     sd = numpy.std(overall_data_times)
 
-    print "overall average speed = {} max speed = {} min speed = {} " \
-          "std = {}".format(average, max, min, sd)
+    print("overall average speed = {} max speed = {} min speed = {} "
+          "std = {}".format(average, max, min, sd))
