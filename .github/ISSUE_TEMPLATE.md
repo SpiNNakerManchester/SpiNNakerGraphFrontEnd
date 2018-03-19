@@ -18,4 +18,5 @@ What version of our software are you using?
  - [ ] SpiNNMan: `???`
  - [ ] SpiNNMachine: `???`
  - [ ] SpiNNUtilities: `???`
- 
+ - [ ] spinn_common: `???`
+ - [ ] spinnaker_tools: `???`
