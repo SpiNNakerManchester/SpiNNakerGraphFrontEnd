@@ -42,6 +42,10 @@ class Runner(object):
         extra_monitor_gatherers = sim.globals_variables.\
             get_simulator()._last_run_outputs[
                 'MemoryMCGatherVertexToEthernetConnectedChipMapping']
+        fixed_routes = sim.globals_variables.\
+            get_simulator()._last_run_outputs['MemoryFixedRoutes']
+        txrx = sim.globals_variables.\
+            get_simulator()._last_run_outputs['MemoryTransceiver']
 
         receiver = None
         gatherer = extra_monitor_gatherers[(writer_nearest_ethernet.x,
@@ -55,13 +59,13 @@ class Runner(object):
         start = float(time.time())
 
         gatherer.set_cores_for_data_extraction(
-            sim.transceiver(), extra_monitor_vertices, placements)
+            txrx, extra_monitor_vertices, placements)
         data = gatherer.get_data(
-            sim.transceiver(), placements.get_placement_of_vertex(receiver),
+            txrx, placements.get_placement_of_vertex(receiver),
             self._get_data_region_address(sim.transceiver(), writer_placement),
-            writer.mbs_in_bytes)
+            writer.mbs_in_bytes, fixed_routes)
         gatherer.unset_cores_for_data_extraction(
-            sim.transceiver(), extra_monitor_vertices, placements)
+            txrx, extra_monitor_vertices, placements)
         end = float(time.time())
 
         print "time taken to extract {} MB is {}. MBS of {}".format(
