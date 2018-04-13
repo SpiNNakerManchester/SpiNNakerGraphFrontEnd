@@ -1,11 +1,11 @@
-import struct
-import time
-import spinnaker_graph_front_end as sim
+from pacman.model.constraints.placer_constraints import ChipAndCoreConstraint
+from spinnaker_graph_front_end.examples import test_data_in_multi_run
+from spinnaker_graph_front_end.examples.test_data_in_multi_run.sdram_writer \
+    import SDRAMWriter
 from data_specification.utility_calls import get_region_base_address_offset
-from spinnaker_graph_front_end.examples import \
-    test_extra_monitor_core_data_extraction
-from spinnaker_graph_front_end.examples.\
-    test_extra_monitor_core_data_extraction.sdram_writer import SDRAMWriter
+import spinnaker_graph_front_end as sim
+import time
+import struct
 
 
 class Runner(object):
@@ -13,17 +13,22 @@ class Runner(object):
     def __init__(self):
         pass
 
-    def run(self, mbs):
+    def run(self, mbs, x, y):
 
         # setup system
-        sim.setup(model_binary_module=test_extra_monitor_core_data_extraction,
+        sim.setup(model_binary_module=test_data_in_multi_run,
                   n_chips_required=2)
 
         # build verts
-        writer = SDRAMWriter(mbs)
+        reader = SDRAMWriter(mbs)
+        reader.add_constraint(ChipAndCoreConstraint(x=x, y=y))
 
         # add verts to graph
-        sim.add_machine_vertex_instance(writer)
+        sim.add_machine_vertex_instance(reader)
+
+        return self._do_run(mbs, reader)
+
+    def _do_run(self, mbs, writer):
 
         sim.run(12)
 
@@ -72,6 +77,9 @@ class Runner(object):
             mbs, end - start, (mbs * 8) / (end - start))
 
         self._check_data(data)
+
+        with open("python_results_8_100", "a") as myfile:
+            myfile.write("{}:{}\n".format(mbs,  (mbs * 8) / (end - start)))
         sim.stop()
 
     @staticmethod
@@ -105,5 +113,26 @@ class Runner(object):
 
 if __name__ == "__main__":
 
+    # entry point for doing speed search
+    data_sizes = [1]
+    # data_sizes = [1, 2, 5, 10, 20, 30, 50, 100]
+    locations = [(7, 7)]
+    # locations = [(0, 0), (1, 1), (0, 3), (2, 4), (4, 0), (7, 7)]
+    iterations_per_type = 100
     runner = Runner()
-    runner.run(mbs=20)
+
+    data_times = dict()
+    overall_data_times = list()
+    failed_to_run_states = list()
+    lost_data_pattern = dict()
+
+    for mbs_to_run in data_sizes:
+        for x_coord, y_coord in locations:
+            for iteration in range(0, iterations_per_type):
+                print "###########################################" \
+                      "###########################"
+                print "running {}:{}:{}:{}".format(
+                    mbs_to_run, x_coord, y_coord, iteration)
+                print "##################################################" \
+                      "####################"
+                runner.run(mbs_to_run, x_coord, y_coord)
