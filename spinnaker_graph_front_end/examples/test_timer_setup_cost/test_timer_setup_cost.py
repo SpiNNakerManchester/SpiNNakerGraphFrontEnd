@@ -33,8 +33,8 @@ receiver.unset_cores_for_data_extraction(
                         extra_monitor_vertices))
 end = float(time.time())
 
-print "took {} seconds to set and unset the routing timeout".format(
-    float(end - start))
+print("took {} seconds to set and unset the routing timeout".format(
+    float(end - start)))
 
 # end sim
 front_end.stop()

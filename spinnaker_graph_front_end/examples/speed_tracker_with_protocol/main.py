@@ -51,7 +51,7 @@ extra_monitor_vertices = sim.globals_variables. \
 
 
 try:
-    print "starting data gathering"
+    print("starting data gathering")
     start = float(time.time())
     data = receiver.get_data(
         sim.transceiver(),
@@ -62,12 +62,12 @@ try:
     sim.stop()
 
     # check data is correct here
-    elements = len(data) / 4
-    ints = struct.unpack("<{}I".format(elements), data)
+    ints = struct.unpack("<{}I".format(len(data) // 4), data)
     start_value = 0
     for value in ints:
         if value != start_value:
-            print "should be getting {}, but got {}".format(start_value, value)
+            print("should be getting {}, but got {}".format(
+                start_value, value))
             start_value = value + 1
         else:
             start_value += 1
@@ -75,7 +75,7 @@ try:
     # print data
     seconds = float(end - start)
     speed = (mbs * 8) / seconds
-    print ("Read {} MB in {} seconds ({} Mb/s)".format(mbs, seconds, speed))
+    print("Read {} MB in {} seconds ({} Mb/s)".format(mbs, seconds, speed))
 
 
 except Exception as e:

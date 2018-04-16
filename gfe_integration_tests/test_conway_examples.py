@@ -12,7 +12,7 @@ class TestConwayExamples(unittest.TestCase):
             one_no_graph_example as conways_ng
         class_file = conways_ng.__file__
         path = os.path.dirname(os.path.abspath(class_file))
-        print path
+        print(path)
         os.chdir(path)
         import spinnaker_graph_front_end.examples.Conways.one_no_graph_example.conways_no_graph  # NOQA
 
@@ -21,7 +21,7 @@ class TestConwayExamples(unittest.TestCase):
             partitioned_example_a_no_vis_no_buffer as conways_a
         class_file = conways_a.__file__
         path = os.path.dirname(os.path.abspath(class_file))
-        print path
+        print(path)
         os.chdir(path)
         import spinnaker_graph_front_end.examples.Conways.partitioned_example_a_no_vis_no_buffer.conways_partitioned   # NOQA
 

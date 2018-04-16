@@ -122,9 +122,7 @@ class HelloWorldVertex(
             placement, 0)
         if missing_data:
             raise Exception("missing data!")
-        record_raw = data_pointer.read_all()
-        output = str(record_raw)
-        return output
+        return str(data_pointer.read_all())
 
     def get_minimum_buffer_sdram_usage(self):
         return self._string_data_size
