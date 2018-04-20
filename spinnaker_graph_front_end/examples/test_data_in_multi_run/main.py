@@ -114,7 +114,7 @@ class Runner(object):
 if __name__ == "__main__":
 
     # entry point for doing speed search
-    data_sizes = [1]
+    data_sizes = [20]
     # data_sizes = [1, 2, 5, 10, 20, 30, 50, 100]
     locations = [(7, 7)]
     # locations = [(0, 0), (1, 1), (0, 3), (2, 4), (4, 0), (7, 7)]
