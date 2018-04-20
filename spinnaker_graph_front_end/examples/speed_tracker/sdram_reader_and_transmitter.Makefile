@@ -7,10 +7,6 @@ APP = sdram_reader_and_transmitter
 BUILD_DIR = build/
 SOURCES = sdram_reader_and_transmitter.c
 
-MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
-CURRENT_DIR := $(dir $(MAKEFILE_PATH))
-SOURCE_DIR := $(abspath $(CURRENT_DIR))
-SOURCE_DIRS += $(SOURCE_DIR)
-APP_OUTPUT_DIR := $(abspath $(CURRENT_DIR))/
+APP_OUTPUT_DIR := $(abspath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))/
 
-include $(SPINN_DIRS)/make/Makefile.SpiNNFrontEndCommon
+include $(SPINN_DIRS)/make/local.mk
