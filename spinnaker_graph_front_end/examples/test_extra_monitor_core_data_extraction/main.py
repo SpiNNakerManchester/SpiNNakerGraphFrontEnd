@@ -7,6 +7,8 @@ from spinnaker_graph_front_end.examples import \
 from spinnaker_graph_front_end.examples.\
     test_extra_monitor_core_data_extraction.sdram_writer import SDRAMWriter
 
+_ONE_WORD = struct.Struct("<I")
+
 
 class Runner(object):
 
@@ -68,8 +70,8 @@ class Runner(object):
             txrx, extra_monitor_vertices, placements)
         end = float(time.time())
 
-        print "time taken to extract {} MB is {}. MBS of {}".format(
-            mbs, end - start, (mbs * 8) / (end - start))
+        print("time taken to extract {} MB is {}. MBS of {}".format(
+            mbs, end - start, (mbs * 8) / (end - start)))
 
         self._check_data(data)
         sim.stop()
@@ -83,27 +85,23 @@ class Runner(object):
         # Get the provenance region base address
         base_address_offset = get_region_base_address_offset(
             app_data_base_address, SDRAMWriter.DATA_REGIONS.DATA.value)
-        base_address_buffer = buffer(transceiver.read_memory(
-            placement.x, placement.y, base_address_offset, 4))
-        _ONE_WORD = struct.Struct("<I")
-        return _ONE_WORD.unpack(str(base_address_buffer))[0]
+        return _ONE_WORD.unpack(transceiver.read_memory(
+            placement.x, placement.y, base_address_offset, _ONE_WORD.size))[0]
 
     @staticmethod
     def _check_data(data):
         # check data is correct here
-        elements = len(data) / 4
-        ints = struct.unpack("<{}I".format(elements), data)
+        ints = struct.unpack("<{}I".format(len(data) // 4), data)
         start_value = 0
         for value in ints:
             if value != start_value:
-                print "should be getting {}, but got {}".format(
-                    start_value, value)
+                print("should be getting {}, but got {}".format(
+                    start_value, value))
                 start_value = value + 1
             else:
                 start_value += 1
 
 
 if __name__ == "__main__":
-
     runner = Runner()
     runner.run(mbs=20)

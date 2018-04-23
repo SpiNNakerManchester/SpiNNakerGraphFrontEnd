@@ -104,8 +104,8 @@ class PacketGathererWithProtocol(
     def get_data(self, transceiver, placement):
 
         data = struct.pack("<I", self.SDP_PACKET_START_SENDING_COMMAND_ID)
-        # print "sending to core {}:{}:{}".format(
-        #    placement.x, placement.y, placement.p)
+        # print("sending to core {}:{}:{}".format(
+        #     placement.x, placement.y, placement.p))
         message = SDPMessage(
             sdp_header=SDPHeader(
                 destination_chip_x=placement.x,
@@ -142,7 +142,7 @@ class PacketGathererWithProtocol(
                         seq_nums, transceiver, placement)
 
         # pretend that we're broken, re-require some of the data
-        print "doing fake retransmission"
+        print("doing fake retransmission")
         missing_seq_nums = [3140, 1938]
         self._remove_seq_nums(seq_nums, missing_seq_nums)
         finished = self._transmit_missing_seq_nums(
@@ -261,7 +261,7 @@ class PacketGathererWithProtocol(
                     destination_cpu=placement.p,
                     destination_port=self.SDP_PACKET_PORT,
                     flags=SDPFlag.REPLY_NOT_EXPECTED),
-                data=str(data))
+                data=data)
 
             # debug
             self._print_out_packet_data(data)
@@ -309,7 +309,7 @@ class PacketGathererWithProtocol(
             else:
                 # this flag can be dropped at some point
                 seq_num = first_packet_element
-                # print "seq num = {}".format(seq_num)
+                # print("seq num = {}".format(seq_num))
                 if seq_num > self._max_seq_num:
                     raise Exception(
                         "got an insane sequence number. got {} when "
@@ -379,9 +379,9 @@ class PacketGathererWithProtocol(
                 "seq num {} length of packet {} and final {}".format(
                     len(self._output), view_end_position, seq_num,
                     self._max_seq_num, packet_length, is_final))
-        # print "view_start={} view_end={} data_start={} data_end={}".format(
-        #   view_start_position, view_end_position, data_start_position,
-        #   data_end_position)
+        # print("view_start={} view_end={} data_start={} data_end={}".format(
+        #     view_start_position, view_end_position, data_start_position,
+        #     data_end_position))
         self._view[view_start_position: view_end_position] = \
             data[data_start_position:data_end_position]
 
@@ -415,21 +415,21 @@ class PacketGathererWithProtocol(
         seq_nums = sorted(seq_nums)
         for seq_num in seq_nums:
             if seq_num != last_seq_num + 1:
-                print "from list im missing seq num {}".format(seq_num)
+                print("from list im missing seq num {}".format(seq_num))
             last_seq_num = seq_num
 
     def _print_out_packet_data(self, data):
         reread_data = struct.unpack("<{}I".format(
             int(math.ceil(len(data) / self.WORD_TO_BYTE_CONVERTER))),
-            str(data))
-        print "converted data back into readable form is {}" \
-            .format(reread_data)
+            data)
+        print("converted data back into readable form is {}".format(
+            reread_data))
 
     @staticmethod
     def _print_length_of_received_seq_nums(seq_nums, max_needed):
         if len(seq_nums) != max_needed:
-            print "should have received {} sequence numbers, but received " \
-                  "{} sequence numbers".format(max_needed, len(seq_nums))
+            print("should have received {} sequence numbers, but received "
+                  "{} sequence numbers".format(max_needed, len(seq_nums)))
             return False
 
     @staticmethod

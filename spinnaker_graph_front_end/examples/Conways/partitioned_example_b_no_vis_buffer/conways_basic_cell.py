@@ -179,8 +179,8 @@ class ConwayBasicCell(
 
         # do check for missing data
         if data_missing:
-            print "missing_data from ({}, {}, {}); ".format(
-                placement.x, placement.y, placement.p)
+            print("missing_data from ({}, {}, {}); ".format(
+                placement.x, placement.y, placement.p))
 
         # get raw data
         raw_data = reader.read_all()
@@ -189,7 +189,7 @@ class ConwayBasicCell(
         return [
             bool(element)
             for element in struct.unpack(
-                "<{}I".format(len(raw_data) / 4), str(raw_data))]
+                "<{}I".format(len(raw_data) // 4), raw_data)]
 
     @property
     @overrides(MachineVertex.resources_required)

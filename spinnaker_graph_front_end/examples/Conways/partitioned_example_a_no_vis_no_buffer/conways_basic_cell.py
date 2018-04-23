@@ -9,14 +9,15 @@ from pacman.model.resources import DTCMResource, SDRAMResource
 from pacman.utilities import utility_calls
 
 # spinn front end common imports
-from spinn_front_end_common.utilities \
-    import constants, exceptions, helpful_functions
+from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT
+from spinn_front_end_common.utilities.exceptions import ConfigurationException
 from spinn_front_end_common.interface.simulation import simulation_utilities
-from spinn_front_end_common.abstract_models.impl \
-    import MachineDataSpecableVertex
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
-
+from spinn_front_end_common.abstract_models.impl \
+    import MachineDataSpecableVertex
+from spinn_front_end_common.utilities.helpful_functions \
+    import locate_memory_region_for_placement
 
 # general imports
 from enum import Enum
@@ -68,7 +69,7 @@ class ConwayBasicCell(
             n_machine_time_steps):
 
         # Setup words + 1 for flags + 1 for recording size
-        setup_size = constants.SYSTEM_BYTES_REQUIREMENT
+        setup_size = SYSTEM_BYTES_REQUIREMENT
 
         # reserve memory regions
         spec.reserve_memory_region(
@@ -97,8 +98,8 @@ class ConwayBasicCell(
         partitions = \
             machine_graph.get_outgoing_edge_partitions_starting_at_vertex(self)
         if not utility_calls.is_single(partitions):
-            raise exceptions.ConfigurationException(
-                "Can only handle one type of partition. ")
+            raise ConfigurationException(
+                "Can only handle one type of partition.")
 
         # check for duplicates
         edges = list(machine_graph.get_edges_ending_at_vertex(self))
@@ -106,19 +107,19 @@ class ConwayBasicCell(
             output = ""
             for edge in edges:
                 output += edge.pre_subvertex.label + " : "
-            raise exceptions.ConfigurationException(
+            raise ConfigurationException(
                 "I've got duplicate edges. This is a error. The edges are "
                 "connected to these vertices \n {}".format(output))
 
         if len(edges) != 8:
-            raise exceptions.ConfigurationException(
+            raise ConfigurationException(
                 "I've not got the right number of connections. I have {} "
                 "instead of 9".format(
                     len(machine_graph.incoming_subedges_from_subvertex(self))))
 
         for edge in edges:
             if edge.pre_vertex == self:
-                raise exceptions.ConfigurationException(
+                raise ConfigurationException(
                     "I'm connected to myself, this is deemed an error"
                     " please fix.")
 
@@ -160,23 +161,20 @@ class ConwayBasicCell(
     def get_data(self, transceiver, placement, n_machine_time_steps):
         # Get the data region base address where results are stored for the
         # core
-        record_region_base_address = \
-            helpful_functions.locate_memory_region_for_placement(
-                placement, self.DATA_REGIONS.RESULTS.value, transceiver)
+        record_region_base_address = locate_memory_region_for_placement(
+            placement, self.DATA_REGIONS.RESULTS.value, transceiver)
 
         # find how many bytes are needed to be read
-        number_of_bytes_to_read = str(transceiver.read_memory(
-            placement.x, placement.y, record_region_base_address, 4))
         number_of_bytes_to_read = \
-            struct.unpack("<I", number_of_bytes_to_read)[0]
+            struct.unpack("<I", transceiver.read_memory(
+                placement.x, placement.y, record_region_base_address, 4))[0]
 
         # read the bytes
         if number_of_bytes_to_read != n_machine_time_steps * 4:
-            raise exceptions.ConfigurationException(
-                "number of bytes seems wrong")
-        raw_data = str(transceiver.read_memory(
+            raise ConfigurationException("number of bytes seems wrong")
+        raw_data = transceiver.read_memory(
             placement.x, placement.y, record_region_base_address + 4,
-            number_of_bytes_to_read))
+            number_of_bytes_to_read)
 
         # convert to bools and return
         return [bool(element) for element in struct.unpack(
@@ -186,8 +184,7 @@ class ConwayBasicCell(
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
         return ResourceContainer(
-            sdram=SDRAMResource(
-                self._calculate_sdram_requirement()),
+            sdram=SDRAMResource(self._calculate_sdram_requirement()),
             dtcm=DTCMResource(0),
             cpu_cycles=CPUCyclesPerTickResource(0))
 
@@ -197,7 +194,7 @@ class ConwayBasicCell(
 
     @inject_items({"n_machine_time_steps": "TotalMachineTimeSteps"})
     def _calculate_sdram_requirement(self, n_machine_time_steps):
-        return (constants.SYSTEM_BYTES_REQUIREMENT +
+        return (SYSTEM_BYTES_REQUIREMENT +
                 self.TRANSMISSION_DATA_SIZE + self.STATE_DATA_SIZE +
                 self.NEIGHBOUR_INITIAL_STATES_SIZE +
                 n_machine_time_steps + 4)
