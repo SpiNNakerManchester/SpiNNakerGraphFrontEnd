@@ -4,7 +4,6 @@ ifndef SPINN_DIRS
 endif
 
 APP = sdram_reader_and_transmitter
-BUILD_DIR = build/
 SOURCES = sdram_reader_and_transmitter.c
 
 APP_OUTPUT_DIR := $(abspath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))/

@@ -6,8 +6,6 @@ endif
 # TODO: Rename to suit your application 
 APP = c_template_vertex
 
-BUILD_DIR = build/
-
 # TODO: Replace with your source code files
 SOURCES = c_template_vertex.c
 

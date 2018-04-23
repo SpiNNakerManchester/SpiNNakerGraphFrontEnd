@@ -4,7 +4,6 @@ ifndef SPINN_DIRS
 endif
 
 APP = conways_cell
-BUILD_DIR = build/
 SOURCES = conways_cell.c
 
 APP_OUTPUT_DIR := $(abspath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))/

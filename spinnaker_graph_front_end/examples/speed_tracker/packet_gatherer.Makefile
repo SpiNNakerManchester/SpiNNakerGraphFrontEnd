@@ -4,7 +4,6 @@ ifndef SPINN_DIRS
 endif
 
 APP = packet_gatherer
-BUILD_DIR = build/
 SOURCES = packet_gatherer.c
 
 APP_OUTPUT_DIR := $(abspath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))/
