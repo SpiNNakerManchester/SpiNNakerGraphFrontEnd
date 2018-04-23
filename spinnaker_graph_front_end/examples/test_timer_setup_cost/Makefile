@@ -4,7 +4,6 @@ ifndef SPINN_DIRS
 endif
 
 APP = hello_world
-BUILD_DIR = build/
 SOURCES = hello_world.c
 
 APP_OUTPUT_DIR := $(abspath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))/
