@@ -44,8 +44,8 @@ for y in range(MAX_X_SIZE_OF_FABRIC - 1, 0, -1):
     for x in range(0, MAX_Y_SIZE_OF_FABRIC):
         output += "X" if vertices[x][y].state else " "
     output += "\n"
-print output
-print "\n\n"
+print(output)
+print("\n\n")
 
 # build edges
 for x in range(0, MAX_X_SIZE_OF_FABRIC):
@@ -87,14 +87,14 @@ for x in range(0, MAX_X_SIZE_OF_FABRIC):
 
 # visualise it in text form (bad but no vis this time)
 for time in range(0, runtime):
-    print "at time {}".format(time)
+    print("at time {}".format(time))
     output = ""
     for y in range(MAX_X_SIZE_OF_FABRIC - 1, 0, -1):
         for x in range(0, MAX_Y_SIZE_OF_FABRIC):
             output += "X" if recorded_data[x, y][time] else " "
         output += "\n"
-    print output
-    print "\n\n"
+    print(output)
+    print("\n\n")
 
 # clear the machine
 front_end.stop()
