@@ -14,7 +14,7 @@ with open("results", "r") as reader:
                 data_size[int(bits[2])] = set()
             data_size[int(bits[2])].add(float(bits[3]))
 
-    #print data_size
+    # print data_size
 
 
 # sumemrise data
@@ -56,8 +56,10 @@ index = 1
 for mb in keys:
     x.append(index)
     y.append(data_chip_summary[mb]["average"])
-    e_top.append(data_chip_summary[mb]["high"] - data_chip_summary[mb]["average"])
-    e_bottom.append(data_chip_summary[mb]["average"] - data_chip_summary[mb]["low"])
+    e_top.append(data_chip_summary[mb]["high"] -
+                 data_chip_summary[mb]["average"])
+    e_bottom.append(data_chip_summary[mb]["average"] -
+                    data_chip_summary[mb]["low"])
     index += 5
     labels.append("{}".format(mb))
 
@@ -91,4 +93,3 @@ for mb in keys:
     plt.show()
     plt.clf()
     plt.close()
-

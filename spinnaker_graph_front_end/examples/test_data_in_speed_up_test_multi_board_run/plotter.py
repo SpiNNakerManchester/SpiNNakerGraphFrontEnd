@@ -19,10 +19,6 @@ with open("results", "r") as reader:
             data_size[bits[2]] = set()
         data_size[bits[2]].add(float(bits[4]))
 
-    #print data_size
-    #print data_chip
-
-
 # sumemrise data
 data_chip_summary = dict()
 for x, y in data_chip:
@@ -59,8 +55,10 @@ for chip_x, chip_y in chip_keys:
     for mb in keys:
         x.append(index)
         y.append(data_chip_summary[chip_x, chip_y][mb]["average"])
-        e_top.append(data_chip_summary[chip_x, chip_y][mb]["high"] - data_chip_summary[chip_x, chip_y][mb]["average"])
-        e_bottom.append(data_chip_summary[chip_x, chip_y][mb]["average"] - data_chip_summary[chip_x, chip_y][mb]["low"])
+        e_top.append(data_chip_summary[chip_x, chip_y][mb]["high"] -
+                     data_chip_summary[chip_x, chip_y][mb]["average"])
+        e_bottom.append(data_chip_summary[chip_x, chip_y][mb]["average"] -
+                        data_chip_summary[chip_x, chip_y][mb]["low"])
         index += 5
         labels.append("{}:{}:{}".format(chip_x, chip_y, mb))
 
@@ -72,5 +70,3 @@ for chip_x, chip_y in chip_keys:
     plt.show()
     plt.clf()
     plt.close()
-
-
