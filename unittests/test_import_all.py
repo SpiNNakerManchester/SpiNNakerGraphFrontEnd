@@ -34,6 +34,15 @@ EXCLUSIONS = ["spinnaker_graph_front_end.examples.Conways."
               "speed_tracker.main",
 
               "spinnaker_graph_front_end.examples."
+              "test_data_in_speed_up_on_every_chip_at_same_time.plotter",
+
+              "spinnaker_graph_front_end.examples."
+              "test_data_in_speed_up_test_multi_board_run.plotter",
+
+              "spinnaker_graph_front_end.examples."
+              "test_data_in_speed_up.plotter",
+
+              "spinnaker_graph_front_end.examples."
               "test_fixed_router_transmitter_reciever.hello_world",
 
               "spinnaker_graph_front_end.examples."
