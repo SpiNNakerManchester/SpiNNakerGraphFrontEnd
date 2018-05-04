@@ -69,7 +69,7 @@ try:
         else:
             start_value += 1
 
-    # print data
+    # print(data)
     seconds = float(end - start)
     speed = (mbs * 8) / seconds
     print("Read {} MB in {} seconds ({} Mb/s)".format(mbs, seconds, speed))

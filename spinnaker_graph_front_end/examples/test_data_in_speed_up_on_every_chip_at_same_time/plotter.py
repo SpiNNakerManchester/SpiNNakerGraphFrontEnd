@@ -39,10 +39,10 @@ for mb in data_size:
 
     data_chip_summary[mb]["average"] = \
         data_chip_summary[mb]["average"] / len(data_size[mb])
-    print "{}:{}:{}:{}".format(
+    print("{}:{}:{}:{}".format(
         mb, data_chip_summary[mb]["average"],
         data_chip_summary[mb]["low"],
-        data_chip_summary[mb]["high"])
+        data_chip_summary[mb]["high"]))
 
 keys = data_chip_summary
 keys = sorted(keys)
@@ -84,7 +84,7 @@ for mb in keys:
         label.append("{}".format(mbs))
 
         y[int(mbs)] = len(histogram[mb][mbs])
-        print "{}:{}".format(mbs, len(histogram[mb][mbs]))
+        print("{}:{}".format(mbs, len(histogram[mb][mbs])))
     plt.errorbar(x, y)
 
     plt.axis([0, 30, 0, 5000])

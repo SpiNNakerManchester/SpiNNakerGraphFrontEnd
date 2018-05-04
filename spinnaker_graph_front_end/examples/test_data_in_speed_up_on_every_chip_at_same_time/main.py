@@ -49,8 +49,8 @@ class Runner(object):
             for line in lines[2:-1]:
                 bits = line.split("\t\t")
                 if int(bits[3]) == mbs * 1024 * 1024:
-                    print "for {} bytes, mbs is {} with missing seqs " \
-                          "of {}".format(mbs * 1024 * 1024, bits[5], bits[6])
+                    print("for {} bytes, mbs is {} with missing seqs "
+                          "of {}".format(mbs * 1024 * 1024, bits[5], bits[6]))
                     data[(bits[0], bits[1])] = (bits[5], bits[6])
 
         sim.stop()
@@ -71,11 +71,11 @@ if __name__ == "__main__":
 
     for mbs_to_run in data_sizes:
         for iteration in range(0, iterations_per_type):
-            print "###########################################" \
-                  "###########################"
-            print "running {}:{}".format(mbs_to_run, iteration)
-            print "##################################################" \
-                  "####################"
+            print("###########################################"
+                  "###########################")
+            print("running {}:{}".format(mbs_to_run, iteration))
+            print("##################################################"
+                  "####################")
             data = runner.run(mbs_to_run)
             for (x, y) in data.keys():
                 data_times[(x, y, mbs_to_run, iteration)] = data[(x, y)]
@@ -90,4 +90,4 @@ if __name__ == "__main__":
                     writer.write(
                         "     {}:{}:{}:{}:{}\n".format(
                             x, y, mbs_to_run, speed, missing_seq))
-    print data_times
+    print(data_times)

@@ -53,8 +53,8 @@ class Runner(object):
             for line in lines[2:-1]:
                 bits = line.split("\t\t")
                 if int(bits[3]) == mbs * 1024 * 1024:
-                    print "for {} bytes, mbs is {} with missing seqs " \
-                          "of {}".format(mbs * 1024 * 1024, bits[5], bits[6])
+                    print("for {} bytes, mbs is {} with missing seqs "
+                          "of {}".format(mbs * 1024 * 1024, bits[5], bits[6]))
                     speed = bits[5]
                     missing_seq = bits[6]
 
@@ -74,11 +74,11 @@ if __name__ == "__main__":
     lost_data_pattern = dict()
 
     for mbs_to_run in data_sizes:
-        print "###########################################" \
-              "###########################"
-        print "running {}".format(mbs_to_run)
-        print "##################################################" \
-              "####################"
+        print("###########################################"
+              "###########################")
+        print("running {}".format(mbs_to_run))
+        print("##################################################"
+              "####################")
         speed, missing_seq = runner.run(mbs_to_run)
         data_times[(mbs_to_run)] = (speed, missing_seq)
 
@@ -88,4 +88,4 @@ if __name__ == "__main__":
         with open("results", writer_behaviour) as writer:
             writer.write(
                 "running {}:{}:{}\n".format(mbs_to_run, speed, missing_seq))
-    print data_times
+    print(data_times)

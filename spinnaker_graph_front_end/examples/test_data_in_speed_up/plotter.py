@@ -40,10 +40,10 @@ for x, y in data_chip:
                 data_chip_summary[x, y][mb]["high"] = mbs
         data_chip_summary[x, y][mb]["average"] = \
             data_chip_summary[x, y][mb]["average"] / len(data_chip[x, y][mb])
-        print "{}:{}:{}:{}:{}:{}".format(
+        print("{}:{}:{}:{}:{}:{}".format(
             x, y, mb, data_chip_summary[x, y][mb]["average"],
             data_chip_summary[x, y][mb]["low"],
-            data_chip_summary[x, y][mb]["high"])
+            data_chip_summary[x, y][mb]["high"]))
 
 chip_keys = data_chip_summary
 chip_keys = sorted(chip_keys)
