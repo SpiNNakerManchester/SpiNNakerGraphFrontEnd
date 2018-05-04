@@ -8,7 +8,7 @@ from spinnaker_graph_front_end.utilities.graph_front_end_failed_state \
     import GraphFrontEndFailedState
 from spinnaker_graph_front_end.graph_front_end_simulator_interface \
     import GraphFrontEndSimulatorInterface
-from _version import __version__ as version
+from ._version import __version__ as version
 
 # general imports
 import logging

@@ -143,15 +143,13 @@ class TemplateVertex(
 
         :param placement: the location of this vertex
         :param buffer_manager: the buffer manager
-        :return: The data read
+        :return: The data read, as bytes
         """
         data_pointer, is_missing_data = buffer_manager.get_data_for_vertex(
             placement, 0)
         if is_missing_data:
             logger.warn("Some data was lost when recording")
-        record_raw = data_pointer.read_all()
-        output = str(record_raw)
-        return output
+        return data_pointer.read_all()
 
     @overrides(AbstractReceiveBuffersToHost.get_minimum_buffer_sdram_usage)
     def get_minimum_buffer_sdram_usage(self):

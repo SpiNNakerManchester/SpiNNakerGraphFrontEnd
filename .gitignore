@@ -12,3 +12,5 @@ dist/
 **/*.egg-info/
 .cache/
 .coverage
+__pycache__
+.pytest_cache
