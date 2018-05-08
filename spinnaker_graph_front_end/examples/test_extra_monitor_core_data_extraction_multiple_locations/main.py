@@ -1,4 +1,5 @@
 import struct
+import sys
 import time
 import spinnaker_graph_front_end as sim
 from data_specification.utility_calls import get_region_base_address_offset
@@ -8,6 +9,9 @@ from spinnaker_graph_front_end.examples import \
 from spinnaker_graph_front_end.examples.\
     test_extra_monitor_core_data_extraction_multiple_locations.sdram_writer \
     import SDRAMWriter
+# TODO check if memoryview does what buffer was intended to do here
+if sys.version_info > (3,):
+    buffer = memoryview
 
 
 class Runner(object):
