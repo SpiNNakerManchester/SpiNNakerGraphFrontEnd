@@ -23,11 +23,11 @@ placements = front_end.placements()
 
 start = float(time.time())
 receiver = extra_monitor_gatherers[0, 0]
-receiver.set_cores_for_data_extraction(
+receiver.set_cores_for_data_streaming(
                     transceiver=transceiver, placements=placements,
                     extra_monitor_cores_for_router_timeout=(
                         extra_monitor_vertices))
-receiver.unset_cores_for_data_extraction(
+receiver.unset_cores_for_data_streaming(
                     transceiver=transceiver, placements=placements,
                     extra_monitor_cores_for_router_timeout=(
                         extra_monitor_vertices))
