@@ -1,27 +1,21 @@
+import struct
+from enum import Enum
 from spinn_utilities.overrides import overrides
-# pacman imports
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, CPUCyclesPerTickResource
-from pacman.model.resources import DTCMResource, SDRAMResource
+from pacman.model.resources import (
+    ResourceContainer, CPUCyclesPerTickResource, DTCMResource, SDRAMResource)
 from pacman.utilities import utility_calls
-
-# spinn front end common imports
-from spinn_front_end_common.utilities \
-    import constants, exceptions, helpful_functions
-from spinn_front_end_common.utilities import globals_variables
+from spinn_front_end_common.utilities import (
+    constants, exceptions, helpful_functions, globals_variables)
 from spinn_front_end_common.interface.simulation import simulation_utilities
-from spinn_front_end_common.interface.buffer_management.buffer_models\
-    import AbstractReceiveBuffersToHost
-from spinn_front_end_common.interface.buffer_management \
-    import recording_utilities
-from spinn_front_end_common.abstract_models.impl \
-    import MachineDataSpecableVertex
+from spinn_front_end_common.interface.buffer_management.buffer_models import (
+    AbstractReceiveBuffersToHost)
+from spinn_front_end_common.interface.buffer_management import (
+    recording_utilities)
+from spinn_front_end_common.abstract_models.impl import (
+    MachineDataSpecableVertex)
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
-
-# general imports
-from enum import Enum
-import struct
 
 
 class ConwayBasicCell(

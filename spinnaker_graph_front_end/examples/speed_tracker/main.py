@@ -1,15 +1,14 @@
 import struct
 import traceback
-
-import spinnaker_graph_front_end as sim
+import time
 from pacman.model.constraints.placer_constraints import ChipAndCoreConstraint
 from pacman.model.graphs.machine import MachineEdge
-from spinnaker_graph_front_end.examples.speed_tracker.packt_gatherer import \
-    PacketGatherer
+import spinnaker_graph_front_end as sim
+from spinnaker_graph_front_end.examples.speed_tracker.packt_gatherer import (
+    PacketGatherer)
 from spinnaker_graph_front_end.examples.speed_tracker.\
-    sdram_reader_and_transmitter import \
-    SDRAMReaderAndTransmitter
-import time
+    sdram_reader_and_transmitter import (
+        SDRAMReaderAndTransmitter)
 from spinnaker_graph_front_end.examples import speed_tracker
 
 # data to write
@@ -72,7 +71,6 @@ try:
             start_value = value + 1
         else:
             start_value += 1
-
 
 except Exception as e:
     # if boomed. end so that we can get iobuf

@@ -1,20 +1,19 @@
 import struct
 import traceback
-
-import spinnaker_graph_front_end as sim
+import time
 from pacman.model.constraints.placer_constraints import ChipAndCoreConstraint
 from pacman.model.graphs.machine import MachineEdge
+import spinnaker_graph_front_end as sim
 from spinnaker_graph_front_end.examples.\
     test_retransmission_phase_on_multi_cores.\
-    packet_gatherer_with_protocol import \
-    PacketGathererWithProtocol
+    packet_gatherer_with_protocol import (
+        PacketGathererWithProtocol)
 from spinnaker_graph_front_end.examples.\
     test_retransmission_phase_on_multi_cores.\
-    sdram_reader_and_transmitter_with_protocol import \
-    SDRAMReaderAndTransmitterWithProtocol
-import time
-from spinnaker_graph_front_end.examples import \
-    test_retransmission_phase_on_multi_cores
+    sdram_reader_and_transmitter_with_protocol import (
+        SDRAMReaderAndTransmitterWithProtocol)
+from spinnaker_graph_front_end.examples import (
+    test_retransmission_phase_on_multi_cores)
 
 # data to write
 mbs = 1.0
@@ -73,7 +72,6 @@ try:
     seconds = float(end - start)
     speed = (mbs * 8) / seconds
     print("Read {} MB in {} seconds ({} Mb/s)".format(mbs, seconds, speed))
-
 
 except Exception as e:
     # if boomed. end so that we can get iobuf

@@ -1,23 +1,16 @@
-# common front end imports
-from spinn_front_end_common.interface.abstract_spinnaker_base \
-    import AbstractSpinnakerBase
-from spinn_front_end_common.utilities import globals_variables
-
-# graph front end imports
-from spinnaker_graph_front_end.utilities.graph_front_end_failed_state \
-    import GraphFrontEndFailedState
-from spinnaker_graph_front_end.graph_front_end_simulator_interface \
-    import GraphFrontEndSimulatorInterface
-from ._version import __version__ as version
-
-# general imports
 import logging
 import os
+from spinn_front_end_common.interface.abstract_spinnaker_base import (
+    AbstractSpinnakerBase)
+from spinn_front_end_common.utilities import globals_variables
+from spinnaker_graph_front_end.utilities.graph_front_end_failed_state import (
+    GraphFrontEndFailedState)
+from spinnaker_graph_front_end.graph_front_end_simulator_interface import (
+    GraphFrontEndSimulatorInterface)
+from ._version import __version__ as version
 
 logger = logging.getLogger(__name__)
-
 SPALLOC_CORES = 48
-
 # At import time change the default FailedState
 globals_variables.set_failed_state(GraphFrontEndFailedState())
 

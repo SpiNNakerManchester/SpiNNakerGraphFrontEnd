@@ -1,22 +1,23 @@
+import logging
+from enum import Enum
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
 from pacman.model.resources import ResourceContainer, SDRAMResource
-
-from spinn_front_end_common.utilities import globals_variables
-from spinn_front_end_common.utilities import constants, helpful_functions
-from spinn_front_end_common.abstract_models.impl \
-    import MachineDataSpecableVertex
+from spinn_front_end_common.utilities import (
+    constants, globals_variables, helpful_functions)
+from spinn_front_end_common.abstract_models.impl import (
+    MachineDataSpecableVertex)
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
-from spinn_front_end_common.interface.buffer_management.buffer_models\
-    import AbstractReceiveBuffersToHost
-from spinn_front_end_common.interface.buffer_management\
-    import recording_utilities
-from spinn_front_end_common.interface.simulation import simulation_utilities
+from spinn_front_end_common.interface.buffer_management.buffer_models import (
+    AbstractReceiveBuffersToHost)
+from spinn_front_end_common.interface.buffer_management.recording_utilities \
+    import (
+        get_recording_resources, get_recording_header_array,
+        get_recording_header_size, get_n_timesteps_in_buffer_space)
+from spinn_front_end_common.interface.simulation.simulation_utilities import (
+    get_simulation_header_array)
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
-
-from enum import Enum
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +67,7 @@ class TemplateVertex(
             sdram=SDRAMResource(
                 constants.SYSTEM_BYTES_REQUIREMENT +
                 self.TRANSMISSION_REGION_N_BYTES))
-        resources.extend(recording_utilities.get_recording_resources(
+        resources.extend(get_recording_resources(
             [self._recording_size], self._receive_buffer_host,
             self._receive_buffer_port))
         return resources
@@ -99,13 +100,13 @@ class TemplateVertex(
 
         # write simulation interface data
         spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
-        spec.write_array(simulation_utilities.get_simulation_header_array(
+        spec.write_array(get_simulation_header_array(
             self.get_binary_file_name(), machine_time_step,
             time_scale_factor))
 
         # write recording data interface
         spec.switch_write_focus(self.DATA_REGIONS.RECORDED_DATA.value)
-        spec.write_array(recording_utilities.get_recording_header_array(
+        spec.write_array(get_recording_header_array(
             [self._recording_size], self._time_between_requests,
             self._buffer_size_before_receive, iptags))
 
@@ -135,7 +136,7 @@ class TemplateVertex(
             size=self.TRANSMISSION_REGION_N_BYTES, label="transmission")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.RECORDED_DATA.value,
-            size=recording_utilities.get_recording_header_size(1),
+            size=get_recording_header_size(1),
             label="recording")
 
     def read(self, placement, buffer_manager):
@@ -157,8 +158,7 @@ class TemplateVertex(
 
     @overrides(AbstractReceiveBuffersToHost.get_n_timesteps_in_buffer_space)
     def get_n_timesteps_in_buffer_space(self, buffer_space, machine_time_step):
-        return recording_utilities.get_n_timesteps_in_buffer_space(
-            buffer_space, 100)
+        return get_n_timesteps_in_buffer_space(buffer_space, 100)
 
     @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)
     def get_recorded_region_ids(self):
