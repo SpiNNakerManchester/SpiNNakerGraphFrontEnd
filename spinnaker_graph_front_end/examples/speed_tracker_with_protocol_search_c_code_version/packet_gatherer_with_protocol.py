@@ -1,5 +1,5 @@
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, SDRAMResource, \
+from pacman.model.resources import ResourceContainer, ConstantSDRAM, \
     IPtagResource
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models.impl import \
@@ -60,7 +60,7 @@ class PacketGathererWithProtocol(
     @property
     def resources_required(self):
         return ResourceContainer(
-            sdram=SDRAMResource(
+            sdram=ConstantSDRAM(
                 constants.SYSTEM_BYTES_REQUIREMENT + self.CONFIG_SIZE),
             iptags=[IPtagResource(
                 port=self._connection.local_port, strip_sdp=True,

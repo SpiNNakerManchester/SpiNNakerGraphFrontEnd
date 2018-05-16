@@ -5,7 +5,7 @@ from pacman.executor.injection_decorator \
     import supports_injection, inject_items
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, CPUCyclesPerTickResource
-from pacman.model.resources import DTCMResource, SDRAMResource
+from pacman.model.resources import DTCMResource, VariableSDRAM
 from pacman.utilities import utility_calls
 
 # spinn front end common imports
@@ -183,8 +183,12 @@ class ConwayBasicCell(
     @property
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
+        (fixed_sdram, per_timestep_sdram, assumed_timesteps) = \
+            self._calculate_sdram_requirement()
         return ResourceContainer(
-            sdram=SDRAMResource(self._calculate_sdram_requirement()),
+            # https://github.com/SpiNNakerManchester/SpiNNakerGraphFrontEnd/issues/86 # NOQA
+            sdram=VariableSDRAM(
+                fixed_sdram, per_timestep_sdram, assumed_timesteps),
             dtcm=DTCMResource(0),
             cpu_cycles=CPUCyclesPerTickResource(0))
 
@@ -194,10 +198,11 @@ class ConwayBasicCell(
 
     @inject_items({"n_machine_time_steps": "TotalMachineTimeSteps"})
     def _calculate_sdram_requirement(self, n_machine_time_steps):
-        return (SYSTEM_BYTES_REQUIREMENT +
+        # https://github.com/SpiNNakerManchester/SpiNNakerGraphFrontEnd/issues/86 # NOQA
+        return ((SYSTEM_BYTES_REQUIREMENT +
                 self.TRANSMISSION_DATA_SIZE + self.STATE_DATA_SIZE +
                 self.NEIGHBOUR_INITIAL_STATES_SIZE +
-                n_machine_time_steps + 4)
+                 + 4), 1, n_machine_time_steps)
 
     def __repr__(self):
         return self.label

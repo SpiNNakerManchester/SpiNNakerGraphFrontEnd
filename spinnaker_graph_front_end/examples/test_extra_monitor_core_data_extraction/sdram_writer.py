@@ -33,7 +33,7 @@ class SDRAMWriter(
 
     @property
     def resources_required(self):
-        return ResourceContainer(sdram=SDRAMResource(
+        return ResourceContainer(sdram=ConstantSDRAM(
             self._mbs + constants.SYSTEM_BYTES_REQUIREMENT +
             self.CONFIG_REGION_SIZE))
 

@@ -1,7 +1,7 @@
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
-from pacman.model.resources import ResourceContainer, SDRAMResource
+from pacman.model.resources import ResourceContainer, ConstantSDRAM
 
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities import constants, helpful_functions
@@ -57,7 +57,7 @@ class HelloWorldVertex(
     def resources_required(self):
         resources = ResourceContainer(
             cpu_cycles=CPUCyclesPerTickResource(45),
-            dtcm=DTCMResource(100), sdram=SDRAMResource(100))
+            dtcm=DTCMResource(100), sdram=ConstantSDRAM(100))
 
         resources.extend(recording_utilities.get_recording_resources(
             [self._string_data_size],

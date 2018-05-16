@@ -2,7 +2,7 @@ from spinn_utilities.overrides import overrides
 # pacman imports
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, CPUCyclesPerTickResource
-from pacman.model.resources import DTCMResource, SDRAMResource
+from pacman.model.resources import DTCMResource, ConstantSDRAM
 from pacman.utilities import utility_calls
 
 # spinn front end common imports
@@ -195,7 +195,7 @@ class ConwayBasicCell(
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
         resources = ResourceContainer(
-            sdram=SDRAMResource(
+            sdram=ConstantSDRAM(
                 self._calculate_sdram_requirement()),
             dtcm=DTCMResource(0),
             cpu_cycles=CPUCyclesPerTickResource(0))

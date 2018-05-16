@@ -3,7 +3,7 @@ import struct
 from enum import Enum
 
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, SDRAMResource, \
+from pacman.model.resources import ResourceContainer, ConstantSDRAM, \
     IPtagResource
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models.impl import \
@@ -30,7 +30,7 @@ class PacketGatherer(
     @property
     def resources_required(self):
         return ResourceContainer(
-            sdram=SDRAMResource(constants.SYSTEM_BYTES_REQUIREMENT),
+            sdram=ConstantSDRAM(constants.SYSTEM_BYTES_REQUIREMENT),
             iptags=[IPtagResource(port=self.PORT, strip_sdp=True,
                                   ip_address="localhost")])
 

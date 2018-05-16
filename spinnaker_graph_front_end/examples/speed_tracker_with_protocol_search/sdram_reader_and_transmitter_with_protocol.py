@@ -1,7 +1,7 @@
 from enum import Enum
 
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, SDRAMResource
+from pacman.model.resources import ResourceContainer, ConstantSDRAM
 from spinn_front_end_common.abstract_models import \
     AbstractHasAssociatedBinary, \
     AbstractProvidesNKeysForPartition
@@ -31,7 +31,7 @@ class SDRAMReaderAndTransmitterWithProtocol(
 
     @property
     def resources_required(self):
-        return ResourceContainer(sdram=SDRAMResource(
+        return ResourceContainer(sdram=ConstantSDRAM(
             self._mbs + constants.SYSTEM_BYTES_REQUIREMENT +
             self.KEY_REGION_SIZE))
 
