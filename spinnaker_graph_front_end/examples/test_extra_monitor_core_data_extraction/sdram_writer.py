@@ -1,7 +1,7 @@
 from enum import Enum
 
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, SDRAMResource
+from pacman.model.resources import ConstantSDRAM, ResourceContainer
 from spinn_front_end_common.abstract_models import \
     AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models.impl import \
