@@ -221,11 +221,6 @@ class ConwayBasicCell(
     def get_minimum_buffer_sdram_usage(self):
         return 1024
 
-    @overrides(AbstractReceiveBuffersToHost.get_n_timesteps_in_buffer_space)
-    def get_n_timesteps_in_buffer_space(self, buffer_space, machine_time_step):
-        return recording_utilities.get_n_timesteps_in_buffer_space(
-            buffer_space, [100])
-
     @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)
     def get_recorded_region_ids(self):
         return [0]
