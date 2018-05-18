@@ -124,9 +124,6 @@ class HelloWorldVertexClone(
             raise Exception("missing data!")
         return str(data_pointer.read_all())
 
-    def get_minimum_buffer_sdram_usage(self):
-        return self._string_data_size
-
     def get_n_timesteps_in_buffer_space(self, buffer_space, machine_time_step):
         return recording_utilities.get_n_timesteps_in_buffer_space(
             buffer_space, len("Hello world"))

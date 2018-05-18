@@ -124,9 +124,6 @@ class HelloWorldVertex(
             raise Exception("missing data!")
         return str(data_pointer.read_all())
 
-    def get_minimum_buffer_sdram_usage(self):
-        return self._string_data_size
-
     def get_recorded_region_ids(self):
         return [0]
 

@@ -217,10 +217,6 @@ class ConwayBasicCell(
     def __repr__(self):
         return self.label
 
-    @overrides(AbstractReceiveBuffersToHost.get_minimum_buffer_sdram_usage)
-    def get_minimum_buffer_sdram_usage(self):
-        return 1024
-
     @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)
     def get_recorded_region_ids(self):
         return [0]
