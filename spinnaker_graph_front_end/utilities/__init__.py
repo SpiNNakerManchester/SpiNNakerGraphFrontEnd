@@ -1,3 +1,3 @@
-from .simulation_binary import SimulationBinary
+from .simulator_vertex import SimulatorVertex
 
-__all__ = ["SimulationBinary"]
+__all__ = ["SimulatorVertex"]

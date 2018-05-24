@@ -1,16 +1,19 @@
-from pacman.model.decorators import overrides
-
+from spinn_utilities.overrides import overrides
+from pacman.model.graphs.machine import MachineVertex
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 
 
-class SimulationBinary(AbstractHasAssociatedBinary):
-    """This is a simple helper class that handles the case where the vertex
-    to which it is mixed in only handles a single binary that supports the
-    SpiNNaker simulation interface.
+class SimulatorVertex(
+        MachineVertex, AbstractHasAssociatedBinary):
+    """ A machine vertex that is implemented by a binary APLX that supports\
+        the spin1_api simulation control protocol.
     """
 
-    def __init__(self, binary_name):
+    __slots__ = ["_binary_name"]
+
+    def __init__(self, label, binary_name, constraints=None):
+        super(SimulatorVertex, self).__init__(label, constraints)
         self._binary_name = binary_name
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)

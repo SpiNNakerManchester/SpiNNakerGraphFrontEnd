@@ -16,7 +16,7 @@ from spinn_front_end_common.utilities.helpful_functions \
 from spinn_front_end_common.abstract_models.impl \
     import MachineDataSpecableVertex
 
-from spinnaker_graph_front_end.utilities import SimulationBinary
+from spinnaker_graph_front_end.utilities import SimulatorVertex
 from spinnaker_graph_front_end.utilities.data_utils \
     import generate_system_data_region
 
@@ -26,8 +26,7 @@ import struct
 
 
 @supports_injection
-class ConwayBasicCell(
-        MachineVertex, MachineDataSpecableVertex, SimulationBinary):
+class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
     """ Cell which represents a cell within the 2d fabric
     """
 
@@ -47,8 +46,7 @@ class ConwayBasicCell(
                ('RESULTS', 4)])
 
     def __init__(self, label, state):
-        super(ConwayBasicCell, self).__init__(label)
-        SimulationBinary.__init__(self, "conways_cell.aplx")
+        super(ConwayBasicCell, self).__init__(label, "conways_cell.aplx")
 
         # app specific elements
         self._state = state

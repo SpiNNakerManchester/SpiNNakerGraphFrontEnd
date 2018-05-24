@@ -14,7 +14,7 @@ from spinn_front_end_common.interface.buffer_management.buffer_models\
 from spinn_front_end_common.interface.buffer_management\
     import recording_utilities
 
-from spinnaker_graph_front_end.utilities import SimulationBinary
+from spinnaker_graph_front_end.utilities import SimulatorVertex
 from spinnaker_graph_front_end.utilities.data_utils \
     import generate_system_data_region
 
@@ -27,7 +27,7 @@ PARTITION_ID = "DATA"
 
 
 class TemplateVertex(
-        MachineVertex, MachineDataSpecableVertex, SimulationBinary,
+        SimulatorVertex, MachineDataSpecableVertex,
         AbstractReceiveBuffersToHost):
 
     # The number of bytes for the has_key flag and the key
@@ -42,8 +42,8 @@ class TemplateVertex(
 
     def __init__(self, label, constraints=None):
         super(TemplateVertex, self).__init__(
-            label=label, constraints=constraints)
-        SimulationBinary.__init__(self, "c_template_vertex.aplx")
+            label=label, binary_name="c_template_vertex.aplx",
+            constraints=constraints)
 
         self._recording_size = 5000
 

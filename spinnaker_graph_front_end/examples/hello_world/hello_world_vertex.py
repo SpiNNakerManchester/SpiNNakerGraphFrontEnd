@@ -13,7 +13,7 @@ from spinn_front_end_common.interface.buffer_management.buffer_models\
 from spinn_front_end_common.interface.buffer_management\
     import recording_utilities
 
-from spinnaker_graph_front_end.utilities import SimulationBinary
+from spinnaker_graph_front_end.utilities import SimulatorVertex
 from spinnaker_graph_front_end.utilities.data_utils \
     import generate_system_data_region
 
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 class HelloWorldVertex(
-        MachineVertex, MachineDataSpecableVertex, SimulationBinary,
+        SimulatorVertex, MachineDataSpecableVertex,
         AbstractReceiveBuffersToHost):
 
     DATA_REGIONS = Enum(
@@ -36,8 +36,7 @@ class HelloWorldVertex(
 
     def __init__(self, label, constraints=None):
         super(HelloWorldVertex, self).__init__(
-            label=label, constraints=constraints)
-        SimulationBinary.__init__(self, "hello_world.aplx")
+            label, "hello_world.aplx", constraints=constraints)
 
         config = globals_variables.get_simulator().config
         self._buffer_size_before_receive = None
