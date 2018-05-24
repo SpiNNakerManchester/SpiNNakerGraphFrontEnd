@@ -1,5 +1,5 @@
+from spinn_utilities.overrides import overrides
 # pacman imports
-from pacman.model.decorators import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, CPUCyclesPerTickResource
 from pacman.model.resources import DTCMResource, SDRAMResource
@@ -66,7 +66,7 @@ class ConwayBasicCell(
             config, "Buffers", "receive_buffer_port")
 
         # app specific data items
-        self._state = state
+        self._state = bool(state)
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
@@ -109,7 +109,7 @@ class ConwayBasicCell(
         if len(edges) != 8:
             raise ConfigurationException(
                 "I've not got the right number of connections. I have {} "
-                "instead of 9".format(
+                "instead of 8".format(
                     len(machine_graph.incoming_subedges_from_vertex(self))))
         for edge in edges:
             if edge.pre_vertex == self:
@@ -129,7 +129,7 @@ class ConwayBasicCell(
         # write state value
         spec.switch_write_focus(
             region=self.DATA_REGIONS.STATE.value)
-        spec.write_value(1 if self._state else 0)
+        spec.write_value(int(bool(self._state)))
 
         # write neighbours data state
         spec.switch_write_focus(
@@ -137,8 +137,7 @@ class ConwayBasicCell(
         alive = 0
         dead = 0
         for edge in edges:
-            state = edge.pre_vertex.state
-            if state:
+            if edge.pre_vertex.state:
                 alive += 1
             else:
                 dead += 1
@@ -155,13 +154,17 @@ class ConwayBasicCell(
 
         # do check for missing data
         if data_missing:
-            print "missing_data from ({}, {}, {}); ".format(
-                placement.x, placement.y, placement.p)
+            print("missing_data from ({}, {}, {}); ".format(
+                placement.x, placement.y, placement.p))
 
         # get raw data, convert to list of booleans
         raw_data = reader.read_all()
-        return [elem != 0 for elem in struct.unpack(
-            "<{}I".format(len(raw_data) / 4), str(raw_data))]
+
+        # return the data, converted to list of booleans
+        return [
+            bool(element)
+            for element in struct.unpack(
+                "<{}I".format(len(raw_data) // 4), raw_data)]
 
     @property
     @overrides(MachineVertex.resources_required)

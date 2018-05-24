@@ -1,8 +1,8 @@
 # pacman imports
-from pacman.model.decorators import overrides
+from spinn_utilities.overrides import overrides
 
-from pacman.executor.injection_decorator import supports_injection, \
-    inject_items
+from pacman.executor.injection_decorator \
+    import supports_injection, inject_items
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, CPUCyclesPerTickResource
 from pacman.model.resources import DTCMResource, SDRAMResource
@@ -47,7 +47,7 @@ class ConwayBasicCell(
                ('RESULTS', 4)])
 
     def __init__(self, label, state):
-        MachineVertex.__init__(self, label)
+        super(ConwayBasicCell, self).__init__(label)
         SimulationBinary.__init__(self, "conways_cell.aplx")
 
         # app specific elements
@@ -86,15 +86,21 @@ class ConwayBasicCell(
             raise ConfigurationException(
                 "Can only handle one type of partition.")
 
-        # check for misconfigured connections; note that the underlying model
-        # of a machine graph's connections is based on an ordered set, so we
-        # can assume that we have no duplicates.
-        edges = machine_graph.get_edges_ending_at_vertex(self)
+        # check for duplicates
+        edges = list(machine_graph.get_edges_ending_at_vertex(self))
         if len(edges) != 8:
             raise ConfigurationException(
                 "I've not got the right number of connections. I have {} "
                 "instead of 8".format(
                     len(machine_graph.incoming_subedges_from_subvertex(self))))
+        if len(set(edges)) != 8:
+            output = ""
+            for edge in edges:
+                output += edge.pre_subvertex.label + " : "
+            raise ConfigurationException(
+                "I've got duplicate edges. This is a error. The edges are "
+                "connected to these vertices \n {}".format(output))
+
         for edge in edges:
             if edge.pre_vertex == self:
                 raise ConfigurationException(
@@ -113,7 +119,7 @@ class ConwayBasicCell(
         # write state value
         spec.switch_write_focus(
             region=self.DATA_REGIONS.STATE.value)
-        spec.write_value(1 if self._state else 0)
+        spec.write_value(int(bool(self._state)))
 
         # write neighbours data state
         spec.switch_write_focus(
@@ -121,8 +127,7 @@ class ConwayBasicCell(
         alive = 0
         dead = 0
         for edge in edges:
-            state = edge.pre_vertex.state
-            if state:
+            if edge.pre_vertex.state:
                 alive += 1
             else:
                 dead += 1
@@ -140,29 +145,26 @@ class ConwayBasicCell(
             placement, self.DATA_REGIONS.RESULTS.value, transceiver)
 
         # find how many bytes are needed to be read
-        number_of_bytes_to_read = str(transceiver.read_memory(
-            placement.x, placement.y, record_region_base_address, 4))
         number_of_bytes_to_read = \
-            struct.unpack("<I", number_of_bytes_to_read)[0]
+            struct.unpack("<I", transceiver.read_memory(
+                placement.x, placement.y, record_region_base_address, 4))[0]
 
         # read the bytes
         if number_of_bytes_to_read != n_machine_time_steps * 4:
             raise ConfigurationException("number of bytes seems wrong")
-
-        raw_data = str(transceiver.read_memory(
+        raw_data = transceiver.read_memory(
             placement.x, placement.y, record_region_base_address + 4,
-            number_of_bytes_to_read))
+            number_of_bytes_to_read)
 
         # convert to booleans
-        return [elem != 0 for elem in struct.unpack(
+        return [bool(element) for element in struct.unpack(
             "<{}I".format(n_machine_time_steps), raw_data)]
 
     @property
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
         return ResourceContainer(
-            sdram=SDRAMResource(
-                self._calculate_sdram_requirement()),
+            sdram=SDRAMResource(self._calculate_sdram_requirement()),
             dtcm=DTCMResource(0),
             cpu_cycles=CPUCyclesPerTickResource(0))
 

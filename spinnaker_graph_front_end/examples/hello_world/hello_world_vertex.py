@@ -1,4 +1,4 @@
-from pacman.model.decorators import overrides
+from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
 from pacman.model.resources import ResourceContainer, SDRAMResource
@@ -35,7 +35,8 @@ class HelloWorldVertex(
     CORE_APP_IDENTIFIER = 0xBEEF
 
     def __init__(self, label, constraints=None):
-        MachineVertex.__init__(self, label=label, constraints=constraints)
+        super(HelloWorldVertex, self).__init__(
+            label=label, constraints=constraints)
         SimulationBinary.__init__(self, "hello_world.aplx")
 
         config = globals_variables.get_simulator().config
@@ -108,9 +109,7 @@ class HelloWorldVertex(
             placement, 0)
         if missing_data:
             raise Exception("missing data!")
-        record_raw = data_pointer.read_all()
-        output = str(record_raw)
-        return output
+        return str(data_pointer.read_all())
 
     def get_minimum_buffer_sdram_usage(self):
         return self._string_data_size

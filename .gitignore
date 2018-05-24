@@ -9,6 +9,8 @@ dist/
 **/application_generated_data_files/
 **/reports/
 *.aplx
-/spynnaker_graph_front_end.egg-info/
-/SpiNNakerGraphFrontEnd.egg-info/
-/spinnaker_graph_front_end.egg-info/
+**/*.egg-info/
+.cache/
+.coverage
+__pycache__
+.pytest_cache

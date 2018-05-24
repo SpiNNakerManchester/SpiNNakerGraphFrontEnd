@@ -26,9 +26,8 @@ class SDRAMReaderAndTransmitter(
 
     def __init__(self, mbs):
         self._mbs = mbs * self.SDRAM_READING_SIZE_IN_BYTES_CONVERTER
-        MachineVertex.__init__(self, label="speed", constraints=None)
-        MachineDataSpecableVertex.__init__(self)
-        AbstractHasAssociatedBinary.__init__(self)
+        super(SDRAMReaderAndTransmitter, self).__init__(
+            label="speed", constraints=None)
 
     @property
     def resources_required(self):
@@ -63,7 +62,7 @@ class SDRAMReaderAndTransmitter(
 
         spec.switch_write_focus(self.DATA_REGIONS.CONFIG.value)
         first_key = local_routing_info.first_key
-        print "first key is {}".format(first_key)
+        print("first key is {}".format(first_key))
         spec.write_value(first_key)
         spec.write_value(self._mbs)
 

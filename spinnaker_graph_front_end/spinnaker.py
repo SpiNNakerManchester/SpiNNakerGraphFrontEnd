@@ -8,7 +8,7 @@ from spinnaker_graph_front_end.utilities.graph_front_end_failed_state \
     import GraphFrontEndFailedState
 from spinnaker_graph_front_end.graph_front_end_simulator_interface \
     import GraphFrontEndSimulatorInterface
-from _version import __version__ as version
+from ._version import __version__ as version
 
 # general imports
 import logging
@@ -50,8 +50,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
         front_end_versions = [("SpiNNakerGraphFrontEnd", version)]
 
-        AbstractSpinnakerBase.__init__(
-            self,
+        super(SpiNNaker, self).__init__(
             configfile=self.CONFIG_FILE_NAME,
             executable_finder=executable_finder,
             graph_label=graph_label,

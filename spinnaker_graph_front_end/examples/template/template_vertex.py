@@ -1,4 +1,4 @@
-from pacman.model.decorators import overrides
+from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
 from pacman.model.resources import ResourceContainer, SDRAMResource
@@ -41,7 +41,8 @@ class TemplateVertex(
                ('RECORDED_DATA', 2)])
 
     def __init__(self, label, constraints=None):
-        MachineVertex.__init__(self, label=label, constraints=constraints)
+        super(TemplateVertex, self).__init__(
+            label=label, constraints=constraints)
         SimulationBinary.__init__(self, "c_template_vertex.aplx")
 
         self._recording_size = 5000
@@ -129,15 +130,13 @@ class TemplateVertex(
 
         :param placement: the location of this vertex
         :param buffer_manager: the buffer manager
-        :return: The data read
+        :return: The data read, as bytes
         """
         data_pointer, is_missing_data = buffer_manager.get_data_for_vertex(
             placement, 0)
         if is_missing_data:
             logger.warn("Some data was lost when recording")
-        record_raw = data_pointer.read_all()
-        output = str(record_raw)
-        return output
+        return data_pointer.read_all()
 
     @overrides(AbstractReceiveBuffersToHost.get_minimum_buffer_sdram_usage)
     def get_minimum_buffer_sdram_usage(self):
