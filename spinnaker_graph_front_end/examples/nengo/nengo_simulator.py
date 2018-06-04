@@ -1,3 +1,5 @@
+import atexit
+
 from spinn_front_end_common.utilities.utility_objs import ExecutableFinder
 from spinnaker_graph_front_end.spinnaker import SpiNNaker
 from spinnaker_graph_front_end.examples.nengo import binaries
@@ -110,69 +112,13 @@ class NengoSimulator(SpiNNaker):
         # extract data
         self._extract_data()
 
-    def _create_host_sim(self):
-        # change node_functions to reflect time
-        # TODO: improve the reference simulator so that this is not needed
-        #       by adding a realtime option
-        node_functions = {}
-        node_info = dict(start=None)
-        for node in self.io_controller.host_network.all_nodes:
-            if callable(node.output):
-                old_func = node.output
-                if node.size_in == 0:
-                    def func(t, f=old_func):
-                        now = time.time()
-                        if node_info['start'] is None:
-                            node_info['start'] = now
-
-                        t = (now - node_info['start']) * self.timescale
-                        return f(t)
-                else:
-                    def func(t, x, f=old_func):
-                        now = time.time()
-                        if node_info['start'] is None:
-                            node_info['start'] = now
-
-                        t = (now - node_info['start']) * self.timescale
-                        return f(t, x)
-                node.output = func
-                node_functions[node] = old_func
-
-        # Build the host simulator
-        host_sim = nengo.Simulator(self.io_controller.host_network,
-                                   dt=self.dt)
-        # reset node functions
-        for node, func in node_functions.items():
-            node.output = func
-
-        return host_sim
-
-    def close(self):
+    def close(self, turn_off_machine=None, clear_routing_tables=None,
+              clear_tags=None):
         """Clean the SpiNNaker board and prevent further simulation."""
         if not self._closed:
-            # Stop the application
-            self._closed = True
             self.io_controller.close()
             self.controller.send_signal("stop")
-
-            # Destroy the job if we allocated one
-            if self.job is not None:
-                self.job.destroy()
-
-            # Remove this simulator from the list of open simulators
-            Simulator._remove_simulator(self)
-
-    def trange(self, dt=None):
-        return np.arange(1, self.steps + 1) * (self.dt or dt)
-
-
-@atexit.register
-def _close_open_simulators():
-    """Close all remaining open simulators."""
-    # We make a list to avoid modifying the object we're iterating over.
-    for sim in list(Simulator._open_simulators):
-        # Ignore any errors which may occur during this shut-down process.
-        try:
-            sim.close()
-        except:
-            pass
+            SpiNNaker.stop(
+                self=self, turn_off_machine=turn_off_machine,
+                clear_tags=clear_tags,
+                clear_routing_tables=clear_routing_tables)
