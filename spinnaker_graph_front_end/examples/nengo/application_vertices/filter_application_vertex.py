@@ -1,8 +1,13 @@
-from pacman.model.graphs.application import ApplicationVertex
 import math
 
+from spinn_utilities.overrides import overrides
+from spinnaker_graph_front_end.examples.nengo.graph_components.\
+    basic_nengo_application_vertex import \
+    BasicNengoApplicationVertex
+from spinnaker_graph_front_end.examples.nengo import constants
 
-class FilterApplicationVertex(ApplicationVertex):
+
+class FilterApplicationVertex(BasicNengoApplicationVertex):
     """Operator which receives values, performs filtering, applies a linear
         transform and then forwards the resultant vector(s).
 
@@ -66,85 +71,75 @@ class FilterApplicationVertex(ApplicationVertex):
         "_groups"
         ]
 
-    MAX_ROWS = 64
-    MAX_COLUMNS = 128
-
-    def __init__(self, size_in, max_cols=MAX_COLUMNS, max_rows=MAX_ROWS):
+    def __init__(self, size_in, label, rng, max_cols=constants.MAX_COLUMNS,
+                 max_rows=constants.MAX_ROWS):
         """Create a new parallel Filter.
+        
+        :param size_in:  Width of the filter (length of any incoming signals).
+        :type size_in: int
+        :param max_cols: Maximum number of columns and rows which may be\ 
+        handled by a single processing core. The defaults (128 and 64 \
+        respectively) result in the overall connection matrix being \
+        decomposed such that (a) blocks are sufficiently small to be stored \
+        in DTCM, (b) network traffic is reduced.
+        :type max_cols: int
+        :param max_rows: see max_cols
+        :type max_rows: int
+        :param rng: the random number generator for generating seeds
+        """
 
-                Parameters
-                ----------
-                size_in : int
-                    Width of the filter (length of any incoming signals).
-                max_cols : int
-                max_rows : int
-                    Maximum number of columns and rows which may be handled by a single
-                    processing core. The defaults (128 and 64 respectively) result in
-                    the overall connection matrix being decomposed such that (a) blocks
-                    are sufficiently small to be stored in DTCM, (b) network traffic is
-                    reduced.
-                """
         # NB: max_rows and max_cols determined by experimentation by AM and
         # some modelling by SBF.
         # Create as many groups as necessary to keep the size in of any group
         # less than max_cols.
+        BasicNengoApplicationVertex.__init__(self, label=label, rng=rng)
+
         self._size_in = size_in
         n_groups = int(math.ceil(size_in // max_cols))
         self._groups = tuple(FilterGroup(sl, max_rows) for sl in
                             divide_slice(slice(0, size_in), n_groups))
 
-    def create_machine_vertex(self, vertex_slice, resources_required,
-                              label=None, constraints=None):
-        pass
+    @overrides(BasicNengoApplicationVertex.create_machine_vertices)
+    def make_vertices(self, output_signals, machine_timestep, filter_region,
+                      filter_routing_region):
+        """Partition the transform matrix into groups of rows and assign each
+        group of rows to a core for computation.
+    
+        If the group needs to be split over multiple chips (i.e., the group is
+        larger than 17 cores) then partition the matrix such that any used
+        chips are used in their entirety.
+        """
+        if OutputPort.standard not in output_signals:
+            self.cores = list()
+        else:
+            # Get the output transform, keys and slices for this slice of the
+            # filter.
+            transform, keys, output_slices = \
+                get_transforms_and_keys(output_signals[OutputPort.standard],
+                                        self.column_slice)
 
-    @property
-    def n_atoms(self):
-        return self._size_in
+            size_out = transform.shape[0]
 
-    def get_resources_used_by_atoms(self, vertex_slice):
-        pass
+            # Build as many vertices as required to keep the number of rows
+            # handled by each core below max_rows.
+            n_cores = (
+                (size_out // self.max_rows) +
+                (1 if size_out % self.max_rows else 0)
+            )
 
+            # Build the transform region for these cores
+            transform_region = regions.MatrixRegion(
+                np_to_fix(transform),
+                sliced_dimension=regions.MatrixPartitioning.rows
+            )
 
-def make_vertices(self, output_signals, machine_timestep, filter_region,
-                  filter_routing_region):
-    """Partition the transform matrix into groups of rows and assign each
-    group of rows to a core for computation.
+            # Build all the vertices
+            self.cores = [
+                FilterCore(self.column_slice, out_slice,
+                           transform_region, keys, output_slices,
+                           machine_timestep,
+                           filter_region, filter_routing_region) for
+                out_slice in divide_slice(slice(0, size_out), n_cores)
+            ]
 
-    If the group needs to be split over multiple chips (i.e., the group is
-    larger than 17 cores) then partition the matrix such that any used
-    chips are used in their entirety.
-    """
-    if OutputPort.standard not in output_signals:
-        self.cores = list()
-    else:
-        # Get the output transform, keys and slices for this slice of the
-        # filter.
-        transform, keys, output_slices = \
-            get_transforms_and_keys(output_signals[OutputPort.standard],
-                                    self.column_slice)
-
-        size_out = transform.shape[0]
-
-        # Build as many vertices as required to keep the number of rows
-        # handled by each core below max_rows.
-        n_cores = (
-            (size_out // self.max_rows) +
-            (1 if size_out % self.max_rows else 0)
-        )
-
-        # Build the transform region for these cores
-        transform_region = regions.MatrixRegion(
-            np_to_fix(transform),
-            sliced_dimension=regions.MatrixPartitioning.rows
-        )
-
-        # Build all the vertices
-        self.cores = [
-            FilterCore(self.column_slice, out_slice,
-                       transform_region, keys, output_slices,
-                       machine_timestep,
-                       filter_region, filter_routing_region) for
-            out_slice in divide_slice(slice(0, size_out), n_cores)
-        ]
-
-    return self.cores
+        return self.cores

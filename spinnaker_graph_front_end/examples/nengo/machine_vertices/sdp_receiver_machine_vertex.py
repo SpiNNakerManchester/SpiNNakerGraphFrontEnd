@@ -75,7 +75,13 @@ class SDPReceiverMachineVertex(
             time_scale_factor))
         spec.switch_write_focus(self.DATA_REGIONS.N_KEYS.value)
         spec.write_value(len(self._n_keys), DataType.UINT32)
+        spec.switch_write_focus(self.DATA_REGIONS.KEYS.value)
+        self._write_keys_region(routing_info)
         spec.end_specification()
+
+    def _write_keys_region(self, routing_info):
+        xxxxxxxxxxxxxxxxxxxxx
+
 
     def _reserve_memory_regions(self, spec):
         spec.reserve_memory_region(

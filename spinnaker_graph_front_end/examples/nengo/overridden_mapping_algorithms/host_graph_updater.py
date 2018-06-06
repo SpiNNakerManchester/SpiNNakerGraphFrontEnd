@@ -4,7 +4,7 @@ class HostGraphUpdator(object):
 
     SLEEP_PERIOD = 0.0001
 
-    def __call__(self, host_graph, time_step):
+    def __call__(self, nengo_host_graph, time_step):
         while run_time < exp_time:
             # Run a step
             host_graph.step()

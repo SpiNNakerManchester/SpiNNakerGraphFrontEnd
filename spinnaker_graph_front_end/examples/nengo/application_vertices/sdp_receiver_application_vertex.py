@@ -1,39 +1,42 @@
-from pacman.model.graphs.application import ApplicationVertex
-from pacman.model.resources import ResourceContainer, SDRAMResource, \
-    DTCMResource, CPUCyclesPerTickResource
+from spinn_utilities.overrides import overrides
+from spinnaker_graph_front_end.examples.nengo.graph_components.basic_nengo_application_vertex import \
+    BasicNengoApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.machine_vertices.sdp_receiver_machine_vertex import \
     SDPReceiverMachineVertex
 
 
-class SDPReceiver(ApplicationVertex):
+class SDPReceiver(BasicNengoApplicationVertex):
     """An operator which receives SDP packets and transmits the contained data
     as a stream of multicast packets.
     
     ABS THIS LOOKS VERY MUCH LIKE A SPIKE INJECTOR WITH PAYLOADS!!!!!
     """
 
-    def __init__(self):
+    def __init__(self, label, rng):
         # Create a mapping of which connection is broadcast by which vertex
         self._connection_vertices = dict()
-        self._sys_regions = dict()
-        self._key_regions = dict()
 
-        ApplicationVertex.__init__(self, label="SDP_Receiver")
+        BasicNengoApplicationVertex.__init__(self, label=label, rng=rng)
 
-    def create_machine_vertices(self):
+    @overrides(BasicNengoApplicationVertex.create_machine_vertices)
+    def create_machine_vertices(self, nengo_app_graph):
+        verts = list()
 
+        # Get all outgoing signals and their associated transmission parameters
+        for signal, transmission_params in \
+                model.get_signals_from_object(self)[OutputPort.standard]:
+            # Get the transform, and from this the keys
+            transform = transmission_params.full_transform(slice_out=False)
+            keys = [(signal, {"index": i}) for i in
+                    range(transform.shape[0])]
 
-    def create_machine_vertex(
-            self, vertex_slice, resources_required, label=None,
-            constraints=None):
-        pass
+            # Create a vertex for this connection (assuming its size out <= 64)
+            if len(keys) > 64:
+                raise NotImplementedError(
+                    "Connection is too wide to transmit to SpiNNaker. "
+                    "Consider breaking the connection up or making the "
+                    "originating node a function of time Node."
+                )
 
-    @property
-    def n_atoms(self):
-        return 1
-
-    def get_resources_used_by_atoms(self, vertex_slice):
-        """ the reason why this is passed is due to a impicit requirement to 
-        use the built in partitioner, which this doesnt 
-        """
-        pass
+            verts.append(SDPReceiverMachineVertex(keys))
+        return verts

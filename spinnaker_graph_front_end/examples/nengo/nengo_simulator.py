@@ -1,13 +1,17 @@
-import atexit
-
 from spinn_front_end_common.utilities.utility_objs import ExecutableFinder
+from spinnaker_graph_front_end.examples.nengo.nengo_components.connection import \
+    Connection
+from spinnaker_graph_front_end.examples.nengo.nengo_components.ensemble import \
+    Ensemble
 from spinnaker_graph_front_end.spinnaker import SpiNNaker
 from spinnaker_graph_front_end.examples.nengo import binaries
+
+from spinnaker_graph_front_end.examples.nengo.nengo_components.node import Node
 
 import logging
 import os
 import numpy
-
+import nengo
 
 logger = logging.getLogger(__name__)
 
@@ -74,11 +78,26 @@ class NengoSimulator(SpiNNaker):
         machine_timestep = int((dt / time_scale) * 1e6)
 
         SpiNNaker.__init__(
-            self, executable_finder, host_name=None, graph_label=None,
-            database_socket_addresses=None, dsg_algorithm=None,
-            n_chips_required=None, extra_pre_run_algorithms=None,
-            extra_post_run_algorithms=None, time_scale_factor=None,
-            machine_time_step=None)
+            self, executable_finder, host_name=host_name,
+            graph_label=graph_label,
+            database_socket_addresses=database_socket_addresses,
+            dsg_algorithm=dsg_algorithm,
+            n_chips_required=n_chips_required,
+            extra_pre_run_algorithms=extra_pre_run_algorithms,
+            extra_post_run_algorithms=extra_post_run_algorithms,
+            time_scale_factor=time_scale,
+            machine_time_step=machine_timestep)
+
+        # create nengo to spinnaker nengo component map
+        model_conversion_map = dict()
+        model_conversion_map[nengo.node.Node] = Node
+        model_conversion_map[nengo.ensemble.Ensemble] = Ensemble
+        model_conversion_map[nengo.connection.Connection] = Connection
+
+        self.update_extra_inputs(
+            {'NengoModel': network,
+             'NengoMap': model_conversion_map})
+
 
     def __enter__(self):
         """Enter a context which will close the simulator when exited."""
