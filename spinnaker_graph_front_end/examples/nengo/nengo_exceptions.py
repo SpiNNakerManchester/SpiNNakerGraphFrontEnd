@@ -18,5 +18,12 @@ class NeuronTypeConstructorNotFoundException(NengoException):
 
 
 class NotLocatedProbableClass(NengoException):
-    """ raised when theres a probe on something thats not an ensemble
+    """ raised when there's a probe on something that's not an ensemble
     """
+
+
+class NotBuildingPassThroughNodes(NengoException):
+    """raised when trying to build a machine vertex pass through node. 
+    expectation that either it'll be supported in future, or flag will 
+    disappear"""
+

@@ -1,11 +1,19 @@
 import nengo
 import numpy
+
+from nengo.processes import Process
 from pacman.model.graphs import AbstractOutgoingEdgePartition
 from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.impl import Graph
 from spinnaker_graph_front_end.examples.nengo.application_vertices.\
     lif_application_vertex import \
     LIFApplicationVertex
+from spinnaker_graph_front_end.examples.nengo.application_vertices.\
+    pass_through_application_vertex import \
+    PassThroughApplicationVertex
+from spinnaker_graph_front_end.examples.nengo.application_vertices.\
+    value_source_application_vertex import \
+    ValueSourceApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
     basic_nengo_application_vertex import \
     BasicNengoApplicationVertex
@@ -18,11 +26,16 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
 
     APP_GRAPH_NAME = "nengo_operator_graph"
 
-    def __call__(self, nengo_network, extra_model_converters):
+    def __call__(
+            self, nengo_network, extra_model_converters, machine_time_step,
+            nengo_node_function_of_time, nengo_node_function_of_time_period,
+            nengo_random_number_generator_seed):
 
         # build the high level graph (operator level)
-        app_graph = self._generate_app_graph(
-            nengo_network, extra_model_converters)
+        app_graph, host_network = self._generate_app_graph(
+            nengo_network, extra_model_converters, machine_time_step,
+            nengo_node_function_of_time, nengo_node_function_of_time_period,
+            nengo_random_number_generator_seed)
 
         # build the spinnaker machine graph
         machine_graph = self._generate_machine_graph(app_graph)
@@ -33,16 +46,31 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
         # return the 3 graphs
         return app_graph, machine_graph, nengo_graph
 
-    def _generate_app_graph(self, nengo_network, extra_model_converters):
+    def _generate_app_graph(
+            self, nengo_network, extra_model_converters, machine_time_step,
+            nengo_node_function_of_time, nengo_node_function_of_time_period,
+            nengo_random_number_generator_seed):
+
+        # specific random number generator for all seeds.
+        if nengo_random_number_generator_seed is not None:
+            numpy.random.seed(nengo_random_number_generator_seed)
         random_number_generator = numpy.random
 
+        # graph for holding the nengo operators. equiv of a app graph.
         app_graph = Graph(
             allowed_vertex_types=BasicNengoApplicationVertex,
             allowed_edge_types=ApplicationEdge,
             allowed_partition_types=AbstractOutgoingEdgePartition,
             label=self.APP_GRAPH_NAME)
+
+        # nengo host network, used to store nodes that do not execute on the
+        # SpiNNaker machine
+        host_network = nengo.Network()
+
+        # mappings between nengo instances and the spinnaker operator graph
         nengo_to_app_graph_map = dict()
 
+        # convert from ensembles to neuron model operators
         for nengo_ensemble in nengo_network.ensembles:
             operator = self._ensemble_conversion(
                 nengo_ensemble, extra_model_converters,
@@ -50,12 +78,17 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
             app_graph.add_vertex(operator)
             nengo_to_app_graph_map[nengo_ensemble] = operator
 
+        # convert from nodes to either pass through nodes or sources.
         for nengo_node in nengo_network.nodes:
             operator = self._node_conversion(
-                nengo_node, random_number_generator)
+                nengo_node, random_number_generator, machine_time_step,
+                nengo_node_function_of_time,
+                nengo_node_function_of_time_period,
+                host_network)
             app_graph.add_vertex(operator)
             nengo_to_app_graph_map[nengo_node] = operator
 
+        # convert connections into edges with specific data elements
         for nengo_connection in nengo_network.connections:
             edge, edge_outgoing_partition_name = self._connection_conversion(
                 nengo_connection, app_graph, nengo_to_app_graph_map,
@@ -63,7 +96,8 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
             app_graph.add_edge(edge, edge_outgoing_partition_name)
             nengo_to_app_graph_map[nengo_connection] = edge
 
-        # for each probe, ask the operator if it supports this probe
+        # for each probe, ask the operator if it supports this probe (equiv
+        # of recording parameters)
         for nengo_probe in nengo_network.probes:
             if nengo_probe.attr in nengo_to_app_graph_map[
                     nengo_probe.target].probeable_components:
@@ -124,7 +158,8 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
             operator = LIFApplicationVertex(
                 label="LIF neurons for ensemble {}".format(
                     nengo_ensemble.label),
-                rng=random_number_generator)
+                rng=random_number_generator,
+                params=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX)
             return operator
         elif nengo_ensemble.neuron_type in extra_model_converters:
             operator = extra_model_converters[
@@ -136,36 +171,44 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
                 "constructors for the following neuron types LIF,{}".format(
                     nengo_ensemble.neuron_type, extra_model_converters.keys))
 
-    def _node_conversion(self, nengo_node, random_number_generator):
-        f_of_t = nengo_node.size_in == 0 and (
-            not callable(nengo_node.output) or
-            getconfig(model.config, nengo_node, "function_of_time", False)
-        )
+    @staticmethod
+    def _node_conversion(
+            nengo_node, random_number_generator, machine_time_step,
+            nengo_node_function_of_time, nengo_node_function_of_time_period,
+            host_network):
 
-        if node.output is None:
-            # If the Node is a passthrough Node then create a new placeholder
-            # for the passthrough node.
-            op = PassthroughNode(node.label)
-            self.passthrough_nodes[node] = op
-            model.object_operators[node] = op
-        elif f_of_t:
+        # ????? no idea what the size in has to do with it
+        function_of_time = nengo_node.size_in == 0 and (
+            not callable(nengo_node.output) or not nengo_node_function_of_time)
+
+        if nengo_node.output is None:
+            # If the Node is a pass through Node then create a new placeholder
+            # for the pass through node.
+            return PassThroughApplicationVertex(
+                label=nengo_node.label, rng=random_number_generator)
+
+        elif function_of_time:
             # If the Node is a function of time then add a new value source for
             # it.  Determine the period by looking in the config, if the output
             # is a constant then the period is dt (i.e., it repeats every
-            # timestep).
-            if callable(node.output) or isinstance(node.output, Process):
-                period = getconfig(model.config, node,
-                                   "function_of_time_period")
+            # time step).
+            if callable(nengo_node.output) or isinstance(
+                    nengo_node.output, Process):
+
+                period = nengo_node_function_of_time_period
             else:
-                period = model.dt
+                period = machine_time_step
 
-            vs = ValueSource(node.output, node.size_out, period)
-            self._f_of_t_nodes[node] = vs
-            model.object_operators[node] = vs
-        else:
-            with self.host_network:
-                self._add_node(node)
-
+            return ValueSourceApplicationVertex(
+                label="value_source_vertex for node {}".format(
+                    nengo_node.label),
+                rng=random_number_generator,
+                nengo_node_output=nengo_node.output,
+                nengo_node_size_out=nengo_node.size_out,
+                period=period)
+        else: # not a function of time or a pass through node, so must be a
+            # host based node
+            host_network.add(nengo_node)
 
     def _connection_conversion(
             self, nengo_connection, app_graph, nengo_to_app_graph_map,
@@ -188,13 +231,13 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
 
 
 
-    def _create_host_sim(self):
+    def _create_host_sim(self, host_network):
         # change node_functions to reflect time
         # TODO: improve the reference simulator so that this is not needed
         #       by adding a realtime option
         node_functions = {}
         node_info = dict(start=None)
-        for node in self.io_controller.host_network.all_nodes:
+        for node in host_network.all_nodes:
             if callable(node.output):
                 old_func = node.output
                 if node.size_in == 0:
