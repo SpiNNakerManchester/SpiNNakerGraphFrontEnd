@@ -207,8 +207,9 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
                 nengo_node_size_out=nengo_node.size_out,
                 period=period)
         else: # not a function of time or a pass through node, so must be a
-            # host based node
-            host_network.add(nengo_node)
+            # host based node, needs with wrapper, as the network assumes
+            with host_network:
+                host_network.add(nengo_node)
 
     def _connection_conversion(
             self, nengo_connection, app_graph, nengo_to_app_graph_map,
