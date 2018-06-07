@@ -20,6 +20,13 @@ from spinnaker_graph_front_end.examples.nengo.graph_components.\
 from spinnaker_graph_front_end.examples.nengo.nengo_exceptions import \
     ProbeableException, NeuronTypeConstructorNotFoundException, \
     NotLocatedProbableClass
+from spinnaker_graph_front_end.examples.nengo.parameters.\
+    node_transmission_parameters import NodeTransmissionParameters
+from spinnaker_graph_front_end.examples.nengo.parameters.\
+    parameter_transform import ParameterTransform
+from spinnaker_graph_front_end.examples.nengo.parameters.\
+    pass_through_node_transmission_parameters import \
+    PassthroughNodeTransmissionParameters
 
 
 class NengoSpiNNakerApplicationGraphBuilder(object):
@@ -37,14 +44,8 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
             nengo_node_function_of_time, nengo_node_function_of_time_period,
             nengo_random_number_generator_seed)
 
-        # build the spinnaker machine graph
-        machine_graph = self._generate_machine_graph(app_graph)
-
-        # build the nengo host graph used for vis
-        nengo_graph = self._generate_nengo_host_graph()
-
-        # return the 3 graphs
-        return app_graph, machine_graph, nengo_graph
+        # return the 2 graphs
+        return app_graph, host_network
 
     def _generate_app_graph(
             self, nengo_network, extra_model_converters, machine_time_step,
@@ -116,6 +117,13 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
     @staticmethod
     def _locate_correct_app_vertex_for_probe(
             nengo_probe, nengo_to_app_graph_map):
+        """ locates the correct app vertex for a given probe
+        
+        :param nengo_probe: the nengo probe
+        :param nengo_to_app_graph_map: the map between nego objects and app 
+        verts
+        :return: the app vert considered here
+        """
         target_object = None
         # ensure the target is of a nengo object
         if isinstance(nengo_probe.target, nengo.base.ObjView):
@@ -163,7 +171,8 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
             return operator
         elif nengo_ensemble.neuron_type in extra_model_converters:
             operator = extra_model_converters[
-                nengo_ensemble.neuron_type](nengo_ensemble)
+                nengo_ensemble.neuron_type](
+                nengo_ensemble, random_number_generator, params)
             return operator
         else:
             raise NeuronTypeConstructorNotFoundException(
@@ -214,57 +223,96 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
     def _connection_conversion(
             self, nengo_connection, app_graph, nengo_to_app_graph_map,
             random_number_generator):
+        """Make a Connection and add a new signal to the Model.
 
+        This method will build a connection and construct a new signal which
+        will be included in the model.
+        """
 
+        # Get the transmission parameters and reception parameters for the
+        # connection.
+        transmission_params = self._get_transmission_parameters(
+            nengo_connection)
+        reception_params = \
+            self._reception_parameter_builders[post_type](self, conn)
 
+        # Get the source and sink specification, then make the signal provided
+        # that neither of specs is None.
+        source = self._source_getters[pre_type](self, conn)
+        sink = self._sink_getters[post_type](self, conn)
 
-    def _generate_machine_graph(self, app_graph):
+        if not (source is None or sink is None):
+            # Construct the signal parameters
+            signal_params = _make_signal_parameters(source, sink, conn)
 
+            # Add the connection to the connection map, this will automatically
+            # merge connections which are equivalent.
+            self.connection_map.add_connection(
+                source.target.obj, source.target.port, signal_params,
+                transmission_params, sink.target.obj, sink.target.port,
+                reception_params
+            )
 
-    def _generate_nengo_host_graph(self):
+    def _get_transmission_parameters(self, nengo_connection):
+        # if a input node of some form. verify if its a transmission node or
+        # a pass through node
+        if isinstance(nengo_connection.pre_obj, nengo.Node):
 
+            # if a transmission node
+            if nengo_connection.pre_obj.output is not None:
 
-
-
-
-
-
-
-
-
-    def _create_host_sim(self, host_network):
-        # change node_functions to reflect time
-        # TODO: improve the reference simulator so that this is not needed
-        #       by adding a realtime option
-        node_functions = {}
-        node_info = dict(start=None)
-        for node in host_network.all_nodes:
-            if callable(node.output):
-                old_func = node.output
-                if node.size_in == 0:
-                    def func(t, f=old_func):
-                        now = time.time()
-                        if node_info['start'] is None:
-                            node_info['start'] = now
-
-                        t = (now - node_info['start']) * self.timescale
-                        return f(t)
+                # get size in??????
+                if nengo_connection.function is None:
+                    size_in = nengo_connection.pre_obj.size_out
                 else:
-                    def func(t, x, f=old_func):
-                        now = time.time()
-                        if node_info['start'] is None:
-                            node_info['start'] = now
+                    size_in = nengo_connection.size_mid
 
-                        t = (now - node_info['start']) * self.timescale
-                        return f(t, x)
-                node.output = func
-                node_functions[node] = old_func
+                # return transmission parameters
+                return NodeTransmissionParameters(
+                    transform=ParameterTransform(
+                        size_in=size_in,
+                        size_out=nengo_connection.post_obj.size_in,
+                        transform=nengo_connection.transform,
+                        slice_out=nengo_connection.post_slice),
+                    pre_slice=nengo_connection.pre_slice,
+                    parameter_function=nengo_connection.function)
+            else:  # return pass through params
+                return PassthroughNodeTransmissionParameters(
+                    transform=ParameterTransform(
+                        size_in=nengo_connection.pre_obj.size_out,
+                        size_out=nengo_connection.post_obj.size_in,
+                        transform=nengo_connection.transform,
+                        slice_in=nengo_connection.pre_slice,
+                        slice_out=nengo_connection.post_slice))
 
-        # Build the host simulator
-        host_sim = nengo.Simulator(
-            self.io_controller.host_network, dt=self.dt)
-        # reset node functions
-        for node, func in node_functions.items():
-            node.output = func
+        # if a ensemble
+        elif isinstance(nengo_connection.pre_obj, nengo.Ensemble):
+            # Build the parameters object for a connection from an Ensemble.
+            if nengo_connection.solver.weights:
+                raise NotImplementedError(
+                    "SpiNNaker does not currently support neuron to neuron "
+                    "connections")
 
-        return host_sim
+            # Create a random number generator
+            rng = numpy.random.RandomState(model.seeds[conn])
+
+            # Get the transform
+            transform = conn.transform
+
+            # Solve for the decoders
+            eval_points, decoders, solver_info = build_decoders(model, conn,
+                                                                rng)
+
+            # Store the parameters in the model
+            model.params[conn] = BuiltConnection(decoders=decoders,
+                                                 eval_points=eval_points,
+                                                 transform=transform,
+                                                 solver_info=solver_info)
+
+            t = Transform(size_in=decoders.shape[1],
+                          size_out=conn.post_obj.size_in,
+                          transform=transform,
+                          slice_out=conn.post_slice)
+            return EnsembleTransmissionParameters(
+                decoders.T, t, conn.learning_rule
+            )
