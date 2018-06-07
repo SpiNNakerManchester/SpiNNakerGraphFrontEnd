@@ -96,8 +96,18 @@ class NengoSimulator(SpiNNaker):
 
         self.update_extra_inputs(
             {'NengoModel': network,
-             'NengoMap': model_conversion_map})
-
+             'NengoMap': model_conversion_map,
+             "NengoNodeIOSetting": self.config.get("Simulator", "node_io"),
+             "NengoNodeSetAsFunctionOfTime":
+                 self.config.getboolean("Node", "function_of_time"),
+             "NengoNodeSetAsFunctionOfTimePeriod":
+                 self.config.getboolean("Node", "function_of_time_period"),
+             "NengoNodeOptimizeOut":
+                 self.config.getboolean("Node", "optimise_out"),
+             "NengoEnsembleProfile":
+                 self.config.getboolean("Ensemble", "profile"),
+             "NengoEnsembleProfileNumSamples":
+                 self.config.getboolean("Ensemble", "profile_num_samples")})
 
     def __enter__(self):
         """Enter a context which will close the simulator when exited."""
