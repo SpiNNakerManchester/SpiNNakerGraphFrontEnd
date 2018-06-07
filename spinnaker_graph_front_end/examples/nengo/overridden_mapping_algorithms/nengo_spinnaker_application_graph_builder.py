@@ -10,7 +10,8 @@ from spinnaker_graph_front_end.examples.nengo.graph_components.\
     basic_nengo_application_vertex import \
     BasicNengoApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.nengo_exceptions import \
-    ProbeableException, NeuronTypeConstructorNotFoundException
+    ProbeableException, NeuronTypeConstructorNotFoundException, \
+    NotLocatedProbableClass
 
 
 class NengoSpiNNakerApplicationGraphBuilder(object):
@@ -18,10 +19,19 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
     APP_GRAPH_NAME = "nengo_operator_graph"
 
     def __call__(self, nengo_network, extra_model_converters):
+
+        # build the high level graph (operator level)
         app_graph = self._generate_app_graph(
             nengo_network, extra_model_converters)
+
+        # build the spinnaker machine graph
         machine_graph = self._generate_machine_graph(app_graph)
+
+        # build the nengo host graph used for vis
         nengo_graph = self._generate_nengo_host_graph()
+
+        # return the 3 graphs
+        return app_graph, machine_graph, nengo_graph
 
     def _generate_app_graph(self, nengo_network, extra_model_converters):
         random_number_generator = numpy.random
@@ -57,15 +67,55 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
         for nengo_probe in nengo_network.probes:
             if nengo_probe.attr in nengo_to_app_graph_map[
                     nengo_probe.target].probeable_components:
-                nengo_to_app_graph_map[
-                    nengo_probe.target].set_probeable_component(
-                        nengo_probe.attr)
+
+                # verify the app vertex it should be going to
+                app_vertex = self._locate_correct_app_vertex_for_probe(
+                    nengo_probe, nengo_to_app_graph_map)
+                app_vertex.set_probeable_component(nengo_probe.attr)
             else:
                 raise ProbeableException(
                     "the operator {}. Does not support probing of attribute"
                     " {}.".format(
                         nengo_to_app_graph_map[nengo_probe.target],
                         nengo_probe.attr))
+
+    @staticmethod
+    def _locate_correct_app_vertex_for_probe(
+            nengo_probe, nengo_to_app_graph_map):
+        target_object = None
+        # ensure the target is of a nengo object
+        if isinstance(nengo_probe.target, nengo.base.ObjView):
+
+            # if the target is an ensemble, get the ensemble's app vert
+            if isinstance(nengo_probe.target.obj, nengo.Ensemble):
+                target_object = nengo_probe.target.obj
+
+            # if the target is a Neurons from an ensemble, backtrack to the
+            # ensemble
+            elif isinstance(nengo_probe.target.obj, nengo.ensemble.Neurons):
+                if isinstance(nengo_probe.target, nengo.base.ObjView):
+                    target_object =  nengo_probe.target.obj.ensemble
+                else:
+                    target_object = nengo_probe.target.ensemble
+
+            # if the target is a learning rule, locate the ensemble at the
+            # destination.
+            elif  isinstance(nengo_probe.target.obj,
+                             nengo.connection.LearningRule):
+                if isinstance(nengo_probe.target.connection.post_obj,
+                              nengo.Ensemble):
+                    target_object = nengo_probe.target.connection.post_obj
+        else:
+            target_object =  nengo_probe.target
+
+        # if the target object has been found, return the app vertex
+        # associated with it. else raise exception
+        if target_object is not None:
+            return nengo_to_app_graph_map[target_object]
+        else:
+            raise NotLocatedProbableClass(
+                "SpiNNaker does not currently support probing '{}' on "
+                "'{}'".format(nengo_probe.attr, nengo_probe.target))
 
     @staticmethod
     def _ensemble_conversion(
@@ -86,11 +136,40 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
                 "constructors for the following neuron types LIF,{}".format(
                     nengo_ensemble.neuron_type, extra_model_converters.keys))
 
-    def _node_conversion(self, nengo_node):
+    def _node_conversion(self, nengo_node, random_number_generator):
+        f_of_t = nengo_node.size_in == 0 and (
+            not callable(nengo_node.output) or
+            getconfig(model.config, nengo_node, "function_of_time", False)
+        )
+
+        if node.output is None:
+            # If the Node is a passthrough Node then create a new placeholder
+            # for the passthrough node.
+            op = PassthroughNode(node.label)
+            self.passthrough_nodes[node] = op
+            model.object_operators[node] = op
+        elif f_of_t:
+            # If the Node is a function of time then add a new value source for
+            # it.  Determine the period by looking in the config, if the output
+            # is a constant then the period is dt (i.e., it repeats every
+            # timestep).
+            if callable(node.output) or isinstance(node.output, Process):
+                period = getconfig(model.config, node,
+                                   "function_of_time_period")
+            else:
+                period = model.dt
+
+            vs = ValueSource(node.output, node.size_out, period)
+            self._f_of_t_nodes[node] = vs
+            model.object_operators[node] = vs
+        else:
+            with self.host_network:
+                self._add_node(node)
 
 
     def _connection_conversion(
-            self, nengo_connection, app_graph, nengo_to_app_graph_map):
+            self, nengo_connection, app_graph, nengo_to_app_graph_map,
+            random_number_generator):
 
 
 

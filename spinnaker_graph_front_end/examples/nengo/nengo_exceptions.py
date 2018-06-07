@@ -15,3 +15,8 @@ class NeuronTypeConstructorNotFoundException(NengoException):
     tools. 
     """
     pass
+
+
+class NotLocatedProbableClass(NengoException):
+    """ raised when theres a probe on something thats not an ensemble
+    """
