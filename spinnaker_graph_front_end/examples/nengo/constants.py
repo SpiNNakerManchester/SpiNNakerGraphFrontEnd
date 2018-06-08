@@ -1,6 +1,6 @@
 from enum import Enum
 
-# enums assocaited with the ports used by the nengo tools
+# enums associated with the ports used by the nengo tools
 OUTPUT_PORT = Enum(
     value="OUTPUT_PORT",
     names=[('STANDARD', 0)])
@@ -24,3 +24,7 @@ ENSEMBLE_INPUT_PORT = Enum(
 
 MAX_ROWS = 64
 MAX_COLUMNS = 128
+
+DECODERS_FLAG = "decoders"
+ENCODERS_FLAG ="encoders"
+APP_GRAPH_NAME = "nengo_operator_graph"
