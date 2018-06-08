@@ -6,6 +6,7 @@ from spinnaker_graph_front_end.examples.nengo.graph_components.\
 
 
 class NengoPartitioner(object):
+
     MACHINE_GRAPH_LABEL = "machine graph"
 
     def __call__(self, nengo_operator_graph, skip_pass_through_nodes):
@@ -22,8 +23,7 @@ class NengoPartitioner(object):
                 machine_vertices = operator.make_vertices()
             machine_graph.add_vertices(machine_vertices)
 
-
-        # Construct nets from the signals
+        # Construct edges from the application edges
         nets = dict()
         id_to_signal = dict()
         for signal, transmission_parameters in \
