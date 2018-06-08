@@ -14,17 +14,14 @@ class BasicNengoApplicationVertex(
 
     def __init__(self, label, rng, constraints=None):
         ConstrainedObject.__init__(self, constraints)
+        AbstractVertex.__init__(self)
+        BasicNengoObject.__init__(self, rng)
         self._label = label
-        self._seed = self.get_seed(self, rng)
 
     @property
     @overrides(AbstractVertex.label)
     def label(self):
         return self._label
-
-    @property
-    def seed(self):
-        return self._seed
 
     def __str__(self):
         return self.label
