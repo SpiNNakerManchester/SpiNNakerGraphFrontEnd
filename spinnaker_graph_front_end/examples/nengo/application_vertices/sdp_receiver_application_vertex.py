@@ -1,11 +1,16 @@
+import nengo
+from pacman.executor.injection_decorator import inject
 from spinn_utilities.overrides import overrides
-from spinnaker_graph_front_end.examples.nengo.graph_components.basic_nengo_application_vertex import \
-    BasicNengoApplicationVertex
-from spinnaker_graph_front_end.examples.nengo.machine_vertices.sdp_receiver_machine_vertex import \
-    SDPReceiverMachineVertex
+from spinnaker_graph_front_end.examples.nengo.graph_components. \
+    basic_nengo_application_vertex import BasicNengoApplicationVertex
+from spinnaker_graph_front_end.examples.nengo.machine_vertices. \
+    sdp_receiver_machine_vertex import SDPReceiverMachineVertex
+from spinnaker_graph_front_end.examples.nengo.nengo_implicit_interfaces.nengo_live_output_interface import \
+    NengoLiveOutputInterface
 
 
-class SDPReceiver(BasicNengoApplicationVertex):
+class SDPReceiverApplicationVertex(
+        BasicNengoApplicationVertex,  nengo.Node, NengoLiveOutputInterface):
     """An operator which receives SDP packets and transmits the contained data
     as a stream of multicast packets.
     
@@ -13,13 +18,33 @@ class SDPReceiver(BasicNengoApplicationVertex):
     """
 
     def __init__(self, label, rng):
+        nengo.Node.__init__(self)
+        BasicNengoApplicationVertex.__init__(self, label=label, rng=rng)
         # Create a mapping of which connection is broadcast by which vertex
         self._connection_vertices = dict()
 
-        BasicNengoApplicationVertex.__init__(self, label=label, rng=rng)
+    @inject({"transceiver": "MemoryTransceiver",
+             "graph_mapper": "MemoryNengoGraphMapper",
+             "placements": "MemoryPlacements"})
+    @overrides(
+        NengoLiveOutputInterface.output,
+        additional_arguments={"transceiver", "graph_mapper", "placements"})
+    def output(self, _, value, transceiver, graph_mapper, placements):
+        for machine_vertex in graph_mapper.get_machine_vertices(self):
+            placement = placements.get_placement_of_vertex(machine_vertex)
+            machine_vertex.send_output_to_spinnaker(
+                value, placement, transceiver)
+
+    @overrides(nengo.Node.__setstate__)
+    def __setstate__(self, state):
+        raise NotImplementedError("Nengo objects do not support pickling")
+
+    @overrides(nengo.Node.__getstate__)
+    def __getstate__(self):
+        raise NotImplementedError("Nengo objects do not support pickling")
 
     @overrides(BasicNengoApplicationVertex.create_machine_vertices)
-    def create_machine_vertices(self, nengo_app_graph):
+    def create_machine_vertices(self):
         verts = list()
 
         # Get all outgoing signals and their associated transmission parameters

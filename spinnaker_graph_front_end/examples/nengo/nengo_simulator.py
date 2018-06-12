@@ -1,17 +1,11 @@
+from nengo.cache import NoDecoderCache
 from spinn_front_end_common.utilities.utility_objs import ExecutableFinder
-from spinnaker_graph_front_end.examples.nengo.nengo_components.connection import \
-    Connection
-from spinnaker_graph_front_end.examples.nengo.nengo_components.ensemble import \
-    Ensemble
 from spinnaker_graph_front_end.spinnaker import SpiNNaker
 from spinnaker_graph_front_end.examples.nengo import binaries
-
-from spinnaker_graph_front_end.examples.nengo.nengo_components.node import Node
 
 import logging
 import os
 import numpy
-import nengo
 
 logger = logging.getLogger(__name__)
 
@@ -37,14 +31,15 @@ class NengoSimulator(SpiNNaker):
             sim.run(10.0)
     """
 
-    __slots__ = []
+    __slots__ = [
+    ]
 
     def __init__(
             self, network, dt=0.001, time_scale=1.0,
             host_name=None, graph_label=None,
             database_socket_addresses=None, dsg_algorithm=None,
             n_chips_required=None, extra_pre_run_algorithms=None,
-            extra_post_run_algorithms=None):
+            extra_post_run_algorithms=None, decoder_cache=NoDecoderCache()):
         """Create a new Simulator with the given network.
         
         :param time_scale: Scaling factor to apply to the simulation, e.g.,\
@@ -88,15 +83,9 @@ class NengoSimulator(SpiNNaker):
             time_scale_factor=time_scale,
             machine_time_step=machine_timestep)
 
-        # create nengo to spinnaker nengo component map
-        model_conversion_map = dict()
-        model_conversion_map[nengo.node.Node] = Node
-        model_conversion_map[nengo.ensemble.Ensemble] = Ensemble
-        model_conversion_map[nengo.connection.Connection] = Connection
-
         self.update_extra_inputs(
             {'NengoModel': network,
-             'NengoMap': model_conversion_map,
+             'NengoDecoderCache': decoder_cache,
              "NengoNodeIOSetting": self.config.get("Simulator", "node_io"),
              "NengoNodeSetAsFunctionOfTime":
                  self.config.getboolean("Node", "function_of_time"),

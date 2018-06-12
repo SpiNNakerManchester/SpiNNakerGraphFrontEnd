@@ -28,3 +28,9 @@ MAX_COLUMNS = 128
 DECODERS_FLAG = "decoders"
 ENCODERS_FLAG ="encoders"
 APP_GRAPH_NAME = "nengo_operator_graph"
+MACHINE_GRAPH_LABEL = "machine graph"
+
+SDP_PORTS = Enum(
+    value="SDP_PORTS_READ_BY_C_CODE",
+    names=[("SDP_RECEIVER", 1)]
+)

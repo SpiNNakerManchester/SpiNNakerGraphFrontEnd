@@ -1,4 +1,5 @@
 from pacman.model.graphs.machine import MachineGraph
+from spinnaker_graph_front_end.examples.nengo import constants
 from spinnaker_graph_front_end.examples.nengo.application_vertices.\
     pass_through_application_vertex import PassThroughApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
@@ -7,12 +8,11 @@ from spinnaker_graph_front_end.examples.nengo.graph_components.\
 
 class NengoPartitioner(object):
 
-    MACHINE_GRAPH_LABEL = "machine graph"
-
     def __call__(self, nengo_operator_graph, skip_pass_through_nodes):
-        machine_graph = MachineGraph(label=self.MACHINE_GRAPH_LABEL)
+        machine_graph = MachineGraph(label=constants.MACHINE_GRAPH_LABEL)
         graph_mapper = GraphMapper()
 
+        # convert application vertices into machine vertices
         for operator in nengo_operator_graph.vertices():
 
             # If the operator is a pass through Node then skip it
@@ -21,7 +21,12 @@ class NengoPartitioner(object):
                 continue
             else:
                 machine_vertices = operator.make_vertices()
-            machine_graph.add_vertices(machine_vertices)
+
+            # update data objects
+            for machine_vertex in machine_vertices:
+                machine_graph.add_vertex(machine_vertex)
+                graph_mapper.add_vertex_mapping(
+                    machine_vertex=machine_vertex, application_vertex=operator)
 
         # Construct edges from the application edges
         nets = dict()

@@ -1,4 +1,5 @@
 from enum import Enum
+import numpy
 
 from data_specification.enums import DataType
 from pacman.model.graphs.machine import MachineVertex
@@ -13,6 +14,8 @@ from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_front_end_common.utilities import constants
 
 from spinn_utilities.overrides import overrides
+from spinnaker_graph_front_end.examples.nengo import helpful_functions
+from spinnman.messages.sdp import SDPMessage, SDPHeader
 
 
 class SDPReceiverMachineVertex(
@@ -20,7 +23,17 @@ class SDPReceiverMachineVertex(
 
     __slots__ = [
         # keys to transmit with i think
-        '_keys'
+        '_keys',
+
+        #
+        "_pre_slice",
+
+        #
+        "_value_conversion_function",
+
+        #
+        "_value_conversion_transform"
+
     ]
 
     DATA_REGIONS = Enum(
@@ -31,11 +44,16 @@ class SDPReceiverMachineVertex(
     N_KEYS_REGION_SIZE = 4
     BYTES_PER_FIELD = 4
 
-    def __init__(self, keys):
+    def __init__(self, keys, pre_slice, value_conversion_function,
+                 value_conversion_transform):
         MachineVertex.__init__(self)
         MachineDataSpecableVertex.__init__(self)
         AbstractHasAssociatedBinary.__init__(self)
         self._keys = keys
+        self._pre_slice = pre_slice
+        self._value_conversion_transform = value_conversion_transform
+        self._value_conversion_function = value_conversion_function
+
 
     @property
     @overrides(MachineVertex.resources_required)
@@ -94,3 +112,21 @@ class SDPReceiverMachineVertex(
             self.DATA_REGIONS.KEYS.value(),
             self._calculate_sdram_for_keys(self.keys),
             label="keys region")
+
+    def send_output_to_spinnaker(self, value, placement, transceiver):
+        # Apply the pre-slice, the connection function and the transform.
+        c_value = value[self._pre_slice]
+        if self._value_conversion_function is not None:
+            c_value = self._value_conversion_function(c_value)
+        c_value = numpy.dot(self._value_conversion_transform, c_value)
+
+        # create SCP packet
+        # c_value is converted to S16.15
+        data = helpful_functions.convert_numpy_array_to_s16_15(c_value)
+        packet = SDPMessage(
+            sdp_header=SDPHeader(
+                destination_port=constants.SDP_PORTS.SDP_RECEIVER,
+                destination_cpu=placement.p, destination_chip_x=placement.x,
+                destination_chip_y=placement.y),
+            data=data)
+        transceiver.send_sdp_message(packet)
