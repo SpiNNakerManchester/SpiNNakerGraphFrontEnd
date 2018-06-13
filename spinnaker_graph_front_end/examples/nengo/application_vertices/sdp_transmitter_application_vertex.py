@@ -5,8 +5,8 @@ import numpy
 import nengo
 from spinn_utilities.overrides import overrides
 from spinnaker_graph_front_end.examples.nengo.graph_components. \
-    basic_nengo_application_vertex import \
-    BasicNengoApplicationVertex
+    abstract_nengo_application_vertex import \
+    AbstractNengoApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.machine_vertices. \
     sdp_transmitter_machine_vertex import \
     SDPTransmitterMachineVertex
@@ -15,14 +15,14 @@ from spinnaker_graph_front_end.examples.nengo.nengo_implicit_interfaces.nengo_li
 
 
 class SDPTransmitterApplicationVertex(
-        BasicNengoApplicationVertex, nengo.Node, NengoLiveInputInterface):
+        AbstractNengoApplicationVertex, nengo.Node, NengoLiveInputInterface):
     """
     LPG equiv vertex (but includes filtering and some routing stuff)
     """
 
     def __init__(self, size_in, label, rng):
         nengo.Node.__init__(self)
-        BasicNengoApplicationVertex.__init__(self, label=label, rng=rng)
+        AbstractNengoApplicationVertex.__init__(self, label=label, rng=rng)
         self._size_in = size_in
         self._vertex = None
         self._output = numpy.zeros(self._size_out)
@@ -43,7 +43,7 @@ class SDPTransmitterApplicationVertex(
         with self._lock:
             self._output = new_output
 
-    @overrides(BasicNengoApplicationVertex.create_machine_vertices)
+    @overrides(AbstractNengoApplicationVertex.create_machine_vertices)
     def create_machine_vertices(self):
         """Create vertices that will simulate the SDPTransmitter."""
         return SDPTransmitterMachineVertex(self._size_in)

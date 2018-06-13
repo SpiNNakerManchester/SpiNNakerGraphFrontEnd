@@ -1,14 +1,14 @@
 from spinn_utilities.overrides import overrides
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
-    basic_nengo_application_vertex import \
-    BasicNengoApplicationVertex
+    abstract_nengo_application_vertex import \
+    AbstractNengoApplicationVertex
 from nengo import builder as nengo_builder
 import nengo
 import numpy
 from nengo.utils import numpy as nengo_numpy
 
 
-class LIFApplicationVertex(BasicNengoApplicationVertex):
+class LIFApplicationVertex(AbstractNengoApplicationVertex):
 
     __slots__ = [
         "eval_points",
@@ -34,7 +34,7 @@ class LIFApplicationVertex(BasicNengoApplicationVertex):
         :param gain: ????
         :param bias: ????
         """
-        BasicNengoApplicationVertex.__init__(self, label=label, rng=rng)
+        AbstractNengoApplicationVertex.__init__(self, label=label, rng=rng)
         self._eval_points = eval_points
         self._encoders = encoders
         self._scaled_encoders = scaled_encoders
@@ -143,6 +143,6 @@ class LIFApplicationVertex(BasicNengoApplicationVertex):
             "gain": gain,
             "bias": bias}
 
-    @overrides(BasicNengoApplicationVertex.create_machine_vertices)
+    @overrides(AbstractNengoApplicationVertex.create_machine_vertices)
     def create_machine_vertices(self):
         pass

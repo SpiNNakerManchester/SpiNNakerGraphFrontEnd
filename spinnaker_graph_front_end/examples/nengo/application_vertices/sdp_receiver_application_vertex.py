@@ -2,7 +2,7 @@ import nengo
 from pacman.executor.injection_decorator import inject
 from spinn_utilities.overrides import overrides
 from spinnaker_graph_front_end.examples.nengo.graph_components. \
-    basic_nengo_application_vertex import BasicNengoApplicationVertex
+    abstract_nengo_application_vertex import AbstractNengoApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.machine_vertices. \
     sdp_receiver_machine_vertex import SDPReceiverMachineVertex
 from spinnaker_graph_front_end.examples.nengo.nengo_implicit_interfaces.nengo_live_output_interface import \
@@ -10,7 +10,7 @@ from spinnaker_graph_front_end.examples.nengo.nengo_implicit_interfaces.nengo_li
 
 
 class SDPReceiverApplicationVertex(
-        BasicNengoApplicationVertex,  nengo.Node, NengoLiveOutputInterface):
+        AbstractNengoApplicationVertex,  nengo.Node, NengoLiveOutputInterface):
     """An operator which receives SDP packets and transmits the contained data
     as a stream of multicast packets.
     
@@ -19,7 +19,7 @@ class SDPReceiverApplicationVertex(
 
     def __init__(self, label, rng):
         nengo.Node.__init__(self)
-        BasicNengoApplicationVertex.__init__(self, label=label, rng=rng)
+        AbstractNengoApplicationVertex.__init__(self, label=label, rng=rng)
         # Create a mapping of which connection is broadcast by which vertex
         self._connection_vertices = dict()
 
@@ -43,7 +43,7 @@ class SDPReceiverApplicationVertex(
     def __getstate__(self):
         raise NotImplementedError("Nengo objects do not support pickling")
 
-    @overrides(BasicNengoApplicationVertex.create_machine_vertices)
+    @overrides(AbstractNengoApplicationVertex.create_machine_vertices)
     def create_machine_vertices(self):
         verts = list()
 

@@ -1,5 +1,7 @@
 from pacman.model.graphs.machine import MachineGraph
 from spinnaker_graph_front_end.examples.nengo import constants
+from spinnaker_graph_front_end.examples.nengo.application_vertices.filter_application_vertex import \
+    FilterApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.application_vertices.\
     pass_through_application_vertex import PassThroughApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
@@ -31,6 +33,17 @@ class NengoPartitioner(object):
         # Construct edges from the application edges
         nets = dict()
         id_to_signal = dict()
+        for edge in nengo_operator_graph.edges:
+            for machine_vertex_source in graph_mapper.get_machine_vertices(
+                    edge.pre_vertex):
+                if (isinstance(
+                        machine_vertex_source, FilterApplicationVertex) and
+                        machine_vertex_source.transmits_signal(
+                            edge., edge.)):
+                    :
+
+
+
         for signal, transmission_parameters in \
                 self.connection_map.get_signals():
             # Get the source and sink vertices

@@ -31,8 +31,8 @@ from spinnaker_graph_front_end.examples.nengo.application_vertices. \
     value_source_application_vertex import \
     ValueSourceApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.graph_components. \
-    basic_nengo_application_vertex import \
-    BasicNengoApplicationVertex
+    abstract_nengo_application_vertex import \
+    AbstractNengoApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.graph_components. \
     connection_application_edge import \
     ConnectionApplicationEdge
@@ -73,7 +73,7 @@ class NengoApplicationGraphBuilder(object):
 
         # graph for holding the nengo operators. equiv of a app graph.
         app_graph = Graph(
-            allowed_vertex_types=BasicNengoApplicationVertex,
+            allowed_vertex_types=AbstractNengoApplicationVertex,
             allowed_edge_types=ApplicationEdge,
             allowed_partition_types=AbstractOutgoingEdgePartition,
             label=constants.APP_GRAPH_NAME)

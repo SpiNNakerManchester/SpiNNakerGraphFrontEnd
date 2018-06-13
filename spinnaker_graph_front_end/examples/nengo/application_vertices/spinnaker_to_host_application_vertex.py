@@ -1,8 +1,8 @@
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
-    basic_nengo_application_vertex import BasicNengoApplicationVertex
+    abstract_nengo_application_vertex import AbstractNengoApplicationVertex
 
 
-class SpiNNakerToHostApplicationVertex(BasicNengoApplicationVertex):
+class SpiNNakerToHostApplicationVertex(AbstractNengoApplicationVertex):
 
     def __init__(self, node):
         self.size_in = node.size_out

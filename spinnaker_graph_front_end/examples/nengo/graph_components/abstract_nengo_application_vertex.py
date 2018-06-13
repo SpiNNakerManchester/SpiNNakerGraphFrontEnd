@@ -5,17 +5,17 @@ from pacman.model.graphs.common import ConstrainedObject
 from spinn_utilities.abstract_base import AbstractBase, abstractmethod
 from spinn_utilities.overrides import overrides
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
-    basic_nengo_object import BasicNengoObject
+    abstract_nengo_object import AbstractNengoObject
 
 
 @add_metaclass(AbstractBase)
-class BasicNengoApplicationVertex(
-        ConstrainedObject, AbstractVertex, BasicNengoObject):
+class AbstractNengoApplicationVertex(
+        ConstrainedObject, AbstractVertex, AbstractNengoObject):
 
     def __init__(self, label, rng, constraints=None):
         ConstrainedObject.__init__(self, constraints)
         AbstractVertex.__init__(self)
-        BasicNengoObject.__init__(self, rng)
+        AbstractNengoObject.__init__(self, rng)
         self._label = label
 
     @property

@@ -2,12 +2,12 @@ import math
 
 from spinn_utilities.overrides import overrides
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
-    basic_nengo_application_vertex import \
-    BasicNengoApplicationVertex
+    abstract_nengo_application_vertex import \
+    AbstractNengoApplicationVertex
 from spinnaker_graph_front_end.examples.nengo import constants
 
 
-class FilterApplicationVertex(BasicNengoApplicationVertex):
+class FilterApplicationVertex(AbstractNengoApplicationVertex):
     """Operator which receives values, performs filtering, applies a linear
         transform and then forwards the resultant vector(s).
 
@@ -92,14 +92,14 @@ class FilterApplicationVertex(BasicNengoApplicationVertex):
         # some modelling by SBF.
         # Create as many groups as necessary to keep the size in of any group
         # less than max_cols.
-        BasicNengoApplicationVertex.__init__(self, label=label, rng=rng)
+        AbstractNengoApplicationVertex.__init__(self, label=label, rng=rng)
 
         self._size_in = size_in
         n_groups = int(math.ceil(size_in // max_cols))
         self._groups = tuple(FilterGroup(sl, max_rows) for sl in
                             divide_slice(slice(0, size_in), n_groups))
 
-    @overrides(BasicNengoApplicationVertex.create_machine_vertices)
+    @overrides(AbstractNengoApplicationVertex.create_machine_vertices)
     def make_vertices(self, output_signals, machine_timestep, filter_region,
                       filter_routing_region):
         """Partition the transform matrix into groups of rows and assign each

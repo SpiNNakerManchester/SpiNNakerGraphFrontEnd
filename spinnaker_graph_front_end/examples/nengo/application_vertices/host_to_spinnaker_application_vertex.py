@@ -1,12 +1,12 @@
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
-    basic_nengo_application_vertex import BasicNengoApplicationVertex
+    abstract_nengo_application_vertex import AbstractNengoApplicationVertex
 import nengo
 
 
-class HostToSpiNNakerApplicationVertex(BasicNengoApplicationVertex, nengo.Node):
+class HostToSpiNNakerApplicationVertex(AbstractNengoApplicationVertex, nengo.Node):
 
     def __init__(self, size_in):
-        BasicNengoApplicationVertex.__init__
+        AbstractNengoApplicationVertex.__init__
         self._size_in = size_in
         self._size_out = 0
 
