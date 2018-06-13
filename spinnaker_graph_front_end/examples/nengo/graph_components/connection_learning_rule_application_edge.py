@@ -1,9 +1,10 @@
-from pacman.model.graphs.application import ApplicationEdge
-from spinnaker_graph_front_end.examples.nengo.graph_components.\
+from spinnaker_graph_front_end.examples.nengo.abstracts. \
     abstract_connection_application_edge import \
     AbstractConnectionApplicationEdge
-from spinnaker_graph_front_end.examples.nengo.graph_components.\
-    abstract_nengo_object import AbstractNengoObject
+
+from pacman.model.graphs.application import ApplicationEdge
+from spinnaker_graph_front_end.examples.nengo.abstracts\
+    .abstract_nengo_object import AbstractNengoObject
 
 
 class ConnectionLearningRuleApplicationEdge(

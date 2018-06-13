@@ -1,12 +1,12 @@
 import nengo
 from pacman.executor.injection_decorator import inject
 from spinn_utilities.overrides import overrides
-from spinnaker_graph_front_end.examples.nengo.graph_components. \
+from spinnaker_graph_front_end.examples.nengo.abstracts.\
     abstract_nengo_application_vertex import AbstractNengoApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.machine_vertices. \
     sdp_receiver_machine_vertex import SDPReceiverMachineVertex
-from spinnaker_graph_front_end.examples.nengo.nengo_implicit_interfaces.nengo_live_output_interface import \
-    NengoLiveOutputInterface
+from spinnaker_graph_front_end.examples.nengo.nengo_implicit_interfaces.\
+    nengo_live_output_interface import NengoLiveOutputInterface
 
 
 class SDPReceiverApplicationVertex(
@@ -17,9 +17,16 @@ class SDPReceiverApplicationVertex(
     ABS THIS LOOKS VERY MUCH LIKE A SPIKE INJECTOR WITH PAYLOADS!!!!!
     """
 
+    __slots__ = [
+        #
+        '_connection_vertices'
+    ]
+
     def __init__(self, label, rng):
         nengo.Node.__init__(self)
         AbstractNengoApplicationVertex.__init__(self, label=label, rng=rng)
+        NengoLiveOutputInterface.__init__(self)
+
         # Create a mapping of which connection is broadcast by which vertex
         self._connection_vertices = dict()
 

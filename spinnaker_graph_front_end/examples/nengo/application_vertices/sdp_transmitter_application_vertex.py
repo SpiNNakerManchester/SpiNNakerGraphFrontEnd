@@ -4,13 +4,14 @@ import numpy
 
 import nengo
 from spinn_utilities.overrides import overrides
-from spinnaker_graph_front_end.examples.nengo.graph_components. \
-    abstract_nengo_application_vertex import \
+from spinnaker_graph_front_end.examples.nengo.\
+    abstracts.abstract_nengo_application_vertex import \
     AbstractNengoApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.machine_vertices. \
     sdp_transmitter_machine_vertex import \
     SDPTransmitterMachineVertex
-from spinnaker_graph_front_end.examples.nengo.nengo_implicit_interfaces.nengo_live_input_interface import \
+from spinnaker_graph_front_end.examples.nengo.\
+    nengo_implicit_interfaces.nengo_live_input_interface import \
     NengoLiveInputInterface
 
 
@@ -20,9 +21,21 @@ class SDPTransmitterApplicationVertex(
     LPG equiv vertex (but includes filtering and some routing stuff)
     """
 
+    __slots__ = [
+        #
+        '_size_in',
+        #
+        '_vertex',
+        #
+        '_output',
+        #
+        '_lock'
+    ]
+
     def __init__(self, size_in, label, rng):
         nengo.Node.__init__(self)
         AbstractNengoApplicationVertex.__init__(self, label=label, rng=rng)
+        NengoLiveInputInterface.__init__(self)
         self._size_in = size_in
         self._vertex = None
         self._output = numpy.zeros(self._size_out)

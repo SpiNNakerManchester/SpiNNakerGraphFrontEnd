@@ -6,10 +6,14 @@ from enum import Enum
 
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_utilities.overrides import overrides
+from spinnaker_graph_front_end.examples.nengo.abstracts.\
+    abstract_accepts_multicast_signals import \
+    AcceptsMulticastSignals
 
 
 class FilterMachineVertex(
-        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
+        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
+        AcceptsMulticastSignals):
     """Portion of the rows of the transform assigned to a parallel filter
     group, represents the load assigned to a single processing core.
     """
@@ -22,8 +26,10 @@ class FilterMachineVertex(
                ('INPUT_ROUTING', 3),
                ('TRANSFORM', 4)])
 
-    def __init__(self, size_in, max_cols, max_row):
-        pass
+    def __init__(self, size_in, max_cols, max_row, label, constraints):
+        MachineVertex.__init__(self, label=label, constraints=constraints)
+        AbstractHasAssociatedBinary.__init__(self)
+        AcceptsMulticastSignals.__init__(self)
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(self, spec, placement,
@@ -33,6 +39,10 @@ class FilterMachineVertex(
                                             machine_time_step,
                                             time_scale_factor):
         pass
+
+    @overrides(AcceptsMulticastSignals.accepts_multicast_signals)
+    def accepts_multicast_signals(self, transmission_params):
+        return transmission_params.projects_to(self._column_slice)
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):

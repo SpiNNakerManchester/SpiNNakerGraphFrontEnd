@@ -1,23 +1,25 @@
+import numpy
+
+import nengo
+from nengo import builder as nengo_builder
+from nengo.utils import numpy as nengo_numpy
 from spinn_utilities.overrides import overrides
-from spinnaker_graph_front_end.examples.nengo.graph_components.\
+from spinnaker_graph_front_end.examples.nengo.abstracts.\
     abstract_nengo_application_vertex import \
     AbstractNengoApplicationVertex
-from nengo import builder as nengo_builder
-import nengo
-import numpy
-from nengo.utils import numpy as nengo_numpy
 
 
-class LIFApplicationVertex(AbstractNengoApplicationVertex):
+class LIFApplicationVertex(
+        AbstractNengoApplicationVertex):
 
     __slots__ = [
-        "eval_points",
-        "encoders",
-        "scaled_encoders",
-        "max_rates",
-        "intercepts",
-        "gain",
-        "bias"]
+        "_eval_points",
+        "_encoders",
+        "_scaled_encoders",
+        "_max_rates",
+        "_intercepts",
+        "_gain",
+        "_bias"]
 
     def __init__(
             self, label, rng, eval_points, encoders, scaled_encoders,

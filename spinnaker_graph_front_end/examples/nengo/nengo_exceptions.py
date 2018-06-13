@@ -27,3 +27,8 @@ class NotBuildingPassThroughNodes(NengoException):
     expectation that either it'll be supported in future, or flag will 
     disappear"""
 
+
+class NotAbleToBeConnectedToAsADestination(NengoException):
+    """raised during partitioning when a machine vertex that is a destination
+     of a connection doesnt inherit from the accepts multicast signals 
+     interface"""

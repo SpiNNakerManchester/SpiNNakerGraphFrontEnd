@@ -1,10 +1,10 @@
 import math
 
 from spinn_utilities.overrides import overrides
-from spinnaker_graph_front_end.examples.nengo.graph_components.\
+from spinnaker_graph_front_end.examples.nengo import constants
+from spinnaker_graph_front_end.examples.nengo.abstracts.\
     abstract_nengo_application_vertex import \
     AbstractNengoApplicationVertex
-from spinnaker_graph_front_end.examples.nengo import constants
 
 
 class FilterApplicationVertex(AbstractNengoApplicationVertex):
@@ -12,38 +12,49 @@ class FilterApplicationVertex(AbstractNengoApplicationVertex):
         transform and then forwards the resultant vector(s).
 
         The input and output vector(s) may be sufficiently large that the load
-        related to receiving all the packets, filtering the input vector, applying
+        related to receiving all the packets, filtering the input vector, 
+        applying
         the linear transform and transmitting the resultant values may be beyond
-        the computational or communication capabilities of a single chip or core.
-        The output vectors can be treated as a single large vector which is split
+        the computational or communication capabilities of a single chip or
+         core.
+        The output vectors can be treated as a single large vector which is 
+        split
         into smaller vectors by transmitting each component with an appropriate
-        key; hence we can consider the entire operation of the filter component as
+        key; hence we can consider the entire operation of the filter component 
+        as
         computing:
 
         ..math:: c[z] = \mathbf{A} b[z]
 
         Where **A** is the linear transform applied by the filter operator,
-        :math:`b[z]` is the filtered input vector and :math:`c[z]` is the nominal
+        :math:`b[z]` is the filtered input vector and :math:`c[z]` is the 
+        nominal
         output vector.
 
-        If **A** is of size :math:`m \times n` then *n* determines how many packets
+        If **A** is of size :math:`m \times n` then *n* determines how many 
+        packets
         each processing core (or group of processing cores) needs to receive and
         *m* determines how many packets each processing core (or group of cores)
-        needs to transmit. To keep the number of packets received small we perform
+        needs to transmit. To keep the number of packets received small we 
+        perform
         column-wise partition of A such that:
 
         ..math:: c[z] = \mathbf{A_1} b_1[z] + \mathbf{A_2} b_2[z]
 
         Where :math:`\mathbf{A_x} b_x[z]` is the product computed by one set of
-        processing cores and :math:`c[z]` is the resultant vector as constructed by
+        processing cores and :math:`c[z]` is the resultant vector as 
+        constructed by
         any cores which receive packets from cores implementing the filter
-        operator. Note that the sum of products is computed by the receiving cores.
+        operator. Note that the sum of products is computed by the receiving
+         cores.
         **A** and `b` are now partitioned such that **A** is of size :math:`m
-        \times (\frac{n}{2})` and `b` is of size :math:`\frac{n}{2}`; this reduces
+        \times (\frac{n}{2})` and `b` is of size :math:`\frac{n}{2}`; this 
+        reduces
         the number of packets that need to be received by any group of cores
         implementing the filter operator.
 
-        To reduce the number of packets which need to be transmitted by each core
+        To reduce the number of packets which need to be transmitted by each 
+        core
         we partition :math:`A_x` into rows such that:
 
         ..math::
@@ -58,7 +69,8 @@ class FilterApplicationVertex(AbstractNengoApplicationVertex):
         transmitted by each core has been halved, and the number of
         multiply-accumulates performed by each core has been quartered.  This
         reduction in communication and computation in the filter operator is
-        achieved at the cost of requiring any operator with input `c` to receive
+        achieved at the cost of requiring any operator with input `c` to 
+        receive
         twice as many packets as previously (one set of packets for each
         column-wise division) and to perform some additions.
         """
@@ -98,6 +110,9 @@ class FilterApplicationVertex(AbstractNengoApplicationVertex):
         n_groups = int(math.ceil(size_in // max_cols))
         self._groups = tuple(FilterGroup(sl, max_rows) for sl in
                             divide_slice(slice(0, size_in), n_groups))
+
+    def create_machine_vertices(self):
+        pass
 
     @overrides(AbstractNengoApplicationVertex.create_machine_vertices)
     def make_vertices(self, output_signals, machine_timestep, filter_region,

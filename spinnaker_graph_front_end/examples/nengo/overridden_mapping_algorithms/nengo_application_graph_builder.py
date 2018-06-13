@@ -8,13 +8,19 @@ from nengo.connection import LearningRule
 from nengo.ensemble import Neurons
 from nengo.processes import Process
 from nengo.utils.builder import full_transform
+from nengo.builder import connection as nengo_connection_builder
+from nengo.exceptions import BuildError
 
 from pacman.model.graphs import AbstractOutgoingEdgePartition
 from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.impl import Graph
+from spinnaker_graph_front_end.examples.nengo import constants
 
-from spinnaker_graph_front_end.examples.nengo import constants, \
-    helpful_functions
+from spinnaker_graph_front_end.examples.nengo.utility_objects.\
+    model_wrapper import ModelWrapper
+from spinnaker_graph_front_end.examples.nengo.abstracts.\
+    abstract_nengo_application_vertex import \
+    AbstractNengoApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.application_vertices. \
     lif_application_vertex import \
     LIFApplicationVertex
@@ -31,27 +37,24 @@ from spinnaker_graph_front_end.examples.nengo.application_vertices. \
     value_source_application_vertex import \
     ValueSourceApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.graph_components. \
-    abstract_nengo_application_vertex import \
-    AbstractNengoApplicationVertex
-from spinnaker_graph_front_end.examples.nengo.graph_components. \
     connection_application_edge import \
     ConnectionApplicationEdge
-from spinnaker_graph_front_end.examples.nengo.graph_components.\
+from spinnaker_graph_front_end.examples.nengo.graph_components. \
     connection_learning_rule_application_edge import \
     ConnectionLearningRuleApplicationEdge
 from spinnaker_graph_front_end.examples.nengo.nengo_exceptions import \
     ProbeableException, NeuronTypeConstructorNotFoundException, \
     NotLocatedProbableClass
-from spinnaker_graph_front_end.examples.nengo.parameters.\
+from spinnaker_graph_front_end.examples.nengo.parameters. \
     ensemble_transmission_parameters import EnsembleTransmissionParameters
 from spinnaker_graph_front_end.examples.nengo.parameters. \
     node_transmission_parameters import NodeTransmissionParameters
 from spinnaker_graph_front_end.examples.nengo.parameters. \
     pass_through_node_transmission_parameters import \
     PassthroughNodeTransmissionParameters
-from spinnaker_graph_front_end.examples.nengo.parameters.\
+from spinnaker_graph_front_end.examples.nengo.parameters. \
     reception_parameters import ReceptionParameters
-from spinnaker_graph_front_end.examples.nengo.utility_objects.\
+from spinnaker_graph_front_end.examples.nengo.utility_objects. \
     parameter_transform import ParameterTransform
 
 logger = logging.getLogger(__name__)
@@ -351,7 +354,7 @@ class NengoApplicationGraphBuilder(object):
             application_edge.seed)
 
         # Solve for the decoders
-        decoders = helpful_functions.build_decoders_for_nengo_connection(
+        decoders = self._build_decoders_for_nengo_connection(
             nengo_connection, random_number_generator, nengo_to_app_graph_map,
             decoder_cache)
 
@@ -365,6 +368,74 @@ class NengoApplicationGraphBuilder(object):
 
         return EnsembleTransmissionParameters(
             decoders.T, transform, nengo_connection.learning_rule)
+
+    @staticmethod
+    def _build_decoders_for_nengo_connection(
+            nengo_connection, random_number_generator,
+            nengo_to_app_graph_map,
+            decoder_cache):
+        """
+
+        :param nengo_connection: 
+        :param random_number_generator: 
+        :param nengo_to_app_graph_map: 
+        :param decoder_cache: 
+        :return: 
+        """
+
+        # fudge to support the built in enngo demanding a god object with params
+        model = ModelWrapper(nengo_to_app_graph_map, decoder_cache)
+
+        # gets encoders, gains, anf bias's from the application vertex
+        encoders = nengo_to_app_graph_map[nengo_connection.pre_obj].encoders
+        gain = nengo_to_app_graph_map[nengo_connection.pre_obj].gain
+        bias = nengo_to_app_graph_map[nengo_connection.pre_obj].bias
+
+        eval_points = nengo_connection_builder.get_eval_points(
+            model, nengo_connection, random_number_generator)
+
+        # TODO Figure out which version this is meant to support and use only
+        # TODO that one
+        try:
+            targets = nengo_connection_builder.get_targets(
+                model, nengo_connection, eval_points)
+        except:  # yuck
+            # nengo <= 2.3.0
+            targets = nengo_connection_builder.get_targets(
+                model, nengo_connection, eval_points)
+
+        x = numpy.dot(eval_points, encoders.T / nengo_connection.pre_obj.radius)
+        e = None
+        if nengo_connection.solver.weights:
+            e = nengo_to_app_graph_map[
+                nengo_connection.post_obj].scaled_encoders.T[
+                nengo_connection.post_slice]
+
+            # include transform in solved weights
+            targets = nengo_connection_builder.multiply(
+                targets, nengo_connection.transform.T)
+
+        try:
+            wrapped_solver = model.decoder_cache.wrap_solver(
+                nengo_connection_builder.solve_for_decoders)
+            try:
+                decoders, solver_info = wrapped_solver(
+                    nengo_connection, gain, bias, x, targets,
+                    rng=random_number_generator, E=e)
+            except TypeError:
+                # fallback for older nengo versions
+                decoders, solver_info = wrapped_solver(
+                    nengo_connection.solver,
+                    nengo_connection.pre_obj.neuron_type,
+                    gain, bias, x, targets, rng=random_number_generator, E=e)
+        except BuildError:
+            raise BuildError(
+                "Building {}: 'activities' matrix is all zero for {}. "
+                "This is because no evaluation points fall in the firing "
+                "ranges of any neurons.".format(
+                    nengo_connection, nengo_connection.pre_obj))
+
+        return decoders
 
     def _get_transmission_parameters(
             self, nengo_connection, application_edge, nengo_to_app_graph_map,
