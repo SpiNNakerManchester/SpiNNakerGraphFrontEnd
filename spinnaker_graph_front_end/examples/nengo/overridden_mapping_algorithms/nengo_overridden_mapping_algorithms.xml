@@ -1,0 +1,139 @@
+<algorithms xmlns="https://github.com/SpiNNakerManchester/PACMAN"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="https://github.com/SpiNNakerManchester/PACMAN
+            https://raw.githubusercontent.com/SpiNNakerManchester/PACMAN/master/pacman/operations/algorithms_metadata_schema.xsd">
+    <algorithm name="NengoApplicationGraphBuilder">
+        <python_module>spinnaker_graph_front_end.examples.nengo.overridden_mapping_algorithms.nengo_spinnaker_application_graph_builder</python_module>
+        <python_class>NengoSpiNNakerApplicationGraphBuilder</python_class>
+        <input_definitions>
+            <parameter>
+                <param_name>nengo_network</param_name>
+                <param_type>NengoModel</param_type>
+            </parameter>
+            <parameter>
+                <param_name>extra_model_converts</param_name>
+                <param_type>NengoExtraModelConverters</param_type>
+            </parameter>
+            <parameter>
+                <param_name>machine_time_step</param_name>
+                <param_type>MachineTimeStep</param_type>
+            </parameter>
+            <parameter>
+                <param_name>nengo_node_function_of_time</param_name>
+                <param_type>NengoNodeSetAsFunctionOfTime</param_type>
+            </parameter>
+            <parameter>
+                <param_name>nengo_node_function_of_time_period</param_name>
+                <param_type>NengoNodeSetAsFunctionOfTimePeriod</param_type>
+            </parameter>
+            <parameter>
+                <param_name>nengo_random_number_generator_seed</param_name>
+                <param_type>NengoRandomNumberGeneratorSeed</param_type>
+            </parameter>
+            <parameter>
+                <param_name>decoder_cache</param_name>
+                <param_type>NengoDecoderCache</param_type>
+            </parameter>
+        </input_definitions>
+        <required_inputs>
+            <param_name>nengo_network</param_name>
+            <param_name>extra_model_converts</param_name>
+            <param_name>machine_time_step</param_name>
+            <param_name>nengo_node_function_of_time</param_name>
+            <param_name>nengo_node_function_of_time_period</param_name>
+            <param_name>nengo_random_number_generator_seed</param_name>
+            <param_name>decoder_cache</param_name>
+        </required_inputs>
+        <outputs>
+            <param_type>NengoOperatorGraph</param_type>
+            <param_type>NengoHostGraph</param_type>
+        </outputs>
+    </algorithm>
+    <algorithm name="NengoPartitioner">
+        <python_module>spinnaker_graph_front_end.examples.nengo.overridden_mapping_algorithms.nengo_partitioner</python_module>
+        <python_class>NengoPartitioner</python_class>
+        <input_definitions>
+            <parameter>
+                <param_name>nengo_operator_graph</param_name>
+                <param_type>NengoOperatorGraph</param_type>
+            </parameter>
+            <parameter>
+                <param_name>skip_pass_through_nodes</param_name>
+                <param_type>NengoNodeOptimizeOutPassThroughNodes</param_type>
+            </parameter>
+        </input_definitions>
+        <required_inputs>
+            <param_name>nengo_operator_graph</param_name>
+            <param_name>skip_pass_through_nodes</param_name>
+        </required_inputs>
+        <outputs>
+            <param_type>MemoryMachineGraph</param_type>
+            <param_type>NengoGraphMapper</param_type>
+        </outputs>
+    </algorithm>
+    <algorithm name="NengoSetUpLiveIO">
+        <python_module>spinnaker_graph_front_end.examples.nengo.overridden_mapping_algorithms.nenego_set_up_live_io</python_module>
+        <python_class>NengoSetUpLiveIO</python_class>
+        <input_definitions>
+
+        </input_definitions>
+        <required_inputs>
+
+        </required_inputs>
+        <outputs>
+
+        </outputs>
+    </algorithm>
+    <algorithm name="NengoCreateHostSimulator">
+        <python_module>spinnaker_graph_front_end.examples.nengo.overridden_mapping_algorithms.nengo_create_host_simulator</python_module>
+        <python_class>NengoCreateHostSimulator</python_class>
+        <input_definitions>
+
+        </input_definitions>
+        <required_inputs>
+
+        </required_inputs>
+        <outputs>
+
+        </outputs>
+    </algorithm>
+    <algorithm name="NengoKeyAllocator">
+        <python_module>spinnaker_graph_front_end.examples.nengo.overridden_mapping_algorithms.nengo_key_allocator</python_module>
+        <python_class>NengoKeyAllocator</python_class>
+        <input_definitions>
+
+        </input_definitions>
+        <required_inputs>
+
+        </required_inputs>
+        <outputs>
+
+        </outputs>
+    </algorithm>
+    <algorithm name="NengoUtiliseInterposers">
+        <python_module>spinnaker_graph_front_end.examples.nengo.overridden_mapping_algorithms.nengo_utilise_interposers</python_module>
+        <python_class>NengoUtiliseInterposers</python_class>
+        <input_definitions>
+
+        </input_definitions>
+        <required_inputs>
+
+        </required_inputs>
+        <outputs>
+
+        </outputs>
+    </algorithm>
+    <algorithm name="NengoHostGraphUpdater">
+        <python_module>spinnaker_graph_front_end.examples.nengo.overridden_mapping_algorithms.nengo_host_graph_updater</python_module>
+        <python_class>NengoHostGraphUpdater</python_class>
+        <input_definitions>
+
+        </input_definitions>
+        <required_inputs>
+
+        </required_inputs>
+        <outputs>
+
+        </outputs>
+    </algorithm>
+</algorithms>

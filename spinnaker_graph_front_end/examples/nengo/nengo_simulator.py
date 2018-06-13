@@ -39,7 +39,8 @@ class NengoSimulator(SpiNNaker):
             host_name=None, graph_label=None,
             database_socket_addresses=None, dsg_algorithm=None,
             n_chips_required=None, extra_pre_run_algorithms=None,
-            extra_post_run_algorithms=None, decoder_cache=NoDecoderCache()):
+            extra_post_run_algorithms=None, decoder_cache=NoDecoderCache(),
+            extra_model_converters=None):
         """Create a new Simulator with the given network.
         
         :param time_scale: Scaling factor to apply to the simulation, e.g.,\
@@ -83,16 +84,23 @@ class NengoSimulator(SpiNNaker):
             time_scale_factor=time_scale,
             machine_time_step=machine_timestep)
 
+        self.extend_extra_mapping_algorithms(
+            ["NengoKeyAllocator", "NengoUtiliseInterposers",
+             "NengoHostGraphUpdater", "NengoCreateHostSimulator",
+             "NengoSetUpLiveIO"])
+
         self.update_extra_inputs(
             {'NengoModel': network,
              'NengoDecoderCache': decoder_cache,
+             'NengoExtraModelConverters': extra_model_converters,
              "NengoNodeIOSetting": self.config.get("Simulator", "node_io"),
              "NengoNodeSetAsFunctionOfTime":
                  self.config.getboolean("Node", "function_of_time"),
              "NengoNodeSetAsFunctionOfTimePeriod":
                  self.config.getboolean("Node", "function_of_time_period"),
-             "NengoNodeOptimizeOut":
-                 self.config.getboolean("Node", "optimise_out"),
+             "NengoNodeOptimizeOutPassThroughNodes":
+                 self.config.getboolean(
+                     "Node", "optimise_out_pass_through_nodes"),
              "NengoEnsembleProfile":
                  self.config.getboolean("Ensemble", "profile"),
              "NengoEnsembleProfileNumSamples":

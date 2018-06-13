@@ -1,7 +1,8 @@
-import nengo
-import numpy
 import logging
 
+import numpy
+
+import nengo
 from nengo.base import NengoObject
 from nengo.connection import LearningRule
 from nengo.ensemble import Neurons
@@ -12,44 +13,51 @@ from pacman.model.graphs import AbstractOutgoingEdgePartition
 from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.impl import Graph
 
-from spinnaker_graph_front_end.examples.nengo.application_vertices.\
+from spinnaker_graph_front_end.examples.nengo import constants, \
+    helpful_functions
+from spinnaker_graph_front_end.examples.nengo.application_vertices. \
     lif_application_vertex import \
     LIFApplicationVertex
-from spinnaker_graph_front_end.examples.nengo.application_vertices.\
+from spinnaker_graph_front_end.examples.nengo.application_vertices. \
     pass_through_application_vertex import \
     PassThroughApplicationVertex
-from spinnaker_graph_front_end.examples.nengo.application_vertices.\
+from spinnaker_graph_front_end.examples.nengo.application_vertices. \
     sdp_receiver_application_vertex import \
     SDPReceiverApplicationVertex
-from spinnaker_graph_front_end.examples.nengo.application_vertices.\
+from spinnaker_graph_front_end.examples.nengo.application_vertices. \
     sdp_transmitter_application_vertex import \
     SDPTransmitterApplicationVertex
-from spinnaker_graph_front_end.examples.nengo.application_vertices.\
+from spinnaker_graph_front_end.examples.nengo.application_vertices. \
     value_source_application_vertex import \
     ValueSourceApplicationVertex
-from spinnaker_graph_front_end.examples.nengo.graph_components.\
+from spinnaker_graph_front_end.examples.nengo.graph_components. \
     basic_nengo_application_vertex import \
     BasicNengoApplicationVertex
+from spinnaker_graph_front_end.examples.nengo.graph_components. \
+    connection_application_edge import \
+    ConnectionApplicationEdge
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
-    nengo_connection_application_edge import \
-    NengoConnectionApplicationEdge
+    connection_learning_rule_application_edge import \
+    ConnectionLearningRuleApplicationEdge
 from spinnaker_graph_front_end.examples.nengo.nengo_exceptions import \
     ProbeableException, NeuronTypeConstructorNotFoundException, \
     NotLocatedProbableClass
 from spinnaker_graph_front_end.examples.nengo.parameters.\
+    ensemble_transmission_parameters import EnsembleTransmissionParameters
+from spinnaker_graph_front_end.examples.nengo.parameters. \
     node_transmission_parameters import NodeTransmissionParameters
-from spinnaker_graph_front_end.examples.nengo.parameters.\
-    parameter_transform import ParameterTransform
-from spinnaker_graph_front_end.examples.nengo.parameters.\
+from spinnaker_graph_front_end.examples.nengo.parameters. \
     pass_through_node_transmission_parameters import \
     PassthroughNodeTransmissionParameters
-from spinnaker_graph_front_end.examples.nengo import constants, \
-    helpful_functions
+from spinnaker_graph_front_end.examples.nengo.parameters.\
+    reception_parameters import ReceptionParameters
+from spinnaker_graph_front_end.examples.nengo.utility_objects.\
+    parameter_transform import ParameterTransform
 
 logger = logging.getLogger(__name__)
 
 
-class NengoSpiNNakerApplicationGraphBuilder(object):
+class NengoApplicationGraphBuilder(object):
 
     def __call__(
             self, nengo_network, extra_model_converters, machine_time_step,
@@ -256,9 +264,17 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
 
         # build_application_edge
         if source_vertex is not None and destination_vertex is not None:
-            application_edge = NengoConnectionApplicationEdge(
-                pre_vertex=source_vertex, post_vertex=destination_vertex,
-                rng=random_number_generator)
+
+            if (destination_input_port ==
+                    constants.ENSEMBLE_INPUT_PORT.LEARNING_RULE):
+                application_edge = ConnectionLearningRuleApplicationEdge(
+                    pre_vertex=source_vertex, post_vertex=destination_vertex,
+                    rng=random_number_generator,
+                    learning_rule=nengo_connection.post_obj)
+            else:
+                application_edge = ConnectionApplicationEdge(
+                    pre_vertex=source_vertex, post_vertex=destination_vertex,
+                    rng=random_number_generator)
 
             # Get the transmission parameters  for the connection.
             transmission_params = self._get_transmission_parameters(
@@ -269,15 +285,28 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
             reception_params = self._get_reception_parameters(nengo_connection)
 
             # Construct the signal parameters
-            signal_params = _make_signal_parameters(source, sink, conn)
+            latching_required, edge_weight = self._make_signal_parameters(
+                source_vertex, destination_vertex, nengo_connection)
 
-            # Add the connection to the connection map, this will automatically
-            # merge connections which are equivalent.
-            self.connection_map.add_connection(
-                source.target.obj, source.target.port, signal_params,
-                transmission_params, sink.target.obj, sink.target.port,
-                reception_params
-            )
+            application_edge.set_parameters(
+                transmission_params=transmission_params,
+                reception_params=reception_params,
+                latching_required=latching_required, weight=edge_weight,
+                source_output_port=source_output_port,
+                destination_input_port=destination_input_port)
+
+            return application_edge, destination_input_port
+
+    @staticmethod
+    def _get_reception_parameters(nengo_connection):
+        if (isinstance(nengo_connection.post_obj, nengo.base.NengoObject) or
+                isinstance(nengo_connection.post_obj,
+                           nengo.connection.LearningRule) or
+                isinstance(nengo_connection.post_obj, nengo.ensemble.Neurons)):
+            return ReceptionParameters(
+                parameter_filter=nengo_connection.synapse,
+                width=nengo_connection.post_obj.size_in,
+                learning_rule=nengo_connection.learning_rule)
 
     @staticmethod
     def _get_transmission_parameters_for_a_nengo_node(nengo_connection):
@@ -321,30 +350,21 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
         random_number_generator = numpy.random.RandomState(
             application_edge.seed)
 
-        # Get the transform
-        transform = nengo_connection.transform
-
         # Solve for the decoders
-        eval_points, decoders, solver_info = \
-            helpful_functions.build_decoders_for_nengo_connection(
-                nengo_connection, random_number_generator,
-                nengo_to_app_graph_map, decoder_cache)
+        decoders = helpful_functions.build_decoders_for_nengo_connection(
+            nengo_connection, random_number_generator, nengo_to_app_graph_map,
+            decoder_cache)
 
-        application_edge.set_eval_points
+        # build the parameter transformer, used during data mapping onto
+        # spinnaker
+        transform = ParameterTransform(
+            size_in=decoders.shape[1],
+            size_out=nengo_connection.post_obj.size_in,
+            transform=nengo_connection.transform,
+            slice_out=nengo_connection.post_slice)
 
-        # Store the parameters in the model
-        model.params[conn] = BuiltConnection(decoders=decoders,
-                                             eval_points=eval_points,
-                                             transform=transform,
-                                             solver_info=solver_info)
-
-        t = Transform(size_in=decoders.shape[1],
-                      size_out=nengo_connection.post_obj.size_in,
-                      transform=transform,
-                      slice_out=nengo_connection.post_slice)
         return EnsembleTransmissionParameters(
-            decoders.T, t, conn.learning_rule
-        )
+            decoders.T, transform, nengo_connection.learning_rule)
 
     def _get_transmission_parameters(
             self, nengo_connection, application_edge, nengo_to_app_graph_map,
@@ -359,17 +379,6 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
             return self._get_transmission_parameters_for_a_nengo_ensemble(
                 nengo_connection, application_edge, nengo_to_app_graph_map,
                 decoder_cache)
-
-    @Model.reception_parameter_builders.register(nengo.base.NengoObject)
-    @Model.reception_parameter_builders.register(nengo.connection.LearningRule)
-    @Model.reception_parameter_builders.register(nengo.ensemble.Neurons)
-    def build_generic_reception_params(model, conn):
-        """Build parameters necessary for receiving packets that simulate this
-        connection.
-        """
-        # Just extract the synapse from the connection.
-        return ReceptionParameters(conn.synapse, conn.post_obj.size_in,
-                                   conn.learning_rule)
 
     @staticmethod
     def _get_source_vertex_and_output_port_for_nengo_ensemble(
@@ -499,7 +508,8 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
         if (nengo_connection.post_obj.learning_rule_type.modifies ==
                 constants.DECODERS_FLAG):
 
-            # If connection begins at an ensemble
+            # If the learning rule's connection within the main connection,
+            # begins at an ensemble (yuck)
             if isinstance(
                     nengo_connection.post_obj.connection.pre_obj,
                     nengo.Ensemble):
@@ -513,7 +523,7 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
                     "SpiNNaker only supports decoder learning "
                     "rules on connections from ensembles")
         elif (nengo_connection.post_obj.learning_rule_type.modifies ==
-                  constants.ENCODERS_FLAG):
+                constants.ENCODERS_FLAG):
 
             # If connections ends at an ensemble
             if isinstance(
@@ -532,7 +542,7 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
             raise NotImplementedError(
                 "SpiNNaker only supports learning rules  "
                 "which modify 'decoders' or 'encoders'")
-        return operator, nengo_connection.post_obj
+        return operator, constants.ENSEMBLE_INPUT_PORT.LEARNING_RULE
 
     @staticmethod
     def _get_destination_vertex_and_input_port_for_nengo_node(
@@ -609,35 +619,14 @@ class NengoSpiNNakerApplicationGraphBuilder(object):
                 nengo_connection, nengo_to_app_graph_map,
                 host_network, random_number_generator, app_graph)
 
-def _make_signal_parameters(source_spec, sink_spec, connection):
-    """Create parameters for a signal using specifications provided by the
-    source and sink.
-
-    Parameters
-    ----------
-    source_spec : spec
-        Signal specification parameters from the source of the signal.
-    sink_spec : spec
-        Signal specification parameters from the sink of the signal.
-    connection : nengo.Connection
-        The Connection for this signal
-
-    Returns
-    -------
-    :py:class:`~.SignalParameters`
-        Description of the signal.
-    """
-    # Raise an error if keyspaces are specified by the source and sink
-    if source_spec.keyspace is not None and sink_spec.keyspace is not None:
-        raise NotImplementedError("Cannot merge keyspaces")
-
-    weight = max((0 or source_spec.weight,
-                  0 or sink_spec.weight,
-                  getattr(connection.post_obj, "size_in", 0)))
-
-    # Create the signal parameters
-    return model.SignalParameters(
-        latching=source_spec.latching or sink_spec.latching,
-        weight=weight,
-        keyspace=source_spec.keyspace or sink_spec.keyspace,
-    )
+    @staticmethod
+    def _make_signal_parameters(
+            source_vertex, destination_vertex, nengo_connection):
+        """Create parameters for a signal using specifications provided by the
+        source and sink.
+        """
+        if (isinstance(destination_vertex, SDPTransmitterApplicationVertex) or
+                isinstance(source_vertex, SDPTransmitterApplicationVertex)):
+            return True, nengo_connection.post_obj.size_in
+        else:
+            return False, nengo_connection.post_obj.size_in

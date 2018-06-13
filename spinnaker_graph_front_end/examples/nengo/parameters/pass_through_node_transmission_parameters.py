@@ -1,10 +1,10 @@
 from spinn_utilities.overrides import overrides
-from spinnaker_graph_front_end.examples.nengo.parameters.\
+from spinnaker_graph_front_end.examples.nengo.parameters. \
     abstract_transmission_parameters import AbstractTransmissionParameters
-from spinnaker_graph_front_end.examples.nengo.parameters.\
-    parameter_transform import ParameterTransform
-from spinnaker_graph_front_end.examples.nengo.parameters.\
+from spinnaker_graph_front_end.examples.nengo.parameters. \
     transmission_parameters_impl import TransmissionParametersImpl
+from spinnaker_graph_front_end.examples.nengo.utility_objects.parameter_transform import \
+    ParameterTransform
 
 
 class PassthroughNodeTransmissionParameters(

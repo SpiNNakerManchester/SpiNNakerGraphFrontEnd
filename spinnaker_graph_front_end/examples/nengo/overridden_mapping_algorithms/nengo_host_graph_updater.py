@@ -1,6 +1,6 @@
 import time
 
-class HostGraphUpdator(object):
+class NengoHostGraphUpdater(object):
 
     SLEEP_PERIOD = 0.0001
 

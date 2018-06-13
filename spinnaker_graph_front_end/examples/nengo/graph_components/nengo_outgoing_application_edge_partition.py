@@ -1,7 +1,7 @@
 from pacman.model.graphs.impl import OutgoingEdgePartition
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
-    nengo_connection_application_edge import \
-    NengoConnectionApplicationEdge
+    connection_application_edge import \
+    ConnectionApplicationEdge
 
 
 class NengoOutgoingApplicationEdgePartition(OutgoingEdgePartition):
@@ -12,7 +12,7 @@ class NengoOutgoingApplicationEdgePartition(OutgoingEdgePartition):
             label=None, traffic_weight=1):
 
         if allowed_edge_types is None:
-            allowed_edge_types = [NengoConnectionApplicationEdge]
+            allowed_edge_types = [ConnectionApplicationEdge]
         OutgoingEdgePartition.__init__(
             self, allowed_edge_types=allowed_edge_types, identifier=identifier,
             constraints=constraints, label=label, traffic_weight=traffic_weight)

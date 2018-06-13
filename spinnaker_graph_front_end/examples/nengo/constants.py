@@ -18,19 +18,20 @@ ENSEMBLE_INPUT_PORT = Enum(
     value="ENSEMBLE_INPUT_PORT",
     names=[('NEURONS', 0),
            ('GLOBAL_INHIBITION', 1),
-           ('LEARNT', 2)])
+           ('LEARNT', 2),
+           ('LEANING_RULE', 3)])
 
 # the max atoms per core are based off matrix sizes. these were
-
 MAX_ROWS = 64
 MAX_COLUMNS = 128
 
+# flag constants used around the codebase
 DECODERS_FLAG = "decoders"
-ENCODERS_FLAG ="encoders"
+ENCODERS_FLAG = "encoders"
 APP_GRAPH_NAME = "nengo_operator_graph"
 MACHINE_GRAPH_LABEL = "machine graph"
 
+# sdp ports used by c code, to track with fec sdp ports.
 SDP_PORTS = Enum(
     value="SDP_PORTS_READ_BY_C_CODE",
-    names=[("SDP_RECEIVER", 1)]
-)
+    names=[("SDP_RECEIVER", 6)])

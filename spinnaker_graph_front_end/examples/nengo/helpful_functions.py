@@ -2,8 +2,8 @@ from data_specification.enums import DataType
 import numpy
 from nengo.builder import connection as nengo_connection_builder
 from nengo.exceptions import BuildError
-from spinnaker_graph_front_end.examples.nengo.utility_objects.model_wrapper import \
-    ModelWrapper
+from spinnaker_graph_front_end.examples.nengo.utility_objects.\
+    model_wrapper import ModelWrapper
 
 
 def convert_numpy_array_to_s16_15(values):
@@ -23,6 +23,14 @@ def convert_numpy_array_to_s16_15(values):
 def build_decoders_for_nengo_connection(
         nengo_connection, random_number_generator, nengo_to_app_graph_map,
         decoder_cache):
+    """
+    
+    :param nengo_connection: 
+    :param random_number_generator: 
+    :param nengo_to_app_graph_map: 
+    :param decoder_cache: 
+    :return: 
+    """
 
     # fudge to support the built in enngo demanding a god object with params
     model = ModelWrapper(nengo_to_app_graph_map, decoder_cache)
@@ -35,6 +43,8 @@ def build_decoders_for_nengo_connection(
     eval_points = nengo_connection_builder.get_eval_points(
         model, nengo_connection, random_number_generator)
 
+    # TODO Figure out which version this is meant to support and use only that
+    # TODO one
     try:
         targets = nengo_connection_builder.get_targets(
             model, nengo_connection, eval_points)
@@ -44,11 +54,12 @@ def build_decoders_for_nengo_connection(
             model, nengo_connection, eval_points)
 
     x = numpy.dot(eval_points, encoders.T / nengo_connection.pre_obj.radius)
-    E = None
+    e = None
     if nengo_connection.solver.weights:
-        E = nengo_to_app_graph_map[
+        e = nengo_to_app_graph_map[
             nengo_connection.post_obj].scaled_encoders.T[
                 nengo_connection.post_slice]
+
         # include transform in solved weights
         targets = nengo_connection_builder.multiply(
             targets, nengo_connection.transform.T)
@@ -59,12 +70,12 @@ def build_decoders_for_nengo_connection(
         try:
             decoders, solver_info = wrapped_solver(
                 nengo_connection, gain, bias, x, targets,
-                rng=random_number_generator, E=E)
+                rng=random_number_generator, E=e)
         except TypeError:
             # fallback for older nengo versions
             decoders, solver_info = wrapped_solver(
                 nengo_connection.solver, nengo_connection.pre_obj.neuron_type,
-                gain, bias, x, targets, rng=random_number_generator, E=E)
+                gain, bias, x, targets, rng=random_number_generator, E=e)
     except BuildError:
         raise BuildError(
             "Building {}: 'activities' matrix is all zero for {}. "
@@ -72,4 +83,4 @@ def build_decoders_for_nengo_connection(
             "ranges of any neurons.".format(
                 nengo_connection, nengo_connection.pre_obj))
 
-    return eval_points, decoders, solver_info
+    return decoders
