@@ -106,7 +106,10 @@ class NengoSimulator(SpiNNaker):
              "NengoEnsembleProfileNumSamples":
                  self.config.getboolean("Ensemble", "profile_num_samples"),
              "NengoRandomNumberGeneratorSeed":
-                self.config.get("Simulator", "global_seed")})
+                self.config.get("Simulator", "global_seed"),
+             "NengoUtiliseExtraCoreForProbes":
+                self.config.getboolean(
+                    "Node", "utilise_extra_core_for_probes")})
 
     def __enter__(self):
         """Enter a context which will close the simulator when exited."""

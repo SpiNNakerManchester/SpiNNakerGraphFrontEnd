@@ -15,6 +15,10 @@ from pacman.model.graphs import AbstractOutgoingEdgePartition
 from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.impl import Graph
 from spinnaker_graph_front_end.examples.nengo import constants
+from spinnaker_graph_front_end.examples.nengo.application_vertices.\
+    value_sink_application_vertex import ValueSinkApplicationVertex
+from spinnaker_graph_front_end.examples.nengo.graph_components.connection_outgoing_partition import \
+    ConnectionOutgoingPartition
 
 from spinnaker_graph_front_end.examples.nengo.utility_objects.\
     model_wrapper import ModelWrapper
@@ -37,9 +41,6 @@ from spinnaker_graph_front_end.examples.nengo.application_vertices. \
     value_source_application_vertex import \
     ValueSourceApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.graph_components. \
-    connection_application_edge import \
-    ConnectionApplicationEdge
-from spinnaker_graph_front_end.examples.nengo.graph_components. \
     connection_learning_rule_application_edge import \
     ConnectionLearningRuleApplicationEdge
 from spinnaker_graph_front_end.examples.nengo.nengo_exceptions import \
@@ -61,11 +62,18 @@ logger = logging.getLogger(__name__)
 
 
 class NengoApplicationGraphBuilder(object):
+    """ Beast of a class, this converts between nengo objects and the 
+    SpiNNaker operators that represent the nengo graph. Also produces the 
+    Nengo host graph, and finally produces a map between nengo obejcts and 
+    the application vertex associated with it
+    
+    """
 
     def __call__(
             self, nengo_network, extra_model_converters, machine_time_step,
             nengo_node_function_of_time, nengo_node_function_of_time_period,
-            nengo_random_number_generator_seed, decoder_cache):
+            nengo_random_number_generator_seed, decoder_cache,
+            utilise_extra_core_for_decoded_output_probe):
 
         # build the high level graph (operator level)
 
@@ -90,53 +98,81 @@ class NengoApplicationGraphBuilder(object):
 
         # convert from ensembles to neuron model operators
         for nengo_ensemble in nengo_network.ensembles:
-            operator = self._ensemble_conversion(
+            self._ensemble_conversion(
                 nengo_ensemble, extra_model_converters,
-                random_number_generator)
-            app_graph.add_vertex(operator)
-            nengo_to_app_graph_map[nengo_ensemble] = operator
+                random_number_generator,
+                utilise_extra_core_for_decoded_output_probe,
+                app_graph, nengo_to_app_graph_map)
 
         # convert from nodes to either pass through nodes or sources.
         for nengo_node in nengo_network.nodes:
-            operator = self._node_conversion(
+            self._node_conversion(
                 nengo_node, random_number_generator, machine_time_step,
                 nengo_node_function_of_time,
                 nengo_node_function_of_time_period,
-                host_network)
-
-            # only add to the app graph if it'll run on SpiNNaker.
-            if operator != nengo_node:
-                app_graph.add_vertex(operator)
-
-            # add to mapping. May point to itself if host based
-            nengo_to_app_graph_map[nengo_node] = operator
+                host_network, app_graph, nengo_to_app_graph_map)
 
         # convert connections into edges with specific data elements
         for nengo_connection in nengo_network.connections:
-            edge, edge_outgoing_partition_name = self._connection_conversion(
+            self._connection_conversion(
                 nengo_connection, app_graph, nengo_to_app_graph_map,
                 random_number_generator, host_network, decoder_cache)
-            app_graph.add_edge(edge, edge_outgoing_partition_name)
-            nengo_to_app_graph_map[nengo_connection] = edge
 
         # for each probe, ask the operator if it supports this probe (equiv
         # of recording parameters)
         for nengo_probe in nengo_network.probes:
-            if nengo_probe.attr in nengo_to_app_graph_map[
-                    nengo_probe.target].probeable_components:
+            self._probe_conversion(
+                nengo_probe, nengo_to_app_graph_map, random_number_generator,
+                app_graph, host_network, decoder_cache)
 
-                # verify the app vertex it should be going to
-                app_vertex = self._locate_correct_app_vertex_for_probe(
-                    nengo_probe, nengo_to_app_graph_map)
+        return app_graph, host_network, nengo_to_app_graph_map
+
+    def _probe_conversion(
+            self, nengo_probe, nengo_to_app_graph_map,
+            random_number_generator, app_graph, host_network, decoder_cache):
+        if nengo_probe.attr in nengo_to_app_graph_map[
+                nengo_probe.target].probeable_components:
+
+            # verify the app vertex it should be going to
+            app_vertex = self._locate_correct_app_vertex_for_probe(
+                nengo_probe, nengo_to_app_graph_map)
+
+            # to allow some logic, flip recording to new core if requested
+            # either ensemble code cant do it in dtcm, or cpu, or ITCM.
+            # TODO figure out the real logic for this, as this is likely a
+            # TODO major factor in the routing table compression
+            if app_vertex.can_probe_variable(nengo_probe.attr):
                 app_vertex.set_probeable_component(nengo_probe.attr)
-            else:
-                raise ProbeableException(
-                    "the operator {}. Does not support probing of attribute"
-                    " {}.".format(
-                        nengo_to_app_graph_map[nengo_probe.target],
-                        nengo_probe.attr))
+                nengo_to_app_graph_map[nengo_probe] = app_vertex
 
-        return app_graph, host_network
+            # if cant be recorded locally by the vertex, check if its one
+            #  of those that can be recorded by a value sink vertex.
+            elif nengo_probe.attr == constants.DECODER_OUTPUT_FLAG:
+
+                # create new vertex and add to probe map.
+                app_vertex = ValueSinkApplicationVertex(
+                    rng=random_number_generator,
+                    label="Sink vertex for neurons {} for probeable "
+                          "attribute {}".format(app_vertex.label,
+                                                nengo_probe.attr),
+                    size_in=nengo_probe.size_in)
+                nengo_to_app_graph_map[nengo_probe] = app_vertex
+
+                # build connection and let connection conversion do rest
+                nengo_connection = nengo.Connection(
+                    nengo_probe.target, nengo_probe,
+                    synapse=nengo_probe.synapse,
+                    solver=nengo_probe.solver,
+                    seed=nengo_to_app_graph_map[nengo_probe].seed)
+                self._connection_conversion(
+                    nengo_connection, app_graph, nengo_to_app_graph_map,
+                    random_number_generator, host_network, decoder_cache)
+        else:
+            raise ProbeableException(
+                "the operator {}. Does not support probing of attribute"
+                " {}.".format(
+                    nengo_to_app_graph_map[nengo_probe.target],
+                    nengo_probe.attr))
 
     @staticmethod
     def _locate_correct_app_vertex_for_probe(
@@ -171,6 +207,10 @@ class NengoApplicationGraphBuilder(object):
                 if isinstance(nengo_probe.target.connection.post_obj,
                               nengo.Ensemble):
                     target_object = nengo_probe.target.connection.post_obj
+            else:
+                raise NotLocatedProbableClass(
+                    "SpiNNaker does not currently support probing '{}' on "
+                    "'{}'".format(nengo_probe.attr, nengo_probe.target))
         else:
             target_object = nengo_probe.target
 
@@ -185,30 +225,35 @@ class NengoApplicationGraphBuilder(object):
 
     @staticmethod
     def _ensemble_conversion(
-            nengo_ensemble, extra_model_converters, random_number_generator):
+            nengo_ensemble, extra_model_converters, random_number_generator,
+            utilise_extra_core_for_decoded_output_probe, app_graph,
+            nengo_to_app_graph_map):
         if nengo_ensemble.neuron_type == nengo.neurons.LIF:
             operator = LIFApplicationVertex(
                 label="LIF neurons for ensemble {}".format(
                     nengo_ensemble.label),
                 rng=random_number_generator,
+                utilise_extra_core_for_decoded_output_probe=
+                utilise_extra_core_for_decoded_output_probe,
                 **LIFApplicationVertex.generate_parameters_from_ensamble(
                     nengo_ensemble, random_number_generator))
-            return operator
         elif nengo_ensemble.neuron_type in extra_model_converters:
             operator = extra_model_converters[nengo_ensemble.neuron_type](
                 nengo_ensemble, random_number_generator)
-            return operator
         else:
             raise NeuronTypeConstructorNotFoundException(
                 "could not find a constructor for neuron type {}. I have "
                 "constructors for the following neuron types LIF,{}".format(
                     nengo_ensemble.neuron_type, extra_model_converters.keys))
+        # update objects
+        app_graph.add_vertex(operator)
+        nengo_to_app_graph_map[nengo_ensemble] = operator
 
     @staticmethod
     def _node_conversion(
             nengo_node, random_number_generator, machine_time_step,
             nengo_node_function_of_time, nengo_node_function_of_time_period,
-            host_network):
+            host_network, app_graph, nengo_to_app_graph_map):
 
         # ????? no idea what the size in has to do with it
         function_of_time = nengo_node.size_in == 0 and (
@@ -217,7 +262,7 @@ class NengoApplicationGraphBuilder(object):
         if nengo_node.output is None:
             # If the Node is a pass through Node then create a new placeholder
             # for the pass through node.
-            return PassThroughApplicationVertex(
+            operator = PassThroughApplicationVertex(
                 label=nengo_node.label, rng=random_number_generator)
 
         elif function_of_time:
@@ -232,7 +277,7 @@ class NengoApplicationGraphBuilder(object):
             else:
                 period = machine_time_step
 
-            return ValueSourceApplicationVertex(
+            operator = ValueSourceApplicationVertex(
                 label="value_source_vertex for node {}".format(
                     nengo_node.label),
                 rng=random_number_generator,
@@ -244,7 +289,15 @@ class NengoApplicationGraphBuilder(object):
             with host_network:
                 if nengo_node not in host_network:
                     host_network.add(nengo_node)
-            return nengo_node
+            operator = nengo_node
+
+        # update objects
+        # only add to the app graph if it'll run on SpiNNaker.
+        if operator != nengo_node:
+            app_graph.add_vertex(operator)
+
+        # add to mapping. May point to itself if host based
+        nengo_to_app_graph_map[nengo_node] = operator
 
     def _connection_conversion(
             self, nengo_connection, app_graph, nengo_to_app_graph_map,
@@ -272,16 +325,21 @@ class NengoApplicationGraphBuilder(object):
                     constants.ENSEMBLE_INPUT_PORT.LEARNING_RULE):
                 application_edge = ConnectionLearningRuleApplicationEdge(
                     pre_vertex=source_vertex, post_vertex=destination_vertex,
-                    rng=random_number_generator,
                     learning_rule=nengo_connection.post_obj)
             else:
-                application_edge = ConnectionApplicationEdge(
-                    pre_vertex=source_vertex, post_vertex=destination_vertex,
-                    rng=random_number_generator)
+                application_edge = ApplicationEdge(
+                    pre_vertex=source_vertex, post_vertex=destination_vertex)
+
+            # rectify outgoing partition for data store and add to graphs
+            outgoing_partition = ConnectionOutgoingPartition(
+                rng=random_number_generator, identifier=destination_input_port)
+            app_graph.add_outgoing_edge_partition(outgoing_partition)
+            app_graph.add_edge(application_edge, destination_input_port)
+            nengo_to_app_graph_map[nengo_connection] = application_edge
 
             # Get the transmission parameters  for the connection.
             transmission_params = self._get_transmission_parameters(
-                nengo_connection, application_edge, nengo_to_app_graph_map,
+                nengo_connection, outgoing_partition, nengo_to_app_graph_map,
                 decoder_cache)
 
             #  reception parameters for the connection.
@@ -291,14 +349,12 @@ class NengoApplicationGraphBuilder(object):
             latching_required, edge_weight = self._make_signal_parameters(
                 source_vertex, destination_vertex, nengo_connection)
 
-            application_edge.set_parameters(
+            outgoing_partition.set_parameters(
                 transmission_params=transmission_params,
                 reception_params=reception_params,
                 latching_required=latching_required, weight=edge_weight,
                 source_output_port=source_output_port,
                 destination_input_port=destination_input_port)
-
-            return application_edge, destination_input_port
 
     @staticmethod
     def _get_reception_parameters(nengo_connection):
@@ -341,7 +397,7 @@ class NengoApplicationGraphBuilder(object):
                     slice_out=nengo_connection.post_slice))
 
     def _get_transmission_parameters_for_a_nengo_ensemble(
-            self, nengo_connection, application_edge, nengo_to_app_graph_map,
+            self, nengo_connection, outgoing_partition, nengo_to_app_graph_map,
             decoder_cache):
         # Build the parameters object for a connection from an Ensemble.
         if nengo_connection.solver.weights:
@@ -351,7 +407,7 @@ class NengoApplicationGraphBuilder(object):
 
         # Create a random number generator
         random_number_generator = numpy.random.RandomState(
-            application_edge.seed)
+            outgoing_partition.seed)
 
         # Solve for the decoders
         decoders = self._build_decoders_for_nengo_connection(
@@ -438,7 +494,7 @@ class NengoApplicationGraphBuilder(object):
         return decoders
 
     def _get_transmission_parameters(
-            self, nengo_connection, application_edge, nengo_to_app_graph_map,
+            self, nengo_connection, outgoing_partition, nengo_to_app_graph_map,
             decoder_cache):
         # if a input node of some form. verify if its a transmission node or
         # a pass through node
@@ -448,7 +504,7 @@ class NengoApplicationGraphBuilder(object):
         # if a ensemble
         elif isinstance(nengo_connection.pre_obj, nengo.Ensemble):
             return self._get_transmission_parameters_for_a_nengo_ensemble(
-                nengo_connection, application_edge, nengo_to_app_graph_map,
+                nengo_connection, outgoing_partition, nengo_to_app_graph_map,
                 decoder_cache)
 
     @staticmethod

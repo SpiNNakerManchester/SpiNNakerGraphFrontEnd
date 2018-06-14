@@ -4,13 +4,16 @@ import nengo
 from nengo import builder as nengo_builder
 from nengo.utils import numpy as nengo_numpy
 from spinn_utilities.overrides import overrides
+from spinnaker_graph_front_end.examples.nengo import constants
 from spinnaker_graph_front_end.examples.nengo.abstracts.\
     abstract_nengo_application_vertex import \
     AbstractNengoApplicationVertex
+from spinnaker_graph_front_end.examples.nengo.abstracts.\
+    abstract_probeable import AbstractProbeable
 
 
 class LIFApplicationVertex(
-        AbstractNengoApplicationVertex):
+        AbstractNengoApplicationVertex, AbstractProbeable):
 
     __slots__ = [
         "_eval_points",
@@ -19,11 +22,15 @@ class LIFApplicationVertex(
         "_max_rates",
         "_intercepts",
         "_gain",
-        "_bias"]
+        "_bias",
+        "_probeable_variables",
+        "_is_recording_probeable_variable",
+        "_probeable_variables_supported_elsewhere"]
 
     def __init__(
             self, label, rng, eval_points, encoders, scaled_encoders,
-            max_rates, intercepts, gain, bias):
+            max_rates, intercepts, gain, bias,
+            utilise_extra_core_for_decoded_output_probe):
         """ constructor for lifs
         
         :param label: label of the vertex
@@ -44,6 +51,20 @@ class LIFApplicationVertex(
         self._intercepts = intercepts
         self._gain = gain
         self._bias = bias
+
+        self._probeable_variables = [
+            constants.RECORD_OUTPUT_FLAG, constants.RECORD_SPIKES_FLAG,
+            constants.RECORD_VOLTAGE_FLAG]
+        self._is_recording_probeable_variable = {
+            constants.RECORD_OUTPUT_FLAG: False,
+            constants.RECORD_SPIKES_FLAG: False,
+            constants.RECORD_VOLTAGE_FLAG: False}
+
+        if not utilise_extra_core_for_decoded_output_probe:
+            self._probeable_variables.append(
+                constants.DECODER_OUTPUT_FLAG)
+            self._is_recording_probeable_variable[
+                constants.DECODER_OUTPUT_FLAG] = False
 
     @property
     def eval_points(self):
@@ -72,6 +93,21 @@ class LIFApplicationVertex(
     @property
     def bias(self):
         return self._bias
+
+    @overrides(AbstractProbeable.set_probeable_variable)
+    def set_probeable_variable(self, variable):
+        self._is_recording_probeable_variable[variable] = True
+
+    @overrides(AbstractProbeable.get_data_for_variable)
+    def get_data_for_variable(self, variable):
+        pass
+
+    @overrides(AbstractProbeable.can_probe_variable)
+    def can_probe_variable(self, variable):
+            if variable in self._probeable_variables:
+                return True
+            else:
+                return False
 
     @staticmethod
     def generate_parameters_from_ensemble(

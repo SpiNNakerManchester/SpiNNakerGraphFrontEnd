@@ -10,6 +10,13 @@ class ProbeableException(NengoException):
     pass
 
 
+class NotProbeableException(NengoException):
+    """ Raised when a neuron model is asked to prove a variable it does not 
+    support in being probed.
+    """
+    pass
+
+
 class NeuronTypeConstructorNotFoundException(NengoException):
     """ raised when there's a neuron model which has no constructor in the 
     tools. 

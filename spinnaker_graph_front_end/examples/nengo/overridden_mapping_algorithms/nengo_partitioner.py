@@ -3,16 +3,21 @@ from spinnaker_graph_front_end.examples.nengo import constants
 from spinnaker_graph_front_end.examples.nengo.abstracts.\
     abstract_accepts_multicast_signals import AcceptsMulticastSignals
 from spinnaker_graph_front_end.examples.nengo.application_vertices.\
-    filter_application_vertex import FilterApplicationVertex
-from spinnaker_graph_front_end.examples.nengo.application_vertices.\
     pass_through_application_vertex import PassThroughApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
     graph_mapper import GraphMapper
+from spinnaker_graph_front_end.examples.nengo.machine_vertices.\
+    filter_machine_vertex import \
+    FilterMachineVertex
 from spinnaker_graph_front_end.examples.nengo.nengo_exceptions import \
     NotAbleToBeConnectedToAsADestination
 
 
 class NengoPartitioner(object):
+    """ partitions the app graph for the nengo graph, and turns it into a 
+    machine graph recognised by the main tool chain
+    
+    """
 
     def __call__(self, nengo_operator_graph, skip_pass_through_nodes):
         machine_graph = MachineGraph(label=constants.MACHINE_GRAPH_LABEL)
@@ -39,7 +44,7 @@ class NengoPartitioner(object):
             for machine_vertex_source in graph_mapper.get_machine_vertices(
                     edge.pre_vertex):
                 if (isinstance(
-                        machine_vertex_source, FilterApplicationVertex) and
+                        machine_vertex_source, FilterMachineVertex) and
                         machine_vertex_source.transmits_signal(
                             edge.transmission_parameters)):
                     self._check_destination_vertices(

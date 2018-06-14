@@ -27,8 +27,13 @@ MAX_COLUMNS = 128
 
 # flag constants used around the codebase
 DECODERS_FLAG = "decoders"
+DECODER_OUTPUT_FLAG = "decoded_output"
+RECORD_OUTPUT_FLAG = "output"
+RECORD_SPIKES_FLAG = "spikes"
+RECORD_VOLTAGE_FLAG = "voltage"
 ENCODERS_FLAG = "encoders"
 APP_GRAPH_NAME = "nengo_operator_graph"
+INTER_APP_GRAPH_NAME = "nengo_operator_graph_par_way_interposers"
 MACHINE_GRAPH_LABEL = "machine graph"
 
 # sdp ports used by c code, to track with fec sdp ports.

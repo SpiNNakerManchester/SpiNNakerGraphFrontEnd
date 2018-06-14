@@ -4,7 +4,7 @@ from spinn_utilities.abstract_base import AbstractBase
 
 
 @add_metaclass(AbstractBase)
-class AbstractConnectionApplicationEdge(object):
+class AbstractConnectionApplicationDataHolder(object):
 
     __slots__ = [
         #
