@@ -1,4 +1,6 @@
 from collections import deque
+import itertools
+from six import iteritems, itervalues, iterkeys
 
 from pacman.model.graphs import AbstractOutgoingEdgePartition
 from pacman.model.graphs.application import ApplicationEdge
@@ -8,8 +10,9 @@ from spinnaker_graph_front_end.examples.nengo.abstracts.\
     abstract_nengo_application_vertex import \
     AbstractNengoApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.application_vertices.\
-    pass_through_application_vertex import \
-    PassThroughApplicationVertex
+    lif_application_vertex import LIFApplicationVertex
+from spinnaker_graph_front_end.examples.nengo.application_vertices.\
+    pass_through_application_vertex import PassThroughApplicationVertex
 
 
 class NengoUtiliseInterposers(object):
@@ -39,28 +42,31 @@ class NengoUtiliseInterposers(object):
         # For every clique in this connection map we identify which connections
         # to replace with interposers and then insert the modified connectivity
         # into the new connection map.
-        for sources, nodes in self._get_cliques(application_graph):
+        for sources, application_vertex in self._get_cliques(application_graph):
             # Extract all possible interposers from the clique. Interposers can
             # either replace connections from passthrough nodes or the
             # "transform" portion of the connection from an ensemble.
 
-            possible_interposers = (
-                (node, port, conn, {s.sink_object for s in sinks})
-                for node in chain(
-                nodes, (e for e in sources if isinstance(e, EnsembleLIF))
-            )
-                for port, conns in iteritems(
-                self._connections[node])
-                for conn, sinks in iteritems(conns)
-            )
+            possible_interposers = list()
+            for operator in itertools.chain(
+                    application_vertex, (e for e in sources if isinstance(
+                        e, LIFApplicationVertex))):
+                for outgoing_partition in \
+                        application_graph.outgoing_edge_partitions():
+                    sinks = set()
+                    for application_edge in outgoing_partition.edges():
+                        sinks.add(application_edge.post_vertex)
+                        possible_interposers.append(
+                            (operator, outgoing_partition, sinks))
 
             # Of these possible connections determine which would benefit from
             # replacement with interposers. For these interposers build a set
             # of other potential interposers whose input depends on the output
             # of the interposer.
             potential_interposers = dict()
-            for node, port, conn, sink_objects in possible_interposers:
-                _, tps = conn  # Extract the transmission parameters
+            for node, outgoing_partition, sink_objects in possible_interposers:
+                transmission_parameters = \
+                    outgoing_partition.transmission_parameters
 
                 # Determine if the interposer connects to anything
                 if not self._connects_to_non_passthrough_node(sink_objects):
@@ -68,7 +74,7 @@ class NengoUtiliseInterposers(object):
 
                 # For each connection look at the fan-out and fan-in vs the
                 # cost of the interposer.
-                trans = tps.full_transform(False, False)
+                trans = transmission_parameters.full_transform(False, False)
                 mean_fan_in = np.mean(np.sum(trans != 0.0, axis=0))
                 mean_fan_out = np.mean(np.sum(trans != 0.0, axis=1))
                 interposer_fan_in = np.ceil(
@@ -136,6 +142,32 @@ class NengoUtiliseInterposers(object):
                 )
 
         return interposers, new_application_graph
+
+    def _connects_to_non_passthrough_node(self, sink_objects):
+        """Determine whether any of the sink objects are not pass through nodes,
+        or if none are whether those pass through nodes eventually connect to a
+        non-pass through node.
+        """
+        # Extract passthrough nodes from the sinks
+        pass_through_application_verts = [s for s in sink_objects if isinstance(
+            s, PassThroughApplicationVertex)]
+
+        # If any of the sink objects are not passthrough nodes then return
+        if len(pass_through_application_verts) < len(sink_objects):
+            return True
+        else:
+            # Otherwise loop over the connections from each connected
+            # passthrough node and see if any of those connect to a sink.
+            for obj in pass_through_application_verts:
+                for conn_sinks in itervalues(self._connections[obj]):
+                    for sinks in itervalues(conn_sinks):
+                        sink_objs = [s.sink_object for s in sinks]
+                        if self._connects_to_non_passthrough_node(sink_objs):
+                            return True
+
+        # Otherwise return false to indicate that a non-passthrough node object
+        # is never reached.
+        return False
 
     @staticmethod
     def _get_cliques(application_graph):
