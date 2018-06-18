@@ -29,7 +29,7 @@ class AbstractConnectionApplicationDataHolder(object):
         self._source_output_port = None
         self._destination_input_port = None
 
-    def set_parameters(
+    def set_all_parameters(
             self, transmission_params, reception_params, latching_required,
             weight, source_output_port, destination_input_port):
         self._transmission_params = transmission_params

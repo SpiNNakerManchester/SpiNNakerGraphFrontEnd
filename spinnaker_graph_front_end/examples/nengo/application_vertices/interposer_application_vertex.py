@@ -7,7 +7,7 @@ from spinnaker_graph_front_end.examples.nengo.abstracts.\
     AbstractNengoApplicationVertex
 
 
-class FilterApplicationVertex(AbstractNengoApplicationVertex):
+class InterposerApplicationVertex(AbstractNengoApplicationVertex):
     """Operator which receives values, performs filtering, applies a linear
         transform and then forwards the resultant vector(s).
 

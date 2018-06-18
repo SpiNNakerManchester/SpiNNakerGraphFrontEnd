@@ -54,7 +54,7 @@ class SDPReceiverApplicationVertex(
     def create_machine_vertices(self):
         verts = list()
 
-        # Get all outgoing signals and their associated transmission parameters
+        # Get all outgoing signals and their associated transmission connection_parameters
         for signal, transmission_params in \
                 model.get_signals_from_object(self)[OutputPort.standard]:
             # Get the transform, and from this the keys

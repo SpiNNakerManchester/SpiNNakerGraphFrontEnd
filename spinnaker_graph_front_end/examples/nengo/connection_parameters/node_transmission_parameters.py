@@ -1,8 +1,8 @@
 from spinn_utilities.overrides import overrides
-from spinnaker_graph_front_end.examples.nengo.parameters. \
+from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     abstract_transmission_parameters import \
     AbstractTransmissionParameters
-from spinnaker_graph_front_end.examples.nengo.parameters. \
+from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     transmission_parameters_impl import \
     TransmissionParametersImpl
 from spinnaker_graph_front_end.examples.nengo.utility_objects.parameter_transform import \
@@ -39,18 +39,18 @@ class NodeTransmissionParameters(
 
     @overrides(AbstractTransmissionParameters.concat)
     def concat(self, other):
-        """Create new connection parameters which are the result of
+        """Create new connection connection_parameters which are the result of
         concatenating this connection another.
 
         Parameters
         ----------
         other : NodeTransmissionParameters
-            Connection parameters to add to the end of this connection.
+            Connection connection_parameters to add to the end of this connection.
 
         Returns
         -------
         NodeTransmissionParameters or None
-            Either a new set of transmission parameters, or None if the
+            Either a new set of transmission connection_parameters, or None if the
             resulting transform contained no non-zero values.
         """
         # Get the outgoing transformation

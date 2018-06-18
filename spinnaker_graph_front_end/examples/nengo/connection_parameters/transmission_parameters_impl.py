@@ -1,5 +1,7 @@
 import numpy
 
+from spinnaker_graph_front_end.examples.nengo import constants
+
 
 class TransmissionParametersImpl(object):
     __slots__ = ["_transform"]
@@ -40,3 +42,13 @@ class TransmissionParametersImpl(object):
     @property
     def transform(self):
         return self._transform
+
+    def update_to_global_inhibition_if_required(self, destination_input_port):
+        # change to support global inhibition if required
+        if (destination_input_port is constants.ENSEMBLE_INPUT_PORT.NEURONS
+                and self.supports_global_inhibition):
+            destination_input_port = (
+                constants.ENSEMBLE_INPUT_PORT.GLOBAL_INHIBITION)
+            return self.as_global_inhibition_connection, destination_input_port
+        else:
+            return self, destination_input_port

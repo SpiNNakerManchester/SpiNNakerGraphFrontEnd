@@ -35,7 +35,7 @@ class AbstractFilter(object):
 
     @abstractmethod
     def size_words(self):  # pragma: no cover
-        """Get the number of words used to store the parameters for this
+        """Get the number of words used to store the connection_parameters for this
         filter.
         """
 

@@ -11,7 +11,7 @@ from spinnaker_graph_front_end.examples.nengo.abstracts.\
     AcceptsMulticastSignals
 
 
-class FilterMachineVertex(
+class InterposerMachineVertex(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
         AcceptsMulticastSignals):
     """Portion of the rows of the transform assigned to a parallel filter
@@ -46,7 +46,7 @@ class FilterMachineVertex(
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
-        return "filter.aplx"
+        return "interposer.aplx"  # this was filter in mundy code
 
     @property
     @overrides(MachineVertex.resources_required)

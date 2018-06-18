@@ -84,11 +84,17 @@ class NengoSimulator(SpiNNaker):
             time_scale_factor=time_scale,
             machine_time_step=machine_timestep)
 
-        self.extend_extra_mapping_algorithms(
-            ["NengoKeyAllocator", "NengoUtiliseInterposers",
-             "NengoHostGraphUpdater", "NengoCreateHostSimulator",
-             "NengoSetUpLiveIO"])
+        # basic mapping extras
+        extra_mapping_algorithms = [
+            "NengoKeyAllocator", "NengoHostGraphUpdater",
+            "NengoCreateHostSimulator", "NengoSetUpLiveIO"]
 
+        # if using interposers, add new algorithm
+        if self.config.getboolean("Node", "optimise_utilise_interposers"):
+            extra_mapping_algorithms.append("NengoUtiliseInterposers")
+
+        # update the main flow with new algorithms and params
+        self.extend_extra_mapping_algorithms(extra_mapping_algorithms)
         self.update_extra_inputs(
             {'NengoModel': network,
              'NengoDecoderCache': decoder_cache,
@@ -98,9 +104,6 @@ class NengoSimulator(SpiNNaker):
                  self.config.getboolean("Node", "function_of_time"),
              "NengoNodeSetAsFunctionOfTimePeriod":
                  self.config.getboolean("Node", "function_of_time_period"),
-             "NengoNodeOptimizeOutPassThroughNodes":
-                 self.config.getboolean(
-                     "Node", "optimise_out_pass_through_nodes"),
              "NengoEnsembleProfile":
                  self.config.getboolean("Ensemble", "profile"),
              "NengoEnsembleProfileNumSamples":

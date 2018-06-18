@@ -15,7 +15,9 @@ class ConnectionOutgoingPartition(
         OutgoingEdgePartition, AbstractConnectionApplicationDataHolder,
         AbstractNengoObject):
 
-    __slots__ = []
+    __slots__ = [
+        '_outgoing_edges_destinations'
+    ]
 
     _REPR_TEMPLATE = \
         "ConnectionOutgoingPartition(\n" \
@@ -30,6 +32,16 @@ class ConnectionOutgoingPartition(
                 ApplicationEdge, ConnectionLearningRuleApplicationEdge])
         AbstractConnectionApplicationDataHolder.__init__(self)
         AbstractNengoObject.__init__(self, rng=rng)
+        self._outgoing_edges_destinations = list()
+
+    @overrides(OutgoingEdgePartition.add_edge)
+    def add_edge(self, edge):
+        OutgoingEdgePartition.add_edge(edge)
+        self._outgoing_edges_destinations.append(edge.post_vertex)
+
+    @property
+    def edge_destinations(self):
+        return self._outgoing_edges_destinations
 
     @property
     @overrides(OutgoingEdgePartition.traffic_weight)

@@ -3,7 +3,7 @@ from nengo import LinearFilter
 
 
 class ReceptionParameters(object):
-    """Basic reception parameters that relate to the reception of a series of
+    """Basic reception connection_parameters that relate to the reception of a series of
     multicast packets.
 
     Attributes
@@ -32,8 +32,8 @@ class ReceptionParameters(object):
         return self._learning_rule
 
     def concat(self, other):
-        """Create new reception parameters by combining this set of reception
-        parameters with another.
+        """Create new reception connection_parameters by combining this set of reception
+        connection_parameters with another.
         """
         # Combine the filters
         if self._parameter_filter is None:
@@ -63,5 +63,5 @@ class ReceptionParameters(object):
 
         new_learning_rule = self._learning_rule or other.learning_rule
 
-        # Create the new reception parameters
+        # Create the new reception connection_parameters
         return ReceptionParameters(new_filter, other.width, new_learning_rule)

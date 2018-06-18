@@ -1,9 +1,9 @@
 import numpy
 
 from spinn_utilities.overrides import overrides
-from spinnaker_graph_front_end.examples.nengo.parameters. \
+from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     abstract_transmission_parameters import AbstractTransmissionParameters
-from spinnaker_graph_front_end.examples.nengo.parameters. \
+from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     transmission_parameters_impl import TransmissionParametersImpl
 from spinnaker_graph_front_end.examples.nengo.utility_objects\
     .parameter_transform import ParameterTransform
@@ -48,7 +48,7 @@ class EnsembleTransmissionParameters(
 
     @overrides(TransmissionParametersImpl.__eq__)
     def __eq__(self, other):
-        # Two parameters are equal only if they are of the same type, both have
+        # Two connection_parameters are equal only if they are of the same type, both have
         # no learning rule and are equivalent in all other fields.
         return (super(EnsembleTransmissionParameters, self).__eq__(other) and
                 numpy.array_equal(self._decoders, other.decoders) and
@@ -62,18 +62,18 @@ class EnsembleTransmissionParameters(
 
     @overrides(AbstractTransmissionParameters.concat)
     def concat(self, other):
-        """Create new connection parameters which are the result of
+        """Create new connection connection_parameters which are the result of
         concatenating this connection with others.
 
         Parameters
         ----------
         other : PassthroughNodeTransmissionParameters
-            Connection parameters to add to the end of this connection.
+            Connection connection_parameters to add to the end of this connection.
 
         Returns
         -------
         EnsembleTransmissionParameters or None
-            Either a new set of transmission parameters, or None if the
+            Either a new set of transmission connection_parameters, or None if the
             resulting transform contained no non-zero values.
         """
         # Get the outgoing transformation

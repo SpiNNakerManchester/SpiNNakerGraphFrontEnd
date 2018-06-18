@@ -15,5 +15,5 @@ class PassThroughApplicationVertex(AbstractNengoApplicationVertex):
     def create_machine_vertices(self):
         raise NotImplementedError(
             "This vertex has not been implemented. Please set the config "
-            "param [Node] optimise_out_pass_through_nodes to True to avoid "
+            "param [Node] optimise_utilise_interposers to True to avoid "
             "this error.")

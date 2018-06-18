@@ -46,14 +46,14 @@ from spinnaker_graph_front_end.examples.nengo.graph_components. \
 from spinnaker_graph_front_end.examples.nengo.nengo_exceptions import \
     ProbeableException, NeuronTypeConstructorNotFoundException, \
     NotLocatedProbableClass
-from spinnaker_graph_front_end.examples.nengo.parameters. \
+from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     ensemble_transmission_parameters import EnsembleTransmissionParameters
-from spinnaker_graph_front_end.examples.nengo.parameters. \
+from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     node_transmission_parameters import NodeTransmissionParameters
-from spinnaker_graph_front_end.examples.nengo.parameters. \
+from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     pass_through_node_transmission_parameters import \
     PassthroughNodeTransmissionParameters
-from spinnaker_graph_front_end.examples.nengo.parameters. \
+from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     reception_parameters import ReceptionParameters
 from spinnaker_graph_front_end.examples.nengo.utility_objects. \
     parameter_transform import ParameterTransform
@@ -119,13 +119,14 @@ class NengoApplicationGraphBuilder(object):
                 random_number_generator, host_network, decoder_cache)
 
         # for each probe, ask the operator if it supports this probe (equiv
-        # of recording parameters)
+        # of recording connection_parameters)
         for nengo_probe in nengo_network.probes:
             self._probe_conversion(
                 nengo_probe, nengo_to_app_graph_map, random_number_generator,
                 app_graph, host_network, decoder_cache)
 
-        return app_graph, host_network, nengo_to_app_graph_map
+        return (app_graph, host_network, nengo_to_app_graph_map,
+                random_number_generator)
 
     def _probe_conversion(
             self, nengo_probe, nengo_to_app_graph_map,
@@ -337,19 +338,23 @@ class NengoApplicationGraphBuilder(object):
             app_graph.add_edge(application_edge, destination_input_port)
             nengo_to_app_graph_map[nengo_connection] = application_edge
 
-            # Get the transmission parameters  for the connection.
+            # Get the transmission connection_parameters  for the connection.
             transmission_params = self._get_transmission_parameters(
                 nengo_connection, outgoing_partition, nengo_to_app_graph_map,
                 decoder_cache)
 
-            #  reception parameters for the connection.
+            transmission_params, destination_input_port = transmission_params.\
+                update_to_global_inhibition_if_required(destination_input_port)
+
+            #  reception connection_parameters for the connection.
             reception_params = self._get_reception_parameters(nengo_connection)
 
-            # Construct the signal parameters
+            # Construct the signal connection_parameters
             latching_required, edge_weight = self._make_signal_parameters(
                 source_vertex, destination_vertex, nengo_connection)
 
-            outgoing_partition.set_parameters(
+            # set the outgoing partition with all the channel's params
+            outgoing_partition.set_all_parameters(
                 transmission_params=transmission_params,
                 reception_params=reception_params,
                 latching_required=latching_required, weight=edge_weight,
@@ -378,7 +383,7 @@ class NengoApplicationGraphBuilder(object):
             else:
                 size_in = nengo_connection.size_mid
 
-            # return transmission parameters
+            # return transmission connection_parameters
             return NodeTransmissionParameters(
                 transform=ParameterTransform(
                     size_in=size_in,
@@ -399,7 +404,7 @@ class NengoApplicationGraphBuilder(object):
     def _get_transmission_parameters_for_a_nengo_ensemble(
             self, nengo_connection, outgoing_partition, nengo_to_app_graph_map,
             decoder_cache):
-        # Build the parameters object for a connection from an Ensemble.
+        # Build the connection_parameters object for a connection from an Ensemble.
         if nengo_connection.solver.weights:
             raise NotImplementedError(
                 "SpiNNaker does not currently support neuron to neuron "
@@ -749,7 +754,7 @@ class NengoApplicationGraphBuilder(object):
     @staticmethod
     def _make_signal_parameters(
             source_vertex, destination_vertex, nengo_connection):
-        """Create parameters for a signal using specifications provided by the
+        """Create connection_parameters for a signal using specifications provided by the
         source and sink.
         """
         if (isinstance(destination_vertex, SDPTransmitterApplicationVertex) or

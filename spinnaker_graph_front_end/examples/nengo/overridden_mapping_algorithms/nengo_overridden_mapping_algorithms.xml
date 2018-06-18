@@ -53,6 +53,7 @@
             <param_type>NengoOperatorGraph</param_type>
             <param_type>NengoHostGraph</param_type>
             <param_type>NengoGraphToAppGraphMap</param_type>
+            <param_type>NengoRandomNumberGenerator</param_type>
         </outputs>
     </algorithm>
     <algorithm name="NengoPartitioner">
@@ -68,10 +69,6 @@
                 <param_type>NengoNodeOptimizeOutPassThroughNodes</param_type>
             </parameter>
         </input_definitions>
-        <required_inputs>
-            <param_name>nengo_operator_graph</param_name>
-            <param_name>skip_pass_through_nodes</param_name>
-        </required_inputs>
         <outputs>
             <param_type>MemoryMachineGraph</param_type>
             <param_type>NengoGraphMapper</param_type>

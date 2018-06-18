@@ -113,7 +113,7 @@ class LIFApplicationVertex(
     def generate_parameters_from_ensemble(
             nengo_ensemble, random_number_generator):
         """ goes through the nengo ensemble object and extracts the 
-        parameters for the lif neurons
+        connection_parameters for the lif neurons
         
         :param nengo_ensemble: the ensemble handed down by nengo
         :param random_number_generator: the random number generator 

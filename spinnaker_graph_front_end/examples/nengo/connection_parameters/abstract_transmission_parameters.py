@@ -1,6 +1,7 @@
 from six import add_metaclass
 
 from spinn_utilities.abstract_base import AbstractBase, abstractmethod
+from spinnaker_graph_front_end.examples.nengo import constants
 
 
 @add_metaclass(AbstractBase)

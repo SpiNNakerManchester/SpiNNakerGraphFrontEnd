@@ -7,8 +7,8 @@ from spinnaker_graph_front_end.examples.nengo.application_vertices.\
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
     graph_mapper import GraphMapper
 from spinnaker_graph_front_end.examples.nengo.machine_vertices.\
-    filter_machine_vertex import \
-    FilterMachineVertex
+    interposer_machine_vertex import \
+    InterposerMachineVertex
 from spinnaker_graph_front_end.examples.nengo.nengo_exceptions import \
     NotAbleToBeConnectedToAsADestination
 
@@ -19,19 +19,15 @@ class NengoPartitioner(object):
     
     """
 
-    def __call__(self, nengo_operator_graph, skip_pass_through_nodes):
+    def __call__(self, nengo_operator_graph):
         machine_graph = MachineGraph(label=constants.MACHINE_GRAPH_LABEL)
         graph_mapper = GraphMapper()
 
         # convert application vertices into machine vertices
         for operator in nengo_operator_graph.vertices():
 
-            # If the operator is a pass through Node then skip it
-            if (isinstance(operator, PassThroughApplicationVertex) and
-                    skip_pass_through_nodes):
-                continue
-            else:
-                machine_vertices = operator.make_vertices()
+            # create the machine verts
+            machine_vertices = operator.make_vertices()
 
             # update data objects
             for machine_vertex in machine_vertices:
@@ -44,7 +40,7 @@ class NengoPartitioner(object):
             for machine_vertex_source in graph_mapper.get_machine_vertices(
                     edge.pre_vertex):
                 if (isinstance(
-                        machine_vertex_source, FilterMachineVertex) and
+                        machine_vertex_source, InterposerMachineVertex) and
                         machine_vertex_source.transmits_signal(
                             edge.transmission_parameters)):
                     self._check_destination_vertices(
