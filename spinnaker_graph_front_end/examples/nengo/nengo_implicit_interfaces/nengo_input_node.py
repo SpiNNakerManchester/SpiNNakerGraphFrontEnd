@@ -12,6 +12,10 @@ class NengoInputNode(nengo.Node, NengoLiveInputInterface):
         NengoLiveInputInterface.__init__(self)
         self._spinnaker_vertex = spinnaker_vertex
 
+    @property
+    def size_in(self):
+        return self._spinnaker_vertex.size_in
+
     @overrides(NengoLiveInputInterface.output)
     def output(self, t):
         """ enforced by the nengo duck typing

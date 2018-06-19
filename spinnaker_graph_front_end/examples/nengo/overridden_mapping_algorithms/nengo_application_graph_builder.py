@@ -572,12 +572,12 @@ class NengoApplicationGraphBuilder(object):
                 operator = SDPReceiverApplicationVertex(
                     label="sdp receiver app vertex for nengo node {}".format(
                         nengo_connection.pre_obj.label),
-                    rng=random_number_generator)
+                    rng=random_number_generator,
+                    size_in=nengo_connection.pre_obj.size_out)
 
                 # TODO sort out this inhirtance issue.
                 with host_network:
-                    host_output_node = NengoOutputNode(
-                        operator, nengo_connection.pre_obj.size_out)
+                    host_output_node = NengoOutputNode(operator)
                     if host_output_node not in host_network:
                         host_network.add(host_output_node)
                         nengo.Connection(
@@ -699,7 +699,7 @@ class NengoApplicationGraphBuilder(object):
     @staticmethod
     def _get_destination_vertex_and_input_port_for_nengo_node(
             nengo_connection, nengo_to_app_graph_map, host_network,
-            random_number_generator, app_graph):
+            random_number_generator, app_graph, live_io_senders):
         """Get the sink for a connection terminating at a Node."""
         if isinstance(nengo_connection.post_obj, PassThroughApplicationVertex):
             return (nengo_to_app_graph_map[nengo_connection.post_obj],
@@ -725,23 +725,28 @@ class NengoApplicationGraphBuilder(object):
             # Otherwise we create a new InputNode for the Node at the end
             # of the given connection, then add both it and the Node to the
             # host network with a joining connection.
+            if nengo_connection.post_obj not in live_io_senders:
 
-            # create new live io output operator
-            operator = SDPTransmitterApplicationVertex(
-                label="sdp transmitter app vertex for nengo node {}".format(
-                    nengo_connection.pre_obj.label),
-                rng=random_number_generator,
-                size_in=nengo_connection.pre_obj.size_out)
+                # create new live io output operator
+                operator = SDPTransmitterApplicationVertex(
+                    label="sdp transmitter app vertex for nengo node {}".format(
+                        nengo_connection.pre_obj.label),
+                    rng=random_number_generator,
+                    size_in=nengo_connection.pre_obj.size_out)
 
-            # TODO solve this inheritance issue
-            host_link = NengoInputNode(operator)
-            with host_network:
-                if host_link not in host_network:
-                    host_network.add(host_link)
+                # TODO solve this inheritance issue
+                host_link = NengoInputNode(operator)
+                with host_network:
+                    if host_link not in host_network:
+                        host_network.add(host_link)
+                        nengo.Connection(operator, nengo_connection.post_obj,
+                                         synapse=None)
 
-            # update records
-            nengo_to_app_graph_map[nengo_connection.pre_obj] = operator
-            app_graph.add_vertex(operator)
+                # update records
+                live_io_senders[nengo_connection.pre_obj] = operator
+                app_graph.add_vertex(operator)
+            else:
+                operator = live_io_senders[nengo_connection.post_obj]
 
             # return operator and the defacto output port
             return operator, constants.INPUT_PORT.STANDARD

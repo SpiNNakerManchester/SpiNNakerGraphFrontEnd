@@ -19,15 +19,22 @@ class SDPReceiverApplicationVertex(
 
     __slots__ = [
         #
-        '_connection_vertices'
+        '_connection_vertices',
+        #
+        "_size_in"
     ]
 
-    def __init__(self, label, rng):
+    def __init__(self, label, rng, size_in):
         AbstractNengoApplicationVertex.__init__(self, label=label, rng=rng)
         NengoLiveOutputInterface.__init__(self)
 
         # Create a mapping of which connection is broadcast by which vertex
         self._connection_vertices = dict()
+        self._size_in = size_in
+
+    @property
+    def size_in(self):
+        return self._size_in
 
     @inject({"transceiver": "MemoryTransceiver",
              "graph_mapper": "MemoryNengoGraphMapper",
