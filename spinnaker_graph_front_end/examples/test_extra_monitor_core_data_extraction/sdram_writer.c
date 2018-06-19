@@ -44,9 +44,9 @@ void resume_callback() {
     time = UINT32_MAX;
 }
 
-//! method to make test data in sdram
+//! method to make test data in SDRAM
 void write_data(){
-    // write data into sdram for reading later
+    // write data into SDRAM for reading later
     address_t address = data_specification_get_data_address();
     store_address = data_specification_get_region(DATA_REGION, address);
     log_info("address is %d", store_address);
@@ -111,7 +111,7 @@ void update(uint ticks, uint b) {
 void c_main() {
 
     uint32_t timer_period;
-    log_info("starting sdram reader and writer\n");
+    log_info("starting SDRAM reader and writer\n");
 
     // initialise the model
     if (!initialize(&timer_period)) {

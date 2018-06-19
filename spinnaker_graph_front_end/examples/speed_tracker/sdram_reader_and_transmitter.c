@@ -65,7 +65,7 @@ void sdp(uint mailbox, uint port){
 
 
 void read(){
-    // set off dma
+    // set off DMA
     dma_pointer = (dma_pointer + 1) % 2;
 
     address_t data_sdram_position = &store_address[position];
@@ -91,7 +91,7 @@ void send_data(uint unused, uint tag){
    use(unused);
    use(tag);
 
-   // do dma
+   // do DMA
    uint32_t current_dma_pointer = dma_pointer;
    uint32_t current_position = position;
 
@@ -111,7 +111,7 @@ void send_data(uint unused, uint tag){
 }
 
 void write_data(){
-    // write data into sdram for reading later
+    // write data into SDRAM for reading later
     store_address = sark_xalloc(
         sv->sdram_heap, bytes_to_write, 0,
         ALLOC_LOCK + ALLOC_ID + (sark_vec->app_id << 8));

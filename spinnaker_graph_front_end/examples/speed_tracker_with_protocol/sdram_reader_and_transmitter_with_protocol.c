@@ -1,4 +1,3 @@
-
 //! imports
 #include "spin1_api.h"
 #include "common-typedefs.h"
@@ -16,7 +15,7 @@
 //! flag for saying stuff has ended
 #define END_FLAG 0xFFFFFFFF
 
-//! sdp port for packets.
+//! SDP port for packets.
 #define SDP_PORT_FOR_SDP_PACKETS 2
 
 //! items per SDP packet for sending
@@ -27,41 +26,41 @@
 
 #define SEQUENCE_NUMBER_SIZE 1
 
-//!################## sdp flags
-//! send data command id in SDP
+//!################## SDP flags
+//! send data command ID in SDP
 #define SDP_COMMAND_FOR_SENDING_DATA 100
 
-//! start missing sdp seq nums in SDP (this includes n SDP packets expected)
+//! start missing SDP seq nums in SDP (this includes n SDP packets expected)
 #define SDP_COMMAND_FOR_START_OF_MISSING_SDP_PACKETS 1000
 
-//! other missing sdp seq nums in SDP
+//! other missing SDP seq nums in SDP
 #define SDP_COMMAND_FOR_MORE_MISSING_SDP_PACKETS 1001
 
 //! timeout for trying to end SDP packet
 #define SDP_TIMEOUT 1000
 
-//! extra length adjustment for the sdp header
+//! extra length adjustment for the SDP header
 #define LENGTH_OF_SDP_HEADER 8
 
-//################### dma tags
+//################### DMA tags
 
-//! dma complete tag for writing the missing SEQ nums to SDRAM
+//! DMA complete tag for writing the missing SEQ nums to SDRAM
 #define DMA_TAG_FOR_WRITING_MISSING_SEQ_NUMS 3
 
-//! dma complete tag for the reading from sdram of data to be retransmitted
+//! DMA complete tag for the reading from SDRAM of data to be retransmitted
 #define DMA_TAG_RETRANSMISSION_READING 2
 
-//! dma complete tag for retransmission of data seq nums
+//! DMA complete tag for retransmission of data seq nums
 #define DMA_TAG_READ_FOR_RETRANSMISSION 1
 
-//! dma complete tag for original transmission, this isnt used yet, but needed
+//! DMA complete tag for original transmission, this isn't used yet, but needed
 //! for full protocol
 #define DMA_TAG_READ_FOR_TRANSMISSION 0
 
 //! throttle power on the MC transmissions if needed (assume not needed)
 #define TDMA_WAIT_PERIOD 0
 
-//! struct for a SDP message with pure data, no scp header
+//! struct for a SDP message with pure data, no SCP header
 typedef struct sdp_msg_pure_data {	// SDP message (=292 bytes)
     struct sdp_msg *next;		// Next in free list
     uint16_t length;		// length
@@ -75,7 +74,7 @@ typedef struct sdp_msg_pure_data {	// SDP message (=292 bytes)
     uint16_t dest_addr;		// SDP destination address
     uint16_t srce_addr;		// SDP source address
 
-    // User data (272 bytes when no scp header)
+    // User data (272 bytes when no SCP header)
     uint32_t data[ITEMS_PER_DATA_PACKET];
 
     uint32_t _PAD;		// Private padding
@@ -100,14 +99,14 @@ static uint32_t missing_sdp_packets = 0;
 static uint32_t data_written = 0;
 address_t missing_sdp_seq_num_sdram_address = NULL;
 
-//! retransmission dma stuff
+//! retransmission DMA stuff
 static uint32_t *retransmit_seq_nums[N_DMA_BUFFERS];
 static uint32_t current_dma_pointer = 0;
 static uint32_t position_for_retransmission = 0;
 static uint32_t missing_seq_num_being_processed = 0;
 static uint32_t position_in_read_data = 0;
 
-//! sdp message holder for transmissions
+//! SDP message holder for transmissions
 sdp_msg_pure_data my_msg;
 
 //! state for how many bytes it needs to send, gives approx bandwidth if 
@@ -154,13 +153,13 @@ void send_data_block(
    //log_info("last data is %d", data_to_transmit[current_dma_pointer][number_of_elements_to_send - 1]);
 }
 
-//! \brief sets off a dma reading a block of SDRAM for dara
-//! \param[in] position_in_sdram where in sdram to read from
-//! \param[in] dma_tag the dma tag assocated with this read.
+//! \brief sets off a DMA reading a block of SDRAM for dara
+//! \param[in] position_in_sdram where in SDRAM to read from
+//! \param[in] dma_tag the DMA tag associated with this read.
 //!            transmission or retransmission
 //! \param[in] offset where in the data array to start writing to
 void read(uint32_t dma_tag, uint32_t offset, uint32_t size_in_bytes_to_read){
-    // set off dma
+    // set off DMA
     transmit_dma_pointer = (transmit_dma_pointer + 1) % N_DMA_BUFFERS;
 
     address_t data_sdram_position =
@@ -177,12 +176,12 @@ void read(uint32_t dma_tag, uint32_t offset, uint32_t size_in_bytes_to_read){
     }
 }
 
-//! \brief dma complete callback for reading for original transmission
+//! \brief DMA complete callback for reading for original transmission
 void dma_complete_reading_for_original_transmission(uint unused, uint unused2){
     use(unused);
     use(unused2);
 
-    // do dma
+    // do DMA
     uint32_t current_dma_pointer = transmit_dma_pointer;
     uint32_t key_to_transmit = key;
 
@@ -198,7 +197,7 @@ void dma_complete_reading_for_original_transmission(uint unused, uint unused2){
     // if a full packet, read another and try again
     //log_info("position_in_store = %d, to get to %d", position_in_store, (uint)bytes_to_write / WORD_TO_BYTE_MULTIPLIER);
     if (position_in_store < (uint)bytes_to_write / WORD_TO_BYTE_MULTIPLIER){
-        //log_info("setting off another dma");
+        //log_info("setting off another DMA");
         uint32_t num_items_to_transmit =
             ITEMS_PER_DATA_PACKET - SEQUENCE_NUMBER_SIZE;
 
@@ -238,14 +237,14 @@ void dma_complete_reading_for_original_transmission(uint unused, uint unused2){
     }
 }
 
-//! write SDP seq nums to sdram that need retransmitting
+//! write SDP seq nums to SDRAM that need retransmitting
 void write_missing_sdp_seq_nums_into_sdram(
         uint32_t data[], ushort length, uint32_t start_offset){
 
     for(ushort offset=start_offset; offset < length; offset ++){
         missing_sdp_seq_num_sdram_address[
             data_written + (offset - start_offset)] = data[offset];
-        //log_info("data writing into sdram is %d", data[offset]);
+        //log_info("data writing into SDRAM is %d", data[offset]);
     }
     data_written += (length - start_offset);
 }
@@ -278,33 +277,33 @@ void store_missing_seq_nums(uint32_t data[], ushort length, bool first){
         //         missing_sdp_seq_num_sdram_address);
     }
     
-    // write data to sdram and update packet counter
+    // write data to SDRAM and update packet counter
     write_missing_sdp_seq_nums_into_sdram(data, length, start_reading_offset);
     missing_sdp_packets -= 1;
 }
 
 //! sets off a DMA for retransmission stuff
 void retransmission_dma_read(){
-    // update dma pointer for oscillation
+    // update DMA pointer for oscillation
     current_dma_pointer = (current_dma_pointer + 1) % N_DMA_BUFFERS;
 
-    // locate where we are in sdram
+    // locate where we are in SDRAM
     address_t data_sdram_position =
         &missing_sdp_seq_num_sdram_address[position_for_retransmission];
-    //log_info(" address to dma from is %d", data_sdram_position);
-    //log_info(" dma pointer = %d", dma_pointer);
+    //log_info(" address to DMA from is %d", data_sdram_position);
+    //log_info(" DMA pointer = %d", dma_pointer);
     //log_info("size to read is %d",
     //         ITEMS_PER_DATA_PACKET * WORD_TO_BYTE_MULTIPLIER);
 
-    // set off dma
-    //log_info("setting off dma");
+    // set off DMA
+    //log_info("setting off DMA");
     while (!spin1_dma_transfer(
             DMA_TAG_READ_FOR_RETRANSMISSION, data_sdram_position,
             (void *)retransmit_seq_nums[current_dma_pointer], DMA_READ,
             ITEMS_PER_DATA_PACKET * WORD_TO_BYTE_MULTIPLIER)){
         // do nothing when failing, just keep retrying. it'll work at
         // some point
-        //log_info("failing to set off dma transfer!");
+        //log_info("failing to set off DMA transfer!");
     }
 }
 
@@ -341,7 +340,7 @@ void the_dma_complete_read_missing_seqeuence_nums(uint unused, uint unused2){
     }
 }
 
-//! \brief dma complete callback for have read missing seq num data
+//! \brief DMA complete callback for have read missing seq num data
 void dma_complete_writing_missing_seq_to_sdram(uint unused, uint unused2){
     use(unused);
     use(unused2);
@@ -349,7 +348,7 @@ void dma_complete_writing_missing_seq_to_sdram(uint unused, uint unused2){
 }
 
 
-//! \brief dma complete callback for have read missing seq num data
+//! \brief DMA complete callback for have read missing seq num data
 void dma_complete_reading_retransmission_data(uint unused, uint unused2){
     use(unused);
     use(unused2);
@@ -371,7 +370,7 @@ void dma_complete_reading_retransmission_data(uint unused, uint unused2){
 
 
 
-//! sdp reception
+//! SDP reception
 void sdp_reception(uint mailbox, uint port){
     use(port);
     //log_info("packet received");
@@ -418,25 +417,25 @@ void sdp_reception(uint mailbox, uint port){
         // if got all missing packets, start retransmitting them to host
         if(missing_sdp_packets == 0){
         
-            // packets all received, add finish flag for dma stoppage
+            // packets all received, add finish flag for DMA stoppage
             missing_sdp_seq_num_sdram_address[data_written + 1] = END_FLAG;
             data_written += 1;
 
-            //log_info("create dma buffers");
-            // create the dma buffers when needed
+            //log_info("create DMA buffers");
+            // create the DMA buffers when needed
             for (uint32_t i = 0; i < N_DMA_BUFFERS; i++) {
                 retransmit_seq_nums[i] = (uint32_t*) spin1_malloc(
                     ITEMS_PER_DATA_PACKET * sizeof(uint32_t));
             }
 
             //log_info("start retransmission");
-            // start dma off  
+            // start DMA off
             retransmission_dma_read();
         }
     }
 
     else{
-        log_error("received unknown sdp packet");
+        log_error("received unknown SDP packet");
     }
 }
 
@@ -445,9 +444,9 @@ void resume_callback() {
     time = UINT32_MAX;
 }
 
-//! method to make test data in sdram
+//! method to make test data in SDRAM
 void write_data(){
-    // write data into sdram for reading later
+    // write data into SDRAM for reading later
     store_address = (address_t) sark_xalloc(
         sv->sdram_heap, bytes_to_write, 0,
         ALLOC_LOCK + ALLOC_ID + (sark_vec->app_id << 8));
@@ -481,7 +480,7 @@ static bool initialize(uint32_t *timer_period) {
         return false;
     }
 
-    // add callback for dma when dealing with retransmissions
+    // add callback for DMA when dealing with retransmissions
     simulation_dma_transfer_done_callback_on(
         DMA_TAG_READ_FOR_RETRANSMISSION,
         the_dma_complete_read_missing_seqeuence_nums);
@@ -504,7 +503,7 @@ static bool initialize(uint32_t *timer_period) {
             ITEMS_PER_DATA_PACKET * sizeof(uint32_t));
     }
 
-    // flags needed for sdp message to go via ethernet
+    // flags needed for SDP message to go via ethernet
     my_msg.tag = 1;                    // IPTag 1
     my_msg.dest_port = PORT_ETH;       // Ethernet
     my_msg.dest_addr = sv->eth_addr;   // Nearest Ethernet chip
@@ -521,7 +520,7 @@ static bool initialize(uint32_t *timer_period) {
 void c_main() {
 
     uint32_t timer_period;
-    log_info("starting sdram reader and writer\n");
+    log_info("starting SDRAM reader and writer\n");
 
     // initialise the model
     if (!initialize(&timer_period)) {
@@ -531,10 +530,10 @@ void c_main() {
     // write data
     write_data();
 
-    // set up sdp callback
+    // set up SDP callback
     simulation_sdp_callback_on(SDP_PORT_FOR_SDP_PACKETS, sdp_reception);
 
-    // set up the dma complete callbacks per tag
+    // set up the DMA complete callbacks per tag
     simulation_dma_transfer_done_callback_on(
         DMA_TAG_READ_FOR_TRANSMISSION,
         dma_complete_reading_for_original_transmission);

@@ -41,7 +41,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
         global CONFIG_FILE_NAME, SPALLOC_CORES
 
-        # dsg algorithm store for user defined algorithms
+        # DSG algorithm store for user defined algorithms
         self._user_dsg_algorithm = dsg_algorithm
 
         # create xml path for where to locate GFE related functions when
@@ -115,7 +115,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
     def run(self, run_time):
 
-        # set up the correct dsg algorithm
+        # set up the correct DSG algorithm
         if self._user_dsg_algorithm is not None:
             self.dsg_algorithm = self._user_dsg_algorithm
 

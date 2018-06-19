@@ -27,7 +27,7 @@ class PacketGathererWithProtocol(
 
     SDRAM_READING_SIZE_IN_BYTES_CONVERTER = 1024 * 1024
     CONFIG_SIZE = 8
-    DATA_PER_FULL_PACKET = 68  # 272 bytes as removed scp header
+    DATA_PER_FULL_PACKET = 68  # 272 bytes as removed SCP header
     DATA_PER_FULL_PACKET_WITH_SEQUENCE_NUM = DATA_PER_FULL_PACKET - 1
     WORD_TO_BYTE_CONVERTER = 4
 
@@ -183,7 +183,7 @@ class PacketGathererWithProtocol(
                 float(length_via_format2) /
                 float(self.DATA_PER_FULL_PACKET - 1)))
 
-        # transmit missing seq as a new sdp packet
+        # transmit missing seq as a new SDP packet
         first = True
         seq_num_offset = 0
         for _packet_count in range(0, n_packets):
@@ -243,7 +243,7 @@ class PacketGathererWithProtocol(
                  seq_num_offset + size_of_data_left_to_transmit])
             seq_num_offset += length_left_in_packet
 
-            # build sdp message
+            # build SDP message
             message = SDPMessage(
                 sdp_header=SDPHeader(
                     destination_chip_x=placement.x,
@@ -425,5 +425,5 @@ class PacketGathererWithProtocol(
 
     @staticmethod
     def _print_packet_num_being_sent(packet_count, n_packets):
-        print("send sdp packet with missing seq nums: {} of {}".format(
+        print("send SDP packet with missing seq nums: {} of {}".format(
             packet_count + 1, n_packets))

@@ -26,7 +26,7 @@ sim.run()
 # get placements for extraction
 placements = sim.placements()
 
-# try getting data via mc transmission
+# try getting data via multicast transmission
 start = None
 end = None
 data = None

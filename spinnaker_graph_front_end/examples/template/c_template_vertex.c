@@ -111,7 +111,7 @@ void resume_callback() {
 static bool initialise_recording() {
     address_t address = data_specification_get_data_address();
 
-    // TODO: Update with the recording region ids
+    // TODO: Update with the recording region IDs
     address_t regions_addresses_to_record = data_specification_get_region(
             RECORDED_DATA, address);
 

@@ -192,7 +192,7 @@ void read_input_buffer(){
 }
 
 void record_state(){
-    //* record my state via sdram
+    //* record my state via SDRAM
     address_t record_region =
         data_specification_get_region(RECORDED_DATA, address);
     uint8_t* record_space_address = (uint8_t*) record_region;
