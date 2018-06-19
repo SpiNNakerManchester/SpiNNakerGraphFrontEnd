@@ -7,7 +7,7 @@ from spinn_utilities.abstract_base import AbstractBase
 @add_metaclass(AbstractBase)
 class AbstractNengoObject(object):
 
-    __slots__ = ["_seed"]
+    #__slots__ = ["_seed"]
 
     def __init__(self, rng):
         self._seed = self._get_seed(rng)

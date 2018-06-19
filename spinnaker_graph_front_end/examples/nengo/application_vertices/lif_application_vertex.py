@@ -2,6 +2,7 @@ import numpy
 
 import nengo
 from nengo import builder as nengo_builder
+from nengo.builder import ensemble
 from nengo.utils import numpy as nengo_numpy
 from spinn_utilities.overrides import overrides
 from spinnaker_graph_front_end.examples.nengo import constants
@@ -65,6 +66,13 @@ class LIFApplicationVertex(
                 constants.DECODER_OUTPUT_FLAG)
             self._is_recording_probeable_variable[
                 constants.DECODER_OUTPUT_FLAG] = False
+
+    @property
+    def constraints(self):
+        return []
+
+    def add_constraint(self, constraint):
+        pass
 
     @property
     def eval_points(self):
@@ -137,8 +145,8 @@ class LIFApplicationVertex(
 
         # Get correct sample function (seems dists.get_samples not in nengo
         # dists in some versions, so has to be a if / else)
-        if hasattr(nengo_ensemble, 'sample'):
-            sample_function = nengo_ensemble.sample
+        if hasattr(ensemble, 'sample'):
+            sample_function = ensemble.sample
         else:
             sample_function = nengo.dists.get_samples
 

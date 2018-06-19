@@ -158,3 +158,11 @@ class InterposerApplicationVertex(AbstractNengoApplicationVertex):
             ]
 
         return self.cores
+
+
+    def add_constraint(self, constraint):
+        pass
+
+    @property
+    def constraints(self):
+        pass

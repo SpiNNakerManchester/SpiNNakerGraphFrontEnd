@@ -66,5 +66,5 @@ class NengoPartitioner(object):
             elif not isinstance(machine_vertex_sink, AcceptsMulticastSignals):
                 raise NotAbleToBeConnectedToAsADestination(
                     "The vertex {} is not meant to receive connections. But "
-                    "it reiceved a connection from {}".format(
+                    "it received a connection from {}".format(
                         machine_vertex_sink, edge))

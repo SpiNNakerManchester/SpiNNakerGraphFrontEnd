@@ -25,7 +25,7 @@ class ConnectionOutgoingPartition(
         "transmission_params={}, reception_params={}, latching_required={}," \
         "weight={}, source_output_port={}, destination_input_port={}, seed={})"
 
-    def __init__(self, rng, identifier):
+    def __init__(self, rng, identifier, pre_vertex):
         OutgoingEdgePartition.__init__(
             self, identifier=identifier,
             allowed_edge_types=[
@@ -33,10 +33,11 @@ class ConnectionOutgoingPartition(
         AbstractConnectionApplicationDataHolder.__init__(self)
         AbstractNengoObject.__init__(self, rng=rng)
         self._outgoing_edges_destinations = list()
+        self._pre_vertex = pre_vertex
 
     @overrides(OutgoingEdgePartition.add_edge)
     def add_edge(self, edge):
-        OutgoingEdgePartition.add_edge(edge)
+        super(OutgoingEdgePartition, self).add_edge(edge)
         self._outgoing_edges_destinations.append(edge.post_vertex)
 
     @property

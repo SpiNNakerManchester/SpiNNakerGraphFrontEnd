@@ -1,5 +1,6 @@
 from enum import Enum
 
+from pacman.executor.injection_decorator import inject
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, SDRAMResource, \
     CPUCyclesPerTickResource, DTCMResource
@@ -33,7 +34,7 @@ class ValueSinkMachineVertex(
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
-               ('SLICE_DATA', 1)
+               ('SLICE_DATA', 1),
                ('FILTERS', 2),
                ('FILTER_ROUTING', 3),
                ('RECORDING', 4)])
@@ -99,7 +100,10 @@ class ValueSinkMachineVertex(
         return ExecutableType.USES_SIMULATION_INTERFACE
 
     @property
-    @overrides(MachineVertex.resources_required, )
+    @inject({"n_machine_time_steps": "TotalMachineTimeSteps"})
+    @overrides(
+        MachineVertex.resources_required,
+        additional_arguments=["n_machine_time_steps"])
     def resources_required(self, n_machine_time_steps):
         container = ResourceContainer(
             sdram=SDRAMResource(

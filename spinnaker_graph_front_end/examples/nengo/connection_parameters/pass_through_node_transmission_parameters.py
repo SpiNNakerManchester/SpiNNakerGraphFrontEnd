@@ -3,8 +3,8 @@ from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     abstract_transmission_parameters import AbstractTransmissionParameters
 from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     transmission_parameters_impl import TransmissionParametersImpl
-from spinnaker_graph_front_end.examples.nengo.utility_objects.parameter_transform import \
-    ParameterTransform
+from spinnaker_graph_front_end.examples.nengo.utility_objects.\
+    parameter_transform import ParameterTransform
 
 
 class PassthroughNodeTransmissionParameters(

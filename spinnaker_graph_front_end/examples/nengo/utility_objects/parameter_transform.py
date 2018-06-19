@@ -38,6 +38,22 @@ class ParameterTransform(object):
         self._transform = numpy.array(transform, order='C')
         self._transform.flags[self.FLAGS_NAME] = False
 
+    @property
+    def size_in(self):
+        return self._size_in
+
+    @property
+    def size_out(self):
+        return self._size_out
+
+    @property
+    def slice_in(self):
+        return self._slice_in
+
+    @property
+    def slice_out(self):
+        return self._slice_out
+
     @staticmethod
     def _get_slice_as_ndarray(sl, size):
         """Return a slice as a read-only Numpy array."""

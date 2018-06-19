@@ -10,6 +10,22 @@ class TransmissionParametersImpl(object):
         # Store the transform
         self._transform = transform
 
+    @property
+    def size_in(self):
+        return self._transform.size_in
+
+    @property
+    def size_out(self):
+        return self._transform.size_out
+
+    @property
+    def slice_in(self):
+        return self._transform.slice_in
+
+    @property
+    def slice_out(self):
+        return self._transform.slice_out
+
     def __ne__(self, other):
         return not self == other
 

@@ -2,7 +2,6 @@ import threading
 
 import numpy
 
-import nengo
 from spinn_utilities.overrides import overrides
 from spinnaker_graph_front_end.examples.nengo.\
     abstracts.abstract_nengo_application_vertex import \
@@ -16,7 +15,7 @@ from spinnaker_graph_front_end.examples.nengo.\
 
 
 class SDPTransmitterApplicationVertex(
-        AbstractNengoApplicationVertex, nengo.Node, NengoLiveInputInterface):
+        AbstractNengoApplicationVertex, NengoLiveInputInterface):
     """
     LPG equiv vertex (but includes filtering and some routing stuff)
     """
@@ -33,7 +32,6 @@ class SDPTransmitterApplicationVertex(
     ]
 
     def __init__(self, size_in, label, rng):
-        nengo.Node.__init__(self)
         AbstractNengoApplicationVertex.__init__(self, label=label, rng=rng)
         NengoLiveInputInterface.__init__(self)
         self._size_in = size_in
@@ -61,10 +59,9 @@ class SDPTransmitterApplicationVertex(
         """Create vertices that will simulate the SDPTransmitter."""
         return SDPTransmitterMachineVertex(self._size_in)
 
-    @overrides(nengo.Node.__setstate__)
-    def __setstate__(self, state):
-        raise NotImplementedError("Nengo objects do not support pickling")
+    def add_constraint(self, constraint):
+        pass
 
-    @overrides(nengo.Node.__getstate__)
-    def __getstate__(self):
-        raise NotImplementedError("Nengo objects do not support pickling")
+    @property
+    def constraints(self):
+        pass

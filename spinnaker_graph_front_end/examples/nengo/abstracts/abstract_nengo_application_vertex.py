@@ -4,20 +4,22 @@ from pacman.model.graphs import AbstractVertex
 from pacman.model.graphs.common import ConstrainedObject
 from spinn_utilities.abstract_base import AbstractBase, abstractmethod
 from spinn_utilities.overrides import overrides
-from spinnaker_graph_front_end.examples.nengo.abstracts.abstract_nengo_object import \
-    AbstractNengoObject
+from spinnaker_graph_front_end.examples.nengo.abstracts.\
+    abstract_nengo_object import AbstractNengoObject
 
 
 @add_metaclass(AbstractBase)
 class AbstractNengoApplicationVertex(
-        ConstrainedObject, AbstractVertex, AbstractNengoObject):
+        AbstractNengoObject, AbstractVertex, ConstrainedObject):
 
-    __slots__ = [
+    #__slots__ = [
         # the label of this vertex
-        '_label'
-    ]
+    #    '_label'
+    #]
 
     def __init__(self, label, rng, constraints=None):
+        if constraints is None:
+            constraints = []
         ConstrainedObject.__init__(self, constraints)
         AbstractVertex.__init__(self)
         AbstractNengoObject.__init__(self, rng)

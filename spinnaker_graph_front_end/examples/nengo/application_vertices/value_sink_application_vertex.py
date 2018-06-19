@@ -35,3 +35,10 @@ class ValueSinkApplicationVertex(AbstractNengoApplicationVertex):
 
         # Return the spec
         return vertices
+
+    def add_constraint(self, constraint):
+        pass
+
+    @property
+    def constraints(self):
+        pass

@@ -17,3 +17,16 @@ class PassThroughApplicationVertex(AbstractNengoApplicationVertex):
             "This vertex has not been implemented. Please set the config "
             "param [Node] optimise_utilise_interposers to True to avoid "
             "this error.")
+
+    @property
+    def constraints(self):
+        pass
+
+    def add_constraint(self, constraint):
+        pass
+
+    def __repr__(self):
+        return "pass through node with label = {}".format(self._label)
+
+    def __str__(self):
+        return self.__repr__()

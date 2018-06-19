@@ -19,7 +19,7 @@ ENSEMBLE_INPUT_PORT = Enum(
     names=[('NEURONS', 0),
            ('GLOBAL_INHIBITION', 1),
            ('LEARNT', 2),
-           ('LEANING_RULE', 3)])
+           ('LEARNING_RULE', 3)])
 
 # the max atoms per core are based off matrix sizes. these were
 MAX_ROWS = 64
