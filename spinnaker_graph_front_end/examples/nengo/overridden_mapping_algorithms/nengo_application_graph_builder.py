@@ -131,57 +131,77 @@ class NengoApplicationGraphBuilder(object):
         for nengo_probe in nengo_network.probes:
             self._probe_conversion(
                 nengo_probe, nengo_to_app_graph_map, random_number_generator,
-                app_graph, host_network, decoder_cache, live_io_receivers)
+                app_graph, host_network, decoder_cache, live_io_receivers,
+                nengo_random_number_generator_seed)
 
         return (app_graph, host_network, nengo_to_app_graph_map,
                 random_number_generator)
 
     def _probe_conversion(
             self, nengo_probe, nengo_to_app_graph_map, random_number_generator,
-            app_graph, host_network, decoder_cache, live_io_receivers):
+            app_graph, host_network, decoder_cache, live_io_receivers,
+            nengo_random_number_generator_seed):
 
-        # verify the app vertex it should be going to
-        app_vertex = self._locate_correct_app_vertex_for_probe(
-            nengo_probe, nengo_to_app_graph_map)
+            # verify the app vertex it should be going to
+            app_vertex = self._locate_correct_app_vertex_for_probe(
+                nengo_probe, nengo_to_app_graph_map)
 
-        # to allow some logic, flip recording to new core if requested
-        # either ensemble code cant do it in dtcm, or cpu, or ITCM.
-        # TODO figure out the real logic for this, as this is likely a
-        # TODO major factor in the routing table compression
-        if (isinstance(app_vertex, AbstractProbeable) and
-                app_vertex.can_probe_variable(nengo_probe.attr)):
-            app_vertex.set_probeable_variable(nengo_probe.attr)
-            nengo_to_app_graph_map[nengo_probe] = app_vertex
+            if isinstance(app_vertex, PassThroughApplicationVertex):
+                operator = ValueSinkApplicationVertex(
+                    label="value sink for probe {}".format(nengo_probe.label),
+                    rng=random_number_generator, size_in=nengo_probe.size_in)
+                app_graph.add_vertex(operator)
+                nengo_to_app_graph_map[nengo_probe] = operator
 
-        # if cant be recorded locally by the vertex, check if its one
-        #  of those that can be recorded by a value sink vertex.
-        elif nengo_probe.attr == constants.DECODER_OUTPUT_FLAG:
-
-            # create new vertex and add to probe map.
-            app_vertex = ValueSinkApplicationVertex(
-                rng=random_number_generator,
-                label="Sink vertex for neurons {} for probeable "
-                      "attribute {}".format(app_vertex.label,
-                                            nengo_probe.attr),
-                size_in=nengo_probe.size_in)
-            nengo_to_app_graph_map[nengo_probe] = app_vertex
-            app_graph.add_vertex(app_vertex)
-
-            # build connection and let connection conversion do rest
-            with host_network:
                 nengo_connection = nengo.Connection(
                     nengo_probe.target, nengo_probe,
                     synapse=nengo_probe.synapse,
-                    solver=nengo_probe.solver,
-                    seed=nengo_to_app_graph_map[nengo_probe].seed)
-            self._connection_conversion(
-                nengo_connection, app_graph, nengo_to_app_graph_map,
-                random_number_generator, host_network, decoder_cache,
-                live_io_receivers)
-        else:
-            raise NotProbeableException(
-                "operator {} does not support probing {}".format(
-                    app_vertex, nengo_probe.attr))
+                    seed=nengo_random_number_generator_seed,
+                    add_to_container=False)
+
+                self._connection_conversion(
+                    nengo_connection, app_graph, nengo_to_app_graph_map,
+                    random_number_generator, host_network, decoder_cache,
+                    live_io_receivers)
+            else:
+                # to allow some logic, flip recording to new core if requested
+                # either ensemble code cant do it in dtcm, or cpu, or ITCM.
+                # TODO figure out the real logic for this, as this is likely a
+                # TODO major factor in the routing table compression
+                if (isinstance(app_vertex, AbstractProbeable) and
+                        app_vertex.can_probe_variable(nengo_probe.attr)):
+                    app_vertex.set_probeable_variable(nengo_probe.attr)
+                    nengo_to_app_graph_map[nengo_probe] = app_vertex
+
+                # if cant be recorded locally by the vertex, check if its one
+                #  of those that can be recorded by a value sink vertex.
+                elif nengo_probe.attr == constants.DECODER_OUTPUT_FLAG:
+
+                    # create new vertex and add to probe map.
+                    app_vertex = ValueSinkApplicationVertex(
+                        rng=random_number_generator,
+                        label="Sink vertex for neurons {} for probeable "
+                              "attribute {}".format(app_vertex.label,
+                                                    nengo_probe.attr),
+                        size_in=nengo_probe.size_in)
+                    nengo_to_app_graph_map[nengo_probe] = app_vertex
+                    app_graph.add_vertex(app_vertex)
+
+                    # build connection and let connection conversion do rest
+                    with host_network:
+                        nengo_connection = nengo.Connection(
+                            nengo_probe.target, nengo_probe,
+                            synapse=nengo_probe.synapse,
+                            solver=nengo_probe.solver,
+                            seed=nengo_to_app_graph_map[nengo_probe].seed)
+                    self._connection_conversion(
+                        nengo_connection, app_graph, nengo_to_app_graph_map,
+                        random_number_generator, host_network, decoder_cache,
+                        live_io_receivers)
+                else:
+                    raise NotProbeableException(
+                        "operator {} does not support probing {}".format(
+                            app_vertex, nengo_probe.attr))
 
     @staticmethod
     def _locate_correct_app_vertex_for_probe(
@@ -194,28 +214,35 @@ class NengoApplicationGraphBuilder(object):
         :return: the app vertex considered here
         """
         target_object = None
+
+        target = nengo_probe.target
         # ensure the target is of a nengo object
         if isinstance(nengo_probe.target, nengo.base.ObjView):
+            target = target.obj
 
-            # if the target is an ensemble, get the ensemble's app vert
-            if isinstance(nengo_probe.target.obj, nengo.Ensemble):
-                target_object = nengo_probe.target.obj
 
-            # if the target is a Neurons from an ensemble, backtrack to the
-            # ensemble
-            elif isinstance(nengo_probe.target.obj, nengo.ensemble.Neurons):
-                if isinstance(nengo_probe.target, nengo.base.ObjView):
-                    target_object = nengo_probe.target.obj.ensemble
-                else:
-                    target_object = nengo_probe.target.ensemble
+        # if the target is a Node
+        if isinstance(target, nengo.Node):
+            target_object = nengo_probe.target
 
-            # if the target is a learning rule, locate the ensemble at the
-            # destination.
-            elif isinstance(nengo_probe.target.obj,
-                            nengo.connection.LearningRule):
-                if isinstance(nengo_probe.target.connection.post_obj,
-                              nengo.Ensemble):
-                    target_object = nengo_probe.target.connection.post_obj
+        # if the target is an ensemble, get the ensemble's app vert
+        elif isinstance(target, nengo.Ensemble):
+            target_object = target
+
+        # if the target is a Neurons from an ensemble, backtrack to the
+        # ensemble
+        elif isinstance(target, nengo.ensemble.Neurons):
+            if isinstance(nengo_probe.target, nengo.base.ObjView):
+                target_object = nengo_probe.target.obj.ensemble
+            else:
+                target_object = nengo_probe.target.ensemble
+
+        # if the target is a learning rule, locate the ensemble at the
+        # destination.
+        elif isinstance(target, nengo.connection.LearningRule):
+            if isinstance(nengo_probe.target.connection.post_obj,
+                          nengo.Ensemble):
+                target_object = nengo_probe.target.connection.post_obj
             else:
                 raise NotLocatedProbableClass(
                     "SpiNNaker does not currently support probing '{}' on "

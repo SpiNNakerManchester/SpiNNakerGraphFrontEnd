@@ -121,7 +121,7 @@ class NengoUtiliseInterposers(object):
                 # If the interposer would improve connectivity then add it to
                 # the list of potential interposers.
                 if (mean_fan_in > interposer_fan_in or
-                            mean_fan_out > interposer_fan_out):
+                        mean_fan_out > interposer_fan_out):
                     # Store the potential interposer along with a list of nodes
                     # who receive its output.
                     potential_interposers[(node, outgoing_partition)] = [

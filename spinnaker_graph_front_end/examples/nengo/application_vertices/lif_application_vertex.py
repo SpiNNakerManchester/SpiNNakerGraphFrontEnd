@@ -55,11 +55,11 @@ class LIFApplicationVertex(
 
         self._probeable_variables = [
             constants.RECORD_OUTPUT_FLAG, constants.RECORD_SPIKES_FLAG,
-            constants.RECORD_VOLTAGE_FLAG]
-        self._is_recording_probeable_variable = {
-            constants.RECORD_OUTPUT_FLAG: False,
-            constants.RECORD_SPIKES_FLAG: False,
-            constants.RECORD_VOLTAGE_FLAG: False}
+            constants.RECORD_VOLTAGE_FLAG, constants.SCALED_ENCODERS_FLAG]
+
+        self._is_recording_probeable_variable = dict()
+        for flag in self._probeable_variables:
+            self._is_recording_probeable_variable[flag] = False
 
         if not utilise_extra_core_for_decoded_output_probe:
             self._probeable_variables.append(
