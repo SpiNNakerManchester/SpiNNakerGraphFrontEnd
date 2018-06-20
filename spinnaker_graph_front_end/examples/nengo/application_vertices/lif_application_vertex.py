@@ -31,7 +31,7 @@ class LIFApplicationVertex(
     def __init__(
             self, label, rng, eval_points, encoders, scaled_encoders,
             max_rates, intercepts, gain, bias,
-            utilise_extra_core_for_decoded_output_probe):
+            utilise_extra_core_for_output_types_probe):
         """ constructor for lifs
         
         :param label: label of the vertex
@@ -61,7 +61,7 @@ class LIFApplicationVertex(
         for flag in self._probeable_variables:
             self._is_recording_probeable_variable[flag] = False
 
-        if not utilise_extra_core_for_decoded_output_probe:
+        if not utilise_extra_core_for_output_types_probe:
             self._probeable_variables.append(
                 constants.DECODER_OUTPUT_FLAG)
             self._is_recording_probeable_variable[

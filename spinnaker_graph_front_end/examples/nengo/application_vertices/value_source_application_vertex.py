@@ -20,20 +20,25 @@ class ValueSourceApplicationVertex(
         '_update_period',
         #
         '_recording_of'
+        #
+        '_probeable_variables'
     ]
 
     PROBEABLE_ATTRIBUTES = ['output']
 
     def __init__(
-            self, label, rng, nengo_output_function, size_out, update_period):
+            self, label, rng, nengo_output_function, size_out, update_period,
+            utilise_extra_core_for_output_types_probe):
         AbstractNengoApplicationVertex.__init__(self, label=label, rng=rng)
         self._nengo_output_function = nengo_output_function
         self._size_out = size_out
         self._update_period = update_period
         self._recording_of = dict()
 
-        for attribute in self.PROBEABLE_ATTRIBUTES:
-            self._recording_of[attribute] = False
+        self._probeable_variables = dict()
+        if not utilise_extra_core_for_output_types_probe:
+            for attribute in self.PROBEABLE_ATTRIBUTES:
+                self._recording_of[attribute] = False
 
     @overrides(AbstractNengoApplicationVertex.create_machine_vertices)
     def create_machine_vertices(self):

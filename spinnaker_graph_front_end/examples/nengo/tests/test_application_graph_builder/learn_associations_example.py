@@ -112,7 +112,11 @@ class TestAppGraphBuilder(unittest.TestCase):
             nengo_node_function_of_time_period=None,
             nengo_random_number_generator_seed=None,
             decoder_cache=NoDecoderCache(),
-            utilise_extra_core_for_decoded_output_probe=True)
+            utilise_extra_core_for_output_types_probe=True)
+
+        print "nengo_to_operator map contains:"
+        for nengo_obj in nengo_to_app_graph_map:
+            print "{}:{}".format(nengo_obj, nengo_to_app_graph_map[nengo_obj])
 
         print(app_graph, host_network, nengo_to_app_graph_map,
               random_number_generator)

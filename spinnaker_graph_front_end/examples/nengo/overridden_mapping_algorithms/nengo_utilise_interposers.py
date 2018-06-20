@@ -100,33 +100,33 @@ class NengoUtiliseInterposers(object):
             # of the interposer.
             potential_interposers = dict()
             for node, outgoing_partition, sink_objects in possible_interposers:
-                transmission_parameters = \
-                    outgoing_partition.transmission_parameters
+                for transmission_parameters in \
+                        outgoing_partition.transmission_parameters:
 
-                # Determine if the interposer connects to anything
-                if not self._connects_to_non_pass_through_node(
-                        sink_objects, application_graph):
-                    continue
+                    # Determine if the interposer connects to anything
+                    if not self._connects_to_non_pass_through_node(
+                            sink_objects, application_graph):
+                        continue
 
-                # For each connection look at the fan-out and fan-in vs the
-                # cost of the interposer.
-                trans = transmission_parameters.full_transform(False, False)
-                mean_fan_in = numpy.mean(numpy.sum(trans != 0.0, axis=0))
-                mean_fan_out = numpy.mean(numpy.sum(trans != 0.0, axis=1))
-                interposer_fan_in = numpy.ceil(
-                    float(trans.shape[1]) / float(constants.MAX_COLUMNS))
-                interposer_fan_out = numpy.ceil(
-                    float(trans.shape[0]) / float(constants.MAX_ROWS))
+                    # For each connection look at the fan-out and fan-in vs the
+                    # cost of the interposer.
+                    trans = transmission_parameters.full_transform(False, False)
+                    mean_fan_in = numpy.mean(numpy.sum(trans != 0.0, axis=0))
+                    mean_fan_out = numpy.mean(numpy.sum(trans != 0.0, axis=1))
+                    interposer_fan_in = numpy.ceil(
+                        float(trans.shape[1]) / float(constants.MAX_COLUMNS))
+                    interposer_fan_out = numpy.ceil(
+                        float(trans.shape[0]) / float(constants.MAX_ROWS))
 
-                # If the interposer would improve connectivity then add it to
-                # the list of potential interposers.
-                if (mean_fan_in > interposer_fan_in or
-                        mean_fan_out > interposer_fan_out):
-                    # Store the potential interposer along with a list of nodes
-                    # who receive its output.
-                    potential_interposers[(node, outgoing_partition)] = [
-                        s for s in sink_objects if isinstance(
-                            s, PassThroughApplicationVertex)]
+                    # If the interposer would improve connectivity then add it
+                    #  to the list of potential interposers.
+                    if (mean_fan_in > interposer_fan_in or
+                            mean_fan_out > interposer_fan_out):
+                        # Store the potential interposer along with a list of
+                        #  nodes who receive its output.
+                        potential_interposers[(node, outgoing_partition)] = [
+                            s for s in sink_objects if isinstance(
+                                s, PassThroughApplicationVertex)]
 
             # Get the set of potential interposers whose input is independent
             # of the output of any other interposer.
@@ -359,23 +359,30 @@ class NengoUtiliseInterposers(object):
                     # connection to the new connection map.
                     # create new partition for channel data holder
                     new_outgoing_edge_partition = ConnectionOutgoingPartition(
-                        rng=random_number_generator,
+                        rng=random_number_generator, pre_vertex=source_vertex,
                         identifier=outgoing_partition.identifer)
                     interposer_application_graph.add_outgoing_edge_partition(
                         new_outgoing_edge_partition)
                     interposer_application_graph.add_edge(
                         ApplicationEdge(source_vertex, interposer),
                         outgoing_partition.identifer)
-                    new_outgoing_edge_partition.set_all_parameters(
-                        transmission_params=(
-                            outgoing_partition.transmission_params),
-                        reception_params=(
-                            outgoing_partition.reception_params),
-                        latching_required=(
-                            outgoing_partition.latching_required),
-                        weight=outgoing_partition.weight,
-                        source_output_port=source_port,
-                        destination_input_port=constants.INPUT_PORT.STARNDARD)
+
+                    # update all parameters
+                    for (transmission_params, reception_params,
+                            latching_required, weight) in zip(
+                                outgoing_partition.transmission_params,
+                                outgoing_partition.reception_params,
+                                outgoing_partition.latching_required,
+                                outgoing_partition.weight):
+
+                        new_outgoing_edge_partition.add_all_parameters(
+                            transmission_params=transmission_params,
+                            reception_params=reception_params,
+                            latching_required=latching_required,
+                            weight=weight,
+                            source_output_port=source_port,
+                            destination_input_port=(
+                                constants.INPUT_PORT.STARNDARD))
 
                     # Mark the interposer as reached
                     used_interposers.add(
@@ -452,7 +459,7 @@ class NengoUtiliseInterposers(object):
                         if self._connects_to_non_pass_through_node(
                                 sink_operators, application_graph):
                             return True
-        # Otherwise return false to indicate that a non-passthrough node object
+        # Otherwise return false to indicate that a non-pass through node object
         # is never reached.
         return False
 

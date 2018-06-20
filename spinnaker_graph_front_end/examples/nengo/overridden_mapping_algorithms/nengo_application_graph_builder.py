@@ -79,7 +79,7 @@ class NengoApplicationGraphBuilder(object):
             self, nengo_network, extra_model_converters, machine_time_step,
             nengo_node_function_of_time, nengo_node_function_of_time_period,
             nengo_random_number_generator_seed, decoder_cache,
-            utilise_extra_core_for_decoded_output_probe):
+            utilise_extra_core_for_output_types_probe):
 
         # build the high level graph (operator level)
 
@@ -107,7 +107,7 @@ class NengoApplicationGraphBuilder(object):
             self._ensemble_conversion(
                 nengo_ensemble, extra_model_converters,
                 random_number_generator,
-                utilise_extra_core_for_decoded_output_probe,
+                utilise_extra_core_for_output_types_probe,
                 app_graph, nengo_to_app_graph_map)
 
         # convert from nodes to either pass through nodes or sources.
@@ -116,7 +116,8 @@ class NengoApplicationGraphBuilder(object):
                 nengo_node, random_number_generator, machine_time_step,
                 nengo_node_function_of_time,
                 nengo_node_function_of_time_period,
-                host_network, app_graph, nengo_to_app_graph_map)
+                host_network, app_graph, nengo_to_app_graph_map,
+                utilise_extra_core_for_output_types_probe)
 
         # convert connections into edges with specific data elements
         live_io_receivers = dict()
@@ -175,7 +176,8 @@ class NengoApplicationGraphBuilder(object):
 
                 # if cant be recorded locally by the vertex, check if its one
                 #  of those that can be recorded by a value sink vertex.
-                elif nengo_probe.attr == constants.DECODER_OUTPUT_FLAG:
+                elif (nengo_probe.attr == constants.DECODER_OUTPUT_FLAG or
+                      nengo_probe.attr == constants.RECORD_OUTPUT_FLAG):
 
                     # create new vertex and add to probe map.
                     app_vertex = ValueSinkApplicationVertex(
@@ -213,13 +215,11 @@ class NengoApplicationGraphBuilder(object):
         verts
         :return: the app vertex considered here
         """
-        target_object = None
 
-        target = nengo_probe.target
         # ensure the target is of a nengo object
+        target = nengo_probe.target
         if isinstance(nengo_probe.target, nengo.base.ObjView):
             target = target.obj
-
 
         # if the target is a Node
         if isinstance(target, nengo.Node):
@@ -246,7 +246,9 @@ class NengoApplicationGraphBuilder(object):
             else:
                 raise NotLocatedProbableClass(
                     "SpiNNaker does not currently support probing '{}' on "
-                    "'{}'".format(nengo_probe.attr, nengo_probe.target))
+                    "'{}'".format(
+                        nengo_probe.attr, nengo_probe.target.
+                        learning_rule_type.__class__.__name__))
         else:
             target_object = nengo_probe.target
 
@@ -262,15 +264,15 @@ class NengoApplicationGraphBuilder(object):
     @staticmethod
     def _ensemble_conversion(
             nengo_ensemble, extra_model_converters, random_number_generator,
-            utilise_extra_core_for_decoded_output_probe, app_graph,
+            utilise_extra_core_for_output_types_probe, app_graph,
             nengo_to_app_graph_map):
         if isinstance(nengo_ensemble.neuron_type, nengo.neurons.LIF):
             operator = LIFApplicationVertex(
                 label="LIF neurons for ensemble {}".format(
                     nengo_ensemble.label),
                 rng=random_number_generator,
-                utilise_extra_core_for_decoded_output_probe=
-                utilise_extra_core_for_decoded_output_probe,
+                utilise_extra_core_for_output_types_probe=
+                utilise_extra_core_for_output_types_probe,
                 **LIFApplicationVertex.generate_parameters_from_ensemble(
                     nengo_ensemble, random_number_generator))
         elif nengo_ensemble.neuron_type in extra_model_converters:
@@ -289,11 +291,12 @@ class NengoApplicationGraphBuilder(object):
     def _node_conversion(
             nengo_node, random_number_generator, machine_time_step,
             nengo_node_function_of_time, nengo_node_function_of_time_period,
-            host_network, app_graph, nengo_to_app_graph_map):
+            host_network, app_graph, nengo_to_app_graph_map, 
+            utilise_extra_core_for_output_types_probe):
 
         # ????? no idea what the size in has to do with it
         function_of_time = nengo_node.size_in == 0 and (
-            not callable(nengo_node.output) or not nengo_node_function_of_time)
+            not callable(nengo_node.output) or nengo_node_function_of_time)
 
         if nengo_node.output is None:
             # If the Node is a pass through Node then create a new placeholder
@@ -319,17 +322,19 @@ class NengoApplicationGraphBuilder(object):
                 rng=random_number_generator,
                 nengo_output_function=nengo_node.output,
                 size_out=nengo_node.size_out,
-                update_period=period)
+                update_period=period, 
+                utilise_extra_core_for_output_types_probe=(
+                    utilise_extra_core_for_output_types_probe))
         else:  # not a function of time or a pass through node, so must be a
             # host based node, needs with wrapper, as the network assumes
             with host_network:
                 if nengo_node not in host_network:
                     host_network.add(nengo_node)
-            operator = nengo_node
+            operator = None
 
         # update objects
         # only add to the app graph if it'll run on SpiNNaker.
-        if operator != nengo_node:
+        if operator is not None and operator != nengo_node:
             app_graph.add_vertex(operator)
 
         # add to mapping. May point to itself if host based
@@ -612,6 +617,7 @@ class NengoApplicationGraphBuilder(object):
 
                 # update records
                 live_io_receivers[nengo_connection.pre_obj] = operator
+                nengo_to_app_graph_map[nengo_connection.pre_obj] = operator
                 app_graph.add_vertex(operator)
             else:
                 operator = live_io_receivers[nengo_connection.pre_obj]
