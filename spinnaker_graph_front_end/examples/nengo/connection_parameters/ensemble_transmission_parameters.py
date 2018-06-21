@@ -46,10 +46,19 @@ class EnsembleTransmissionParameters(
         # Store the learning rule
         self._learning_rule = learning_rule
 
+    @property
+    def decoders(self):
+        return self._decoders
+
+    @property
+    def learning_rule(self):
+        return self._learning_rule
+
     @overrides(TransmissionParametersImpl.__eq__)
     def __eq__(self, other):
-        # Two connection_parameters are equal only if they are of the same type, both have
-        # no learning rule and are equivalent in all other fields.
+        # Two connection_parameters are equal only if they are of the same
+        #  type, both have no learning rule and are equivalent in all other
+        # fields.
         return (super(EnsembleTransmissionParameters, self).__eq__(other) and
                 numpy.array_equal(self._decoders, other.decoders) and
                 self._learning_rule is None and

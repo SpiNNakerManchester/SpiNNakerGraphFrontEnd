@@ -91,7 +91,8 @@ class NengoApplicationGraphBuilder(object):
         # graph for holding the nengo operators. equiv of a app graph.
         app_graph = Graph(
             allowed_vertex_types=AbstractNengoApplicationVertex,
-            allowed_edge_types=ApplicationEdge,
+            allowed_edge_types=(ApplicationEdge,
+                                ConnectionLearningRuleApplicationEdge),
             allowed_partition_types=AbstractOutgoingEdgePartition,
             label=constants.APP_GRAPH_NAME)
 
@@ -121,11 +122,12 @@ class NengoApplicationGraphBuilder(object):
 
         # convert connections into edges with specific data elements
         live_io_receivers = dict()
+        live_io_senders = dict()
         for nengo_connection in nengo_network.connections:
             self._connection_conversion(
                 nengo_connection, app_graph, nengo_to_app_graph_map,
                 random_number_generator, host_network, decoder_cache,
-                live_io_receivers)
+                live_io_receivers, live_io_senders)
 
         # for each probe, ask the operator if it supports this probe (equiv
         # of recording connection_parameters)
@@ -133,7 +135,7 @@ class NengoApplicationGraphBuilder(object):
             self._probe_conversion(
                 nengo_probe, nengo_to_app_graph_map, random_number_generator,
                 app_graph, host_network, decoder_cache, live_io_receivers,
-                nengo_random_number_generator_seed)
+                nengo_random_number_generator_seed, live_io_senders)
 
         return (app_graph, host_network, nengo_to_app_graph_map,
                 random_number_generator)
@@ -141,7 +143,7 @@ class NengoApplicationGraphBuilder(object):
     def _probe_conversion(
             self, nengo_probe, nengo_to_app_graph_map, random_number_generator,
             app_graph, host_network, decoder_cache, live_io_receivers,
-            nengo_random_number_generator_seed):
+            nengo_random_number_generator_seed, live_io_senders):
 
             # verify the app vertex it should be going to
             app_vertex = self._locate_correct_app_vertex_for_probe(
@@ -163,7 +165,7 @@ class NengoApplicationGraphBuilder(object):
                 self._connection_conversion(
                     nengo_connection, app_graph, nengo_to_app_graph_map,
                     random_number_generator, host_network, decoder_cache,
-                    live_io_receivers)
+                    live_io_receivers, live_io_senders)
             else:
                 # to allow some logic, flip recording to new core if requested
                 # either ensemble code cant do it in dtcm, or cpu, or ITCM.
@@ -199,7 +201,7 @@ class NengoApplicationGraphBuilder(object):
                     self._connection_conversion(
                         nengo_connection, app_graph, nengo_to_app_graph_map,
                         random_number_generator, host_network, decoder_cache,
-                        live_io_receivers)
+                        live_io_receivers, live_io_senders)
                 else:
                     raise NotProbeableException(
                         "operator {} does not support probing {}".format(
@@ -271,8 +273,8 @@ class NengoApplicationGraphBuilder(object):
                 label="LIF neurons for ensemble {}".format(
                     nengo_ensemble.label),
                 rng=random_number_generator,
-                utilise_extra_core_for_output_types_probe=
-                utilise_extra_core_for_output_types_probe,
+                utilise_extra_core_for_output_types_probe=(
+                    utilise_extra_core_for_output_types_probe),
                 **LIFApplicationVertex.generate_parameters_from_ensemble(
                     nengo_ensemble, random_number_generator))
         elif nengo_ensemble.neuron_type in extra_model_converters:
@@ -343,7 +345,7 @@ class NengoApplicationGraphBuilder(object):
     def _connection_conversion(
             self, nengo_connection, app_graph, nengo_to_app_graph_map,
             random_number_generator, host_network, decoder_cache,
-            live_io_receivers):
+            live_io_receivers, live_io_senders):
         """Make a Connection and add a new signal to the Model.
 
         This method will build a connection and construct a new signal which
@@ -358,7 +360,7 @@ class NengoApplicationGraphBuilder(object):
         destination_vertex, destination_input_port = \
             self.get_destination_vertex_and_input_port(
                 nengo_connection, nengo_to_app_graph_map, host_network,
-                random_number_generator, app_graph)
+                random_number_generator, app_graph, live_io_senders)
 
         # build_application_edge
         if source_vertex is not None and destination_vertex is not None:
@@ -404,7 +406,6 @@ class NengoApplicationGraphBuilder(object):
                 transmission_params=transmission_params,
                 reception_params=reception_params,
                 latching_required=latching_required, weight=edge_weight,
-                source_output_port=source_output_port,
                 destination_input_port=destination_input_port)
 
     @staticmethod
@@ -786,7 +787,7 @@ class NengoApplicationGraphBuilder(object):
 
     def get_destination_vertex_and_input_port(
             self, nengo_connection, nengo_to_app_graph_map, host_network,
-            random_number_generator, app_graph):
+            random_number_generator, app_graph, live_io_senders):
         # if a basic nengo object, hand back a basic port
         if isinstance(nengo_connection.post_obj, NengoObject):
             return (nengo_to_app_graph_map[nengo_connection.post_obj],
@@ -808,13 +809,14 @@ class NengoApplicationGraphBuilder(object):
         elif isinstance(nengo_connection.post_obj, nengo.Node):
             return self._get_destination_vertex_and_input_port_for_nengo_node(
                 nengo_connection, nengo_to_app_graph_map,
-                host_network, random_number_generator, app_graph)
+                host_network, random_number_generator, app_graph,
+                live_io_senders=live_io_senders)
 
     @staticmethod
     def _make_signal_parameters(
             source_vertex, destination_vertex, nengo_connection):
-        """Create connection_parameters for a signal using specifications provided by the
-        source and sink.
+        """Create connection_parameters for a signal using specifications 
+        provided by the source and sink.
         """
         if (isinstance(destination_vertex, SDPTransmitterApplicationVertex) or
                 isinstance(source_vertex, SDPTransmitterApplicationVertex)):

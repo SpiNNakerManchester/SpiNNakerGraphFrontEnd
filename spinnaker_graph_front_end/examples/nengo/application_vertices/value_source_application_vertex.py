@@ -40,6 +40,22 @@ class ValueSourceApplicationVertex(
             for attribute in self.PROBEABLE_ATTRIBUTES:
                 self._recording_of[attribute] = False
 
+    @property
+    def nengo_output_function(self):
+        return self._nengo_output_function
+
+    @property
+    def size_out(self):
+        return self._size_out
+
+    @property
+    def update_period(self):
+        return self._update_period
+
+    @property
+    def recording_of(self):
+        return self._recording_of
+
     @overrides(AbstractNengoApplicationVertex.create_machine_vertices)
     def create_machine_vertices(self):
         pass

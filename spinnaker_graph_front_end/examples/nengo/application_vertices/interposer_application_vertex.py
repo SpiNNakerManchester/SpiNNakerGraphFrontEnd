@@ -1,5 +1,6 @@
 import math
 
+from pacman.executor.injection_decorator import inject
 from spinn_utilities.overrides import overrides
 from spinnaker_graph_front_end.examples.nengo import constants
 from spinnaker_graph_front_end.examples.nengo.abstracts.\
@@ -111,12 +112,28 @@ class InterposerApplicationVertex(AbstractNengoApplicationVertex):
         self._groups = tuple(FilterGroup(sl, max_rows) for sl in
                             divide_slice(slice(0, size_in), n_groups))
 
+    @property
+    def size_in(self):
+        return self._size_in
+
+    @property
+    def groups(self):
+        return self._groups
+
     def create_machine_vertices(self):
         pass
 
-    @overrides(AbstractNengoApplicationVertex.create_machine_vertices)
-    def make_vertices(self, output_signals, machine_timestep, filter_region,
-                      filter_routing_region):
+    @inject({"output_signals": "OutputSignals",
+             "machine_time_step": "MachineTimeStep",
+             "filter_region": "Filterregion",
+             "filter_routing_region": "FilterRoutingRegion"})
+    @overrides(AbstractNengoApplicationVertex.create_machine_vertices,
+               additional_arguments=[
+                   "output_signals", "machine_time_step", "filter_region",
+                   "filter_routing_region"])
+    def create_machine_vertices(
+            self, output_signals, machine_time_step, filter_region,
+            filter_routing_region):
         """Partition the transform matrix into groups of rows and assign each
         group of rows to a core for computation.
     

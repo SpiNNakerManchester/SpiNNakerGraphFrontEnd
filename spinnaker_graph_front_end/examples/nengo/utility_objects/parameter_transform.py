@@ -54,6 +54,10 @@ class ParameterTransform(object):
     def slice_out(self):
         return self._slice_out
 
+    @property
+    def transform(self):
+        return self._transform
+
     @staticmethod
     def _get_slice_as_ndarray(sl, size):
         """Return a slice as a read-only Numpy array."""

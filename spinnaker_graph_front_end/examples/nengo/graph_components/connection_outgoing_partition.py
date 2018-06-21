@@ -28,8 +28,8 @@ class ConnectionOutgoingPartition(
     def __init__(self, rng, identifier, pre_vertex):
         OutgoingEdgePartition.__init__(
             self, identifier=identifier,
-            allowed_edge_types=[
-                ApplicationEdge, ConnectionLearningRuleApplicationEdge])
+            allowed_edge_types=(
+                ApplicationEdge, ConnectionLearningRuleApplicationEdge))
         AbstractConnectionApplicationDataHolder.__init__(self)
         AbstractNengoObject.__init__(self, rng=rng)
         self._outgoing_edges_destinations = list()
@@ -37,7 +37,7 @@ class ConnectionOutgoingPartition(
 
     @overrides(OutgoingEdgePartition.add_edge)
     def add_edge(self, edge):
-        super(OutgoingEdgePartition, self).add_edge(edge)
+        super(ConnectionOutgoingPartition, self).add_edge(edge)
         self._outgoing_edges_destinations.append(edge.post_vertex)
 
     @property

@@ -5,8 +5,8 @@ from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
 from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     transmission_parameters_impl import \
     TransmissionParametersImpl
-from spinnaker_graph_front_end.examples.nengo.utility_objects.parameter_transform import \
-    ParameterTransform
+from spinnaker_graph_front_end.examples.nengo.utility_objects.\
+    parameter_transform import ParameterTransform
 
 
 class NodeTransmissionParameters(
@@ -27,11 +27,19 @@ class NodeTransmissionParameters(
         self._pre_slice = pre_slice
         self._parameter_function = parameter_function
 
+    @property
+    def pre_slice(self):
+        return self._pre_slice
+
+    @property
+    def parameter_function(self):
+        return self._parameter_function
+
     @overrides(TransmissionParametersImpl.__eq__)
     def __eq__(self, other):
         return (super(NodeTransmissionParameters, self).__eq__(other) and
                 self._pre_slice == other.pre_slice and
-                self._parameter_function is other.function)
+                self._parameter_function is other.parameter_function)
 
     @overrides(TransmissionParametersImpl.__hash__)
     def __hash__(self):

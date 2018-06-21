@@ -380,7 +380,6 @@ class NengoUtiliseInterposers(object):
                             reception_params=reception_params,
                             latching_required=latching_required,
                             weight=weight,
-                            source_output_port=source_port,
                             destination_input_port=(
                                 constants.INPUT_PORT.STARNDARD))
 

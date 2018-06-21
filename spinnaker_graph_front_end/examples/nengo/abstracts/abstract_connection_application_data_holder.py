@@ -26,17 +26,15 @@ class AbstractConnectionApplicationDataHolder(object):
         self._reception_params = []
         self._latching_required = []
         self._weight = []
-        self._source_output_port = []
         self._destination_input_port = []
 
     def add_all_parameters(
             self, transmission_params, reception_params, latching_required,
-            weight, source_output_port, destination_input_port):
+            weight, destination_input_port):
         self._transmission_params.append(transmission_params)
         self._reception_params.append(reception_params)
         self._latching_required.append(latching_required)
         self._weight.append(weight)
-        self._source_output_port.append(source_output_port)
         self._destination_input_port.append(destination_input_port)
 
     @property
@@ -54,10 +52,6 @@ class AbstractConnectionApplicationDataHolder(object):
     @property
     def weight(self):
         return self._weight
-
-    @property
-    def source_output_port(self):
-        return self._source_output_port
 
     @property
     def destination_input_port(self):

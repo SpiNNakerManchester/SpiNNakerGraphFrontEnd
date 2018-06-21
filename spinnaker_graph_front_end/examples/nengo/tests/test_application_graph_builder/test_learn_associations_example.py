@@ -8,8 +8,13 @@ import nengo
 import unittest
 
 from nengo.cache import NoDecoderCache
+from nengo_spinnaker.builder import Model
+from nengo_spinnaker.node_io import Ethernet
+
 from spinnaker_graph_front_end.examples.nengo.overridden_mapping_algorithms.\
     nengo_application_graph_builder import NengoApplicationGraphBuilder
+from spinnaker_graph_front_end.examples.nengo.tests.test_utilities import \
+    compare_against_the_nengo_spinnaker_and_gfe_impls
 
 
 class TestAppGraphBuilder(unittest.TestCase):
@@ -54,35 +59,35 @@ class TestAppGraphBuilder(unittest.TestCase):
         with model:
 
             # Create the inputs/outputs
-            stim_keys = nengo.Node(output=cycle_array(keys, period, dt),
-                                   label="stim_keys")
-            stim_values = nengo.Node(output=cycle_array(values, period, dt),
-                                     label="stim_values")
-            learning = nengo.Node(output=lambda t: -int(t>=T/2),
-                                  label="learning")
+            stim_keys = nengo.Node(
+                output=cycle_array(keys, period, dt), label="stim_keys")
+            stim_values = nengo.Node(
+                output=cycle_array(values, period, dt), label="stim_values")
+            learning = nengo.Node(
+                output=lambda t: -int(t >= T/2), label="learning")
             recall = nengo.Node(size_in=d_value, label="recall")
 
             # Create the memory
-            memory = nengo.Ensemble(n_neurons, d_key,
-                                    intercepts=[intercept]*n_neurons,
-                                    label="memory")
+            memory = nengo.Ensemble(
+                n_neurons, d_key, intercepts=[intercept]*n_neurons,
+                label="memory")
 
             # Learn the encoders/keys
             voja = nengo.Voja(post_tau=None, learning_rate=5e-2)
-            conn_in = nengo.Connection(stim_keys, memory, synapse=None,
-                                       learning_rule_type=voja)
+            conn_in = nengo.Connection(
+                stim_keys, memory, synapse=None, learning_rule_type=voja)
             nengo.Connection(learning, conn_in.learning_rule, synapse=None)
 
             # Learn the decoders/values, initialized to a null function
-            conn_out = nengo.Connection(memory, recall,
-                                        learning_rule_type=nengo.PES(1e-3),
-                                        function=lambda x: np.zeros(d_value))
+            conn_out = nengo.Connection(
+                memory, recall, learning_rule_type=nengo.PES(1e-3),
+                function=lambda x: np.zeros(d_value))
 
             # Create the error population
             error = nengo.Ensemble(n_neurons, d_value, label="error")
-            nengo.Connection(learning, error.neurons,
-                             transform=[[10.0]]*n_neurons,
-                             synapse=None)
+            nengo.Connection(
+                learning, error.neurons, transform=[[10.0]]*n_neurons,
+                synapse=None)
 
             # Calculate the error and use it to drive the PES rule
             nengo.Connection(stim_values, error, transform=-1, synapse=None)
@@ -97,12 +102,14 @@ class TestAppGraphBuilder(unittest.TestCase):
             p_recall = nengo.Probe(recall, synapse=None, label="p_recall")
 
             if record_encoders:
-                p_encoders = nengo.Probe(conn_in.learning_rule,
-                                         'scaled_encoders', label="p_encoders")
+                p_encoders = nengo.Probe(
+                    conn_in.learning_rule, 'scaled_encoders',
+                    label="p_encoders")
         return model
 
     def test_application_graph_builder(self):
 
+        # build via gfe nengo spinnaker
         network = TestAppGraphBuilder.setUp(self)
         app_graph_builder = NengoApplicationGraphBuilder()
         (app_graph, host_network, nengo_to_app_graph_map,
@@ -113,6 +120,22 @@ class TestAppGraphBuilder(unittest.TestCase):
             nengo_random_number_generator_seed=None,
             decoder_cache=NoDecoderCache(),
             utilise_extra_core_for_output_types_probe=True)
+
+        # build via nengo - spinnaker
+        io_controller = Ethernet()
+        builder_kwargs = io_controller.builder_kwargs
+        nengo_spinnaker_network_builder = Model()
+        nengo_spinnaker_network_builder.build(network, **builder_kwargs)
+        nengo_operators = dict()
+        nengo_operators.update(
+            nengo_spinnaker_network_builder.object_operators)
+        nengo_operators.update(io_controller._sdp_receivers)
+        nengo_operators.update(io_controller._sdp_transmitters)
+
+        compare_against_the_nengo_spinnaker_and_gfe_impls(
+            nengo_operators, nengo_to_app_graph_map,
+            nengo_spinnaker_network_builder.connection_map, app_graph,
+            nengo_spinnaker_network_builder)
 
         print "nengo_to_operator map contains:"
         for nengo_obj in nengo_to_app_graph_map:

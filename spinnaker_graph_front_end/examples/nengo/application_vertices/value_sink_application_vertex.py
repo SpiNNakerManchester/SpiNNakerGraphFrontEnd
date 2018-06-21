@@ -22,6 +22,10 @@ class ValueSinkApplicationVertex(AbstractNengoApplicationVertex):
         AbstractNengoApplicationVertex.__init__(self, label=label, rng=rng)
         self._size_in = size_in
 
+    @property
+    def size_in(self):
+        return self._size_in
+
     @overrides(AbstractNengoApplicationVertex.create_machine_vertices)
     def create_machine_vertices(self):
         # Make sufficient vertices to ensure that each has a size_in of less
