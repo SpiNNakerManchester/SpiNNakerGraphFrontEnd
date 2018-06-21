@@ -1,5 +1,5 @@
 """
-Template for a Graph Front End program on Spinnaker
+Template for a Graph Front End program on SpiNNaker
 """
 
 import spinnaker_graph_front_end as front_end
