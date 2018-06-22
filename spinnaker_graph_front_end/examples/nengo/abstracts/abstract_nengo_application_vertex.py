@@ -14,7 +14,7 @@ class AbstractNengoApplicationVertex(
 
     #__slots__ = [
         # the label of this vertex
-    #    '_label'
+    #    '_label',
     #]
 
     def __init__(self, label, rng, constraints=None):

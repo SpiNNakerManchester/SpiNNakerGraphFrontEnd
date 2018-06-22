@@ -16,11 +16,15 @@ from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.impl import Graph
 from spinnaker_graph_front_end.examples.nengo import constants
 from spinnaker_graph_front_end.examples.nengo.abstracts.\
+    abstract_nengo_object import AbstractNengoObject
+from spinnaker_graph_front_end.examples.nengo.abstracts.\
     abstract_probeable import AbstractProbeable
 from spinnaker_graph_front_end.examples.nengo.application_vertices.\
     value_sink_application_vertex import ValueSinkApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
     connection_outgoing_partition import ConnectionOutgoingPartition
+from spinnaker_graph_front_end.examples.nengo.graph_components.\
+    partition_identifier import PartitionIdentifier
 from spinnaker_graph_front_end.examples.nengo.nengo_implicit_interfaces.\
     nengo_input_node import NengoInputNode
 from spinnaker_graph_front_end.examples.nengo.nengo_implicit_interfaces.\
@@ -70,7 +74,7 @@ logger = logging.getLogger(__name__)
 class NengoApplicationGraphBuilder(object):
     """ Beast of a class, this converts between nengo objects and the 
     SpiNNaker operators that represent the nengo graph. Also produces the 
-    Nengo host graph, and finally produces a map between nengo obejcts and 
+    Nengo host graph, and finally produces a map between nengo objects and 
     the application vertex associated with it
     
     """
@@ -374,39 +378,43 @@ class NengoApplicationGraphBuilder(object):
                 application_edge = ApplicationEdge(
                     pre_vertex=source_vertex, post_vertex=destination_vertex)
 
-            # rectify outgoing partition for data store and add to graphs
-            outgoing_partition = app_graph.\
-                get_outgoing_edge_partition_starting_at_vertex(
-                    source_vertex, source_output_port)
-            if outgoing_partition is None:
-                outgoing_partition = ConnectionOutgoingPartition(
-                    rng=random_number_generator, identifier=source_output_port,
-                    pre_vertex=source_vertex)
-                app_graph.add_outgoing_edge_partition(outgoing_partition)
-            app_graph.add_edge(application_edge, source_output_port)
-            nengo_to_app_graph_map[nengo_connection] = application_edge
+            # Construct the signal connection_parameters
+            latching_required, edge_weight = self._make_signal_parameter(
+                source_vertex, destination_vertex, nengo_connection)
 
             # Get the transmission connection_parameters  for the connection.
-            transmission_params = self._get_transmission_parameters(
-                nengo_connection, outgoing_partition, nengo_to_app_graph_map,
-                decoder_cache)
+            transmission_parameter = self._get_transmission_parameters(
+                nengo_connection,
+                AbstractNengoObject.get_seed(random_number_generator),
+                nengo_to_app_graph_map, decoder_cache)
 
-            transmission_params, destination_input_port = transmission_params.\
+            transmission_parameter, destination_input_port = \
+                transmission_parameter.\
                 update_to_global_inhibition_if_required(destination_input_port)
+
+            # rectify outgoing partition for data store and add to graphs
+            identifier = PartitionIdentifier(
+                source_output_port, transmission_parameter, edge_weight,
+                latching_required)
+            outgoing_partition = app_graph.\
+                get_outgoing_edge_partition_starting_at_vertex(
+                    source_vertex, identifier)
+            if outgoing_partition is None:
+                outgoing_partition = ConnectionOutgoingPartition(
+                    rng=random_number_generator,
+                    identifier=identifier, pre_vertex=source_vertex)
+                app_graph.add_outgoing_edge_partition(outgoing_partition)
+            app_graph.add_edge(application_edge, identifier)
+            nengo_to_app_graph_map[nengo_connection] = application_edge
 
             #  reception connection_parameters for the connection.
             reception_params = self._get_reception_parameters(nengo_connection)
 
-            # Construct the signal connection_parameters
-            latching_required, edge_weight = self._make_signal_parameters(
-                source_vertex, destination_vertex, nengo_connection)
-
             # set the outgoing partition with all the channel's params
-            outgoing_partition.add_all_parameters(
-                transmission_params=transmission_params,
+            outgoing_partition.add_destination_parameter_set(
                 reception_params=reception_params,
-                latching_required=latching_required, weight=edge_weight,
-                destination_input_port=destination_input_port)
+                destination_input_port=destination_input_port,
+                destination_vertex=destination_vertex)
 
     @staticmethod
     def _get_reception_parameters(nengo_connection):
@@ -449,7 +457,7 @@ class NengoApplicationGraphBuilder(object):
                     slice_out=nengo_connection.post_slice))
 
     def _get_transmission_parameters_for_a_nengo_ensemble(
-            self, nengo_connection, outgoing_partition, nengo_to_app_graph_map,
+            self, nengo_connection, partition_seed, nengo_to_app_graph_map,
             decoder_cache):
         # Build the connection_parameters object for a connection from an
         # Ensemble.
@@ -459,8 +467,7 @@ class NengoApplicationGraphBuilder(object):
                 "connections")
 
         # Create a random number generator
-        random_number_generator = numpy.random.RandomState(
-            outgoing_partition.seed)
+        random_number_generator = numpy.random.RandomState(partition_seed)
 
         # Solve for the decoders
         decoders = self._build_decoders_for_nengo_connection(
@@ -547,7 +554,7 @@ class NengoApplicationGraphBuilder(object):
         return decoders
 
     def _get_transmission_parameters(
-            self, nengo_connection, outgoing_partition, nengo_to_app_graph_map,
+            self, nengo_connection, partition_seed, nengo_to_app_graph_map,
             decoder_cache):
         # if a input node of some form. verify if its a transmission node or
         # a pass through node
@@ -557,7 +564,7 @@ class NengoApplicationGraphBuilder(object):
         # if a ensemble
         elif isinstance(nengo_connection.pre_obj, nengo.Ensemble):
             return self._get_transmission_parameters_for_a_nengo_ensemble(
-                nengo_connection, outgoing_partition, nengo_to_app_graph_map,
+                nengo_connection, partition_seed, nengo_to_app_graph_map,
                 decoder_cache)
 
     @staticmethod
@@ -813,13 +820,13 @@ class NengoApplicationGraphBuilder(object):
                 live_io_senders=live_io_senders)
 
     @staticmethod
-    def _make_signal_parameters(
+    def _make_signal_parameter(
             source_vertex, destination_vertex, nengo_connection):
         """Create connection_parameters for a signal using specifications 
         provided by the source and sink.
         """
-        if (isinstance(destination_vertex, SDPTransmitterApplicationVertex) or
-                isinstance(source_vertex, SDPTransmitterApplicationVertex)):
+        if (isinstance(destination_vertex, SDPReceiverApplicationVertex) or
+                isinstance(source_vertex, SDPReceiverApplicationVertex)):
             return True, nengo_connection.post_obj.size_in
         else:
             return False, nengo_connection.post_obj.size_in

@@ -10,10 +10,10 @@ class AbstractNengoObject(object):
     #__slots__ = ["_seed"]
 
     def __init__(self, rng):
-        self._seed = self._get_seed(rng)
+        self._seed = self.get_seed(rng)
 
     @staticmethod
-    def _get_seed(rng):
+    def get_seed(rng):
         seed = rng.randint(nengo_numpy.maxint)
         return seed
 
