@@ -8,8 +8,9 @@ class PassThroughApplicationVertex(AbstractNengoApplicationVertex):
 
     __slots__ = []
 
-    def __init__(self, label, rng):
-        AbstractNengoApplicationVertex.__init__(self, label=label, rng=rng)
+    def __init__(self, label, rng, seed):
+        AbstractNengoApplicationVertex.__init__(
+            self, label=label, rng=rng, seed=seed)
 
     @overrides(AbstractNengoApplicationVertex.create_machine_vertices)
     def create_machine_vertices(self):

@@ -4,6 +4,13 @@ import numpy
 from pacman.model.graphs.common import Slice
 
 
+def get_seed(nengo_object):
+    if hasattr(nengo_object, "seed"):
+        return nengo_object.seed
+    else:
+        return None
+
+
 def convert_numpy_array_to_s16_15(values):
     """Convert the given NumPy array of values into fixed point format."""
     # Scale and cast to appropriate int types

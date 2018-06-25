@@ -9,8 +9,11 @@ class AbstractNengoObject(object):
 
     #__slots__ = ["_seed"]
 
-    def __init__(self, rng):
-        self._seed = self.get_seed(rng)
+    def __init__(self, rng, seed):
+        if seed is None:
+            self._seed = self.get_seed(rng)
+        else:
+            self._seed = seed
 
     @staticmethod
     def get_seed(rng):

@@ -154,7 +154,8 @@ class NengoUtiliseInterposers(object):
                         InterposerApplicationVertex(
                             size_in, rng=random_numer_generator,
                             label="Interposer for node {} in channel {}".format(
-                                node, outgoing_partition))
+                                node, outgoing_partition),
+                            seed=None)
 
             # Insert connections into the new connection map inserting
             # connections to interposers as we go and remembering those to

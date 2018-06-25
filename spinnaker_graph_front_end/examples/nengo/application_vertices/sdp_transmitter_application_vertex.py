@@ -31,8 +31,9 @@ class SDPTransmitterApplicationVertex(
         '_lock'
     ]
 
-    def __init__(self, size_in, label, rng):
-        AbstractNengoApplicationVertex.__init__(self, label=label, rng=rng)
+    def __init__(self, size_in, label, rng, seed):
+        AbstractNengoApplicationVertex.__init__(
+            self, label=label, rng=rng, seed=seed)
         NengoLiveInputInterface.__init__(self)
         self._size_in = size_in
         self._vertex = None

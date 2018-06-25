@@ -29,7 +29,7 @@ class LIFApplicationVertex(
         "_probeable_variables_supported_elsewhere"]
 
     def __init__(
-            self, label, rng, eval_points, encoders, scaled_encoders,
+            self, label, rng, seed, eval_points, encoders, scaled_encoders,
             max_rates, intercepts, gain, bias,
             utilise_extra_core_for_output_types_probe):
         """ constructor for lifs
@@ -44,7 +44,8 @@ class LIFApplicationVertex(
         :param gain: ????
         :param bias: ????
         """
-        AbstractNengoApplicationVertex.__init__(self, label=label, rng=rng)
+        AbstractNengoApplicationVertex.__init__(
+            self, label=label, rng=rng, seed=seed)
         self._eval_points = eval_points
         self._encoders = encoders
         self._scaled_encoders = scaled_encoders

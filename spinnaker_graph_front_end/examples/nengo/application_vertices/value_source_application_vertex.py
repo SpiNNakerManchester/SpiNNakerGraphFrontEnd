@@ -28,8 +28,9 @@ class ValueSourceApplicationVertex(
 
     def __init__(
             self, label, rng, nengo_output_function, size_out, update_period,
-            utilise_extra_core_for_output_types_probe):
-        AbstractNengoApplicationVertex.__init__(self, label=label, rng=rng)
+            utilise_extra_core_for_output_types_probe, seed):
+        AbstractNengoApplicationVertex.__init__(
+            self, label=label, rng=rng, seed=seed)
         self._nengo_output_function = nengo_output_function
         self._size_out = size_out
         self._update_period = update_period

@@ -17,12 +17,12 @@ class AbstractNengoApplicationVertex(
     #    '_label',
     #]
 
-    def __init__(self, label, rng, constraints=None):
+    def __init__(self, label, rng, seed, constraints=None):
         if constraints is None:
             constraints = []
         ConstrainedObject.__init__(self, constraints)
         AbstractVertex.__init__(self)
-        AbstractNengoObject.__init__(self, rng)
+        AbstractNengoObject.__init__(self, rng, seed)
         self._label = label
 
     @property

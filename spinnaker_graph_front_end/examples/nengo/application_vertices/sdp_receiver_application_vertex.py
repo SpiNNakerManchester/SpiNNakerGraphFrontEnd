@@ -24,8 +24,9 @@ class SDPReceiverApplicationVertex(
         "_size_in"
     ]
 
-    def __init__(self, label, rng, size_in):
-        AbstractNengoApplicationVertex.__init__(self, label=label, rng=rng)
+    def __init__(self, label, rng, size_in, seed):
+        AbstractNengoApplicationVertex.__init__(
+            self, label=label, rng=rng, seed=seed)
         NengoLiveOutputInterface.__init__(self)
 
         # Create a mapping of which connection is broadcast by which vertex

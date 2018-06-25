@@ -14,7 +14,8 @@ from nengo.exceptions import BuildError
 from pacman.model.graphs import AbstractOutgoingEdgePartition
 from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.impl import Graph
-from spinnaker_graph_front_end.examples.nengo import constants
+from spinnaker_graph_front_end.examples.nengo import constants, \
+    helpful_functions
 from spinnaker_graph_front_end.examples.nengo.abstracts.\
     abstract_nengo_object import AbstractNengoObject
 from spinnaker_graph_front_end.examples.nengo.abstracts.\
@@ -156,7 +157,8 @@ class NengoApplicationGraphBuilder(object):
             if isinstance(app_vertex, PassThroughApplicationVertex):
                 operator = ValueSinkApplicationVertex(
                     label="value sink for probe {}".format(nengo_probe.label),
-                    rng=random_number_generator, size_in=nengo_probe.size_in)
+                    rng=random_number_generator, size_in=nengo_probe.size_in,
+                    seed=helpful_functions.get_seed(nengo_probe))
                 app_graph.add_vertex(operator)
                 nengo_to_app_graph_map[nengo_probe] = operator
 
@@ -191,7 +193,8 @@ class NengoApplicationGraphBuilder(object):
                         label="Sink vertex for neurons {} for probeable "
                               "attribute {}".format(app_vertex.label,
                                                     nengo_probe.attr),
-                        size_in=nengo_probe.size_in)
+                        size_in=nengo_probe.size_in,
+                        seed=helpful_functions.get_seed(nengo_probe))
                     nengo_to_app_graph_map[nengo_probe] = app_vertex
                     app_graph.add_vertex(app_vertex)
 
@@ -277,6 +280,7 @@ class NengoApplicationGraphBuilder(object):
                 label="LIF neurons for ensemble {}".format(
                     nengo_ensemble.label),
                 rng=random_number_generator,
+                seed=helpful_functions.get_seed(nengo_ensemble),
                 utilise_extra_core_for_output_types_probe=(
                     utilise_extra_core_for_output_types_probe),
                 **LIFApplicationVertex.generate_parameters_from_ensemble(
@@ -308,7 +312,8 @@ class NengoApplicationGraphBuilder(object):
             # If the Node is a pass through Node then create a new placeholder
             # for the pass through node.
             operator = PassThroughApplicationVertex(
-                label=nengo_node.label, rng=random_number_generator)
+                label=nengo_node.label, rng=random_number_generator,
+                seed=helpful_functions.get_seed(nengo_node))
 
         elif function_of_time:
             # If the Node is a function of time then add a new value source for
@@ -330,7 +335,8 @@ class NengoApplicationGraphBuilder(object):
                 size_out=nengo_node.size_out,
                 update_period=period, 
                 utilise_extra_core_for_output_types_probe=(
-                    utilise_extra_core_for_output_types_probe))
+                    utilise_extra_core_for_output_types_probe),
+                seed=helpful_functions.get_seed(nengo_node))
         else:  # not a function of time or a pass through node, so must be a
             # host based node, needs with wrapper, as the network assumes
             with host_network:
@@ -615,7 +621,8 @@ class NengoApplicationGraphBuilder(object):
                     label="sdp receiver app vertex for nengo node {}".format(
                         nengo_connection.pre_obj.label),
                     rng=random_number_generator,
-                    size_in=nengo_connection.pre_obj.size_out)
+                    size_in=nengo_connection.pre_obj.size_out,
+                    seed=helpful_functions.get_seed(nengo_connection.pre_obj))
 
                 # TODO sort out this inhirtance issue.
                 with host_network:
@@ -780,7 +787,8 @@ class NengoApplicationGraphBuilder(object):
                     label="sdp transmitter app vertex for nengo node {}".format(
                         nengo_connection.pre_obj.label),
                     rng=random_number_generator,
-                    size_in=nengo_connection.pre_obj.size_out)
+                    size_in=nengo_connection.pre_obj.size_out,
+                    seed=helpful_functions.get_seed(nengo_connection.post_obj))
 
                 # TODO solve this inheritance issue
                 host_link = NengoInputNode(operator)

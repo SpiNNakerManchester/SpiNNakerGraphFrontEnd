@@ -18,8 +18,9 @@ class ValueSinkApplicationVertex(AbstractNengoApplicationVertex):
 
     MAX_WIDTH = 16
 
-    def __init__(self, label, rng, size_in):
-        AbstractNengoApplicationVertex.__init__(self, label=label, rng=rng)
+    def __init__(self, label, rng, size_in, seed):
+        AbstractNengoApplicationVertex.__init__(
+            self, label=label, rng=rng, seed=seed)
         self._size_in = size_in
 
     @property
