@@ -23,7 +23,7 @@ from spinnaker_graph_front_end.examples.nengo.connection_parameters\
 from spinnaker_graph_front_end.examples.nengo.connection_parameters\
     .pass_through_node_transmission_parameters import \
     PassthroughNodeTransmissionParameters as \
-        GFEPassthroughNodeTransmissionParameters
+    GFEPassthroughNodeTransmissionParameters
 from spinnaker_graph_front_end.examples.nengo import constants
 from spinnaker_graph_front_end.examples.nengo.application_vertices.\
     interposer_application_vertex import \
@@ -244,9 +244,9 @@ def _check_value_sink_app_vertex(nengo_spinnaker_vertex, gfe_nengo_vertex):
 
 def _check_value_source_app_vertex(nengo_spinnaker_vertex, gfe_nengo_vertex):
     return (nengo_spinnaker_vertex.size_out == gfe_nengo_vertex.size_out and
-            nengo_spinnaker_vertex.update_period ==
+            nengo_spinnaker_vertex.period ==
             gfe_nengo_vertex.update_period and
-            nengo_spinnaker_vertex.output ==
+            nengo_spinnaker_vertex.function ==
             gfe_nengo_vertex.nengo_output_function)
 
 def _check_vert(

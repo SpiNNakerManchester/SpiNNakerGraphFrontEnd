@@ -590,7 +590,9 @@ class NengoApplicationGraphBuilder(object):
             nengo_connection, nengo_to_app_graph_map, host_network,
             random_number_generator, app_graph, live_io_receivers):
         if (isinstance(nengo_to_app_graph_map[nengo_connection.pre_obj],
-                       PassThroughApplicationVertex)):
+                       PassThroughApplicationVertex) or
+                isinstance(nengo_to_app_graph_map[nengo_connection.pre_obj],
+                           ValueSourceApplicationVertex)):
             return (nengo_to_app_graph_map[nengo_connection.pre_obj],
                     constants.OUTPUT_PORT.STANDARD)
         elif (nengo_to_app_graph_map[nengo_connection.pre_obj] ==
@@ -625,6 +627,11 @@ class NengoApplicationGraphBuilder(object):
 
                 # update records
                 live_io_receivers[nengo_connection.pre_obj] = operator
+                if (nengo_connection.pre_obj in nengo_to_app_graph_map and
+                        nengo_to_app_graph_map[nengo_connection.pre_obj] is not
+                        None):
+                    raise Exception("ah")
+
                 nengo_to_app_graph_map[nengo_connection.pre_obj] = operator
                 app_graph.add_vertex(operator)
             else:
