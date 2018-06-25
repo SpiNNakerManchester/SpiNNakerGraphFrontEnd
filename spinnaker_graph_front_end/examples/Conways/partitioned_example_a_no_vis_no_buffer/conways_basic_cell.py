@@ -183,11 +183,10 @@ class ConwayBasicCell(
     @property
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
-        (fixed_sdram, per_timestep_sdram, assumed_timesteps) = \
+        (fixed_sdram, per_timestep_sdram) = \
             self._calculate_sdram_requirement()
         return ResourceContainer(
-            sdram=VariableSDRAM(
-                fixed_sdram, per_timestep_sdram, assumed_timesteps),
+            sdram=VariableSDRAM(fixed_sdram, per_timestep_sdram),
             dtcm=DTCMResource(0),
             cpu_cycles=CPUCyclesPerTickResource(0))
 
@@ -195,11 +194,10 @@ class ConwayBasicCell(
     def state(self):
         return self._state
 
-    @inject_items({"n_machine_time_steps": "TotalMachineTimeSteps"})
-    def _calculate_sdram_requirement(self, n_machine_time_steps):
+    def _calculate_sdram_requirement(self):
         return ((SYSTEM_BYTES_REQUIREMENT +
                 self.TRANSMISSION_DATA_SIZE + self.STATE_DATA_SIZE +
-                self.NEIGHBOUR_INITIAL_STATES_SIZE), 4, n_machine_time_steps)
+                self.NEIGHBOUR_INITIAL_STATES_SIZE), 4)
 
     def __repr__(self):
         return self.label
