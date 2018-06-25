@@ -40,7 +40,7 @@ class NengoSimulator(SpiNNaker):
             database_socket_addresses=None, dsg_algorithm=None,
             n_chips_required=None, extra_pre_run_algorithms=None,
             extra_post_run_algorithms=None, decoder_cache=NoDecoderCache(),
-            extra_model_converters=None):
+            extra_model_converters=None, extra_object_params=None):
         """Create a new Simulator with the given network.
         
         :param time_scale: Scaling factor to apply to the simulation, e.g.,\
@@ -64,6 +64,10 @@ class NengoSimulator(SpiNNaker):
         :type extra_post_run_algorithms:
         :param extra_pre_run_algorithms:
         :type extra_pre_run_algorithms:
+        :param extra_object_params: parameters for the nengo objects that are\ 
+            associated with spinnaker related tasks
+        :type extra_object_params: dict of nengo object to dict of params to 
+        values
         :rtype None
         """
         executable_finder = ExecutableFinder()
@@ -96,14 +100,11 @@ class NengoSimulator(SpiNNaker):
         # update the main flow with new algorithms and params
         self.extend_extra_mapping_algorithms(extra_mapping_algorithms)
         self.update_extra_inputs(
-            {'NengoModel': network,
+            {'NengoObjectExtraParams': extra_object_params,
+             'NengoModel': network,
              'NengoDecoderCache': decoder_cache,
              'NengoExtraModelConverters': extra_model_converters,
              "NengoNodeIOSetting": self.config.get("Simulator", "node_io"),
-             "NengoNodeSetAsFunctionOfTime":
-                 self.config.getboolean("Node", "function_of_time"),
-             "NengoNodeSetAsFunctionOfTimePeriod":
-                 self.config.getboolean("Node", "function_of_time_period"),
              "NengoEnsembleProfile":
                  self.config.getboolean("Ensemble", "profile"),
              "NengoEnsembleProfileNumSamples":

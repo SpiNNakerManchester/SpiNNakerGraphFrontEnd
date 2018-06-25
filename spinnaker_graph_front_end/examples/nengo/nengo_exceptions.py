@@ -24,6 +24,13 @@ class NeuronTypeConstructorNotFoundException(NengoException):
     pass
 
 
+class MissingSpecialParameterException(NengoException):
+    """ raised when a vertex expects a special param not provided by nengo but
+    by the simulator and it isnt provided
+    """
+    pass
+
+
 class NotLocatedProbableClass(NengoException):
     """ raised when there's a probe on something that's not an ensemble
     """

@@ -37,6 +37,10 @@ APP_GRAPH_NAME = "nengo_operator_graph"
 INTER_APP_GRAPH_NAME = "nengo_operator_graph_par_way_interposers"
 MACHINE_GRAPH_LABEL = "machine graph"
 
+# extra params that spinnaker supports (unknown why)
+FUNCTION_OF_TIME_PARAM_FLAG = "function_of_time"
+FUNCTION_OF_TIME_PERIOD_PARAM_FLAG = "function_of_time_period"
+
 # sdp ports used by c code, to track with fec sdp ports.
 SDP_PORTS = Enum(
     value="SDP_PORTS_READ_BY_C_CODE",

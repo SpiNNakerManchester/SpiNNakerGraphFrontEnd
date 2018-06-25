@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 
 import numpy
 
@@ -56,7 +57,7 @@ from spinnaker_graph_front_end.examples.nengo.graph_components. \
     ConnectionLearningRuleApplicationEdge
 from spinnaker_graph_front_end.examples.nengo.nengo_exceptions import \
     NeuronTypeConstructorNotFoundException, NotLocatedProbableClass, \
-    NotProbeableException
+    NotProbeableException, MissingSpecialParameterException
 from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     ensemble_transmission_parameters import EnsembleTransmissionParameters
 from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
@@ -82,11 +83,12 @@ class NengoApplicationGraphBuilder(object):
 
     def __call__(
             self, nengo_network, extra_model_converters, machine_time_step,
-            nengo_node_function_of_time, nengo_node_function_of_time_period,
             nengo_random_number_generator_seed, decoder_cache,
-            utilise_extra_core_for_output_types_probe):
+            utilise_extra_core_for_output_types_probe,
+            extra_nengo_object_parameters):
 
-        # build the high level graph (operator level)
+        if extra_nengo_object_parameters is None:
+            extra_nengo_object_parameters = defaultdict(dict)
 
         # start by setting the specific random number generator for all seeds.
         if nengo_random_number_generator_seed is not None:
@@ -120,10 +122,9 @@ class NengoApplicationGraphBuilder(object):
         for nengo_node in nengo_network.nodes:
             self._node_conversion(
                 nengo_node, random_number_generator, machine_time_step,
-                nengo_node_function_of_time,
-                nengo_node_function_of_time_period,
                 host_network, app_graph, nengo_to_app_graph_map,
-                utilise_extra_core_for_output_types_probe)
+                utilise_extra_core_for_output_types_probe,
+                extra_nengo_object_parameters)
 
         # convert connections into edges with specific data elements
         live_io_receivers = dict()
@@ -300,13 +301,19 @@ class NengoApplicationGraphBuilder(object):
     @staticmethod
     def _node_conversion(
             nengo_node, random_number_generator, machine_time_step,
-            nengo_node_function_of_time, nengo_node_function_of_time_period,
             host_network, app_graph, nengo_to_app_graph_map, 
-            utilise_extra_core_for_output_types_probe):
+            utilise_extra_core_for_output_types_probe,
+            extra_nengo_object_parameters):
 
-        # ????? no idea what the size in has to do with it
+        # effects if the spike source repeats every time step
+        node_function_of_time = False
+        if constants.FUNCTION_OF_TIME_PARAM_FLAG in \
+                extra_nengo_object_parameters[nengo_node]:
+            node_function_of_time = extra_nengo_object_parameters[
+                nengo_node][constants.FUNCTION_OF_TIME_PARAM_FLAG]
+
         function_of_time = nengo_node.size_in == 0 and (
-            not callable(nengo_node.output) or nengo_node_function_of_time)
+            not callable(nengo_node.output) or node_function_of_time)
 
         if nengo_node.output is None:
             # If the Node is a pass through Node then create a new placeholder
@@ -322,8 +329,17 @@ class NengoApplicationGraphBuilder(object):
             # time step).
             if callable(nengo_node.output) or isinstance(
                     nengo_node.output, Process):
-
-                period = nengo_node_function_of_time_period
+                if constants.FUNCTION_OF_TIME_PERIOD_PARAM_FLAG in \
+                        extra_nengo_object_parameters[nengo_node]:
+                    period = extra_nengo_object_parameters[nengo_node][
+                        constants.FUNCTION_OF_TIME_PERIOD_PARAM_FLAG]
+                else:
+                    raise MissingSpecialParameterException(
+                        "The {} parameter has not been provided. Please "
+                        "provide it for the node {} within the "
+                        "extra_object_params parameter.".format(
+                            constants.FUNCTION_OF_TIME_PERIOD_PARAM_FLAG,
+                            nengo_node))
             else:
                 period = machine_time_step
 
