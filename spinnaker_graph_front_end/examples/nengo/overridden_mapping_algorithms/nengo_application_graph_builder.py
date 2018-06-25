@@ -334,12 +334,14 @@ class NengoApplicationGraphBuilder(object):
                     period = extra_nengo_object_parameters[nengo_node][
                         constants.FUNCTION_OF_TIME_PERIOD_PARAM_FLAG]
                 else:
-                    raise MissingSpecialParameterException(
+                    logger.warn(
                         "The {} parameter has not been provided. Please "
-                        "provide it for the node {} within the "
-                        "extra_object_params parameter.".format(
+                        "provide it for the node {} with label {} within the "
+                        "extra_object_params parameter. Will use None "
+                        "instead".format(
                             constants.FUNCTION_OF_TIME_PERIOD_PARAM_FLAG,
-                            nengo_node))
+                            nengo_node, nengo_node.label))
+                    period = None
             else:
                 period = machine_time_step
 
@@ -424,6 +426,7 @@ class NengoApplicationGraphBuilder(object):
             if outgoing_partition is None:
                 outgoing_partition = ConnectionOutgoingPartition(
                     rng=random_number_generator,
+                    seed=helpful_functions.get_seed(nengo_connection),
                     identifier=identifier, pre_vertex=source_vertex)
                 app_graph.add_outgoing_edge_partition(outgoing_partition)
             app_graph.add_edge(application_edge, identifier)

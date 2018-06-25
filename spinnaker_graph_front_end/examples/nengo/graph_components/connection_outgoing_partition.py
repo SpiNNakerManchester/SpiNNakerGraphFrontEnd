@@ -29,12 +29,12 @@ class ConnectionOutgoingPartition(OutgoingEdgePartition, AbstractNengoObject):
         "identifier={}, edges={}, constraints={}, label={}, " \
         "reception_params={}, seed={})"
 
-    def __init__(self, rng, identifier, pre_vertex):
+    def __init__(self, rng, identifier, pre_vertex, seed):
         OutgoingEdgePartition.__init__(
             self, identifier=identifier,
             allowed_edge_types=(
                 ApplicationEdge, ConnectionLearningRuleApplicationEdge))
-        AbstractNengoObject.__init__(self, rng=rng)
+        AbstractNengoObject.__init__(self, rng=rng, seed=seed)
         self._outgoing_edges_destinations = list()
         self._pre_vertex = pre_vertex
         self._reception_params = dict()

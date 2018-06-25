@@ -35,10 +35,9 @@ class TestAppGraphBuilder(unittest.TestCase):
         (app_graph, host_network, nengo_to_app_graph_map,
          random_number_generator) = app_graph_builder(
             nengo_network=network, extra_model_converters={},
-            machine_time_step=1.0, nengo_node_function_of_time=False,
-            nengo_node_function_of_time_period=None,
+            machine_time_step=1.0,
             nengo_random_number_generator_seed=1234,
-            decoder_cache=NoDecoderCache(),
+            decoder_cache=NoDecoderCache(), extra_nengo_object_parameters=None,
             utilise_extra_core_for_output_types_probe=True)
 
         # build via nengo - spinnaker
