@@ -110,6 +110,33 @@ class NengoApplicationGraphBuilder(object):
         # mappings between nengo instances and the spinnaker operator graph
         nengo_to_app_graph_map = dict()
 
+        self._build_sub_graph(
+            nengo_network, extra_model_converters, random_number_generator,
+            utilise_extra_core_for_output_types_probe, app_graph,
+            nengo_to_app_graph_map, machine_time_step, host_network,
+            extra_nengo_object_parameters, decoder_cache,
+            nengo_random_number_generator_seed)
+
+        return (app_graph, host_network, nengo_to_app_graph_map,
+                random_number_generator)
+
+    def _build_sub_graph(
+            self, nengo_network, extra_model_converters,
+            random_number_generator,
+            utilise_extra_core_for_output_types_probe,
+            app_graph, nengo_to_app_graph_map, machine_time_step,
+            host_network, extra_nengo_object_parameters, decoder_cache,
+            nengo_random_number_generator_seed):
+
+        for nengo_sub_network in nengo_network.networks:
+            self._build_sub_graph(
+                nengo_sub_network, extra_model_converters,
+                random_number_generator,
+                utilise_extra_core_for_output_types_probe,
+                app_graph, nengo_to_app_graph_map, machine_time_step,
+                host_network, extra_nengo_object_parameters, decoder_cache,
+                nengo_random_number_generator_seed)
+
         # convert from ensembles to neuron model operators
         for nengo_ensemble in nengo_network.ensembles:
             self._ensemble_conversion(
