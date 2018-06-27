@@ -90,3 +90,4 @@ def create_model():
                 conn_in.learning_rule, 'scaled_encoders',
                 label="p_encoders")
     return model
+

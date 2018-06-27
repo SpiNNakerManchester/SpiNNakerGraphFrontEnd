@@ -219,7 +219,7 @@ class NengoApplicationGraphBuilder(object):
                     app_vertex = ValueSinkApplicationVertex(
                         rng=random_number_generator,
                         label="Sink vertex for neurons {} for probeable "
-                              "attribute {}".format(app_vertex.label,
+                              "attribute {}".format(nengo_probe.label,
                                                     nengo_probe.attr),
                         size_in=nengo_probe.size_in,
                         seed=helpful_functions.get_seed(nengo_probe))
@@ -370,7 +370,8 @@ class NengoApplicationGraphBuilder(object):
                             nengo_node, nengo_node.label))
                     period = None
             else:
-                period = machine_time_step
+                period = (machine_time_step /
+                          constants.CONVERT_MILLISECONDS_TO_SECONDS)
 
             operator = ValueSourceApplicationVertex(
                 label="value_source_vertex for node {}".format(
@@ -439,9 +440,13 @@ class NengoApplicationGraphBuilder(object):
                 AbstractNengoObject.get_seed(random_number_generator),
                 nengo_to_app_graph_map, decoder_cache)
 
-            transmission_parameter, destination_input_port = \
-                transmission_parameter.\
-                update_to_global_inhibition_if_required(destination_input_port)
+            # Swap out the connection for a global inhibition connection if
+            # possible.
+            if transmission_parameter is not None:
+                transmission_parameter, destination_input_port = \
+                    transmission_parameter.\
+                    update_to_global_inhibition_if_required(
+                        destination_input_port)
 
             # rectify outgoing partition for data store and add to graphs
             identifier = PartitionIdentifier(
@@ -618,6 +623,12 @@ class NengoApplicationGraphBuilder(object):
             return self._get_transmission_parameters_for_a_nengo_ensemble(
                 nengo_connection, partition_seed, nengo_to_app_graph_map,
                 decoder_cache)
+        elif isinstance(nengo_connection.pre_obj, nengo.ensemble.Neurons):
+            return None
+        else:
+            raise Exception("not recognised connection pre object {}.".format(
+                nengo_connection.pre_obj))
+
 
     @staticmethod
     def _get_source_vertex_and_output_port_for_nengo_ensemble(

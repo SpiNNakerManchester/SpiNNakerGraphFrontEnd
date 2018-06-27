@@ -59,7 +59,10 @@ class ConnectionOutgoingPartition(OutgoingEdgePartition, AbstractNengoObject):
             (destination_vertex, destination_input_port)] = reception_params
 
     def get_reception_params_for_vertex(self, destination_vertex, port_num):
-        return self._reception_params[(destination_vertex, port_num)]
+        if (destination_vertex, port_num) in self._reception_params:
+            return self._reception_params[(destination_vertex, port_num)]
+        else:
+            return None
 
     def __repr__(self):
         edges = ""

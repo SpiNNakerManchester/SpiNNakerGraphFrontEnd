@@ -9,6 +9,8 @@ class PartitionIdentifier(object):
         '_latching_required'
     ]
 
+    STRING_OUTPUT = "{}:{}:{}:{}"
+
     def __init__(
             self, source_port, transmission_parameter, weight,
             latching_required):
@@ -49,3 +51,11 @@ class PartitionIdentifier(object):
         return hash(
             (self._transmission_parameter, self._source_port,
              self._weight, self._latching_required))
+
+    def __repr__(self):
+        return self.STRING_OUTPUT.format(
+            self._source_port, self._transmission_parameter,
+            self._weight, self._latching_required)
+
+    def __str__(self):
+        return self.__repr__()

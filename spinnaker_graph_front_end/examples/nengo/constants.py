@@ -24,6 +24,7 @@ ENSEMBLE_INPUT_PORT = Enum(
 # the max atoms per core are based off matrix sizes. these were
 MAX_ROWS = 64
 MAX_COLUMNS = 128
+CONVERT_MILLISECONDS_TO_SECONDS = 1000
 
 # flag constants used around the codebase
 DECODERS_FLAG = "decoders"

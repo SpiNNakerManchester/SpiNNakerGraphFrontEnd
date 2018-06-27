@@ -1,6 +1,8 @@
+from collections import defaultdict
+
 import numpy
 
-from nengo.learning_rules import LearningRuleType
+from nengo.connection import LearningRule
 from nengo_spinnaker.builder.node import InputNode, OutputNode
 
 from nengo_spinnaker.builder.ports import OutputPort, InputPort, \
@@ -198,7 +200,7 @@ def _compare_nengo_spinnaker_and_gfe_enums(nengo_enum, gfe_enum):
     elif (isinstance(nengo_enum, EnsembleInputPort) and isinstance(
             gfe_enum, constants.ENSEMBLE_INPUT_PORT)):
         return nengo_enum.value == gfe_enum.value
-    elif isinstance(nengo_enum, LearningRuleType):
+    elif isinstance(nengo_enum, LearningRule):
         return (isinstance(gfe_enum, constants.ENSEMBLE_INPUT_PORT) and
                 gfe_enum.value ==
                 constants.ENSEMBLE_INPUT_PORT.LEARNING_RULE.value)
@@ -243,11 +245,20 @@ def _check_value_sink_app_vertex(nengo_spinnaker_vertex, gfe_nengo_vertex):
 
 
 def _check_value_source_app_vertex(nengo_spinnaker_vertex, gfe_nengo_vertex):
-    return (nengo_spinnaker_vertex.size_out == gfe_nengo_vertex.size_out and
-            nengo_spinnaker_vertex.period ==
-            gfe_nengo_vertex.update_period and
-            nengo_spinnaker_vertex.function ==
-            gfe_nengo_vertex.nengo_output_function)
+    basic_values = (
+        nengo_spinnaker_vertex.size_out == gfe_nengo_vertex.size_out and
+        nengo_spinnaker_vertex.period == gfe_nengo_vertex.update_period)
+    output_function_valid = False
+    if isinstance(nengo_spinnaker_vertex.function, (numpy.ndarray,
+                                                    numpy.generic)):
+        output_function_valid = numpy.all(numpy.in1d(
+            nengo_spinnaker_vertex.function,
+            gfe_nengo_vertex.nengo_output_function))
+    else:
+        if (nengo_spinnaker_vertex.function ==
+                gfe_nengo_vertex.nengo_output_function):
+            output_function_valid = True
+    return basic_values and output_function_valid
 
 def _check_vert(
         nengo_spinnaker_vertex, gfe_nengo_vertex, nengo_obj,
@@ -303,72 +314,9 @@ def _test_graph_vertices(
             return False
     return True
 
-
-def _check_rest_of_edge_params(
-        nengo_reception_params, nengo_latching_required, nengo_weight,
-        nengo_destination_port, gfe_reception_params, gfe_latching_required,
-        gfe_weight, gfe_destination_input_port, found_set,
-        nengo_transmission_param, gfe_transmission_param):
-    if (nengo_latching_required == gfe_latching_required and
-            nengo_weight == gfe_weight and
-            _compare_nengo_spinnaker_and_gfe_enums(
-                nengo_destination_port, gfe_destination_input_port) and
-            nengo_reception_params.width == gfe_reception_params.width and
-            nengo_reception_params.learning_rule ==
-                gfe_reception_params.learning_rule and
-            _compare_filters(nengo_reception_params.filter,
-                             gfe_reception_params.parameter_filter)):
-        found_set[(nengo_transmission_param, nengo_reception_params,
-                   nengo_latching_required, nengo_weight,
-                   nengo_destination_port)] = True
-        found_set[(gfe_transmission_param,  gfe_reception_params,
-                   gfe_latching_required, gfe_weight,
-                   gfe_destination_input_port)] = True
-
-
-def _check_partition_destinations(
-        sinks, outgoing_partition, nengo_spinnaker_network_builder):
-    mappings = _create_map_between_nengo_spinnaker_and_gfe_verts()
-    found = dict()
-    for edge_destination in outgoing_partition.edge_destinations:
-        found[edge_destination] = False
-
-    for sink in sinks:
-        for edge_destination in outgoing_partition.edge_destinations:
-            if isinstance(edge_destination, mappings[type(sink)]):
-                valid = False
-                if isinstance(edge_destination, InterposerApplicationVertex):
-                    valid = _check_interposer_app_vertex(sink, edge_destination)
-                elif isinstance(edge_destination, LIFApplicationVertex):
-                    valid = _check_lif_app_vertex(
-                        sink, edge_destination, nengo_spinnaker_network_builder)
-                elif isinstance(edge_destination, PassThroughApplicationVertex):
-                    valid = True
-                elif isinstance(edge_destination, SDPReceiverApplicationVertex):
-                    valid = True
-                elif isinstance(
-                        edge_destination, SDPTransmitterApplicationVertex):
-                    valid = _check_sdp_transmitter_app_vertex(
-                        sink, edge_destination)
-                elif isinstance(edge_destination, ValueSinkApplicationVertex):
-                    valid = _check_value_sink_app_vertex(
-                        sink, edge_destination)
-                elif isinstance(edge_destination, ValueSourceApplicationVertex):
-                    valid = _check_value_source_app_vertex(
-                        sink, edge_destination)
-                if valid:
-                    if not found[edge_destination]:
-                        found[edge_destination] = True
-                    else:
-                        raise Exception("ERM!")
-
-    for edge_destination in found:
-        if not edge_destination:
-            return False
-    return True
-
-
 def _check_reception_params(nengo_reception_params, gfe_reception_params):
+    if gfe_reception_params is None:
+        return False
     return (nengo_reception_params.width == gfe_reception_params.width and
             nengo_reception_params.learning_rule ==
             gfe_reception_params.learning_rule and
@@ -399,23 +347,21 @@ def _create_gfe_port(nengo_enum):
             return constants.ENSEMBLE_INPUT_PORT.LEARNT
         else:
             raise Exception("cant convert enum")
-    elif isinstance(nengo_enum, LearningRuleType):
-        return constants.ENSEMBLE_INPUT_PORT.LEARNING_RULE.value
+    elif isinstance(nengo_enum, LearningRule):
+        return constants.ENSEMBLE_INPUT_PORT.LEARNING_RULE
     else:
         raise Exception("cant convert enum")
 
 
 def _check_partition_to_nengo_objects(
-        maps, outgoing_partition, sinks, nengo_spinnaker_network_builder):
-
-    # check correct number of destinations
-    _check_partition_destinations(
-        sinks, outgoing_partition, nengo_spinnaker_network_builder)
+        nengo_mapped_objs, outgoing_partition,
+        nengo_spinnaker_network_builder):
 
     mappings = _create_map_between_nengo_spinnaker_and_gfe_verts()
 
     # check correct amount of data
-    for (source_port, transmission_param, weight, latching) in maps:
+    for (source_port, weight, latching, transmission_param) in \
+            nengo_mapped_objs:
         if (not (_compare_nengo_spinnaker_and_gfe_enums(
                 source_port, outgoing_partition.identifier.source_port) and
                 _compare_transmission_params(
@@ -423,41 +369,39 @@ def _check_partition_to_nengo_objects(
                     outgoing_partition.identifier.transmission_parameter) and
                 weight == outgoing_partition.identifier.weight and
                 latching == outgoing_partition.identifier.latching_required)):
-            return False
-        for (sink_object, reception_params, input_port) in maps[(
-                source_port, transmission_param, weight, latching)]:
-            found = False
+            return nengo_mapped_objs
+        for (sink_object, reception_params, input_port) in nengo_mapped_objs[(
+                source_port, weight, latching, transmission_param)]:
             for destination in outgoing_partition.edge_destinations:
                 valid = _check_vert(
                     sink_object, destination, None,
                     nengo_spinnaker_network_builder, mappings)
                 if valid:
-                    found = True
                     gfe_equiv_input_port = _create_gfe_port(input_port)
                     gfe_reception_params = \
                         outgoing_partition.get_reception_params_for_vertex(
                             destination, gfe_equiv_input_port)
                     if _check_reception_params(
                             reception_params, gfe_reception_params):
-                        maps[(source_port, transmission_param,
-                              weight, latching)][
+                        nengo_mapped_objs[(source_port, weight, latching,
+                                           transmission_param)][
                             (sink_object, reception_params, input_port)] = True
-                    else:
-                        return False
-            if not found:
-                return False
-    return True
+    return nengo_mapped_objs
 
 
 def _test_graph_edges(
         connection_map, app_graph, nengo_operators, nengo_to_app_graph_map,
         nengo_spinnaker_network_builder):
     for connection_source_vertex in connection_map._connections:
+
+        # locate the vertex linked to this connection source vertex
         found = None
         for nengo_vertex in nengo_operators:
             if nengo_operators[nengo_vertex] == connection_source_vertex:
                 found = nengo_vertex
         app_vertex = nengo_to_app_graph_map[found]
+
+        # get the linked connections
         gfe_partitions = app_graph.\
             get_outgoing_edge_partitions_starting_at_vertex(app_vertex)
         nengo_spinnaker_connections = \
@@ -473,60 +417,50 @@ def _test_graph_edges(
         # find each one
         for channel_identifier in nengo_spinnaker_connections:
 
+            number_of_partitions_at_correct_channel_identifier = 0
+            for partition in gfe_partitions:
+                if _compare_nengo_spinnaker_and_gfe_enums(
+                        channel_identifier, partition.identifier.source_port):
+                    number_of_partitions_at_correct_channel_identifier += 1
+
             if (len(nengo_spinnaker_connections[channel_identifier]) !=
-                    len(gfe_partitions)):
+                    number_of_partitions_at_correct_channel_identifier):
                 raise Exception("for vertex {}. there is a mismatch of "
                                 "channels.".format(connection_source_vertex))
 
             nengo_spinnaker_edge_data = \
                 nengo_spinnaker_connections[channel_identifier]
-            for outgoing_partition in gfe_partitions:
-                if _compare_nengo_spinnaker_and_gfe_enums(
-                        channel_identifier,
-                        outgoing_partition.identifier.source_port):
 
-                    # gather all params, so it can be tested against a
-                    # outgoing partition
-                    maps = dict()
-                    sinks = list()
+            # gather all params, so it can be tested against a
+            # outgoing partition
+            nengo_mapped_objs = defaultdict(dict)
 
-                    for (signal_params, transmission_parameter) in \
-                            nengo_spinnaker_edge_data.keys():
-                        nengo_data = nengo_spinnaker_edge_data[
-                            (signal_params, transmission_parameter)]
-                        for (sink_object, input_port, reception_params) in \
-                                nengo_data:
-                            maps[(channel_identifier,
-                                  transmission_parameter,
-                                  signal_params.weight,
-                                  signal_params.latching)] = dict()
-                            maps[(channel_identifier,
-                                  transmission_parameter,
-                                  signal_params.weight,
-                                  signal_params.latching)][
-                                (sink_object, reception_params, input_port)] \
-                                = False
-                            sinks.append(sink_object)
+            for (signal_params, transmission_parameter) in \
+                    nengo_spinnaker_edge_data.keys():
+                nengo_data = nengo_spinnaker_edge_data[
+                    (signal_params, transmission_parameter)]
+                for (sink_object, input_port, reception_params) in \
+                        nengo_data:
+                    nengo_mapped_objs[(channel_identifier,
+                          signal_params.weight,
+                          signal_params.latching,
+                          transmission_parameter)][
+                        (sink_object, reception_params,
+                         input_port)] = False
 
-                    # check against outgoing partition
-                    found = _check_partition_to_nengo_objects(
-                        maps, outgoing_partition, sinks,
-                        nengo_spinnaker_network_builder)
+                for outgoing_partition in gfe_partitions:
+                    if _compare_nengo_spinnaker_and_gfe_enums(
+                            channel_identifier,
+                            outgoing_partition.identifier.source_port):
 
-                    # if found, update
-                    if found:
-                        if not overall_found[channel_identifier]:
-                            overall_found[channel_identifier] = True
-                        else:
-                            raise Exception("this channel already been found!")
-                        if not overall_found[outgoing_partition]:
-                            overall_found[outgoing_partition] = True
-                        else:
-                            raise Exception(
-                                "this outgoing partition already been found!")
+                        # check against outgoing partition
+                        nengo_mapped_objs = _check_partition_to_nengo_objects(
+                            nengo_mapped_objs, outgoing_partition,
+                            nengo_spinnaker_network_builder)
 
         # check we've found everything
-        for thing in overall_found:
-            if not overall_found[thing]:
-                return False
-        return True
+        for first_key in nengo_mapped_objs:
+            for second_key in nengo_mapped_objs[first_key]:
+                if not nengo_mapped_objs[first_key][second_key]:
+                    return False
+    return True
