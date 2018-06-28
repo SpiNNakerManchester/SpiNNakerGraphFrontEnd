@@ -59,18 +59,13 @@ class TestAppGraphBuilder(unittest.TestCase):
         if not match:
             raise Exception("didnt match")
 
-        print "nengo_to_operator map contains:"
-        for nengo_obj in nengo_to_app_graph_map:
-            print "{}:{}".format(nengo_obj, nengo_to_app_graph_map[nengo_obj])
-
-        print(app_graph, host_network, nengo_to_app_graph_map,
-              random_number_generator)
-
     def test_application_graph_builder_learn_assocates(self):
 
         # build via gfe nengo spinnaker
+        print "evil test"
         network = la_create_model()
         TestAppGraphBuilder.run_test(network)
+        print "end evil"
 
     def test_application_graph_builder_learn_comm_channel(self):
 
@@ -102,7 +97,6 @@ class TestAppGraphBuilder(unittest.TestCase):
         #network = spaun_create_model()
         #TestAppGraphBuilder.run_test(network)
         pass
-
 
 if __name__ == "__main__":
     network = la_create_model()

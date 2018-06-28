@@ -15,6 +15,7 @@ from nengo.exceptions import BuildError
 from pacman.model.graphs import AbstractOutgoingEdgePartition
 from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.impl import Graph
+from spinn_utilities.log import FormatAdapter
 from spinnaker_graph_front_end.examples.nengo import constants, \
     helpful_functions
 from spinnaker_graph_front_end.examples.nengo.abstracts.\
@@ -70,7 +71,7 @@ from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
 from spinnaker_graph_front_end.examples.nengo.utility_objects. \
     parameter_transform import ParameterTransform
 
-logger = logging.getLogger(__name__)
+logger = FormatAdapter(logging.getLogger(__name__))
 
 
 class NengoApplicationGraphBuilder(object):
@@ -308,6 +309,7 @@ class NengoApplicationGraphBuilder(object):
                 label="LIF neurons for ensemble {}".format(
                     nengo_ensemble.label),
                 rng=random_number_generator,
+                size_in=nengo_ensemble.size_in,
                 seed=helpful_functions.get_seed(nengo_ensemble),
                 utilise_extra_core_for_output_types_probe=(
                     utilise_extra_core_for_output_types_probe),
@@ -361,7 +363,7 @@ class NengoApplicationGraphBuilder(object):
                     period = extra_nengo_object_parameters[nengo_node][
                         constants.FUNCTION_OF_TIME_PERIOD_PARAM_FLAG]
                 else:
-                    logger.warn(
+                    logger.warning(
                         "The {} parameter has not been provided. Please "
                         "provide it for the node {} with label {} within the "
                         "extra_object_params parameter. Will use None "
@@ -411,6 +413,47 @@ class NengoApplicationGraphBuilder(object):
             self._get_source_vertex_and_output_port(
                 nengo_connection, nengo_to_app_graph_map, host_network,
                 random_number_generator, app_graph, live_io_receivers)
+
+        if source_vertex.label == 'sdp receiver app vertex for nengo node ' \
+                                  'stim_keys':
+            print ""
+            valids_things = dict()
+            valids_things['LIF neurons for ensemble memory'] = \
+                constants.ENSEMBLE_INPUT_PORT.LEARNT
+            valids_things['Sink vertex for neurons p_keys for probeable ' \
+                          'attribute output'] = constants.INPUT_PORT.STANDARD
+
+            destination_vertex, destination_input_port = \
+                self.get_destination_vertex_and_input_port(
+                    nengo_connection, nengo_to_app_graph_map, host_network,
+                    random_number_generator, app_graph, live_io_senders)
+            if valids_things[destination_vertex.label] != \
+                    destination_input_port:
+                print "WTF!"
+        if source_vertex.label == 'sdp receiver app vertex for nengo node ' \
+                                  'learning':
+            pass
+
+            valid_things = dict()
+            valid_things['LIF neurons for ensemble error'] = constants.ENSEMBLE_INPUT_PORT.GLOBAL_INHIBITION
+
+            valid_things['LIF neurons for ensemble memory'] = \
+                constants.ENSEMBLE_INPUT_PORT.LEARNING_RULE
+            valid_things['Sink vertex for neurons p_learning for probeable attribute output'] = constants.INPUT_PORT.STANDARD
+            # note that the destination input port might be a learning rule object
+            destination_vertex, destination_input_port = \
+                self.get_destination_vertex_and_input_port(
+                    nengo_connection, nengo_to_app_graph_map, host_network,
+                    random_number_generator, app_graph, live_io_senders)
+            if valid_things[destination_vertex.label] != \
+                    destination_input_port:
+                print "WTF!"
+                print "{}:{}vs{}".format(destination_vertex.label,
+                                         valid_things[
+                                             destination_vertex.label],
+                                         destination_input_port, )
+
+
 
         # note that the destination input port might be a learning rule object
         destination_vertex, destination_input_port = \
@@ -867,12 +910,8 @@ class NengoApplicationGraphBuilder(object):
     def get_destination_vertex_and_input_port(
             self, nengo_connection, nengo_to_app_graph_map, host_network,
             random_number_generator, app_graph, live_io_senders):
-        # if a basic nengo object, hand back a basic port
-        if isinstance(nengo_connection.post_obj, NengoObject):
-            return (nengo_to_app_graph_map[nengo_connection.post_obj],
-                    constants.INPUT_PORT.STANDARD)
         # if neurons, hand the sink of the connection
-        elif isinstance(nengo_connection.post_obj, nengo.ensemble.Neurons):
+        if isinstance(nengo_connection.post_obj, nengo.ensemble.Neurons):
             return (nengo_to_app_graph_map[nengo_connection.post_obj.ensemble],
                     constants.ENSEMBLE_INPUT_PORT.NEURONS)
         # if ensemble, get result from ensemble block
@@ -883,7 +922,10 @@ class NengoApplicationGraphBuilder(object):
         elif isinstance(nengo_connection.post_obj, LearningRule):
             return \
                 self._get_destination_vertex_and_input_port_for_learning_rule(
-                    nengo_connection, nengo_to_app_graph_map)
+                    nengo_connection, nengo_to_app_graph_map)  # if a basic nengo object, hand back a basic port
+        elif isinstance(nengo_connection.post_obj, NengoObject):
+            return (nengo_to_app_graph_map[nengo_connection.post_obj],
+                    constants.INPUT_PORT.STANDARD)
         # if a node.
         elif isinstance(nengo_connection.post_obj, nengo.Node):
             return self._get_destination_vertex_and_input_port_for_nengo_node(

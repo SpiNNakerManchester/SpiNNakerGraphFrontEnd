@@ -314,14 +314,16 @@ def _test_graph_vertices(
             return False
     return True
 
+
 def _check_reception_params(nengo_reception_params, gfe_reception_params):
-    if gfe_reception_params is None:
-        return False
-    return (nengo_reception_params.width == gfe_reception_params.width and
-            nengo_reception_params.learning_rule ==
-            gfe_reception_params.learning_rule and
-            _compare_filters(nengo_reception_params.filter,
-                             gfe_reception_params.parameter_filter))
+    for gfe_reception_param in gfe_reception_params:
+        if not (nengo_reception_params.width == gfe_reception_param.width and
+                nengo_reception_params.learning_rule ==
+                gfe_reception_param.learning_rule and
+                _compare_filters(nengo_reception_params.filter,
+                                 gfe_reception_param.parameter_filter)):
+            return False
+    return True
 
 
 def _create_gfe_port(nengo_enum):
@@ -381,6 +383,7 @@ def _check_partition_to_nengo_objects(
                     gfe_reception_params = \
                         outgoing_partition.get_reception_params_for_vertex(
                             destination, gfe_equiv_input_port)
+
                     if _check_reception_params(
                             reception_params, gfe_reception_params):
                         nengo_mapped_objs[(source_port, weight, latching,
@@ -400,6 +403,10 @@ def _test_graph_edges(
             if nengo_operators[nengo_vertex] == connection_source_vertex:
                 found = nengo_vertex
         app_vertex = nengo_to_app_graph_map[found]
+
+        if app_vertex.label == 'sdp receiver app vertex for nengo node ' \
+                               'stim_keys':
+            print ""
 
         # get the linked connections
         gfe_partitions = app_graph.\
@@ -448,6 +455,9 @@ def _test_graph_edges(
                         (sink_object, reception_params,
                          input_port)] = False
 
+                print "checking {}:{}".format(app_vertex.label,
+                                                 channel_identifier)
+
                 for outgoing_partition in gfe_partitions:
                     if _compare_nengo_spinnaker_and_gfe_enums(
                             channel_identifier,
@@ -462,5 +472,7 @@ def _test_graph_edges(
         for first_key in nengo_mapped_objs:
             for second_key in nengo_mapped_objs[first_key]:
                 if not nengo_mapped_objs[first_key][second_key]:
+                    print "didnt find {}:{} for source {}".format(
+                        second_key[0], second_key[2], app_vertex)
                     return False
     return True

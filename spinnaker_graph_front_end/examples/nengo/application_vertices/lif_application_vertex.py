@@ -26,11 +26,12 @@ class LIFApplicationVertex(
         "_bias",
         "_probeable_variables",
         "_is_recording_probeable_variable",
-        "_probeable_variables_supported_elsewhere"]
+        "_probeable_variables_supported_elsewhere",
+        "_direct_input"]
 
     def __init__(
             self, label, rng, seed, eval_points, encoders, scaled_encoders,
-            max_rates, intercepts, gain, bias,
+            max_rates, intercepts, gain, bias, size_in,
             utilise_extra_core_for_output_types_probe):
         """ constructor for lifs
         
@@ -53,6 +54,7 @@ class LIFApplicationVertex(
         self._intercepts = intercepts
         self._gain = gain
         self._bias = bias
+        self._direct_input = numpy.zeros(size_in)
 
         self._probeable_variables = [
             constants.RECORD_OUTPUT_FLAG, constants.RECORD_SPIKES_FLAG,
@@ -74,6 +76,14 @@ class LIFApplicationVertex(
 
     def add_constraint(self, constraint):
         pass
+
+    @property
+    def direct_input(self):
+        return self._direct_input
+
+    @direct_input.setter
+    def direct_input(self, new_value):
+        self._direct_input = new_value
 
     @property
     def eval_points(self):

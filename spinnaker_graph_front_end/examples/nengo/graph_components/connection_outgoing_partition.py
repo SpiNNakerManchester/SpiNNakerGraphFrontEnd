@@ -1,11 +1,19 @@
+import logging
+from collections import defaultdict
+
 from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.impl import OutgoingEdgePartition
+from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
 from spinnaker_graph_front_end.examples.nengo.abstracts.\
     abstract_nengo_object import AbstractNengoObject
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
     connection_learning_rule_application_edge import \
     ConnectionLearningRuleApplicationEdge
+from spinnaker_graph_front_end.examples.nengo.graph_components.\
+    destination_params import DestinationParams
+
+logger = FormatAdapter(logging.getLogger(__name__))
 
 
 class ConnectionOutgoingPartition(OutgoingEdgePartition, AbstractNengoObject):
@@ -37,7 +45,7 @@ class ConnectionOutgoingPartition(OutgoingEdgePartition, AbstractNengoObject):
         AbstractNengoObject.__init__(self, rng=rng, seed=seed)
         self._outgoing_edges_destinations = list()
         self._pre_vertex = pre_vertex
-        self._reception_params = dict()
+        self._reception_params = defaultdict(list)
 
     @overrides(OutgoingEdgePartition.add_edge)
     def add_edge(self, edge):
@@ -55,14 +63,19 @@ class ConnectionOutgoingPartition(OutgoingEdgePartition, AbstractNengoObject):
 
     def add_destination_parameter_set(
             self, reception_params, destination_input_port, destination_vertex):
-        self._reception_params[
-            (destination_vertex, destination_input_port)] = reception_params
+        dest_param = DestinationParams(
+            destination_vertex, destination_input_port)
+        if dest_param in self._reception_params:
+            pass
+        else:
+            self._reception_params[dest_param].append(reception_params)
 
     def get_reception_params_for_vertex(self, destination_vertex, port_num):
-        if (destination_vertex, port_num) in self._reception_params:
-            return self._reception_params[(destination_vertex, port_num)]
+        dest_param = DestinationParams(destination_vertex, port_num)
+        if dest_param in self._reception_params:
+            return self._reception_params[dest_param]
         else:
-            return None
+            return list()
 
     def __repr__(self):
         edges = ""
@@ -73,10 +86,11 @@ class ConnectionOutgoingPartition(OutgoingEdgePartition, AbstractNengoObject):
                 edges += str(edge) + ","
 
         reception_params = ""
-        for (vertex, port) in self._reception_params:
-            reception_params += "{}:{}".format(vertex, port)
-            reception_params+="={}\n".format(
-                self._reception_params[(vertex, port)])
+        for dest_param in self._reception_params:
+            reception_params += "{}:{}".format(dest_param.dest_vertex,
+                                               dest_param.dest_port)
+            reception_params += "={}\n".format(
+                self._reception_params[dest_param])
         return self._REPR_TEMPLATE.format(
             self._identifier, edges, self.constraints, self.label,
             reception_params, self._seed)
