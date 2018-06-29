@@ -18,6 +18,12 @@ class PassthroughNodeTransmissionParameters(
         AbstractTransmissionParameters.__init__(self)
         TransmissionParametersImpl.__init__(self, transform)
 
+    def __repr__(self):
+        return "{}".format(self._transform)
+
+    def __str__(self):
+        return self.__repr__()
+
     @overrides(AbstractTransmissionParameters.concat)
     def concat(self, other):
         """Create new connection connection_parameters which are the result of

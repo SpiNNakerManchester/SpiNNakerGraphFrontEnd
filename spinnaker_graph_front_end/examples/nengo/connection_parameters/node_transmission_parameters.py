@@ -35,6 +35,13 @@ class NodeTransmissionParameters(
     def parameter_function(self):
         return self._parameter_function
 
+    def __repr__(self):
+        return "{}:{}:{}".format(
+            self._transform, self._pre_slice, self._parameter_function)
+
+    def __str__(self):
+        return self.__repr__()
+
     @overrides(TransmissionParametersImpl.__eq__)
     def __eq__(self, other):
         return (super(NodeTransmissionParameters, self).__eq__(other) and

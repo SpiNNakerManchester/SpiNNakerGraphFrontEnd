@@ -46,6 +46,13 @@ class EnsembleTransmissionParameters(
         # Store the learning rule
         self._learning_rule = learning_rule
 
+    def __repr__(self):
+        return "{}:{}:{}".format(
+            self._transform, self._decoders, self._learning_rule)
+
+    def __str__(self):
+        return self.__repr__()
+
     @property
     def decoders(self):
         return self._decoders

@@ -364,31 +364,33 @@ def _check_partition_to_nengo_objects(
     # check correct amount of data
     for (source_port, weight, latching, transmission_param) in \
             nengo_mapped_objs:
-        if (not (_compare_nengo_spinnaker_and_gfe_enums(
+        if (_compare_nengo_spinnaker_and_gfe_enums(
                 source_port, outgoing_partition.identifier.source_port) and
                 _compare_transmission_params(
                     transmission_param,
                     outgoing_partition.identifier.transmission_parameter) and
                 weight == outgoing_partition.identifier.weight and
-                latching == outgoing_partition.identifier.latching_required)):
-            return nengo_mapped_objs
-        for (sink_object, reception_params, input_port) in nengo_mapped_objs[(
-                source_port, weight, latching, transmission_param)]:
-            for destination in outgoing_partition.edge_destinations:
-                valid = _check_vert(
-                    sink_object, destination, None,
-                    nengo_spinnaker_network_builder, mappings)
-                if valid:
-                    gfe_equiv_input_port = _create_gfe_port(input_port)
-                    gfe_reception_params = \
-                        outgoing_partition.get_reception_params_for_vertex(
-                            destination, gfe_equiv_input_port)
+                latching == outgoing_partition.identifier.latching_required):
+            for (sink_object, reception_params, input_port) in \
+                    nengo_mapped_objs[(
+                        source_port, weight, latching, transmission_param)]:
+                for destination in outgoing_partition.edge_destinations:
+                    valid = _check_vert(
+                        sink_object, destination, None,
+                        nengo_spinnaker_network_builder, mappings)
+                    if valid:
+                        gfe_equiv_input_port = _create_gfe_port(input_port)
+                        gfe_reception_params = \
+                            outgoing_partition.get_reception_params_for_vertex(
+                                destination, gfe_equiv_input_port)
 
-                    if _check_reception_params(
-                            reception_params, gfe_reception_params):
-                        nengo_mapped_objs[(source_port, weight, latching,
-                                           transmission_param)][
-                            (sink_object, reception_params, input_port)] = True
+                        if _check_reception_params(
+                                reception_params, gfe_reception_params):
+                            nengo_mapped_objs[
+                                (source_port, weight, latching,
+                                 transmission_param)][
+                                    (sink_object, reception_params,
+                                     input_port)] = True
     return nengo_mapped_objs
 
 
@@ -403,10 +405,6 @@ def _test_graph_edges(
             if nengo_operators[nengo_vertex] == connection_source_vertex:
                 found = nengo_vertex
         app_vertex = nengo_to_app_graph_map[found]
-
-        if app_vertex.label == 'sdp receiver app vertex for nengo node ' \
-                               'stim_keys':
-            print ""
 
         # get the linked connections
         gfe_partitions = app_graph.\
@@ -455,9 +453,6 @@ def _test_graph_edges(
                         (sink_object, reception_params,
                          input_port)] = False
 
-                print "checking {}:{}".format(app_vertex.label,
-                                                 channel_identifier)
-
                 for outgoing_partition in gfe_partitions:
                     if _compare_nengo_spinnaker_and_gfe_enums(
                             channel_identifier,
@@ -472,7 +467,5 @@ def _test_graph_edges(
         for first_key in nengo_mapped_objs:
             for second_key in nengo_mapped_objs[first_key]:
                 if not nengo_mapped_objs[first_key][second_key]:
-                    print "didnt find {}:{} for source {}".format(
-                        second_key[0], second_key[2], app_vertex)
                     return False
     return True

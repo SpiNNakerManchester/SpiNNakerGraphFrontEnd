@@ -38,6 +38,14 @@ class ParameterTransform(object):
         self._transform = numpy.array(transform, order='C')
         self._transform.flags[self.FLAGS_NAME] = False
 
+    def __repr__(self):
+        return "{}:{}:{}:{}:{}".format(self._size_in, self._size_out,
+                                       self._slice_in, self._slice_out,
+                                       self._transform)
+
+    def __str__(self):
+        return self.__repr__()
+
     @property
     def size_in(self):
         return self._size_in

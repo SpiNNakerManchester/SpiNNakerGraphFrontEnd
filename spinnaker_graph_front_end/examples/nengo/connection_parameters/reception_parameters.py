@@ -19,6 +19,12 @@ class ReceptionParameters(object):
         self._width = width
         self._learning_rule = learning_rule
 
+    def __repr__(self):
+        return "{}:{}:{}".format(self._parameter_filter, self._width,
+                                 self._learning_rule)
+    def __str__(self):
+        return self.__repr__()
+
     @property
     def parameter_filter(self):
         return self._parameter_filter

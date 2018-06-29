@@ -414,47 +414,6 @@ class NengoApplicationGraphBuilder(object):
                 nengo_connection, nengo_to_app_graph_map, host_network,
                 random_number_generator, app_graph, live_io_receivers)
 
-        if source_vertex.label == 'sdp receiver app vertex for nengo node ' \
-                                  'stim_keys':
-            print ""
-            valids_things = dict()
-            valids_things['LIF neurons for ensemble memory'] = \
-                constants.ENSEMBLE_INPUT_PORT.LEARNT
-            valids_things['Sink vertex for neurons p_keys for probeable ' \
-                          'attribute output'] = constants.INPUT_PORT.STANDARD
-
-            destination_vertex, destination_input_port = \
-                self.get_destination_vertex_and_input_port(
-                    nengo_connection, nengo_to_app_graph_map, host_network,
-                    random_number_generator, app_graph, live_io_senders)
-            if valids_things[destination_vertex.label] != \
-                    destination_input_port:
-                print "WTF!"
-        if source_vertex.label == 'sdp receiver app vertex for nengo node ' \
-                                  'learning':
-            pass
-
-            valid_things = dict()
-            valid_things['LIF neurons for ensemble error'] = constants.ENSEMBLE_INPUT_PORT.GLOBAL_INHIBITION
-
-            valid_things['LIF neurons for ensemble memory'] = \
-                constants.ENSEMBLE_INPUT_PORT.LEARNING_RULE
-            valid_things['Sink vertex for neurons p_learning for probeable attribute output'] = constants.INPUT_PORT.STANDARD
-            # note that the destination input port might be a learning rule object
-            destination_vertex, destination_input_port = \
-                self.get_destination_vertex_and_input_port(
-                    nengo_connection, nengo_to_app_graph_map, host_network,
-                    random_number_generator, app_graph, live_io_senders)
-            if valid_things[destination_vertex.label] != \
-                    destination_input_port:
-                print "WTF!"
-                print "{}:{}vs{}".format(destination_vertex.label,
-                                         valid_things[
-                                             destination_vertex.label],
-                                         destination_input_port, )
-
-
-
         # note that the destination input port might be a learning rule object
         destination_vertex, destination_input_port = \
             self.get_destination_vertex_and_input_port(
