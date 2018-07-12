@@ -84,7 +84,8 @@ class InterposerApplicationVertex(AbstractNengoApplicationVertex):
         "_groups"
         ]
 
-    def __init__(self, size_in, label, rng, max_cols=constants.MAX_COLUMNS,
+    def __init__(self, size_in, label, rng, seed,
+                 max_cols=constants.MAX_COLUMNS,
                  max_rows=constants.MAX_ROWS):
         """Create a new parallel Filter.
         
@@ -105,7 +106,8 @@ class InterposerApplicationVertex(AbstractNengoApplicationVertex):
         # some modelling by SBF.
         # Create as many groups as necessary to keep the size in of any group
         # less than max_cols.
-        AbstractNengoApplicationVertex.__init__(self, label=label, rng=rng)
+        AbstractNengoApplicationVertex.__init__(self, label=label, rng=rng,
+                                                seed=seed)
 
         self._size_in = size_in
         n_groups = int(math.ceil(size_in // max_cols))

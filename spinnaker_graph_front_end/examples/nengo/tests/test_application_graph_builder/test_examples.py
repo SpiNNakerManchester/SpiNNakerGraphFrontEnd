@@ -62,10 +62,8 @@ class TestAppGraphBuilder(unittest.TestCase):
     def test_application_graph_builder_learn_assocates(self):
 
         # build via gfe nengo spinnaker
-        print "evil test"
         network = la_create_model()
         TestAppGraphBuilder.run_test(network)
-        print "end evil"
 
     def test_application_graph_builder_learn_comm_channel(self):
 
@@ -94,9 +92,8 @@ class TestAppGraphBuilder(unittest.TestCase):
         TestAppGraphBuilder.run_test(network)
 
     def test_application_graph_builder_spaun_model(self):
-        #network = spaun_create_model()
-        #TestAppGraphBuilder.run_test(network)
-        pass
+        network = spaun_create_model()
+        TestAppGraphBuilder.run_test(network)
 
 if __name__ == "__main__":
     network = la_create_model()

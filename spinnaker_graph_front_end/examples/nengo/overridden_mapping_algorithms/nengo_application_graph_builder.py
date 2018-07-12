@@ -24,6 +24,8 @@ from spinnaker_graph_front_end.examples.nengo.abstracts.\
     abstract_probeable import AbstractProbeable
 from spinnaker_graph_front_end.examples.nengo.application_vertices.\
     value_sink_application_vertex import ValueSinkApplicationVertex
+from spinnaker_graph_front_end.examples.nengo.graph_components.connection_application_edge import \
+    ConnectionApplicationEdge
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
     connection_outgoing_partition import ConnectionOutgoingPartition
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
@@ -423,15 +425,6 @@ class NengoApplicationGraphBuilder(object):
         # build_application_edge
         if source_vertex is not None and destination_vertex is not None:
 
-            if (destination_input_port ==
-                    constants.ENSEMBLE_INPUT_PORT.LEARNING_RULE):
-                application_edge = ConnectionLearningRuleApplicationEdge(
-                    pre_vertex=source_vertex, post_vertex=destination_vertex,
-                    learning_rule=nengo_connection.post_obj)
-            else:
-                application_edge = ApplicationEdge(
-                    pre_vertex=source_vertex, post_vertex=destination_vertex)
-
             # Construct the signal connection_parameters
             latching_required, edge_weight = self._make_signal_parameter(
                 source_vertex, destination_vertex, nengo_connection)
@@ -450,6 +443,22 @@ class NengoApplicationGraphBuilder(object):
                     update_to_global_inhibition_if_required(
                         destination_input_port)
 
+            #  reception connection_parameters for the connection.
+            reception_params = self._get_reception_parameters(nengo_connection)
+
+            if (destination_input_port ==
+                    constants.ENSEMBLE_INPUT_PORT.LEARNING_RULE):
+                application_edge = ConnectionLearningRuleApplicationEdge(
+                    pre_vertex=source_vertex, post_vertex=destination_vertex,
+                    learning_rule=nengo_connection.post_obj,
+                    input_port=destination_input_port,
+                    reception_parameters=reception_params)
+            else:
+                application_edge = ConnectionApplicationEdge(
+                    pre_vertex=source_vertex, post_vertex=destination_vertex,
+                    input_port=destination_input_port,
+                    reception_parameters=reception_params)
+
             # rectify outgoing partition for data store and add to graphs
             identifier = PartitionIdentifier(
                 source_output_port, transmission_parameter, edge_weight,
@@ -465,15 +474,6 @@ class NengoApplicationGraphBuilder(object):
                 app_graph.add_outgoing_edge_partition(outgoing_partition)
             app_graph.add_edge(application_edge, identifier)
             nengo_to_app_graph_map[nengo_connection] = application_edge
-
-            #  reception connection_parameters for the connection.
-            reception_params = self._get_reception_parameters(nengo_connection)
-
-            # set the outgoing partition with all the channel's params
-            outgoing_partition.add_destination_parameter_set(
-                reception_params=reception_params,
-                destination_input_port=destination_input_port,
-                destination_vertex=destination_vertex)
 
     @staticmethod
     def _get_reception_parameters(nengo_connection):

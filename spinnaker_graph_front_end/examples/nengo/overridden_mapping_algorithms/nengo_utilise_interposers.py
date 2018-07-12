@@ -23,9 +23,18 @@ from spinnaker_graph_front_end.examples.nengo.connection_parameters.\
 from spinnaker_graph_front_end.examples.nengo.connection_parameters.\
     reception_parameters import ReceptionParameters
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
+    connection_application_edge import \
+    ConnectionApplicationEdge
+from spinnaker_graph_front_end.examples.nengo.graph_components.\
+    connection_learning_rule_application_edge import \
+    ConnectionLearningRuleApplicationEdge
+from spinnaker_graph_front_end.examples.nengo.graph_components.\
     connection_outgoing_partition import ConnectionOutgoingPartition
 from spinnaker_graph_front_end.examples.nengo.connection_parameters.\
     ensemble_transmission_parameters import EnsembleTransmissionParameters
+from spinnaker_graph_front_end.examples.nengo.graph_components.\
+    partition_identifier import \
+    PartitionIdentifier
 from spinnaker_graph_front_end.examples.nengo.utility_objects.\
     parameter_transform import ParameterTransform
 
@@ -42,7 +51,7 @@ class NengoUtiliseInterposers(object):
 
     def __call__(
             self, application_graph, nengo_to_app_graph_map,
-            random_number_generator):
+            random_number_generator, seed):
 
         # add interposers as required
         interposers, interposer_application_graph = \
@@ -51,7 +60,8 @@ class NengoUtiliseInterposers(object):
 
         # compress interposers when applicable
         stacked_interposer_graph = self._stack_interposers(
-            interposer_application_graph, interposers, random_number_generator)
+            interposer_application_graph, interposers, random_number_generator,
+            seed=seed)
 
         # return optimised app graph
         return stacked_interposer_graph
@@ -100,38 +110,39 @@ class NengoUtiliseInterposers(object):
             # of the interposer.
             potential_interposers = dict()
             for node, outgoing_partition, sink_objects in possible_interposers:
-                for transmission_parameters in \
-                        outgoing_partition.transmission_params:
+                transmission_parameter = \
+                    outgoing_partition.identifier.transmission_parameter
 
-                    # Determine if the interposer connects to anything
-                    if not self._connects_to_non_pass_through_node(
-                            sink_objects, application_graph):
-                        continue
+                # Determine if the interposer connects to anything
+                if not self._connects_to_non_pass_through_node(
+                        sink_objects, application_graph):
+                    continue
 
-                    # For each connection look at the fan-out and fan-in vs the
-                    # cost of the interposer.
-                    trans = transmission_parameters.full_transform(False, False)
-                    mean_fan_in = numpy.mean(numpy.sum(trans != 0.0, axis=0))
-                    mean_fan_out = numpy.mean(numpy.sum(trans != 0.0, axis=1))
-                    interposer_fan_in = numpy.ceil(
-                        float(trans.shape[1]) / float(constants.MAX_COLUMNS))
-                    interposer_fan_out = numpy.ceil(
-                        float(trans.shape[0]) / float(constants.MAX_ROWS))
+                # For each connection look at the fan-out and fan-in vs the
+                # cost of the interposer.
+                trans = transmission_parameter.full_transform(False, False)
+                mean_fan_in = numpy.mean(numpy.sum(trans != 0.0, axis=0))
+                mean_fan_out = numpy.mean(numpy.sum(trans != 0.0, axis=1))
+                interposer_fan_in = numpy.ceil(
+                    float(trans.shape[1]) / float(constants.MAX_COLUMNS))
+                interposer_fan_out = numpy.ceil(
+                    float(trans.shape[0]) / float(constants.MAX_ROWS))
 
-                    # If the interposer would improve connectivity then add it
-                    #  to the list of potential interposers.
-                    if (mean_fan_in > interposer_fan_in or
-                            mean_fan_out > interposer_fan_out):
-                        # Store the potential interposer along with a list of
-                        #  nodes who receive its output.
-                        potential_interposers[(node, outgoing_partition)] = [
-                            s for s in sink_objects if isinstance(
-                                s, PassThroughApplicationVertex)]
+                # If the interposer would improve connectivity then add it
+                #  to the list of potential interposers.
+                if (mean_fan_in > interposer_fan_in or
+                        mean_fan_out > interposer_fan_out):
+                    # Store the potential interposer along with a list of
+                    #  nodes who receive its output.
+                    potential_interposers[(node, outgoing_partition)] = [
+                        s for s in sink_objects if isinstance(
+                            s, PassThroughApplicationVertex)]
 
             # Get the set of potential interposers whose input is independent
             # of the output of any other interposer.
             top_level_interposers = set(potential_interposers)
             for dependent_interposers in itervalues(potential_interposers):
+
                 # Subtract from the set of independent interposers any whose
                 # input node is listed in the output nodes for another
                 # interposer.
@@ -144,18 +155,16 @@ class NengoUtiliseInterposers(object):
             # Create an operator for all of the selected interposers
             clique_interposers = dict()
             for node, outgoing_partition in top_level_interposers:
-                # Extract the input size
-                for transmission_par in \
-                        outgoing_partition.transmission_parameters:
-                    size_in = transmission_par.size_in
 
-                    # Create the interposer
-                    clique_interposers[node, outgoing_partition] = \
-                        InterposerApplicationVertex(
-                            size_in, rng=random_numer_generator,
-                            label="Interposer for node {} in channel {}".format(
-                                node, outgoing_partition),
-                            seed=None)
+                # Create the interposer
+                clique_interposers[node, outgoing_partition] = \
+                    InterposerApplicationVertex(
+                        size_in=outgoing_partition.identifier.
+                        transmission_parameter.size_in,
+                        rng=random_numer_generator,
+                        label="Interposer for node {} in channel {}".format(
+                            node, outgoing_partition),
+                        seed=None)
 
             # Insert connections into the new connection map inserting
             # connections to interposers as we go and remembering those to
@@ -189,9 +198,13 @@ class NengoUtiliseInterposers(object):
         return interposers, interposer_application_graph
 
     def _create_new_connection_and_outgoing_partition(
-            self, transmission_param, new_outgoing_edge_partition, interposer,
+            self, random_number_generator, interposer,
             outgoing_edge_partition, interposer_application_graph, source,
             used_interposers):
+
+        transmission_param = \
+            outgoing_edge_partition.identifier.transmission_parameter
+
         # create new transmission_params
         new_transmission_param = EnsembleTransmissionParameters(
             transmission_param.decoders,
@@ -202,24 +215,26 @@ class NengoUtiliseInterposers(object):
             new_transmission_param.update_to_global_inhibition_if_required(
                 constants.INPUT_PORT.STARNDARD)
 
-        # update the outgoing parttion params
-        new_outgoing_edge_partition.add_parameter_set(
-            transmission_params=new_transmission_param,
-            reception_params=ReceptionParameters(
-                self.INTERPOSER_PARAMETER_FILTER,
-                transmission_param.size_in,
-                self.INTERPOSER_LEARNING_RULE),
-            latching_required=False,
-            weight=new_transmission_param.size_in,
-            source_output_port=outgoing_edge_partition.identifier,
-            destination_input_port=destination_input_port,
-            destination_vertex=interposer)
+        # create new outgoing partition to reflect new params
+        new_outgoing_edge_partition = ConnectionOutgoingPartition(
+            pre_vertex=source, seed=outgoing_edge_partition.seed,
+            rng=random_number_generator,
+            identifier=PartitionIdentifier(
+                latching_required=False, weight=new_transmission_param.size_in,
+                transmission_parameter=new_transmission_param,
+                source_port=outgoing_edge_partition.identifier.source_port))
 
         # add interposer and edge to it in to the new app graph
         interposer_application_graph.add_vertex(interposer)
-        interposer_application_graph.add_edge(
-            ApplicationEdge(source, interposer),
-            new_outgoing_edge_partition.identifier)
+        interposer_application_graph.add_outgoing_edge_partition(
+            new_outgoing_edge_partition)
+        interposer_application_graph.add_edge(ConnectionApplicationEdge(
+            pre_vertex=source, post_vertex=interposer,
+            reception_parameters=ReceptionParameters(
+                self.INTERPOSER_PARAMETER_FILTER,
+                transmission_param.size_in,
+                self.INTERPOSER_LEARNING_RULE),
+            input_port=destination_input_port))
 
         # update the used interposers
         used_interposers.add((source, new_outgoing_edge_partition))
@@ -234,53 +249,62 @@ class NengoUtiliseInterposers(object):
         # For every port and set of connections originating at the source
         for outgoing_edge_partition in original_operator_graph.\
                 get_outgoing_edge_partitions_starting_at_vertex(source):
+
+            # If this connection is to be replaced by an interposer
+            # then we instead add a connection to the interposer, the
+            # nature of this connection depends on the nature of the
+            # source.
             if (source, outgoing_edge_partition) in interposers:
-                # If this connection is to be replaced by an interposer
-                # then we instead add a connection to the interposer, the
-                # nature of this connection depends on the nature of the
-                # source.
                 assert isinstance(source, LIFApplicationVertex)
                 interposer = interposers[(source, outgoing_edge_partition)]
 
-                # create new partition for channel data holder
-                new_outgoing_edge_partition = ConnectionOutgoingPartition(
-                    rng=random_number_generator, pre_vertex=source,
-                    identifier=outgoing_edge_partition.identifier)
-                interposer_application_graph.add_outgoing_edge_partition(
-                    new_outgoing_edge_partition)
-
-                for transmission_param in \
-                        outgoing_edge_partition.transmission_params:
-                    self._create_new_connection_and_outgoing_partition(
-                        transmission_param, new_outgoing_edge_partition,
-                        interposer, outgoing_edge_partition,
-                        interposer_application_graph, source, used_interposers)
+                self._create_new_connection_and_outgoing_partition(
+                    random_number_generator,
+                    interposer, outgoing_edge_partition,
+                    interposer_application_graph, source, used_interposers)
             else:
                 # Otherwise we add the connection.
                 # Copy the connections and mark which interposers are
                 # reached.
-                for sink in outgoing_edge_partition.edge_destinations:
-                    # NOTE: The None indicates that no additional reception
-                    # connection_parameters beyond those in the sink are to be
-                    # considered.
-                    used_interposers.update(self._copy_connection(
-                        interposer_application_graph=(
-                            interposer_application_graph),
-                        interposers=interposers, source_vertex=source,
-                        source_port=outgoing_edge_partition.identifier,
-                        destination_transmission_pars=(
-                            outgoing_edge_partition.transmission_params),
-                        destination_vertex=sink,
-                        random_number_generator=random_number_generator,
-                        original_operator_graph=original_operator_graph,
-                        required_latching=(
-                            outgoing_edge_partition.latching_required),
-                        weight=outgoing_edge_partition.weight,
-                        destination_reception_params=(
-                            outgoing_edge_partition.reception_params),
-                        destination_port=(
-                            outgoing_edge_partition.destination_input_port)))
+                self._copy_original_connection(
+                    outgoing_edge_partition, original_operator_graph,
+                    used_interposers, interposer_application_graph, source,
+                    interposers, random_number_generator)
         return used_interposers
+
+    def _copy_original_connection(
+            self, outgoing_edge_partition, original_operator_graph,
+            used_interposers, interposer_application_graph, source,
+            interposers, random_number_generator):
+
+        for sink in outgoing_edge_partition.edge_destinations:
+            # NOTE: The None indicates that no additional reception
+            # connection_parameters beyond those in the sink are to be
+            # considered.
+
+            original_app_edges = original_operator_graph. \
+                get_edges_ending_at_vertex_with_partition_name(
+                    sink, outgoing_edge_partition.identifier)
+
+            for original_app_edge in original_app_edges:
+                used_interposers.update(self._copy_connection(
+                    interposer_application_graph=interposer_application_graph,
+                    interposers=interposers, source_vertex=source,
+                    source_port=outgoing_edge_partition.identifier.source_port,
+                    destination_transmission_pars=(
+                        outgoing_edge_partition.identifier.
+                        transmission_parameter),
+                    destination_vertex=sink,
+                    random_number_generator=random_number_generator,
+                    original_operator_graph=original_operator_graph,
+                    original_required_latching=(
+                        outgoing_edge_partition.identifier.latching_required),
+                    original_weight=outgoing_edge_partition.identifier.weight,
+                    original_transmission_param=(
+                        outgoing_edge_partition.
+                        identifier.transmission_parameter),
+                    original_edge=original_app_edge,
+                    seed=outgoing_edge_partition.seed))
 
     def _copy_connections_from_interposer(
             self, node, outgoing_partition, interposer, new_app_graph,
@@ -289,10 +313,6 @@ class NengoUtiliseInterposers(object):
         """Copy the pattern of connectivity from a node, replacing a specific
         connection with an interposer.
         """
-        # Get the sinks of this connection
-        sinks = list()
-        for application_edge in outgoing_partition.edges:
-            sinks.append(application_edge.post_vertex)
 
         # If the original object was an ensemble then modify the transmission
         # connection_parameters to remove the decoders.
@@ -306,27 +326,27 @@ class NengoUtiliseInterposers(object):
         # are inserted, likewise we specify no additional reception
         # connection_parameters. The connectivity from the sink will be
         # recursively found if it is a pass through node.
-        for sink in sinks:
+        for application_edge in outgoing_partition.edges:
             self._copy_connection(
                 interposer_application_graph=new_app_graph,
                 interposers=interposer, source_vertex=node,
                 source_port=constants.OUTPUT_PORT.STANDARD,
-                required_latching=outgoing_partition.latching_required,
-                weight=outgoing_partition.weight,
+                original_transmission_param=(
+                    outgoing_partition.identifier.transmission_parameter),
+                original_required_latching=outgoing_partition.latching_required,
+                original_weight=outgoing_partition.weight,
                 destination_transmission_pars=transmission_pars,
-                destination_vertex=sink.sink_object,
-                destination_port=outgoing_partition.destination_input_port,
-                destination_reception_params=(
-                    outgoing_partition.reception_params),
+                destination_vertex=application_edge.post_vertex,
                 random_number_generator=random_number_generator,
-                original_operator_graph=old_app_graph)
+                original_operator_graph=old_app_graph,
+                seed=outgoing_partition.seed, original_edge=application_edge)
 
     def _copy_connection(
             self, interposer_application_graph, interposers,
-            source_vertex, source_port, required_latching, weight,
-            destination_transmission_pars, destination_vertex, destination_port,
-            destination_reception_params, random_number_generator,
-            original_operator_graph):
+            source_vertex, source_port, original_required_latching,
+            original_weight, original_transmission_param,
+            destination_transmission_pars, destination_vertex, original_edge,
+            random_number_generator, original_operator_graph, seed):
 
         """Copy a single connection from this connection map to another,
            acting recursively if an appropriate node is identified.
@@ -336,115 +356,166 @@ class NengoUtiliseInterposers(object):
         if not isinstance(destination_vertex, PassThroughApplicationVertex):
             # If the sink is not a pass through node then just add the
             # connection to the new connection map.
-            # create new partition for channel data holder
+            # locate outgoing partition
+            partition_identifier = PartitionIdentifier(
+                source_port=source_port,
+                latching_required=original_required_latching,
+                weight=original_weight,
+                transmission_parameter=destination_transmission_pars)
             new_outgoing_edge_partition = interposer_application_graph.\
                 get_outgoing_edge_partition_starting_at_vertex(
-                    source_vertex, source_port)
+                    source_vertex, partition_identifier)
+
+            # if dont exist, build and add
             if new_outgoing_edge_partition is None:
                 new_outgoing_edge_partition = ConnectionOutgoingPartition(
-                    rng=random_number_generator, identifier=source_port,
-                    pre_vertex=source_vertex)
+                    rng=random_number_generator, seed=seed,
+                    identifier=partition_identifier, pre_vertex=source_vertex)
                 interposer_application_graph.add_outgoing_edge_partition(
                     new_outgoing_edge_partition)
-            interposer_application_graph.add_edge(
-                ApplicationEdge(source_vertex, destination_vertex), source_port)
-            new_outgoing_edge_partition.add_parameter_set(
-                transmission_params=destination_transmission_pars,
-                reception_params=destination_reception_params,
-                latching_required=required_latching, weight=weight,
-                destination_input_port=destination_port,
-                destination_vertex=destination_vertex)
+
+            # add edge as required
+            if isinstance(original_edge, ConnectionApplicationEdge):
+                interposer_application_graph.add_edge(
+                    ConnectionApplicationEdge(
+                        pre_vertex=source_vertex,
+                        input_port=original_edge.input_port,
+                        post_vertex=destination_vertex,
+                        reception_parameters=(
+                            original_edge.reception_parameters)),
+                    new_outgoing_edge_partition.identifier)
+            elif isinstance(
+                    original_edge, ConnectionLearningRuleApplicationEdge):
+                interposer_application_graph.add_edge(
+                    ConnectionLearningRuleApplicationEdge(
+                        pre_vertex=source_vertex,
+                        input_port=original_edge.input_port,
+                        post_vertex=destination_vertex,
+                        reception_parameters=original_edge.reception_parameters,
+                        learning_rule=original_edge.learning_rule),
+                    new_outgoing_edge_partition.identifier)
+            else:
+                raise Exception("dont know this connection edge type")
+
         else:
             # If the sink is a pass through node then we consider each outgoing
             # connection in turn. If the connection is to be replaced by an
             # interposer then we add a connection to the relevant interposer,
             # otherwise we recurse to add further new connections.
-            for outgoing_partition in original_operator_graph.\
+            for destination_outgoing_partition in original_operator_graph.\
                     get_outgoing_edge_partitions_starting_at_vertex(
                         destination_vertex):
 
-                destination_vertex_destinations = list()
-                for application_edge in outgoing_partition.edges:
-                    destination_vertex_destinations.append(
-                        application_edge.post_vertex)
+                for original_application_edge in \
+                        destination_outgoing_partition.edges:
 
-                interposer = interposers.get(destination_vertex)
-                if interposer is not None:
-                    # If the sink is not a pass through node then just add the
-                    # connection to the new connection map.
-                    # create new partition for channel data holder
-                    new_outgoing_edge_partition = ConnectionOutgoingPartition(
-                        rng=random_number_generator, pre_vertex=source_vertex,
-                        identifier=outgoing_partition.identifier)
-                    interposer_application_graph.add_outgoing_edge_partition(
-                        new_outgoing_edge_partition)
-                    interposer_application_graph.add_vertex(interposer)
-                    interposer_application_graph.add_edge(
-                        ApplicationEdge(source_vertex, interposer),
-                        outgoing_partition.identifier)
-
-                    # update all parameters
-                    for (transmission_params, reception_params,
-                            latching_required, weight) in zip(
-                                outgoing_partition.transmission_params,
-                                outgoing_partition.reception_params,
-                                outgoing_partition.latching_required,
-                                outgoing_partition.weight):
-
-                        new_outgoing_edge_partition.add_parameter_set(
-                            transmission_params=transmission_params,
-                            reception_params=reception_params,
-                            latching_required=latching_required,
-                            weight=weight,
-                            destination_input_port=(
-                                constants.INPUT_PORT.STARNDARD),
-                            destination_vertex=interposer)
-
-                    # Mark the interposer as reached
-                    used_interposers.add(
-                        (destination_vertex, new_outgoing_edge_partition))
-                else:
-
-                    self._merge_connection_and_try_again(
-                        outgoing_partition, destination_vertex_destinations,
-                        used_interposers, interposer_application_graph,
-                        interposers, source_vertex, source_port,
-                        required_latching, random_number_generator,
-                        original_operator_graph)
+                    self._process_copy_connection_pass_through_nodes(
+                        interposers, destination_vertex,
+                        random_number_generator,
+                        source_vertex, destination_outgoing_partition, seed,
+                        interposer_application_graph, original_application_edge,
+                        used_interposers, source_port,
+                        original_required_latching, original_operator_graph,
+                        original_edge, original_transmission_param)
 
         return used_interposers
 
+    def _process_copy_connection_pass_through_nodes(
+            self, interposers, destination_vertex, random_number_generator,
+            source_vertex, destination_outgoing_partition, seed,
+            interposer_application_graph, original_application_edge,
+            used_interposers, source_port, original_required_latching,
+            original_operator_graph, original_edge,
+            original_transmission_parameter):
+        interposer = interposers.get(destination_vertex)
+        if interposer is not None:
+            # If the sink is not a pass through node then just add the
+            # connection to the new connection map.
+            # create new partition for channel data holder
+            new_outgoing_edge_partition = ConnectionOutgoingPartition(
+                rng=random_number_generator, pre_vertex=source_vertex,
+                identifier=destination_outgoing_partition.identifier,
+                seed=seed)
+            interposer_application_graph.add_outgoing_edge_partition(
+                new_outgoing_edge_partition)
+            interposer_application_graph.add_vertex(interposer)
+            interposer_application_graph.add_edge(
+                ConnectionApplicationEdge(
+                    pre_vertex=source_vertex, post_vertex=interposer,
+                    input_port=constants.INPUT_PORT.STARNDARD,
+                    reception_parameters=(
+                        original_application_edge.reception_parameters)),
+                destination_outgoing_partition.identifier)
+
+            # Mark the interposer as reached
+            used_interposers.add(
+                (destination_vertex, new_outgoing_edge_partition))
+        else:
+            self._merge_connection_and_try_again(
+                destination_outgoing_partition,
+                destination_outgoing_partition.edges,
+                used_interposers, interposer_application_graph,
+                interposers, source_vertex, source_port,
+                original_required_latching, random_number_generator,
+                original_operator_graph, original_edge,
+                original_transmission_parameter)
+
     def _merge_connection_and_try_again(
-            self, outgoing_partition, destination_vertex_destinations,
+            self, destination_outgoing_partition,
+            destination_vertex_outgoing_edges,
             used_interposers, interposer_application_graph, interposers,
-            source_vertex, source_port, required_latching,
-            random_number_generator, original_operator_graph):
+            source_vertex, source_port, original_required_latching,
+            random_number_generator, original_operator_graph,
+            original_edge, original_transmission_param):
+
         # Build the new signal and transmission parameters.
-        destination_transmission_pars = outgoing_partition.transmission_params.\
-            concat(outgoing_partition.transmission_params)
+        destination_transmission_pars = \
+            destination_outgoing_partition.identifier.transmission_parameter.\
+            concat(original_transmission_param)
 
         if destination_transmission_pars is not None:
 
             # Add onward connections if the transmission
             # parameters aren't empty.
-            for new_sink in destination_vertex_destinations:
+            for new_destination_edge in destination_vertex_outgoing_edges:
+
                 # Build the reception parameters and recurse
-                sink_reception_params = outgoing_partition. \
-                    reception_params.concat(outgoing_partition.reception_params)
+                sink_reception_params = \
+                    new_destination_edge.reception_parameters.concat(
+                        original_edge.reception_parameters)
+                if isinstance(new_destination_edge, ConnectionApplicationEdge):
+                    new_destination_edge = ConnectionApplicationEdge(
+                        pre_vertex=new_destination_edge.pre_vertex,
+                        post_vertex=new_destination_edge.post_vertex,
+                        input_port=new_destination_edge.input_port,
+                        reception_parameters=sink_reception_params)
+                elif isinstance(new_destination_edge,
+                                ConnectionLearningRuleApplicationEdge):
+                    new_destination_edge = \
+                        ConnectionLearningRuleApplicationEdge(
+                            pre_vertex=new_destination_edge.pre_vertex,
+                            post_vertex=new_destination_edge.post_vertex,
+                            input_port=new_destination_edge.input_port,
+                            reception_parameters=sink_reception_params,
+                            learning_rule=new_destination_edge.learning_rule)
 
                 # recursive call
                 used_interposers.update(self._copy_connection(
                     interposer_application_graph=interposer_application_graph,
                     interposers=interposers, source_vertex=source_vertex,
-                    source_port=source_port, weight=outgoing_partition.weight,
-                    required_latching=(
-                        outgoing_partition.latching or required_latching),
+                    source_port=source_port,
+                    original_weight=(
+                        destination_outgoing_partition.identifier.weight),
+                    original_required_latching=(
+                        destination_outgoing_partition.identifier.
+                        latching_required or original_required_latching),
+                    original_transmission_param=original_transmission_param,
                     destination_transmission_pars=destination_transmission_pars,
-                    destination_vertex=new_sink.sink_object,
-                    destination_port=new_sink.port,
-                    destination_reception_params=sink_reception_params,
+                    destination_vertex=new_destination_edge.post_vertex,
                     random_number_generator=random_number_generator,
-                    original_operator_graph=original_operator_graph))
+                    original_operator_graph=original_operator_graph,
+                    original_edge=new_destination_edge,
+                    seed=destination_outgoing_partition.seed))
 
     def _connects_to_non_pass_through_node(
             self, sink_objects, application_graph):
@@ -590,7 +661,7 @@ class NengoUtiliseInterposers(object):
 
     def _stack_interposers(
             self, interposer_application_graph, interposers,
-            random_number_generator):
+            random_number_generator, seed):
         """Return a new list of interposers and a new communication map
         resulting from combining compatible interposers.
 
@@ -627,7 +698,8 @@ class NengoUtiliseInterposers(object):
             new_interposer = InterposerApplicationVertex(
                 sum(i.size_in for i in interposer_group),
                 label="stacked interposer for the interposer group{}".format(
-                    interposer_group), rng=random_number_generator)
+                    interposer_group), rng=random_number_generator,
+                seed=seed)
 
             stacked_interposers[new_interposer] = interposer_group
 
@@ -658,7 +730,7 @@ class NengoUtiliseInterposers(object):
                 if source_vertex not in stacking:
                     self._process_stackable_interposer(
                         outgoing_partition, stacking, random_number_generator,
-                        stacked_interposer_graph, source_vertex)
+                        stacked_interposer_graph, source_vertex, seed)
 
         # For each stacked interposer build up a mapping from sinks, reception
         # parameters and signal parameters to the transmission parameters that
@@ -697,7 +769,8 @@ class NengoUtiliseInterposers(object):
                 stacked_outgoing_partition = \
                     ConnectionOutgoingPartition(
                         identifier=outgoing_partition.identifer,
-                        rng=random_number_generator)
+                        rng=random_number_generator, pre_vertex=new_interposer,
+                        seed=seed)
                 stacked_outgoing_partition.set_all_parameters(
                     transmission_params=transmission_params,
                     reception_params=outgoing_partition.reception_params,
@@ -717,7 +790,7 @@ class NengoUtiliseInterposers(object):
 
     def _process_stackable_interposer(
             self, outgoing_partition, stacking, random_number_generator,
-            stacked_interposer_graph, source_vertex):
+            stacked_interposer_graph, source_vertex, seed):
         # get true mc edge destinations
         connection_destinations = outgoing_partition.edge_destinations
 
@@ -757,26 +830,103 @@ class NengoUtiliseInterposers(object):
                 stacked_outgoing_partition = \
                     ConnectionOutgoingPartition(
                         identifier=outgoing_partition.identifer,
-                        rng=random_number_generator)
-                stacked_outgoing_partition.set_all_parameters(
-                    transmission_params=interposer_transmission_parameters,
-                    reception_params=outgoing_partition.reception_params,
-                    latching_required=outgoing_partition.latching_required,
-                    weight=outgoing_partition.weight,
-                    source_output_port=outgoing_partition.source_output_port,
-                    destination_input_port=(
-                        outgoing_partition.destination_input_port))
+                        rng=random_number_generator, pre_vertex=source_vertex,
+                        seed=seed)
 
                 # add to the graph
+                # insert the vertices as required
+                if source_vertex not in stacked_interposer_graph.vertices:
+                    stacked_interposer_graph.add_vertex(source_vertex)
+                if connection_interposer not in \
+                        stacked_interposer_graph.vertices:
+                    stacked_interposer_graph.add_vertex(connection_interposer)
+
+                # add outgoing partition
                 stacked_interposer_graph.add_outgoing_edge_partition(
                     stacked_outgoing_partition)
-                stacked_interposer_graph.add_edge(
-                    ApplicationEdge(source_vertex, connection_interposer),
-                    outgoing_partition.identifer)
+
+                # add old edges into new outgoing partition
+                for old_app_edge in outgoing_partition.edges:
+                    if (old_app_edge.pre_vertex == source_vertex and
+                            old_app_edge.post_vertex == connection_destination):
+                        if isinstance(old_app_edge,
+                                      ConnectionApplicationEdge):
+                            stacked_interposer_graph.add_edge(
+                                ConnectionApplicationEdge(
+                                    pre_vertex=source_vertex,
+                                    post_vertex=connection_interposer,
+                                    input_port=old_app_edge.input_port,
+                                    reception_parameters=(
+                                        old_app_edge.reception_parameters)),
+                                outgoing_partition.identifer)
+                        elif isinstance(old_app_edge,
+                                        ConnectionLearningRuleApplicationEdge):
+                            stacked_interposer_graph.add_edge(
+                                ConnectionLearningRuleApplicationEdge(
+                                    pre_vertex=source_vertex,
+                                    post_vertex=connection_interposer,
+                                    input_port=old_app_edge.input_port,
+                                    learning_rule=(
+                                        old_app_edge.learning_rule),
+                                    reception_parameters=(
+                                        old_app_edge.reception_parameters)),
+                                outgoing_partition.identifer)
+                        else:
+                            raise Exception("dont recognise this edge type")
 
             else:  # Otherwise just add the signal unchanged
-                stacked_interposer_graph.add_outgoing_edge_partition(
-                    outgoing_partition)
-                stacked_interposer_graph.add_edge(
-                    ApplicationEdge(source_vertex, connection_destination),
-                    outgoing_partition.identifer)
+                # insert the vertices as required
+                if source_vertex not in stacked_interposer_graph.vertices:
+                    stacked_interposer_graph.add_vertex(source_vertex)
+                if connection_destination not in \
+                        stacked_interposer_graph.vertices:
+                    stacked_interposer_graph.add_vertex(connection_destination)
+
+                # insert partition if not already
+                in_graph_partition = stacked_interposer_graph.\
+                    get_outgoing_edge_partition_starting_at_vertex(
+                        source_vertex, outgoing_partition.identifier)
+                if in_graph_partition is None:
+                    stacked_interposer_graph.add_outgoing_edge_partition(
+                        ConnectionOutgoingPartition(
+                            rng=random_number_generator,
+                            pre_vertex=source_vertex,
+                            seed=outgoing_partition.seed,
+                            identifier=PartitionIdentifier(
+                                source_port=(
+                                    outgoing_partition.identifier.source_port),
+                                latching_required=(
+                                    outgoing_partition.identifier.
+                                    latching_required),
+                                weight=outgoing_partition.identifier.weight,
+                                transmission_parameter=(
+                                    outgoing_partition.identifier.
+                                    transmission_parameter))))
+
+                # add edges as required
+                for old_app_edge in outgoing_partition.edges:
+                    if (old_app_edge.pre_vertex == source_vertex and
+                            old_app_edge.post_vertex ==
+                            connection_destination):
+                        if isinstance(old_app_edge, ConnectionApplicationEdge):
+                            stacked_interposer_graph.add_edge(
+                                ConnectionApplicationEdge(
+                                    pre_vertex=source_vertex,
+                                    post_vertex=connection_destination,
+                                    input_port=old_app_edge.input_port,
+                                    reception_parameters=(
+                                        old_app_edge.reception_parameters)),
+                                outgoing_partition.identifier)
+                        elif isinstance(old_app_edge,
+                                        ConnectionLearningRuleApplicationEdge):
+                            stacked_interposer_graph.add_edge(
+                                ConnectionLearningRuleApplicationEdge(
+                                    pre_vertex=source_vertex,
+                                    post_vertex=connection_destination,
+                                    input_port=old_app_edge.input_port,
+                                    reception_parameters=(
+                                        old_app_edge.reception_parameters),
+                                    learning_rule=old_app_edge.learning_rule),
+                            outgoing_partition.identifier)
+                        else:
+                            raise Exception("dont recognise this edge type")

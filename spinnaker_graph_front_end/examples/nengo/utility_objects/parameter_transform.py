@@ -144,17 +144,16 @@ class ParameterTransform(object):
 
         return len(outputs.intersection(space)) != 0
 
-    @staticmethod
-    def concat(a, b):
+    def concat(self, b):
         """Return a transform which is the result of concatenating this
         transform with another.
         """
-        assert a.size_out == b.size_in
+        assert self.size_out == b.size_in
 
         # Determine where the output dimensions of this transform and the input
         # dimensions of the other intersect.
-        out_sel = numpy.zeros(a.size_out, dtype=bool)
-        out_sel[a.slice_out] = True
+        out_sel = numpy.zeros(self.size_out, dtype=bool)
+        out_sel[self.slice_out] = True
 
         in_sel = numpy.zeros(b.size_in, dtype=bool)
         in_sel[b.slice_in] = True
@@ -168,21 +167,21 @@ class ParameterTransform(object):
 
         # If the first transform is specified with either a scalar or a vector
         # (as a diagonal) then the slice in is modified by `mid_sel'.
-        slice_in_sel = mid_sel[a.slice_out]
-        if a.transform.ndim < 2:
+        slice_in_sel = mid_sel[self.slice_out]
+        if self.transform.ndim < 2:
             # Get the new slice in
-            slice_in = a.slice_in[slice_in_sel]
+            slice_in = self.slice_in[slice_in_sel]
 
             # Get the new transform
-            if a.transform.ndim == 0:
-                a_transform = a.transform
+            if self.transform.ndim == 0:
+                a_transform = self.transform
             else:
-                a_transform = a.transform[slice_in_sel]
+                a_transform = self.transform[slice_in_sel]
         else:
             # The slice in remains the same but the rows of the transform are
             # sliced.
-            slice_in = a.slice_in
-            a_transform = a.transform[slice_in_sel]
+            slice_in = self.slice_in
+            a_transform = self.transform[slice_in_sel]
 
         # If the second transform is specified with either a scalar or a vector
         # (as a diagonal) then the output slice is modified by `mid_sel'
@@ -215,7 +214,7 @@ class ParameterTransform(object):
             return None
 
         # Create the new Transform
-        return ParameterTransform(size_in=a.size_in, slice_in=slice_in,
+        return ParameterTransform(size_in=self.size_in, slice_in=slice_in,
                                   transform=new_transform,
                                   size_out=b.size_out, slice_out=slice_out)
 

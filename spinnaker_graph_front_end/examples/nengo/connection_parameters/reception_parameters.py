@@ -43,8 +43,8 @@ class ReceptionParameters(object):
         """
         # Combine the filters
         if self._parameter_filter is None:
-            new_filter = other.filter
-        elif other.filter is None:
+            new_filter = other.parameter_filter
+        elif other.parameter_filter is None:
             new_filter = self._parameter_filter
         elif (isinstance(self._parameter_filter, LinearFilter) and
                 isinstance(other.parameter_filter, LinearFilter)):
@@ -59,7 +59,7 @@ class ReceptionParameters(object):
         else:
             raise NotImplementedError(
                 "Cannot combine filters of type {} and {}".format(
-                    type(self._parameter_filter), type(other.filter)))
+                    type(self._parameter_filter), type(other.parameter_filter)))
 
         # Combine the learning rules
         if self._learning_rule is not None and other.learning_rule is not None:

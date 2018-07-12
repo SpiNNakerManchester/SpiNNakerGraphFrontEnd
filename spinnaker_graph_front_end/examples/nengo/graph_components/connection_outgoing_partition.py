@@ -23,8 +23,6 @@ class ConnectionOutgoingPartition(OutgoingEdgePartition, AbstractNengoObject):
         #
         '_transmission_params',
         #
-        '_reception_params',
-        #
         '_latching_required',
         #
         '_weight',
@@ -34,8 +32,7 @@ class ConnectionOutgoingPartition(OutgoingEdgePartition, AbstractNengoObject):
 
     _REPR_TEMPLATE = \
         "ConnectionOutgoingPartition(\n" \
-        "identifier={}, edges={}, constraints={}, label={}, " \
-        "reception_params={}, seed={})"
+        "identifier={}, edges={}, constraints={}, label={}, seed={})"
 
     def __init__(self, rng, identifier, pre_vertex, seed):
         OutgoingEdgePartition.__init__(
@@ -45,7 +42,6 @@ class ConnectionOutgoingPartition(OutgoingEdgePartition, AbstractNengoObject):
         AbstractNengoObject.__init__(self, rng=rng, seed=seed)
         self._outgoing_edges_destinations = list()
         self._pre_vertex = pre_vertex
-        self._reception_params = defaultdict(list)
 
     @overrides(OutgoingEdgePartition.add_edge)
     def add_edge(self, edge):
@@ -61,22 +57,6 @@ class ConnectionOutgoingPartition(OutgoingEdgePartition, AbstractNengoObject):
     def traffic_weight(self):
         return self._identifier.weight
 
-    def add_destination_parameter_set(
-            self, reception_params, destination_input_port, destination_vertex):
-        dest_param = DestinationParams(
-            destination_vertex, destination_input_port)
-        if dest_param in self._reception_params:
-            pass
-        else:
-            self._reception_params[dest_param].append(reception_params)
-
-    def get_reception_params_for_vertex(self, destination_vertex, port_num):
-        dest_param = DestinationParams(destination_vertex, port_num)
-        if dest_param in self._reception_params:
-            return self._reception_params[dest_param]
-        else:
-            return list()
-
     def __repr__(self):
         edges = ""
         for edge in self._edges:
@@ -85,15 +65,8 @@ class ConnectionOutgoingPartition(OutgoingEdgePartition, AbstractNengoObject):
             else:
                 edges += str(edge) + ","
 
-        reception_params = ""
-        for dest_param in self._reception_params:
-            reception_params += "{}:{}".format(dest_param.dest_vertex,
-                                               dest_param.dest_port)
-            reception_params += "={}\n".format(
-                self._reception_params[dest_param])
         return self._REPR_TEMPLATE.format(
-            self._identifier, edges, self.constraints, self.label,
-            reception_params, self._seed)
+            self._identifier, edges, self.constraints, self.label, self._seed)
 
     def __str__(self):
         return self.__repr__()

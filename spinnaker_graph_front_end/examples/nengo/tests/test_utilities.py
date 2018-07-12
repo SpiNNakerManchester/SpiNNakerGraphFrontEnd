@@ -133,23 +133,30 @@ def _compare_param_transform(nengo_version, gfe_version):
 
 
 def _compare_pass_through_trans(nengo_version, gfe_version):
-    return _compare_param_transform(
-        nengo_version._transform, gfe_version.transform)
+    if isinstance(gfe_version, GFEPassthroughNodeTransmissionParameters):
+        return _compare_param_transform(
+            nengo_version._transform, gfe_version.transform)
+    return False
 
 
 def _compare_ensemble_trans(nengo_version, gfe_version):
-    return (_compare_param_transform(
-        nengo_version._transform, gfe_version.transform) and
-           # numpy.all(numpy.in1d(
-           #     nengo_version.decoders, gfe_version.decoders)) and
-        nengo_version.learning_rule == gfe_version.learning_rule)
+    if isinstance(gfe_version, GFEEnsembleTransmissionParameters):
+        return (_compare_param_transform(
+            nengo_version._transform, gfe_version.transform) and
+               # numpy.all(numpy.in1d(
+               #     nengo_version.decoders, gfe_version.decoders)) and
+            nengo_version.learning_rule == gfe_version.learning_rule)
+    return False
 
 
 def _compare_node_trans_params(nengo_version, gfe_version):
-    return (_compare_param_transform(
-        nengo_version._transform, gfe_version.transform) and
-        nengo_version.function == gfe_version.parameter_function and
-        nengo_version.pre_slice == gfe_version.pre_slice)
+    if isinstance(gfe_version, GFENodeTransmissionParameters):
+        return (_compare_param_transform(
+            nengo_version._transform, gfe_version.transform) and
+            nengo_version.function == gfe_version.parameter_function and
+            nengo_version.pre_slice == gfe_version.pre_slice)
+    else:
+        return False
 
 
 def _compare_transmission_params(nengo_version, gfe_version):
@@ -357,7 +364,7 @@ def _create_gfe_port(nengo_enum):
 
 def _check_partition_to_nengo_objects(
         nengo_mapped_objs, outgoing_partition,
-        nengo_spinnaker_network_builder):
+        nengo_spinnaker_network_builder, gfe_app_graph):
 
     mappings = _create_map_between_nengo_spinnaker_and_gfe_verts()
 
@@ -380,9 +387,12 @@ def _check_partition_to_nengo_objects(
                         nengo_spinnaker_network_builder, mappings)
                     if valid:
                         gfe_equiv_input_port = _create_gfe_port(input_port)
-                        gfe_reception_params = \
-                            outgoing_partition.get_reception_params_for_vertex(
-                                destination, gfe_equiv_input_port)
+
+                        # locate the edge linking to this outgoing partition
+                        # and input port
+                        gfe_reception_params = locate_reception_parameters(
+                            gfe_app_graph, outgoing_partition,
+                            gfe_equiv_input_port, destination)
 
                         if _check_reception_params(
                                 reception_params, gfe_reception_params):
@@ -392,6 +402,16 @@ def _check_partition_to_nengo_objects(
                                     (sink_object, reception_params,
                                      input_port)] = True
     return nengo_mapped_objs
+
+
+def locate_reception_parameters(gfe_app_graph, outgoing_partition,
+                                destination_input_port, destination_vertex):
+    reception_params = list()
+    for edge in gfe_app_graph.get_edges_ending_at_vertex_with_partition_name(
+            destination_vertex, outgoing_partition.identifier):
+        if edge.input_port == destination_input_port:
+            reception_params.append(edge.reception_parameters)
+    return reception_params
 
 
 def _test_graph_edges(
@@ -461,7 +481,7 @@ def _test_graph_edges(
                         # check against outgoing partition
                         nengo_mapped_objs = _check_partition_to_nengo_objects(
                             nengo_mapped_objs, outgoing_partition,
-                            nengo_spinnaker_network_builder)
+                            nengo_spinnaker_network_builder, app_graph)
 
         # check we've found everything
         for first_key in nengo_mapped_objs:
