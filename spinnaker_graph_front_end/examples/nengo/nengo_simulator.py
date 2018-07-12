@@ -40,7 +40,8 @@ class NengoSimulator(SpiNNaker):
             database_socket_addresses=None, dsg_algorithm=None,
             n_chips_required=None, extra_pre_run_algorithms=None,
             extra_post_run_algorithms=None, decoder_cache=NoDecoderCache(),
-            extra_model_converters=None, extra_object_params=None):
+            function_of_time_nodes=None, function_of_time_nodes_time_period=None
+            ):
         """Create a new Simulator with the given network.
         
         :param time_scale: Scaling factor to apply to the simulation, e.g.,\
@@ -64,9 +65,6 @@ class NengoSimulator(SpiNNaker):
         :type extra_post_run_algorithms:
         :param extra_pre_run_algorithms:
         :type extra_pre_run_algorithms:
-        :param extra_object_params: parameters for the nengo objects that are\ 
-            associated with spinnaker related tasks
-        :type extra_object_params: dict of nengo object to dict of params to 
         values
         :rtype None
         """
@@ -97,13 +95,19 @@ class NengoSimulator(SpiNNaker):
         if self.config.getboolean("Node", "optimise_utilise_interposers"):
             extra_mapping_algorithms.append("NengoUtiliseInterposers")
 
+        if function_of_time_nodes is None:
+            function_of_time_nodes = list()
+        if function_of_time_nodes_time_period is None:
+            function_of_time_nodes_time_period = list()
+
         # update the main flow with new algorithms and params
         self.extend_extra_mapping_algorithms(extra_mapping_algorithms)
         self.update_extra_inputs(
-            {'NengoObjectExtraParams': extra_object_params,
+            {'NengoNodesAsFunctionOfTime':function_of_time_nodes,
+             'NengoNodesAsFunctionOfTimeTimePeriod':
+                 function_of_time_nodes_time_period,
              'NengoModel': network,
              'NengoDecoderCache': decoder_cache,
-             'NengoExtraModelConverters': extra_model_converters,
              "NengoNodeIOSetting": self.config.get("Simulator", "node_io"),
              "NengoEnsembleProfile":
                  self.config.getboolean("Ensemble", "profile"),

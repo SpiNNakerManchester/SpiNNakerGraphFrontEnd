@@ -24,8 +24,8 @@ from spinnaker_graph_front_end.examples.nengo.abstracts.\
     abstract_probeable import AbstractProbeable
 from spinnaker_graph_front_end.examples.nengo.application_vertices.\
     value_sink_application_vertex import ValueSinkApplicationVertex
-from spinnaker_graph_front_end.examples.nengo.graph_components.connection_application_edge import \
-    ConnectionApplicationEdge
+from spinnaker_graph_front_end.examples.nengo.graph_components.\
+    connection_application_edge import ConnectionApplicationEdge
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
     connection_outgoing_partition import ConnectionOutgoingPartition
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
@@ -60,7 +60,7 @@ from spinnaker_graph_front_end.examples.nengo.graph_components. \
     ConnectionLearningRuleApplicationEdge
 from spinnaker_graph_front_end.examples.nengo.nengo_exceptions import \
     NeuronTypeConstructorNotFoundException, NotLocatedProbableClass, \
-    NotProbeableException, MissingSpecialParameterException
+    NotProbeableException
 from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     ensemble_transmission_parameters import EnsembleTransmissionParameters
 from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
@@ -85,13 +85,11 @@ class NengoApplicationGraphBuilder(object):
     """
 
     def __call__(
-            self, nengo_network, extra_model_converters, machine_time_step,
+            self, nengo_network, machine_time_step,
             nengo_random_number_generator_seed, decoder_cache,
             utilise_extra_core_for_output_types_probe,
-            extra_nengo_object_parameters):
-
-        if extra_nengo_object_parameters is None:
-            extra_nengo_object_parameters = defaultdict(dict)
+            nengo_nodes_as_function_of_time,
+            function_of_time_nodes_time_period):
 
         # start by setting the specific random number generator for all seeds.
         if nengo_random_number_generator_seed is not None:
@@ -113,37 +111,40 @@ class NengoApplicationGraphBuilder(object):
         # mappings between nengo instances and the spinnaker operator graph
         nengo_to_app_graph_map = dict()
 
-        self._build_sub_graph(
-            nengo_network, extra_model_converters, random_number_generator,
+        self._build_sub_network_graph(
+            nengo_network, random_number_generator,
             utilise_extra_core_for_output_types_probe, app_graph,
             nengo_to_app_graph_map, machine_time_step, host_network,
-            extra_nengo_object_parameters, decoder_cache,
-            nengo_random_number_generator_seed)
+            nengo_nodes_as_function_of_time, decoder_cache,
+            nengo_random_number_generator_seed,
+            function_of_time_nodes_time_period)
 
         return (app_graph, host_network, nengo_to_app_graph_map,
                 random_number_generator)
 
-    def _build_sub_graph(
-            self, nengo_network, extra_model_converters,
+    def _build_sub_network_graph(
+            self, nengo_network,
             random_number_generator,
             utilise_extra_core_for_output_types_probe,
             app_graph, nengo_to_app_graph_map, machine_time_step,
-            host_network, extra_nengo_object_parameters, decoder_cache,
-            nengo_random_number_generator_seed):
+            host_network, nengo_nodes_as_function_of_time, decoder_cache,
+            nengo_random_number_generator_seed,
+            function_of_time_nodes_time_period):
 
         for nengo_sub_network in nengo_network.networks:
-            self._build_sub_graph(
-                nengo_sub_network, extra_model_converters,
+            self._build_sub_network_graph(
+                nengo_sub_network,
                 random_number_generator,
                 utilise_extra_core_for_output_types_probe,
                 app_graph, nengo_to_app_graph_map, machine_time_step,
-                host_network, extra_nengo_object_parameters, decoder_cache,
-                nengo_random_number_generator_seed)
+                host_network, nengo_nodes_as_function_of_time, decoder_cache,
+                nengo_random_number_generator_seed,
+                function_of_time_nodes_time_period)
 
         # convert from ensembles to neuron model operators
         for nengo_ensemble in nengo_network.ensembles:
             self._ensemble_conversion(
-                nengo_ensemble, extra_model_converters,
+                nengo_ensemble,
                 random_number_generator,
                 utilise_extra_core_for_output_types_probe,
                 app_graph, nengo_to_app_graph_map)
@@ -154,7 +155,8 @@ class NengoApplicationGraphBuilder(object):
                 nengo_node, random_number_generator, machine_time_step,
                 host_network, app_graph, nengo_to_app_graph_map,
                 utilise_extra_core_for_output_types_probe,
-                extra_nengo_object_parameters)
+                nengo_nodes_as_function_of_time,
+                function_of_time_nodes_time_period)
 
         # convert connections into edges with specific data elements
         live_io_receivers = dict()
@@ -303,7 +305,7 @@ class NengoApplicationGraphBuilder(object):
 
     @staticmethod
     def _ensemble_conversion(
-            nengo_ensemble, extra_model_converters, random_number_generator,
+            nengo_ensemble, random_number_generator,
             utilise_extra_core_for_output_types_probe, app_graph,
             nengo_to_app_graph_map):
         if isinstance(nengo_ensemble.neuron_type, nengo.neurons.LIF):
@@ -317,14 +319,11 @@ class NengoApplicationGraphBuilder(object):
                     utilise_extra_core_for_output_types_probe),
                 **LIFApplicationVertex.generate_parameters_from_ensemble(
                     nengo_ensemble, random_number_generator))
-        elif nengo_ensemble.neuron_type in extra_model_converters:
-            operator = extra_model_converters[nengo_ensemble.neuron_type](
-                nengo_ensemble, random_number_generator)
         else:
             raise NeuronTypeConstructorNotFoundException(
                 "could not find a constructor for neuron type {}. I have "
-                "constructors for the following neuron types LIF,{}".format(
-                    nengo_ensemble.neuron_type, extra_model_converters.keys))
+                "constructors for the following neuron types LIF".format(
+                    nengo_ensemble.neuron_type))
         # update objects
         app_graph.add_vertex(operator)
         nengo_to_app_graph_map[nengo_ensemble] = operator
@@ -334,17 +333,13 @@ class NengoApplicationGraphBuilder(object):
             nengo_node, random_number_generator, machine_time_step,
             host_network, app_graph, nengo_to_app_graph_map, 
             utilise_extra_core_for_output_types_probe,
-            extra_nengo_object_parameters):
+            nengo_nodes_as_function_of_time,
+            function_of_time_nodes_time_period):
 
         # effects if the spike source repeats every time step
-        node_function_of_time = False
-        if constants.FUNCTION_OF_TIME_PARAM_FLAG in \
-                extra_nengo_object_parameters[nengo_node]:
-            node_function_of_time = extra_nengo_object_parameters[
-                nengo_node][constants.FUNCTION_OF_TIME_PARAM_FLAG]
-
         function_of_time = nengo_node.size_in == 0 and (
-            not callable(nengo_node.output) or node_function_of_time)
+            not callable(nengo_node.output) or
+            nengo_node in nengo_nodes_as_function_of_time)
 
         if nengo_node.output is None:
             # If the Node is a pass through Node then create a new placeholder
@@ -360,10 +355,8 @@ class NengoApplicationGraphBuilder(object):
             # time step).
             if callable(nengo_node.output) or isinstance(
                     nengo_node.output, Process):
-                if constants.FUNCTION_OF_TIME_PERIOD_PARAM_FLAG in \
-                        extra_nengo_object_parameters[nengo_node]:
-                    period = extra_nengo_object_parameters[nengo_node][
-                        constants.FUNCTION_OF_TIME_PERIOD_PARAM_FLAG]
+                if nengo_node in function_of_time_nodes_time_period:
+                    period = function_of_time_nodes_time_period[nengo_node]
                 else:
                     logger.warning(
                         "The {} parameter has not been provided. Please "

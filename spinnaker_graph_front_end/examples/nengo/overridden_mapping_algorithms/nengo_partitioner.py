@@ -2,8 +2,6 @@ from pacman.model.graphs.machine import MachineGraph, MachineEdge
 from spinnaker_graph_front_end.examples.nengo import constants
 from spinnaker_graph_front_end.examples.nengo.abstracts.\
     abstract_accepts_multicast_signals import AcceptsMulticastSignals
-from spinnaker_graph_front_end.examples.nengo.application_vertices.\
-    pass_through_application_vertex import PassThroughApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
     graph_mapper import GraphMapper
 from spinnaker_graph_front_end.examples.nengo.machine_vertices.\

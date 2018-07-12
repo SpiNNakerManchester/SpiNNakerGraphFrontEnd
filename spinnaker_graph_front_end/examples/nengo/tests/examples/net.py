@@ -15,7 +15,6 @@ def create_model():
         nengo.Connection(ens, result, function=lambda x: x[0] * x[1],
                          synapse=0.01)
 
-        #TODO ermmmm, what!
         with nengo.Network(label='subnet') as subnet:
             a = nengo.Ensemble(100, 1)
             b = nengo.Ensemble(100, 1)
