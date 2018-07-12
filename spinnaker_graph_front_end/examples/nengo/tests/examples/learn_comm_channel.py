@@ -36,4 +36,4 @@ def create_model():
 
         # Connect the error into the learning rule
         nengo.Connection(error, conn.learning_rule)
-    return model
+    return model, list(), dict()

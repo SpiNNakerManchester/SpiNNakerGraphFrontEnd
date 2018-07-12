@@ -88,5 +88,5 @@ def create_model():
             p_encoders = nengo.Probe(
                 conn_in.learning_rule, 'scaled_encoders',
                 label="p_encoders")
-    return model
+    return model, list(), dict()
 

@@ -28,4 +28,4 @@ def create_model():
             nengo.Connection(b, c)
             nengo.Connection(d, a)
         nengo.Connection(result, a)
-    return model
+    return model, list(), dict()

@@ -18,5 +18,5 @@ def create_model():
             a='A',
             b=(lambda t: 'C*~A' if (t%0.1 < 0.05) else 'D*~A'),
             )
-    return model
+    return model, list(), dict()
 

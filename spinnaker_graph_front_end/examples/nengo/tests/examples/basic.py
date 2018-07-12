@@ -16,7 +16,7 @@ def create_model():
         nengo.Connection(stimulus_B, ens[1])
         nengo.Connection(
             ens, result, function=lambda x: x[0] * x[1], synapse=0.01)
-    return model
+    return model, list(), dict()
 
 
 

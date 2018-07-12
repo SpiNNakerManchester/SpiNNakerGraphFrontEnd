@@ -12,4 +12,4 @@ def create_model():
             def waves(t, i=i):
                 return np.sin(t + np.arange(i + 1) * 2 * np.pi / (i + 1))
             _ = nengo.Node(waves)
-    return model
+    return model, list(), dict()

@@ -4,6 +4,8 @@ from nengo.cache import NoDecoderCache
 from nengo_spinnaker.builder import Model
 from nengo_spinnaker.node_io import Ethernet
 
+import nengo_spinnaker
+
 from spinnaker_graph_front_end.examples.nengo.overridden_mapping_algorithms.\
     nengo_application_graph_builder import NengoApplicationGraphBuilder
 from spinnaker_graph_front_end.examples.nengo.overridden_mapping_algorithms.\
@@ -29,7 +31,7 @@ from spinnaker_graph_front_end.examples.nengo.tests.examples.spaun_model \
     import create_model as spaun_create_model
 
 
-class TestAppGraphBuilder(unittest.TestCase):
+class TestAppGraphAndInterposerBuilder(unittest.TestCase):
 
     TEST_SPAUN = False
 
@@ -56,6 +58,12 @@ class TestAppGraphBuilder(unittest.TestCase):
             seed)
 
         # build via nengo - spinnaker
+        nengo_spinnaker.add_spinnaker_params(nengo_network.config)
+        for nengo_node in nodes_as_function_of_time:
+            nengo_network.config[nengo_node].function_of_time = True
+        for nengo_node in nodes_as_function_of_time_time_period:
+            nengo_network.config[nengo_node].function_of_time_period = \
+                nodes_as_function_of_time_time_period[nengo_node]
         io_controller = Ethernet()
         builder_kwargs = io_controller.builder_kwargs
         nengo_spinnaker_network_builder = Model()
@@ -76,41 +84,61 @@ class TestAppGraphBuilder(unittest.TestCase):
             raise Exception("didnt match")
 
     def test_application_graph_builder_learn_assocates(self):
+
         # build via gfe nengo spinnaker
-        network = la_create_model()
-        TestAppGraphBuilder.run_test(network, list(), list())
+        network, function_of_time, function_of_time_time_period = \
+            la_create_model()
+        TestAppGraphAndInterposerBuilder.run_test(
+            network, function_of_time, function_of_time_time_period)
 
     def test_application_graph_builder_learn_comm_channel(self):
+
         # build via gfe nengo spinnaker
-        network = lcc_create_model()
-        TestAppGraphBuilder.run_test(network, list(), list())
+        network, function_of_time, function_of_time_time_period = \
+            lcc_create_model()
+        TestAppGraphAndInterposerBuilder.run_test(
+            network, function_of_time, function_of_time_time_period)
 
     def test_application_graph_builder_example_2d(self):
-        network = two_d_create_model()
-        TestAppGraphBuilder.run_test(network, list(), list())
+        network, function_of_time, function_of_time_time_period = \
+            two_d_create_model()
+        TestAppGraphAndInterposerBuilder.run_test(
+            network, function_of_time, function_of_time_time_period)
 
     def test_application_graph_builder_basic(self):
-        network = basic_create_model()
-        TestAppGraphBuilder.run_test(network, list(), list())
+        network, function_of_time, function_of_time_time_period = \
+            basic_create_model()
+        TestAppGraphAndInterposerBuilder.run_test(
+            network, function_of_time, function_of_time_time_period)
 
     def test_application_graph_builder_lines(self):
-        network = lines_create_model()
-        TestAppGraphBuilder.run_test(network, list(), list())
+        network, function_of_time, function_of_time_time_period = \
+            lines_create_model()
+        TestAppGraphAndInterposerBuilder.run_test(
+            network, function_of_time, function_of_time_time_period)
 
     def test_application_graph_builder_net(self):
-        network = net_create_model()
-        TestAppGraphBuilder.run_test(network, list(), list())
+        network, function_of_time, function_of_time_time_period = \
+            net_create_model()
+        TestAppGraphAndInterposerBuilder.run_test(
+            network, function_of_time, function_of_time_time_period)
 
     def test_application_graph_builder_spa(self):
-        network = spa_create_model()
-        TestAppGraphBuilder.run_test(network, list(), list())
+        network, function_of_time, function_of_time_time_period = \
+            spa_create_model()
+        TestAppGraphAndInterposerBuilder.run_test(
+            network, function_of_time, function_of_time_time_period)
 
     def test_application_graph_builder_spaun_model(self):
         if self.TEST_SPAUN:
-            network = spaun_create_model()
-            TestAppGraphBuilder.run_test(network, list(), list())
+            network, function_of_time, function_of_time_time_period = \
+                spaun_create_model()
+            TestAppGraphAndInterposerBuilder.run_test(
+                network, function_of_time, function_of_time_time_period)
 
 if __name__ == "__main__":
-    network = la_create_model()
-    TestAppGraphBuilder.run_test(network, list(), list())
-
+    this_network, this_function_of_time, this_function_of_time_time_period = \
+        la_create_model()
+    TestAppGraphAndInterposerBuilder.run_test(
+        this_network, this_function_of_time,
+        this_function_of_time_time_period)

@@ -9,4 +9,4 @@ def create_model():
         stimulus = nengo.Node(lambda t: (np.sin(t), np.cos(t)))
         ens = nengo.Ensemble(n_neurons=1000, dimensions=2)
         nengo.Connection(stimulus, ens)
-    return model
+    return model, list(), dict()
