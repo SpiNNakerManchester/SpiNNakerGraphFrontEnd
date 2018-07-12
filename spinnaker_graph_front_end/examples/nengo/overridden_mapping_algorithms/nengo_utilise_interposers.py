@@ -469,9 +469,8 @@ class NengoUtiliseInterposers(object):
             original_edge, original_transmission_param):
 
         # Build the new signal and transmission parameters.
-        destination_transmission_pars = \
-            destination_outgoing_partition.identifier.transmission_parameter.\
-            concat(original_transmission_param)
+        destination_transmission_pars = original_transmission_param.concat(
+            destination_outgoing_partition.identifier.transmission_parameter)
 
         if destination_transmission_pars is not None:
 

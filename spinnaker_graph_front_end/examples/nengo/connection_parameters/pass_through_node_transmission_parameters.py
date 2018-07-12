@@ -3,6 +3,8 @@ from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     abstract_transmission_parameters import AbstractTransmissionParameters
 from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     transmission_parameters_impl import TransmissionParametersImpl
+from spinnaker_graph_front_end.examples.nengo.nengo_exceptions import \
+    NotConcatableTransmissionParameter
 from spinnaker_graph_front_end.examples.nengo.utility_objects.\
     parameter_transform import ParameterTransform
 
@@ -40,6 +42,10 @@ class PassthroughNodeTransmissionParameters(
             Either a new set of transmission connection_parameters, or None if the
             resulting transform contained no non-zero values.
         """
+
+        if not isinstance(other, PassthroughNodeTransmissionParameters):
+            raise NotConcatableTransmissionParameter()
+
         # Combine the transforms
         new_transform = self._transform.concat(other._transform)
 

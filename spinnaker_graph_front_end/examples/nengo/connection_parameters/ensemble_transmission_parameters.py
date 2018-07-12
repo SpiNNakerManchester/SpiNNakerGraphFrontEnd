@@ -3,8 +3,12 @@ import numpy
 from spinn_utilities.overrides import overrides
 from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     abstract_transmission_parameters import AbstractTransmissionParameters
+from spinnaker_graph_front_end.examples.nengo.connection_parameters.pass_through_node_transmission_parameters import \
+    PassthroughNodeTransmissionParameters
 from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     transmission_parameters_impl import TransmissionParametersImpl
+from spinnaker_graph_front_end.examples.nengo.nengo_exceptions import \
+    NotConcatableTransmissionParameter
 from spinnaker_graph_front_end.examples.nengo.utility_objects\
     .parameter_transform import ParameterTransform
 
@@ -64,12 +68,11 @@ class EnsembleTransmissionParameters(
     @overrides(TransmissionParametersImpl.__eq__)
     def __eq__(self, other):
         # Two connection_parameters are equal only if they are of the same
-        #  type, both have no learning rule and are equivalent in all other
+        #  type, and are equivalent in all other
         # fields.
         return (super(EnsembleTransmissionParameters, self).__eq__(other) and
                 numpy.array_equal(self._decoders, other.decoders) and
-                self._learning_rule is None and
-                other.learning_rule is None)
+                self._learning_rule == other.learning_rule)
 
     @overrides(TransmissionParametersImpl.__hash__)
     def __hash__(self):
@@ -92,6 +95,10 @@ class EnsembleTransmissionParameters(
             Either a new set of transmission connection_parameters, or None if the
             resulting transform contained no non-zero values.
         """
+
+        if not isinstance(other, PassthroughNodeTransmissionParameters):
+            raise NotConcatableTransmissionParameter()
+
         # Get the outgoing transformation
         new_transform = self._transform.concat(other.transform)
 

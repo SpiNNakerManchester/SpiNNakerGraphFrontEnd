@@ -46,3 +46,8 @@ class NotAbleToBeConnectedToAsADestination(NengoException):
     """raised during partitioning when a machine vertex that is a destination
      of a connection doesnt inherit from the accepts multicast signals 
      interface"""
+
+
+class NotConcatableTransmissionParameter(NengoException):
+    """ raised when during interposers, a transmission parameter is asked to
+    concat a transmission parameter which it cant accept."""

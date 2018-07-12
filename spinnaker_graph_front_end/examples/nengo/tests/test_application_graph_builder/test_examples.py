@@ -28,6 +28,7 @@ from spinnaker_graph_front_end.examples.nengo.tests.test_utilities import \
 
 
 class TestAppGraphBuilder(unittest.TestCase):
+    TEST_SPAUN = False
 
     @staticmethod
     def run_test(network):
@@ -92,8 +93,9 @@ class TestAppGraphBuilder(unittest.TestCase):
         TestAppGraphBuilder.run_test(network)
 
     def test_application_graph_builder_spaun_model(self):
-        network = spaun_create_model()
-        TestAppGraphBuilder.run_test(network)
+        if self.TEST_SPAUN:
+            network = spaun_create_model()
+            TestAppGraphBuilder.run_test(network)
 
 if __name__ == "__main__":
     network = la_create_model()
