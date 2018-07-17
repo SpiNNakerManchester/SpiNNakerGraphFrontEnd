@@ -50,9 +50,7 @@ class PacketGathererCheat(
 
     def __init__(self, mbs, add_seq):
         self._mbs = mbs * self.SDRAM_READING_SIZE_IN_BYTES_CONVERTER
-        MachineVertex.__init__(self, label="pg", constraints=None)
-        MachineDataSpecableVertex.__init__(self)
-        AbstractHasAssociatedBinary.__init__(self)
+        super(PacketGathererCheat, self).__init__(label="pg", constraints=None)
         self._view = None
         self._add_seq = add_seq
         self._max_seq_num = None
@@ -104,8 +102,8 @@ class PacketGathererCheat(
 
     def get_data(self, transceiver, placement):
         data = struct.pack("<I", self.SDP_PACKET_START_SENDING_COMMAND_ID)
-        print "sending to core {}:{}:{}".format(
-            placement.x, placement.y, placement.p)
+        print("sending to core {}:{}:{}".format(
+            placement.x, placement.y, placement.p))
         message = SDPMessage(
             sdp_header=SDPHeader(
                 destination_chip_x=placement.x,
@@ -170,7 +168,7 @@ class PacketGathererCheat(
         # transmit missing seq as a new sdp packet
         first = True
         seq_num_offset = 0
-        for packet_count in range(0, n_packets):
+        for _packet_count in range(0, n_packets):
             length_left_in_packet = self.DATA_PER_FULL_PACKET
             offset = 0
             data = None
@@ -235,7 +233,7 @@ class PacketGathererCheat(
                     destination_cpu=placement.p,
                     destination_port=self.SDP_PACKET_PORT,
                     flags=SDPFlag.REPLY_NOT_EXPECTED),
-                data=str(data))
+                data=data)
 
             # debug
             # self.print_out_missing_seq_packets_data(data)
@@ -243,7 +241,7 @@ class PacketGathererCheat(
             # send message to core
             transceiver.send_sdp_message(message=message)
 
-            # sleep for ensuring core doesnt lose packets
+            # sleep for ensuring core doesn't lose packets
             time.sleep(self.TIME_OUT_FOR_SENDING_IN_SECONDS)
             # self._print_packet_num_being_sent(packet_count, n_packets)
         return False
@@ -377,24 +375,24 @@ class PacketGathererCheat(
         seq_nums = sorted(seq_nums)
         for seq_num in seq_nums:
             if seq_num != last_seq_num + 1:
-                print "from list im missing seq num {}".format(seq_num)
+                print("from list I'm missing seq num {}".format(seq_num))
             last_seq_num = seq_num
 
     def _print_out_missing_seq_packets_data(self, data):
         reread_data = struct.unpack("<{}I".format(
             int(math.ceil(len(data) / self.WORD_TO_BYTE_CONVERTER))),
-            str(data))
-        print "converted data back into readable form is {}"\
-            .format(reread_data)
+            data)
+        print("converted data back into readable form is {}".format(
+            reread_data))
 
     @staticmethod
     def _print_length_of_received_seq_nums(seq_nums, max_needed):
         if len(seq_nums) != max_needed:
-            print "should have received {} sequence numbers, but received " \
-                  "{} sequence numbers".format(max_needed, len(seq_nums))
+            print("should have received {} sequence numbers, but received "
+                  "{} sequence numbers".format(max_needed, len(seq_nums)))
             return False
 
     @staticmethod
     def _print_packet_num_being_sent(packet_count, n_packets):
-        print("send sdp packet with missing seq nums: {} of {}".format(
+        print("send SDP packet with missing seq nums: {} of {}".format(
             packet_count + 1, n_packets))

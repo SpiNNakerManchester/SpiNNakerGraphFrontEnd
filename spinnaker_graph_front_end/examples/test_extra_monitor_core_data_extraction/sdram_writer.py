@@ -25,9 +25,7 @@ class SDRAMWriter(
 
     def __init__(self, mbs):
         self._mbs = mbs * self.SDRAM_READING_SIZE_IN_BYTES_CONVERTER
-        MachineVertex.__init__(self, label="speed")
-        MachineDataSpecableVertex.__init__(self)
-        AbstractHasAssociatedBinary.__init__(self)
+        super(SDRAMWriter, self).__init__(label="speed", constraints=None)
 
     @property
     def mbs_in_bytes(self):
