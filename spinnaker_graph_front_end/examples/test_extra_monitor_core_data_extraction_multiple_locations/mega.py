@@ -1,3 +1,4 @@
+from __future__ import print_function
 import struct
 import time
 import spinnaker_graph_front_end as sim
@@ -52,8 +53,8 @@ class Runner(object):
         time_out_setter.set_cores_for_data_extraction(
             sim.transceiver(), extra_monitor_vertices, placements)
 
-        print "will run for {} iterations".format(
-            len(writers) * number_of_repeats)
+        print("will run for {} iterations".format(
+            len(writers) * number_of_repeats))
 
         counter = 1
         for _ in range(0, number_of_repeats):
@@ -84,8 +85,8 @@ class Runner(object):
                     writer.mbs_in_bytes)
                 end = float(time.time())
 
-                print "{} time taken to extract {} MB is {}. MBS of {}".format(
-                    counter, mbs, end - start, (mbs * 8) / (end - start))
+                print("{} time taken to extract {} MB is {}. MBS of {}".format(
+                    counter, mbs, end - start, (mbs * 8) / (end - start)))
                 counter += 1
 
                 self._check_data(data)
@@ -115,8 +116,8 @@ class Runner(object):
         start_value = 0
         for value in ints:
             if value != start_value:
-                print "should be getting {}, but got {}".format(
-                    start_value, value)
+                print("should be getting {}, but got {}".format(
+                    start_value, value))
                 start_value = value + 1
             else:
                 start_value += 1
