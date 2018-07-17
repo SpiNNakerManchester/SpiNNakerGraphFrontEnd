@@ -97,10 +97,10 @@ class Runner(object):
         # Get the provenance region base address
         base_address_offset = get_region_base_address_offset(
             app_data_base_address, SDRAMWriter.DATA_REGIONS.DATA.value)
-        base_address_buffer = buffer(transceiver.read_memory(
-            placement.x, placement.y, base_address_offset, 4))
+        base_address_buffer = transceiver.read_memory(
+            placement.x, placement.y, base_address_offset, 4)
         _ONE_WORD = struct.Struct("<I")
-        return _ONE_WORD.unpack(str(base_address_buffer))[0]
+        return _ONE_WORD.unpack_from(base_address_buffer)[0]
 
     @staticmethod
     def _check_data(data):
