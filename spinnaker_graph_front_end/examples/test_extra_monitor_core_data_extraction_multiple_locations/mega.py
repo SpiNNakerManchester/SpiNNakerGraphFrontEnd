@@ -19,8 +19,8 @@ class Runner(object):
 
         # setup system
         sim.setup(
-            model_binary_module=
-            test_extra_monitor_core_data_extraction_multiple_locations,
+            model_binary_module=(
+                test_extra_monitor_core_data_extraction_multiple_locations),
             n_chips_required=49*2)
 
         machine = sim.machine()
@@ -31,7 +31,7 @@ class Runner(object):
             for _ in range(0, version_per_chip):
                 writer = SDRAMWriter(
                     mbs, constraint=ChipAndCoreConstraint(chip.x, chip.y))
-                # add verts to graph
+                # add vertices to graph
                 sim.add_machine_vertex_instance(writer)
                 writers.append(writer)
 
@@ -43,10 +43,10 @@ class Runner(object):
 
         extra_monitor_vertices = sim.globals_variables. \
             get_simulator()._last_run_outputs[
-            'MemoryExtraMonitorVertices']
+                'MemoryExtraMonitorVertices']
         extra_monitor_gatherers = sim.globals_variables. \
             get_simulator()._last_run_outputs[
-            'MemoryMCGatherVertexToEthernetConnectedChipMapping']
+                'MemoryMCGatherVertexToEthernetConnectedChipMapping']
         time_out_setter = extra_monitor_gatherers[(0, 0)]
 
         time_out_setter.set_cores_for_data_extraction(
@@ -56,7 +56,7 @@ class Runner(object):
             len(writers) * number_of_repeats)
 
         counter = 1
-        for repeat in range(0, number_of_repeats):
+        for _ in range(0, number_of_repeats):
             for writer in writers:
 
                 writer_placement = placements.get_placement_of_vertex(writer)
