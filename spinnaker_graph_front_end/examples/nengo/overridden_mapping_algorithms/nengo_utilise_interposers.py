@@ -50,13 +50,13 @@ class NengoUtiliseInterposers(object):
     INTERPOSER_PARAMETER_FILTER = None
 
     def __call__(
-            self, application_graph, nengo_to_app_graph_map,
+            self, nengo_operator_graph, nengo_to_app_graph_map,
             random_number_generator, seed):
 
         # add interposers as required
         interposers, interposer_application_graph = \
             self._insert_interposers(
-                application_graph, random_number_generator)
+                nengo_operator_graph, random_number_generator)
 
         # compress interposers when applicable
         stacked_interposer_graph = self._stack_interposers(
