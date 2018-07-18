@@ -1,7 +1,8 @@
 from nengo.cache import NoDecoderCache
+from spinn_front_end_common.utilities import helpful_functions
 from spinn_front_end_common.utilities.utility_objs import ExecutableFinder
 from spinnaker_graph_front_end.spinnaker import SpiNNaker
-from spinnaker_graph_front_end.examples.nengo import binaries
+from spinnaker_graph_front_end.examples.nengo import binaries, constants
 
 import logging
 import os
@@ -34,14 +35,17 @@ class NengoSimulator(SpiNNaker):
     __slots__ = [
     ]
 
+    CONFIG_FILE_NAME = "nengo_spinnaker.cfg"
+
     def __init__(
-            self, network, dt=0.001, time_scale=1.0,
+            self, network, dt=constants.DEFAULT_DT,
+            time_scale=constants.DEFAULT_TIME_SCALE,
             host_name=None, graph_label=None,
             database_socket_addresses=None, dsg_algorithm=None,
             n_chips_required=None, extra_pre_run_algorithms=None,
             extra_post_run_algorithms=None, decoder_cache=NoDecoderCache(),
-            function_of_time_nodes=None, function_of_time_nodes_time_period=None
-            ):
+            function_of_time_nodes=None,
+            function_of_time_nodes_time_period=None):
         """Create a new Simulator with the given network.
         
         :param time_scale: Scaling factor to apply to the simulation, e.g.,\
@@ -73,7 +77,9 @@ class NengoSimulator(SpiNNaker):
 
         # Calculate the machine timestep, this is measured in microseconds
         # (hence the 1e6 scaling factor).
-        machine_timestep = int((dt / time_scale) * 1e6)
+        machine_time_step = (
+            int((dt / time_scale) *
+                constants.SECONDS_TO_MICRO_SECONDS_CONVERTER))
 
         SpiNNaker.__init__(
             self, executable_finder, host_name=host_name,
@@ -84,7 +90,10 @@ class NengoSimulator(SpiNNaker):
             extra_pre_run_algorithms=extra_pre_run_algorithms,
             extra_post_run_algorithms=extra_post_run_algorithms,
             time_scale_factor=time_scale,
-            machine_time_step=machine_timestep)
+            default_config_paths=(
+                os.path.join(os.path.dirname(__file__),
+                             self.CONFIG_FILE_NAME)),
+            machine_time_step=machine_time_step)
 
         # basic mapping extras
         extra_mapping_algorithms = [
@@ -112,12 +121,14 @@ class NengoSimulator(SpiNNaker):
              "NengoEnsembleProfile":
                  self.config.getboolean("Ensemble", "profile"),
              "NengoEnsembleProfileNumSamples":
-                 self.config.getboolean("Ensemble", "profile_num_samples"),
+                 helpful_functions.read_config_int(
+                     self.config, "Ensemble", "profile_num_samples"),
              "NengoRandomNumberGeneratorSeed":
                 self.config.get("Simulator", "global_seed"),
              "NengoUtiliseExtraCoreForProbes":
                 self.config.getboolean(
-                    "Node", "utilise_extra_core_for_probes")})
+                    "Node", "utilise_extra_core_for_probes"),
+             "MachineTimeStepInSeconds": dt})
 
     def __enter__(self):
         """Enter a context which will close the simulator when exited."""
@@ -134,15 +145,12 @@ class NengoSimulator(SpiNNaker):
     def run(self, time_in_seconds):
         """Simulate for the given length of time."""
         # Determine how many steps to simulate for
-        steps = int(numpy.round(float(time_in_seconds) / self.dt))
-        self.run_steps(steps)
-
-    def run_steps(self, steps):
-        """Simulate a give number of steps."""
-        while steps > 0:
-            n_steps = min((steps, self.max_steps))
-            self._run_steps(n_steps)
-            steps -= n_steps
+        steps = int(
+            numpy.round(
+                float((time_in_seconds *
+                       constants.SECONDS_TO_MICRO_SECONDS_CONVERTER))
+                / self.machine_time_step))
+        self._run_steps(steps)
 
     def _run_steps(self, steps):
         """Simulate for the given number of steps."""
