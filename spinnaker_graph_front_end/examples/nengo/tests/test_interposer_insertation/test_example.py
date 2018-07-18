@@ -11,7 +11,7 @@ from spinnaker_graph_front_end.examples.nengo.overridden_mapping_algorithms.\
 from spinnaker_graph_front_end.examples.nengo.overridden_mapping_algorithms.\
     nengo_utilise_interposers import \
     NengoUtiliseInterposers
-from spinnaker_graph_front_end.examples.nengo.tests.test_utilities import \
+from spinnaker_graph_front_end.examples.nengo.tests.test_app_graph_utilities import \
     compare_against_the_nengo_spinnaker_and_gfe_impls
 from spinnaker_graph_front_end.examples.nengo.tests.examples.\
     learn_associates import create_model as la_create_model
@@ -29,6 +29,8 @@ from spinnaker_graph_front_end.examples.nengo.tests.examples.spa import \
     create_model as spa_create_model
 from spinnaker_graph_front_end.examples.nengo.tests.examples.spaun_model \
     import create_model as spaun_create_model
+from spinnaker_graph_front_end.examples.nengo.tests.examples\
+    .test_nodes_sliced import create_model as value_source_test_create_model
 
 
 class TestAppGraphAndInterposerBuilder(unittest.TestCase):
@@ -82,6 +84,13 @@ class TestAppGraphAndInterposerBuilder(unittest.TestCase):
 
         if not match:
             raise Exception("didnt match")
+
+    def test_node_sliced_value_source(self):
+        # build via gfe nengo spinnaker
+        network, function_of_time, function_of_time_time_period = \
+            value_source_test_create_model()
+        TestAppGraphAndInterposerBuilder.run_test(
+            network, function_of_time, function_of_time_time_period)
 
     def test_application_graph_builder_learn_assocates(self):
 

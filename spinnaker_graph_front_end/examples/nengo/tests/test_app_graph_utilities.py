@@ -222,7 +222,6 @@ def _check_interposer_app_vertex(nengo_spinnaker_vertex, gfe_nengo_vertex):
 
 def _check_lif_app_vertex(nengo_spinnaker_vertex, gfe_nengo_vertex,
                           nengo_spinnaker_network_builder):
-
     return True
 
     # TODO if we can somehow fix seeds on both, this would be testable
@@ -268,7 +267,7 @@ def _check_value_source_app_vertex(nengo_spinnaker_vertex, gfe_nengo_vertex):
     return basic_values and output_function_valid
 
 def _check_vert(
-        nengo_spinnaker_vertex, gfe_nengo_vertex, nengo_obj,
+        nengo_spinnaker_vertex, gfe_nengo_vertex,
         nengo_spinnaker_network_builder, mappings):
     if not isinstance(gfe_nengo_vertex, mappings[type(
             nengo_spinnaker_vertex)]):
@@ -315,7 +314,7 @@ def _test_graph_vertices(
     for nengo_obj in nengo_operators:
         nengo_spinnaker_vertex = nengo_operators[nengo_obj]
         gfe_nengo_vertex = nengo_to_app_graph_map[nengo_obj]
-        valid = _check_vert(nengo_spinnaker_vertex, gfe_nengo_vertex, nengo_obj,
+        valid = _check_vert(nengo_spinnaker_vertex, gfe_nengo_vertex,
                             nengo_spinnaker_network_builder, mappings)
         if not valid:
             return False

@@ -1,7 +1,9 @@
 import numpy as np
 import nengo
-from nengo.builder import Model
-from nengo_spinnaker.node_io import Ethernet
+import nengo_spinnaker as mundy_nengo
+import spinnaker_graph_front_end.examples.nengo.nengo_simulator as gfe_nengo
+
+USE_GFE = True
 
 
 def create_model():
@@ -19,9 +21,10 @@ def create_model():
     return model, list(), dict()
 
 
-
 if __name__ == '__main__':
     network = create_model()
-    # build via nengo - spinnaker
-    nengo_spinnaker_network_builder = Model()
-    nengo_spinnaker_network_builder.build(network)
+    if USE_GFE:
+        sim = gfe_nengo.NengoSimulator(network)
+    else:
+        sim = mundy_nengo.Simulator(network)
+    sim.run(100)
