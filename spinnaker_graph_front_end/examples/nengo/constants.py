@@ -26,6 +26,11 @@ MAX_ROWS = 64
 MAX_COLUMNS = 128
 CONVERT_MILLISECONDS_TO_SECONDS = 1000
 
+# random magic nums from the top level
+DEFAULT_DT = 0.001
+DEFAULT_TIME_SCALE = 1.0
+SECONDS_TO_MICRO_SECONDS_CONVERTER = 1e6
+
 # flag constants used around the codebase
 DECODERS_FLAG = "decoders"
 DECODER_OUTPUT_FLAG = "decoded_output"
