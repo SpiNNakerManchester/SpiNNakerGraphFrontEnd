@@ -49,9 +49,14 @@ class NengoUtiliseInterposers(object):
     INTERPOSER_LEARNING_RULE = None
     INTERPOSER_PARAMETER_FILTER = None
 
-    def __call__(
-            self, nengo_operator_graph, nengo_to_app_graph_map,
-            random_number_generator, seed):
+    def __call__(self, nengo_operator_graph, random_number_generator, seed):
+        """
+        
+        :param nengo_operator_graph: 
+        :param random_number_generator: 
+        :param seed: 
+        :return: 
+        """
 
         # add interposers as required
         interposers, interposer_application_graph = \

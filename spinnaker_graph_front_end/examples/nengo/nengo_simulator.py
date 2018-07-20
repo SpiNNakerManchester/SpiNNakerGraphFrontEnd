@@ -1,6 +1,11 @@
 from nengo.cache import NoDecoderCache
 from spinn_front_end_common.utilities import helpful_functions
 from spinn_front_end_common.utilities.utility_objs import ExecutableFinder
+from spinnaker_graph_front_end.examples.nengo.utility_objects.\
+    nengo_application_graph_generator import \
+    NengoApplicationGraphGenerator
+from spinnaker_graph_front_end.examples.nengo \
+    import overridden_mapping_algorithms
 from spinnaker_graph_front_end.spinnaker import SpiNNaker
 from spinnaker_graph_front_end.examples.nengo import binaries, constants
 
@@ -36,6 +41,7 @@ class NengoSimulator(SpiNNaker):
     ]
 
     CONFIG_FILE_NAME = "nengo_spinnaker.cfg"
+    NENGO_ALGORITHM_XML_FILE_NAME = "nengo_overridden_mapping_algorithms.xml"
 
     def __init__(
             self, network, dt=constants.DEFAULT_DT,
@@ -81,6 +87,11 @@ class NengoSimulator(SpiNNaker):
             int((dt / time_scale) *
                 constants.SECONDS_TO_MICRO_SECONDS_CONVERTER))
 
+        xml_paths = list()
+        xml_paths.append(os.path.join(os.path.dirname(
+            overridden_mapping_algorithms.__file__),
+            self.NENGO_ALGORITHM_XML_FILE_NAME))
+
         SpiNNaker.__init__(
             self, executable_finder, host_name=host_name,
             graph_label=graph_label,
@@ -93,16 +104,13 @@ class NengoSimulator(SpiNNaker):
             default_config_paths=(
                 os.path.join(os.path.dirname(__file__),
                              self.CONFIG_FILE_NAME)),
-            machine_time_step=machine_time_step)
+            machine_time_step=machine_time_step,
+            extra_xml_paths=xml_paths)
 
         # basic mapping extras
         extra_mapping_algorithms = [
-            "NengoKeyAllocator", "NengoHostGraphUpdater",
+            "NengoKeyAllocator", "NengoHostGraphUpdateBuilder",
             "NengoCreateHostSimulator", "NengoSetUpLiveIO"]
-
-        # if using interposers, add new algorithm
-        if self.config.getboolean("Node", "optimise_utilise_interposers"):
-            extra_mapping_algorithms.append("NengoUtiliseInterposers")
 
         if function_of_time_nodes is None:
             function_of_time_nodes = list()
@@ -112,10 +120,12 @@ class NengoSimulator(SpiNNaker):
         # update the main flow with new algorithms and params
         self.extend_extra_mapping_algorithms(extra_mapping_algorithms)
         self.update_extra_inputs(
-            {'NengoNodesAsFunctionOfTime':function_of_time_nodes,
+            {'NengoNodesAsFunctionOfTime': function_of_time_nodes,
              'NengoNodesAsFunctionOfTimeTimePeriod':
                  function_of_time_nodes_time_period,
-             'NengoModel': network,
+             # [0] is due to the nengo network to be a tuple with empty other
+             #  things
+             'NengoModel': network[0],
              'NengoDecoderCache': decoder_cache,
              "NengoNodeIOSetting": self.config.get("Simulator", "node_io"),
              "NengoEnsembleProfile":
@@ -124,7 +134,8 @@ class NengoSimulator(SpiNNaker):
                  helpful_functions.read_config_int(
                      self.config, "Ensemble", "profile_num_samples"),
              "NengoRandomNumberGeneratorSeed":
-                self.config.get("Simulator", "global_seed"),
+                helpful_functions.read_config_int(
+                    self.config, "Simulator", "global_seed"),
              "NengoUtiliseExtraCoreForProbes":
                 self.config.getboolean(
                     "Node", "utilise_extra_core_for_probes"),
@@ -154,6 +165,31 @@ class NengoSimulator(SpiNNaker):
 
     def _run_steps(self, steps):
         """Simulate for the given number of steps."""
+
+        # build app graph, as the main tools expect an application / machine
+        # graph level, and cannot go from random to app graph.
+        nengo_app_graph_generator = NengoApplicationGraphGenerator()
+        (nengo_operator_graph, host_network, nengo_to_app_graph_map,
+         random_number_generator) = \
+            nengo_app_graph_generator(
+                self._extra_inputs["NengoModel"], self.machine_time_step,
+                self._extra_inputs["NengoRandomNumberGeneratorSeed"],
+                self._extra_inputs["NengoDecoderCache"],
+                self._extra_inputs["NengoUtiliseExtraCoreForProbes"],
+                self._extra_inputs["NengoNodesAsFunctionOfTime"],
+                self._extra_inputs["NengoNodesAsFunctionOfTimeTimePeriod"],
+                self.config.getboolean("Node", "optimise_utilise_interposers"))
+
+        # update spinnaker with app graph
+        self._original_application_graph = nengo_operator_graph
+
+        # add the extra outputs as new inputs
+        self.update_extra_inputs(
+            {"NengoHostGraph": host_network,
+             "NengoGraphToAppGraphMap": nengo_to_app_graph_map,
+             "NengoRandomNumberGenerator": random_number_generator})
+
+        # run the rest of the tools
         SpiNNaker.run(self, steps)
 
         # extract data
