@@ -10,10 +10,10 @@ def create_model():
 
     model = nengo.Network()
     with model:
-        stimulus_A = nengo.Node([1], label='stim A')
-        stimulus_B = nengo.Node(lambda t: np.sin(2*np.pi*t))
-        ens = nengo.Ensemble(n_neurons=1000, dimensions=2)
-        result = nengo.Ensemble(n_neurons=50, dimensions=1)
+        stimulus_A = nengo.Node([1], label='stimulus A')
+        stimulus_B = nengo.Node(lambda t: np.sin(2*np.pi*t), label="stimulus B")
+        ens = nengo.Ensemble(n_neurons=1000, dimensions=2, label="ens")
+        result = nengo.Ensemble(n_neurons=50, dimensions=1, label="result")
         nengo.Connection(stimulus_A, ens[0])
         nengo.Connection(stimulus_B, ens[1])
         nengo.Connection(
@@ -22,7 +22,7 @@ def create_model():
 
 
 if __name__ == '__main__':
-    network = create_model()
+    network, function_of_time, function_of_time_time_period = create_model()
     if USE_GFE:
         sim = gfe_nengo.NengoSimulator(network)
     else:

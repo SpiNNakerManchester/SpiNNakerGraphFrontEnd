@@ -123,9 +123,7 @@ class NengoSimulator(SpiNNaker):
             {'NengoNodesAsFunctionOfTime': function_of_time_nodes,
              'NengoNodesAsFunctionOfTimeTimePeriod':
                  function_of_time_nodes_time_period,
-             # [0] is due to the nengo network to be a tuple with empty other
-             #  things
-             'NengoModel': network[0],
+             'NengoModel': network,
              'NengoDecoderCache': decoder_cache,
              "NengoNodeIOSetting": self.config.get("Simulator", "node_io"),
              "NengoEnsembleProfile":

@@ -1,4 +1,4 @@
-from pacman.executor.injection_decorator import inject
+from pacman.executor.injection_decorator import inject_items
 from spinn_utilities.overrides import overrides
 from spinnaker_graph_front_end.examples.nengo import constants
 from spinnaker_graph_front_end.examples.nengo.abstracts.\
@@ -37,9 +37,10 @@ class SDPReceiverApplicationVertex(
     def size_in(self):
         return self._size_in
 
-    @inject({"transceiver": "MemoryTransceiver",
-             "graph_mapper": "MemoryNengoGraphMapper",
-             "placements": "MemoryPlacements"})
+    @inject_items(
+        {"transceiver": "MemoryTransceiver",
+         "graph_mapper": "MemoryNengoGraphMapper",
+         "placements": "MemoryPlacements"})
     @overrides(
         NengoLiveOutputInterface.output,
         additional_arguments={"transceiver", "graph_mapper", "placements"})
@@ -49,31 +50,32 @@ class SDPReceiverApplicationVertex(
             machine_vertex.send_output_to_spinnaker(
                 x, placement, transceiver)
 
-    @inject({"app_graph": "NengoOperatorGraph"})
+    @inject_items({"application_graph": "MemoryApplicationGraph"})
     @overrides(
         AbstractNengoApplicationVertex.create_machine_vertices,
-        additional_arguments="app_graph")
-    def create_machine_vertices(self, app_graph):
+        additional_arguments="application_graph")
+    def create_machine_vertices(self, application_graph):
         # Get all outgoing signals and their associated transmission
         # connection_parameters
-        outgoing_partition = app_graph.\
-            get_outgoing_edge_partition_starting_at_vertex(
-                self, constants.OUTPUT_PORT.STANDARD)
 
-        for signal, transmission_params in \
-                model.get_signals_from_object(self)[OutputPort.standard]:
-            # Get the transform, and from this the keys
-            transform = transmission_params.full_transform(slice_out=False)
-            keys = [(signal, {"index": i}) for i in
-                    range(transform.shape[0])]
+        machine_verts = list()
 
-            # Create a vertex for this connection (assuming its size out <= 64)
-            if len(keys) > 64:
-                raise NotImplementedError(
-                    "Connection is too wide to transmit to SpiNNaker. "
-                    "Consider breaking the connection up or making the "
-                    "originating node a function of time Node."
-                )
+        outgoing_partitions = application_graph.\
+            get_outgoing_edge_partitions_starting_at_vertex(self)
 
-            verts.append(SDPReceiverMachineVertex(keys))
-        return verts
+        # only create vertices for output ports of standard, otherwise raise
+        # exception
+        for outgoing_partition in outgoing_partitions:
+            if outgoing_partition.identifier.source_port == \
+                    constants.OUTPUT_PORT.STANDARD:
+
+                # Create a vertex for this connection
+                machine_verts.append(
+                    SDPReceiverMachineVertex(outgoing_partition))
+            else:
+                raise Exception(
+                    "The SDP receiver does not know what to do with output"
+                    " port {}".format(
+                        outgoing_partition.identifier.source_port))
+
+        return machine_verts

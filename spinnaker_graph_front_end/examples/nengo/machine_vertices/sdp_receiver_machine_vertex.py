@@ -6,7 +6,8 @@ from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, SDRAMResource, \
     DTCMResource, CPUCyclesPerTickResource
 
-from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
+from spinn_front_end_common.abstract_models import \
+    AbstractHasAssociatedBinary, AbstractProvidesNKeysForPartition
 from spinn_front_end_common.abstract_models.impl import \
     MachineDataSpecableVertex
 from spinn_front_end_common.interface.simulation import simulation_utilities
@@ -19,20 +20,15 @@ from spinnman.messages.sdp import SDPMessage, SDPHeader
 
 
 class SDPReceiverMachineVertex(
-        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
+        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
+        AbstractProvidesNKeysForPartition):
 
     __slots__ = [
         # keys to transmit with i think
-        '_keys',
+        '_n_keys',
 
         #
-        "_pre_slice",
-
-        #
-        "_value_conversion_function",
-
-        #
-        "_value_conversion_transform"
+        "_managing_outgoing_partition"
 
     ]
 
@@ -44,21 +40,41 @@ class SDPReceiverMachineVertex(
     N_KEYS_REGION_SIZE = 4
     BYTES_PER_FIELD = 4
 
-    def __init__(self, keys, pre_slice, value_conversion_function,
-                 value_conversion_transform):
+    # TODO FIND OUT WHY THIS MAX EXISTS?
+    MAX_N_KEYS_SUPPORTED = 64
+    TRANSFORM_SLICE_OUT = False
+
+    def __init__(self, outgoing_partition):
         MachineVertex.__init__(self)
         MachineDataSpecableVertex.__init__(self)
         AbstractHasAssociatedBinary.__init__(self)
-        self._keys = keys
-        self._pre_slice = pre_slice
-        self._value_conversion_transform = value_conversion_transform
-        self._value_conversion_function = value_conversion_function
 
+        self._managing_outgoing_partition = outgoing_partition
+
+        transform = \
+            self._managing_outgoing_partition.identifier\
+            .transmission_parameter.full_transform(
+                slice_out=self.TRANSFORM_SLICE_OUT)
+        self._n_keys = transform.shape[0]
+
+        # Check n keys size
+        if self._n_keys > self.MAX_N_KEYS_SUPPORTED:
+            raise NotImplementedError(
+                "Connection is too wide to transmit to SpiNNaker. "
+                "Consider breaking the connection up or making the "
+                "originating node a function of time Node.")
+
+    @overrides(AbstractProvidesNKeysForPartition.get_n_keys_for_partition)
+    def get_n_keys_for_partition(self, partition, graph_mapper):
+        if partition.identifier != self._managing_outgoing_partition:
+            raise Exception("don't recognise this partition")
+        else:
+            return self._n_keys
 
     @property
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
-        return self.get_static_resources(self._keys)
+        return self.get_static_resources(self._n_keys)
 
     @staticmethod
     def get_static_resources(keys):
@@ -72,7 +88,7 @@ class SDPReceiverMachineVertex(
 
     @staticmethod
     def _calculate_sdram_for_keys(keys):
-        return SDPReceiverMachineVertex.BYTES_PER_FIELD * len(keys)
+        return SDPReceiverMachineVertex.BYTES_PER_FIELD * keys
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
@@ -98,8 +114,7 @@ class SDPReceiverMachineVertex(
         spec.end_specification()
 
     def _write_keys_region(self, routing_info):
-        xxxxxxxxxxxxxxxxxxxxx
-
+        pass
 
     def _reserve_memory_regions(self, spec):
         spec.reserve_memory_region(
@@ -116,9 +131,21 @@ class SDPReceiverMachineVertex(
     def send_output_to_spinnaker(self, value, placement, transceiver):
         # Apply the pre-slice, the connection function and the transform.
         c_value = value[self._pre_slice]
-        if self._value_conversion_function is not None:
-            c_value = self._value_conversion_function(c_value)
-        c_value = numpy.dot(self._value_conversion_transform, c_value)
+
+        # locate required transforms and functions
+        partition_transmission_function = \
+            self._managing_outgoing_partition.identifier\
+                .transmission_parameter.function
+        partition_transmission_transform = \
+            self._managing_outgoing_partition.identifier\
+                .transmission_parameter.full_transform(slice_out=False)
+
+        # execute function if required
+        if partition_transmission_function is not None:
+            c_value = partition_transmission_function(c_value)
+
+        # do transform
+        c_value = numpy.dot(partition_transmission_transform, c_value)
 
         # create SCP packet
         # c_value is converted to S16.15
