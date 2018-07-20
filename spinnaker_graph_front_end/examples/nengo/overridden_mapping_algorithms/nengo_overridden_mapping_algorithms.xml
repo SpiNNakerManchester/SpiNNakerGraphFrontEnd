@@ -74,13 +74,16 @@
         </outputs>
     </algorithm>
     <algorithm name="NengoSetUpLiveIO">
-        <python_module>spinnaker_graph_front_end.examples.nengo.overridden_mapping_algorithms.nenego_set_up_live_io</python_module>
+        <python_module>spinnaker_graph_front_end.examples.nengo.overridden_mapping_algorithms.nengo_set_up_live_io</python_module>
         <python_class>NengoSetUpLiveIO</python_class>
         <input_definitions>
-
+            <parameter>
+                <param_name>machine_graph</param_name>
+                <param_type>MemoryMachineGraph</param_type>
+            </parameter>
         </input_definitions>
         <required_inputs>
-
+            <param_name>machine_graph</param_name>
         </required_inputs>
         <outputs>
 
@@ -111,10 +114,13 @@
         <python_module>spinnaker_graph_front_end.examples.nengo.overridden_mapping_algorithms.nengo_key_allocator</python_module>
         <python_class>NengoKeyAllocator</python_class>
         <input_definitions>
-
+            <parameter>
+                <param_name>machine_graph</param_name>
+                <param_type>MemoryMachineGraph</param_type>
+            </parameter>
         </input_definitions>
         <required_inputs>
-
+            <param_name>machine_graph</param_name>
         </required_inputs>
         <outputs>
             <param_type>MemoryRoutingInfos</param_type>

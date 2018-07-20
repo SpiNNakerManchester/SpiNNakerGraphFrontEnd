@@ -61,13 +61,6 @@ class ValueSourceApplicationVertex(
     def create_machine_vertices(self):
         pass
 
-    @property
-    def constraints(self):
-        pass
-
-    def add_constraint(self, constraint):
-        pass
-
     def get_data_for_variable(self, variable):
         pass
 

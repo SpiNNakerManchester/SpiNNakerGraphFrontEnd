@@ -77,10 +77,3 @@ class SDPReceiverApplicationVertex(
 
             verts.append(SDPReceiverMachineVertex(keys))
         return verts
-
-    def add_constraint(self, constraint):
-        pass
-
-    @property
-    def constraints(self):
-        pass

@@ -59,10 +59,3 @@ class SDPTransmitterApplicationVertex(
     def create_machine_vertices(self):
         """Create vertices that will simulate the SDPTransmitter."""
         return SDPTransmitterMachineVertex(self._size_in)
-
-    def add_constraint(self, constraint):
-        pass
-
-    @property
-    def constraints(self):
-        pass

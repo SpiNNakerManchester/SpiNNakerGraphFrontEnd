@@ -26,6 +26,15 @@ class AbstractNengoApplicationVertex(
         self._label = label
 
     @property
+    @overrides(ConstrainedObject.constraints)
+    def constraints(self):
+        return self._constraints
+
+    @overrides(ConstrainedObject.add_constraint)
+    def add_constraint(self, constraint):
+        self._constraints.add_constraints(constraint)
+
+    @property
     @overrides(AbstractVertex.label)
     def label(self):
         return self._label

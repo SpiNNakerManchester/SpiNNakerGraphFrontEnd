@@ -17,12 +17,12 @@ class NengoPartitioner(object):
     
     """
 
-    def __call__(self, nengo_operator_graph):
+    def __call__(self, nengo_operator_graph, machine):
         machine_graph = MachineGraph(label=constants.MACHINE_GRAPH_LABEL)
         graph_mapper = GraphMapper()
 
         # convert application vertices into machine vertices
-        for operator in nengo_operator_graph.vertices():
+        for operator in nengo_operator_graph.vertices:
 
             # create the machine verts
             machine_vertices = operator.make_vertices()

@@ -19,13 +19,6 @@ class PassThroughApplicationVertex(AbstractNengoApplicationVertex):
             "param [Node] optimise_utilise_interposers to True to avoid "
             "this error.")
 
-    @property
-    def constraints(self):
-        pass
-
-    def add_constraint(self, constraint):
-        pass
-
     def __repr__(self):
         return "pass through node with label = {}".format(self._label)
 

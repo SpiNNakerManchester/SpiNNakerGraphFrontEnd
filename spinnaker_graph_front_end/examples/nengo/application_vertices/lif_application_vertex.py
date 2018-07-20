@@ -71,13 +71,6 @@ class LIFApplicationVertex(
                 constants.DECODER_OUTPUT_FLAG] = False
 
     @property
-    def constraints(self):
-        return []
-
-    def add_constraint(self, constraint):
-        pass
-
-    @property
     def direct_input(self):
         return self._direct_input
 
