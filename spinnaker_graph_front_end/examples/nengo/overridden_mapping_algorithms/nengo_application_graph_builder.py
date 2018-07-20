@@ -699,7 +699,7 @@ class NengoApplicationGraphBuilder(object):
         :return: the decoders ???????
         """
 
-        # fudge to support the built in enngo demanding a god object with params
+        # fudge to support the built in nengo demanding a god object with params
         model = ModelWrapper(nengo_to_app_graph_map, decoder_cache)
 
         # gets encoders, gains, anf bias's from the application vertex

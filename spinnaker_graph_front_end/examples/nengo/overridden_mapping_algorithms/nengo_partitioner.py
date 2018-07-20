@@ -25,7 +25,7 @@ class NengoPartitioner(object):
         for operator in nengo_operator_graph.vertices:
 
             # create the machine verts
-            machine_vertices = operator.make_vertices()
+            machine_vertices = operator.create_machine_vertices()
 
             # update data objects
             for machine_vertex in machine_vertices:

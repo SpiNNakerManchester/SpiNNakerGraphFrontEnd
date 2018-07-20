@@ -1,9 +1,9 @@
 import nengo
-from spinnaker_graph_front_end.examples.nengo.filters.linear_filter import \
+from spinnaker_graph_front_end.examples.nengo.nengo_filters.linear_filter import \
     LinearFilter
-from spinnaker_graph_front_end.examples.nengo.filters.low_pass_filter import \
+from spinnaker_graph_front_end.examples.nengo.nengo_filters.low_pass_filter import \
     LowPassFilter
-from spinnaker_graph_front_end.examples.nengo.filters.none_filter import \
+from spinnaker_graph_front_end.examples.nengo.nengo_filters.none_filter import \
     NoneFilter
 
 
@@ -30,7 +30,7 @@ class FilterAndRoutingRegionGenerator(object):
                                              index_field)
 
     def _make_filters(self, machine_graph, minimise, width):
-        """Create a list of filters and keyspace routes from the given
+        """Create a list of nengo_filters and keyspace routes from the given
         signals and connections.
 
         Parameters
@@ -43,10 +43,10 @@ class FilterAndRoutingRegionGenerator(object):
         ----------------
         minimise : bool
             It is possible to reduce the amount of memory and computation required
-            to simulate filters by combining equivalent filters together.  If
+            to simulate nengo_filters by combining equivalent nengo_filters together.  If
             minimise is `True` then this is done, otherwise not.
         """
-        # Create new lists of filters and the routing entries
+        # Create new lists of nengo_filters and the routing entries
         filters = list()
         signal_routes = list()
 
@@ -56,7 +56,7 @@ class FilterAndRoutingRegionGenerator(object):
     def _add_filters(self, filters, signal_routes, machine_graph,
                      minimise=False, width=None):
         """Add signals and connections to existing lists
-        of filters and keyspace routes
+        of nengo_filters and keyspace routes
 
         Parameters
         ----------
@@ -67,7 +67,7 @@ class FilterAndRoutingRegionGenerator(object):
         ----------------
         minimise : bool
             It is possible to reduce the amount of memory and computation required
-            to simulate filters by combining equivalent filters together.  If
+            to simulate nengo_filters by combining equivalent nengo_filters together.  If
             minimise is `True` then this is done, otherwise not.
         """
         for signal, reception_params in specs:

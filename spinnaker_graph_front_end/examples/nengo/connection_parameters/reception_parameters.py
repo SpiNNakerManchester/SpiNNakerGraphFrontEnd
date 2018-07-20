@@ -41,14 +41,14 @@ class ReceptionParameters(object):
         """Create new reception connection_parameters by combining this set of reception
         connection_parameters with another.
         """
-        # Combine the filters
+        # Combine the nengo_filters
         if self._parameter_filter is None:
             new_filter = other.parameter_filter
         elif other.parameter_filter is None:
             new_filter = self._parameter_filter
         elif (isinstance(self._parameter_filter, LinearFilter) and
                 isinstance(other.parameter_filter, LinearFilter)):
-            # Combine linear filters by multiplying their numerators and
+            # Combine linear nengo_filters by multiplying their numerators and
             # denominators.
             new_filter = LinearFilter(
                 numpy.polymul(self._parameter_filter.num,
@@ -58,7 +58,7 @@ class ReceptionParameters(object):
             )
         else:
             raise NotImplementedError(
-                "Cannot combine filters of type {} and {}".format(
+                "Cannot combine nengo_filters of type {} and {}".format(
                     type(self._parameter_filter), type(other.parameter_filter)))
 
         # Combine the learning rules

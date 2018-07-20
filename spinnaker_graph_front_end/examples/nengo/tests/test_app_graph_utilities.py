@@ -48,11 +48,11 @@ from spinnaker_graph_front_end.examples.nengo.application_vertices.\
 from spinnaker_graph_front_end.examples.nengo.application_vertices.\
     value_source_application_vertex import \
     ValueSourceApplicationVertex
-from spinnaker_graph_front_end.examples.nengo.filters.low_pass_filter import \
+from spinnaker_graph_front_end.examples.nengo.nengo_filters.low_pass_filter import \
     LowPassFilter as GFELowPassFilter
-from spinnaker_graph_front_end.examples.nengo.filters.linear_filter import \
+from spinnaker_graph_front_end.examples.nengo.nengo_filters.linear_filter import \
     LinearFilter as GFELinearFilter
-from spinnaker_graph_front_end.examples.nengo.filters.none_filter import \
+from spinnaker_graph_front_end.examples.nengo.nengo_filters.none_filter import \
     NoneFilter as GFENoneFilter
 from spinnaker_graph_front_end.examples.nengo.nengo_implicit_interfaces.\
     nengo_input_node import \
@@ -104,7 +104,7 @@ def _create_map_between_nengo_spinnaker_and_gfe_filters():
 def _compare_filters(nengo_filter, gfe_filter):
     # mappings = _create_map_between_nengo_spinnaker_and_gfe_filters()
     return nengo_filter == gfe_filter
-    # seems these are not the filters i thought they were...... might be
+    # seems these are not the nengo_filters i thought they were...... might be
     # worth keeping for future comparision
     """if isinstance(gfe_filter, mappings[type(nengo_filter)]):
         if isinstance(gfe_filter, GFENoneFilter):
