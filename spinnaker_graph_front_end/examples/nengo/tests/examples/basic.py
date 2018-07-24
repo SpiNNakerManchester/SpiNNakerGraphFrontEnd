@@ -3,7 +3,7 @@ import nengo
 import nengo_spinnaker as mundy_nengo
 import spinnaker_graph_front_end.examples.nengo.nengo_simulator as gfe_nengo
 
-USE_GFE = True
+USE_GFE = False
 
 
 def create_model():

@@ -40,20 +40,17 @@ from spinnaker_graph_front_end.examples.nengo.application_vertices.\
     sdp_receiver_application_vertex import \
     SDPReceiverApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.application_vertices.\
-    sdp_transmitter_application_vertex import \
-    SDPTransmitterApplicationVertex
+    sdp_transmitter_application_vertex import SDPTransmitterApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.application_vertices.\
-    value_sink_application_vertex import \
-    ValueSinkApplicationVertex
+    value_sink_application_vertex import ValueSinkApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.application_vertices.\
-    value_source_application_vertex import \
-    ValueSourceApplicationVertex
-from spinnaker_graph_front_end.examples.nengo.nengo_filters.low_pass_filter import \
-    LowPassFilter as GFELowPassFilter
-from spinnaker_graph_front_end.examples.nengo.nengo_filters.linear_filter import \
-    LinearFilter as GFELinearFilter
-from spinnaker_graph_front_end.examples.nengo.nengo_filters.none_filter import \
-    NoneFilter as GFENoneFilter
+    value_source_application_vertex import ValueSourceApplicationVertex
+from spinnaker_graph_front_end.examples.nengo.nengo_filters.\
+    low_pass_filter import LowPassFilter as GFELowPassFilter
+from spinnaker_graph_front_end.examples.nengo.nengo_filters.\
+    linear_filter import LinearFilter as GFELinearFilter
+from spinnaker_graph_front_end.examples.nengo.nengo_filters.\
+    none_filter import NoneFilter as GFENoneFilter
 from spinnaker_graph_front_end.examples.nengo.nengo_implicit_interfaces.\
     nengo_input_node import \
     NengoInputNode

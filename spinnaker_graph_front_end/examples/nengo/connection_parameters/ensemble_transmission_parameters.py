@@ -3,7 +3,8 @@ import numpy
 from spinn_utilities.overrides import overrides
 from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     abstract_transmission_parameters import AbstractTransmissionParameters
-from spinnaker_graph_front_end.examples.nengo.connection_parameters.pass_through_node_transmission_parameters import \
+from spinnaker_graph_front_end.examples.nengo.connection_parameters.\
+    pass_through_node_transmission_parameters import \
     PassthroughNodeTransmissionParameters
 from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     transmission_parameters_impl import TransmissionParametersImpl

@@ -9,7 +9,7 @@ from nengo.connection import LearningRule
 from nengo.ensemble import Neurons
 from nengo.processes import Process
 from nengo.utils.builder import full_transform
-from nengo.builder import connection as nengo_connection_builder
+from nengo.builder import connection as nengo_connection_builder, Signal
 from nengo.exceptions import BuildError
 
 from pacman.model.graphs import AbstractOutgoingEdgePartition
@@ -55,9 +55,6 @@ from spinnaker_graph_front_end.examples.nengo.application_vertices. \
 from spinnaker_graph_front_end.examples.nengo.application_vertices. \
     value_source_application_vertex import \
     ValueSourceApplicationVertex
-from spinnaker_graph_front_end.examples.nengo.graph_components. \
-    connection_learning_rule_application_edge import \
-    ConnectionLearningRuleApplicationEdge
 from spinnaker_graph_front_end.examples.nengo.nengo_exceptions import \
     NeuronTypeConstructorNotFoundException, NotLocatedProbableClass, \
     NotProbeableException
@@ -70,6 +67,9 @@ from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     PassthroughNodeTransmissionParameters
 from spinnaker_graph_front_end.examples.nengo.connection_parameters. \
     reception_parameters import ReceptionParameters
+from spinnaker_graph_front_end.examples.nengo.utility_objects.\
+    parameter_extraction_from_nengo_ensamble import \
+    ParameterExtractionFromNengoEnsemble
 from spinnaker_graph_front_end.examples.nengo.utility_objects. \
     parameter_transform import ParameterTransform
 
@@ -87,14 +87,14 @@ class NengoApplicationGraphBuilder(object):
     def __call__(
             self, nengo_network, machine_time_step,
             nengo_random_number_generator_seed, decoder_cache,
-            utilise_extra_core_for_output_types_probe,
+            utilise_extra_core_for_probes,
             nengo_nodes_as_function_of_time,
             function_of_time_nodes_time_period):
         """ entrance method to start converting from nengo objects to nengo 
         operator graph (spinnaker app graph, including pass through nodes). 
         
         :param nengo_network: the nengo network 
-        :param utilise_extra_core_for_output_types_probe: flag that allows \
+        :param utilise_extra_core_for_probes: flag that allows \
         the user to decide if probes should be on separate vertices or not.
         :param machine_time_step: the machine time step 
         :param nengo_nodes_as_function_of_time: set of nodes which will \
@@ -124,8 +124,7 @@ class NengoApplicationGraphBuilder(object):
         # graph for holding the nengo operators. equiv of a app graph.
         nengo_operator_graph = Graph(
             allowed_vertex_types=AbstractNengoApplicationVertex,
-            allowed_edge_types=(ApplicationEdge,
-                                ConnectionLearningRuleApplicationEdge),
+            allowed_edge_types=ApplicationEdge,
             allowed_partition_types=AbstractOutgoingEdgePartition,
             label=constants.APP_GRAPH_NAME)
 
@@ -138,7 +137,7 @@ class NengoApplicationGraphBuilder(object):
 
         self._build_sub_network_graph(
             nengo_network, random_number_generator,
-            utilise_extra_core_for_output_types_probe, nengo_operator_graph,
+            utilise_extra_core_for_probes, nengo_operator_graph,
             nengo_to_app_graph_map, machine_time_step, host_network,
             nengo_nodes_as_function_of_time, decoder_cache,
             nengo_random_number_generator_seed,
@@ -263,6 +262,8 @@ class NengoApplicationGraphBuilder(object):
             nengo_operator_graph.add_vertex(operator)
             nengo_to_app_graph_map[nengo_probe] = operator
 
+            # NOTE: the add_to_container=False is needed, else its built into
+            #  the network. which we don't want here
             nengo_connection = nengo.Connection(
                 nengo_probe.target, nengo_probe,
                 synapse=nengo_probe.synapse,
@@ -276,7 +277,7 @@ class NengoApplicationGraphBuilder(object):
                 live_io_senders)
         else:
             # to allow some logic, flip recording to new core if requested
-            # either ensemble code cant do it in dtcm, or cpu, or ITCM.
+            # either ensemble code cant do it in DTCM, or cpu, or ITCM.
             # TODO figure out the real logic for this, as this is likely a
             # TODO major factor in the routing table compression
             if (isinstance(app_vertex, AbstractProbeable) and
@@ -306,7 +307,8 @@ class NengoApplicationGraphBuilder(object):
                         nengo_probe.target, nengo_probe,
                         synapse=nengo_probe.synapse,
                         solver=nengo_probe.solver,
-                        seed=nengo_to_app_graph_map[nengo_probe].seed)
+                        seed=nengo_to_app_graph_map[nengo_probe].seed,
+                        add_to_container=False)
                 self._connection_conversion(
                     nengo_connection, nengo_operator_graph,
                     nengo_to_app_graph_map, random_number_generator,
@@ -337,7 +339,7 @@ class NengoApplicationGraphBuilder(object):
         if isinstance(target, nengo.Node):
             target_object = nengo_probe.target
 
-        # if the target is an ensemble, get the ensemble's app vert
+        # if the target is an ensemble, get the ensemble's app vertex
         elif isinstance(target, nengo.Ensemble):
             target_object = target
 
@@ -393,6 +395,9 @@ class NengoApplicationGraphBuilder(object):
         :rtype: None
         """
         if isinstance(nengo_ensemble.neuron_type, nengo.neurons.LIF):
+            params_from_nengo_ensemble = \
+                ParameterExtractionFromNengoEnsemble(
+                    nengo_ensemble, random_number_generator)
             operator = LIFApplicationVertex(
                 label="LIF neurons for ensemble {}".format(
                     nengo_ensemble.label),
@@ -401,8 +406,13 @@ class NengoApplicationGraphBuilder(object):
                 seed=helpful_functions.get_seed(nengo_ensemble),
                 utilise_extra_core_for_output_types_probe=(
                     utilise_extra_core_for_output_types_probe),
-                **LIFApplicationVertex.generate_parameters_from_ensemble(
-                    nengo_ensemble, random_number_generator))
+                eval_points=params_from_nengo_ensemble.eval_points,
+                encoders=params_from_nengo_ensemble.encoders,
+                scaled_encoders=params_from_nengo_ensemble.scaled_encoders,
+                max_rates=params_from_nengo_ensemble.max_rates,
+                intercepts=params_from_nengo_ensemble.intercepts,
+                gain=params_from_nengo_ensemble.gain,
+                bias=params_from_nengo_ensemble.bias)
         else:
             raise NeuronTypeConstructorNotFoundException(
                 "could not find a constructor for neuron type {}. I have "
@@ -561,18 +571,10 @@ class NengoApplicationGraphBuilder(object):
             #  reception connection_parameters for the connection.
             reception_params = self._get_reception_parameters(nengo_connection)
 
-            if (destination_input_port ==
-                    constants.ENSEMBLE_INPUT_PORT.LEARNING_RULE):
-                application_edge = ConnectionLearningRuleApplicationEdge(
-                    pre_vertex=source_vertex, post_vertex=destination_vertex,
-                    learning_rule=nengo_connection.post_obj,
-                    input_port=destination_input_port,
-                    reception_parameters=reception_params)
-            else:
-                application_edge = ConnectionApplicationEdge(
-                    pre_vertex=source_vertex, post_vertex=destination_vertex,
-                    input_port=destination_input_port,
-                    reception_parameters=reception_params)
+            application_edge = ConnectionApplicationEdge(
+                pre_vertex=source_vertex, post_vertex=destination_vertex,
+                input_port=destination_input_port,
+                reception_parameters=reception_params)
 
             # rectify outgoing partition for data store and add to graphs
             identifier = PartitionIdentifier(

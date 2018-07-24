@@ -1,5 +1,4 @@
 import logging
-from collections import defaultdict
 
 from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.impl import OutgoingEdgePartition
@@ -7,12 +6,6 @@ from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
 from spinnaker_graph_front_end.examples.nengo.abstracts.\
     abstract_nengo_object import AbstractNengoObject
-from spinnaker_graph_front_end.examples.nengo.graph_components.\
-    connection_learning_rule_application_edge import \
-    ConnectionLearningRuleApplicationEdge
-from spinnaker_graph_front_end.examples.nengo.graph_components.\
-    destination_params import DestinationParams
-
 logger = FormatAdapter(logging.getLogger(__name__))
 
 
@@ -37,8 +30,7 @@ class ConnectionOutgoingPartition(OutgoingEdgePartition, AbstractNengoObject):
     def __init__(self, rng, identifier, pre_vertex, seed):
         OutgoingEdgePartition.__init__(
             self, identifier=identifier,
-            allowed_edge_types=(
-                ApplicationEdge, ConnectionLearningRuleApplicationEdge))
+            allowed_edge_types=ApplicationEdge)
         AbstractNengoObject.__init__(self, rng=rng, seed=seed)
         self._outgoing_edges_destinations = list()
         self._pre_vertex = pre_vertex

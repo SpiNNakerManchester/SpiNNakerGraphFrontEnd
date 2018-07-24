@@ -28,7 +28,7 @@ class ValueSinkApplicationVertex(AbstractNengoApplicationVertex):
         return self._size_in
 
     @overrides(AbstractNengoApplicationVertex.create_machine_vertices)
-    def create_machine_vertices(self):
+    def create_machine_vertices(self, resource_tracker):
         # Make sufficient vertices to ensure that each has a size_in of less
         # than max_width.
         n_vertices = int(math.ceil((self._size_in // self.MAX_WIDTH)))

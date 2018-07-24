@@ -1,9 +1,8 @@
 import numpy
 
-import nengo
-from nengo import builder as nengo_builder
-from nengo.builder import ensemble
-from nengo.utils import numpy as nengo_numpy
+from nengo.learning_rules import PES as NengoPES
+
+from pacman.executor.injection_decorator import inject_items
 from spinn_utilities.overrides import overrides
 from spinnaker_graph_front_end.examples.nengo import constants
 from spinnaker_graph_front_end.examples.nengo.abstracts.\
@@ -11,6 +10,11 @@ from spinnaker_graph_front_end.examples.nengo.abstracts.\
     AbstractNengoApplicationVertex
 from spinnaker_graph_front_end.examples.nengo.abstracts.\
     abstract_probeable import AbstractProbeable
+from spinnaker_graph_front_end.examples.nengo.connection_parameters.\
+    ensemble_transmission_parameters import \
+    EnsembleTransmissionParameters
+from spinnaker_graph_front_end.examples.nengo.nengo_exceptions import \
+    NengoException
 
 
 class LIFApplicationVertex(
@@ -121,78 +125,143 @@ class LIFApplicationVertex(
             else:
                 return False
 
+    @inject_items({"operator_graph": "NengoOperatorGraph"})
+    @overrides(
+        AbstractNengoApplicationVertex.create_machine_vertices,
+        additional_arguments="operator_graph")
+    def create_machine_vertices(self, resource_tracker, operator_graph):
+
+        # verify no neurons are incoming  (no idea why)
+        incoming_partitions = operator_graph. \
+            get_outgoing_edge_partitions_ending_at_vertex(self)
+        outgoing_partitions = operator_graph.\
+            get_outgoing_edge_partitions_starting_at_vertex(self)
+
+        standard_outgoing_partitions = list()
+        outgoing_learnt_partitions = list()
+        incoming_modulatory_learning_rules = list()
+
+        # filter incoming partitions
+        for incoming_partition in incoming_partitions:
+            # verify there's no neurons incoming partitions
+            if incoming_partition.identifier.source_port == \
+                    constants.ENSEMBLE_INPUT_PORT.NEURONS:
+                raise Exception("not suppose to have neurons incoming")
+
+            # locate all modulating incoming partitions
+            if incoming_partition.identifier.source_port == \
+                    constants.ENSEMBLE_INPUT_PORT.LEARNING_RULE:
+                incoming_modulatory_learning_rules.append(
+                    incoming_partition.identifier.transmission_parameter
+                    .learning_rule)
+
+        # filter outgoing partitions
+        for outgoing_partition in outgoing_partitions:
+            # locate all standard outgoing partitions
+            if outgoing_partition.identifier.source_port == \
+                    constants.OUTPUT_PORT.STANDARD:
+                standard_outgoing_partitions.append(outgoing_partition)
+
+            # locate all learnt partitions
+            if outgoing_partition.identifier.source_port == \
+                    constants.ENSEMBLE_OUTPUT_PORT.LEARNT:
+                outgoing_learnt_partitions.append(outgoing_partition)
+
+        # locate decoders and n keys
+        decoders = numpy.array([])
+        if len(standard_outgoing_partitions) != 0:
+            decoders, _ = self._get_decoders_and_n_keys(
+                standard_outgoing_partitions, True)
+
+        # determine learning rules size out
+
+        # convert to cluster sizes
+        cluster_size_out = decoders.shape[0]
+        cluster_size_in = self._scaled_encoders.shape[1]
+        cluster_learnt_size_out = self._determine_cluster_learnt_size_out(
+            outgoing_learnt_partitions, incoming_modulatory_learning_rules)
+
+
+
+
+
+    def _determine_cluster_learnt_size_out(
+            self, outgoing_learnt_partitions,
+            incoming_modulatory_learning_rules):
+        learnt_decoders = numpy.array([])
+        for learnt_outgoing_partition in outgoing_learnt_partitions:
+            partition_identifier = learnt_outgoing_partition.identifier
+            transmission_parameter = partition_identifier.transmission_parameter
+            learning_rule_type = \
+                transmission_parameter.learning_rule.learning_rule_type
+
+            # verify that the transmission parameter type is as expected
+            if not isinstance(transmission_parameter,
+                              EnsembleTransmissionParameters):
+                raise NengoException(
+                    "the ensemble {} expects a EnsembleTransmissionParameters "
+                    "for its learning rules. got {} instead".format(
+                        self, transmission_parameter))
+
+            # verify that the learning rule is a PES rule
+            if not isinstance(learning_rule_type, NengoPES):
+                raise NengoException(
+                    "The SpiNNaker Nengo Conversion currently only "
+                    "supports PES learning rules")
+
+            # verify that there's a modulatory connection to the learning
+            #  rule
+            if transmission_parameter.learning_rule not in \
+                    incoming_modulatory_learning_rules:
+                raise NengoException(
+                    "Ensemble %s has outgoing connection with PES "
+                    "learning, but no corresponding modulatory "
+                    "connection" % self.label)
+
+            decoder_start = learnt_decoders.shape[0]
+
+            # Get new decoders and output keys for learnt connection
+            rule_decoders, n_keys = self._get_decoders_and_n_keys(
+                [learnt_outgoing_partition], False)
+
+            # If there are no existing decodes, hstacking doesn't
+            # work so set decoders to new learnt decoder matrix
+            if decoder_start == 0:
+                learnt_decoders = rule_decoders
+            # Otherwise, stack learnt decoders
+            # alongside existing matrix
+            else:
+                learnt_decoders = numpy.vstack(
+                    (learnt_decoders, rule_decoders))
+        return learnt_decoders.shape[0]
+
     @staticmethod
-    def generate_parameters_from_ensemble(
-            nengo_ensemble, random_number_generator):
-        """ goes through the nengo ensemble object and extracts the 
-        connection_parameters for the lif neurons
-        
-        :param nengo_ensemble: the ensemble handed down by nengo
-        :param random_number_generator: the random number generator 
-        controlling all random in this nengo run
-        :return: dict of params with names.
-        """
-        eval_points = nengo_builder.ensemble.gen_eval_points(
-            nengo_ensemble, nengo_ensemble.eval_points,
-            rng=random_number_generator)
+    def _get_decoders_and_n_keys(standard_outgoing_partitions, minimise=False):
 
-        # Get the encoders
-        if isinstance(nengo_ensemble.encoders, nengo.dists.Distribution):
-            encoders = nengo_ensemble.encoders.sample(
-                nengo_ensemble.n_neurons, nengo_ensemble.dimensions,
-                rng=random_number_generator)
-            encoders = numpy.asarray(encoders, dtype=numpy.float64)
+        decoders = list()
+        n_keys = 0
+        for standard_outgoing_partition in standard_outgoing_partitions:
+            partition_identifier = standard_outgoing_partition.identifier
+            if not isinstance(partition_identifier.transmission_parameter,
+                              EnsembleTransmissionParameters):
+                raise NengoException(
+                    "To determine the decoders and keys, the ensamble {} "
+                    "assumes it only has ensemble transmission params. this "
+                    "was not the case.".format(self))
+            decoder = partition_identifier.transmission_parameter.full_decoders
+            if not minimise:
+                keep = numpy.array([True for _ in range(decoder.shape[0])])
+            else:
+                # We can reduce the number of packets sent and the memory
+                # requirements by removing columns from the decoder matrix which
+                # will always result in packets containing zeroes.
+                keep = numpy.any(decoder != 0, axis=1)
+            decoders.append(decoder[keep, :])
+            n_keys += decoder.shape[0]
+
+        # Stack the decoders
+        if len(decoders) > 0:
+            decoders = numpy.vstack(decoders)
         else:
-            encoders = nengo_numpy.array(
-                nengo_ensemble.encoders, min_dims=2, dtype=numpy.float64)
-        encoders /= nengo_numpy.norm(encoders, axis=1, keepdims=True)
-
-        # Get correct sample function (seems dists.get_samples not in nengo
-        # dists in some versions, so has to be a if / else)
-        if hasattr(ensemble, 'sample'):
-            sample_function = ensemble.sample
-        else:
-            sample_function = nengo.dists.get_samples
-
-        # Get maximum rates and intercepts
-        max_rates = sample_function(
-            nengo_ensemble.max_rates, nengo_ensemble.n_neurons,
-            rng=random_number_generator)
-        intercepts = sample_function(
-            nengo_ensemble.intercepts, nengo_ensemble.n_neurons,
-            rng=random_number_generator)
-
-        # Build the neurons
-        if nengo_ensemble.gain is None and nengo_ensemble.bias is None:
-            gain, bias = nengo_ensemble.neuron_type.gain_bias(
-                max_rates, intercepts)
-        elif (nengo_ensemble.gain is not None and
-                nengo_ensemble.bias is not None):
-            gain = sample_function(
-                nengo_ensemble.gain, nengo_ensemble.n_neurons,
-                rng=random_number_generator)
-            bias = sample_function(
-                nengo_ensemble.bias, nengo_ensemble.n_neurons,
-                rng=random_number_generator)
-        else:
-            raise NotImplementedError(
-                "gain or bias set for {!s}, but not both. Solving for one "
-                "given the other is not yet implemented.".format(
-                    nengo_ensemble))
-
-        # Scale the encoders
-        scaled_encoders = \
-            encoders * (gain / nengo_ensemble.radius)[:, numpy.newaxis]
-
-        return {
-            "eval_points": eval_points,
-            "encoders": encoders,
-            "scaled_encoders": scaled_encoders,
-            "max_rates": max_rates,
-            "intercepts": intercepts,
-            "gain": gain,
-            "bias": bias}
-
-    @overrides(AbstractNengoApplicationVertex.create_machine_vertices)
-    def create_machine_vertices(self):
-        pass
+            decoders = numpy.array([[]])
+        return decoders, n_keys

@@ -21,6 +21,11 @@ ENSEMBLE_INPUT_PORT = Enum(
            ('LEARNT', 2),
            ('LEARNING_RULE', 3)])
 
+KEY_FIELDS = Enum(
+    value="KEY_FIELDS",
+    names=[('CLUSTER', 0)]
+)
+
 # the max atoms per core are based off matrix sizes. these were
 MAX_ROWS = 64
 MAX_COLUMNS = 128

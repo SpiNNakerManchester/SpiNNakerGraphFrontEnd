@@ -7,7 +7,8 @@ from pacman.model.resources import ResourceContainer, SDRAMResource, \
     DTCMResource, CPUCyclesPerTickResource
 
 from spinn_front_end_common.abstract_models import \
-    AbstractHasAssociatedBinary, AbstractProvidesNKeysForPartition
+    AbstractHasAssociatedBinary, AbstractProvidesNKeysForPartition, \
+    AbstractProvidesOutgoingPartitionConstraints
 from spinn_front_end_common.abstract_models.impl import \
     MachineDataSpecableVertex
 from spinn_front_end_common.interface.simulation import simulation_utilities
@@ -16,12 +17,17 @@ from spinn_front_end_common.utilities import constants
 
 from spinn_utilities.overrides import overrides
 from spinnaker_graph_front_end.examples.nengo import helpful_functions
+from spinnaker_graph_front_end.examples.nengo.constraints.\
+    nengo_key_constraint import NengoKeyConstraint
+from spinnaker_graph_front_end.examples.nengo import constants as \
+    nengo_constants
 from spinnman.messages.sdp import SDPMessage, SDPHeader
 
 
 class SDPReceiverMachineVertex(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-        AbstractProvidesNKeysForPartition):
+        AbstractProvidesNKeysForPartition,
+        AbstractProvidesOutgoingPartitionConstraints):
 
     __slots__ = [
         # keys to transmit with i think
@@ -40,7 +46,9 @@ class SDPReceiverMachineVertex(
     N_KEYS_REGION_SIZE = 4
     BYTES_PER_FIELD = 4
 
-    # TODO FIND OUT WHY THIS MAX EXISTS?
+    # TODO THIS LIMIT IS BECAUSE THE C CODE ASSUMES 1 SDP Message contains
+    # the next timerticks wort of changes. future could be modded to remove
+    # this limitation.
     MAX_N_KEYS_SUPPORTED = 64
     TRANSFORM_SLICE_OUT = False
 
@@ -49,10 +57,10 @@ class SDPReceiverMachineVertex(
         MachineDataSpecableVertex.__init__(self)
         AbstractHasAssociatedBinary.__init__(self)
 
+        # TODO WHY DO WE PARTITION OVER OUTGOING PARTITIONS!!!
         self._managing_outgoing_partition = outgoing_partition
 
-        transform = \
-            self._managing_outgoing_partition.identifier\
+        transform = self._managing_outgoing_partition.identifier\
             .transmission_parameter.full_transform(
                 slice_out=self.TRANSFORM_SLICE_OUT)
         self._n_keys = transform.shape[0]
@@ -66,10 +74,17 @@ class SDPReceiverMachineVertex(
 
     @overrides(AbstractProvidesNKeysForPartition.get_n_keys_for_partition)
     def get_n_keys_for_partition(self, partition, graph_mapper):
-        if partition.identifier != self._managing_outgoing_partition:
+        if partition.identifier != self._managing_outgoing_partition.identifier:
             raise Exception("don't recognise this partition")
         else:
             return self._n_keys
+
+    @overrides(
+        AbstractProvidesOutgoingPartitionConstraints.
+        get_outgoing_partition_constraints)
+    def get_outgoing_partition_constraints(self, partition):
+        if partition.identifier == self._managing_outgoing_partition.identifier:
+            return [NengoKeyConstraint(nengo_constants.KEY_FIELDS.CLUSTER)]
 
     @property
     @overrides(MachineVertex.resources_required)
@@ -110,11 +125,15 @@ class SDPReceiverMachineVertex(
         spec.switch_write_focus(self.DATA_REGIONS.N_KEYS.value)
         spec.write_value(len(self._n_keys), DataType.UINT32)
         spec.switch_write_focus(self.DATA_REGIONS.KEYS.value)
-        self._write_keys_region(routing_info)
+        self._write_keys_region(spec, routing_info)
         spec.end_specification()
 
-    def _write_keys_region(self, routing_info):
-        pass
+    def _write_keys_region(self, spec, routing_info):
+        partition_routing_info = \
+            routing_info.get_routing_info_from_partition(
+                self._managing_outgoing_partition)
+        for key in partition_routing_info.get_keys():
+            spec.write_value(key)
 
     def _reserve_memory_regions(self, spec):
         spec.reserve_memory_region(

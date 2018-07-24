@@ -3,8 +3,8 @@
         xsi:schemaLocation="https://github.com/SpiNNakerManchester/PACMAN
             https://raw.githubusercontent.com/SpiNNakerManchester/PACMAN/master/pacman/operations/algorithms_metadata_schema.xsd">
     <algorithm name="NengoApplicationGraphBuilder">
-        <python_module>spinnaker_graph_front_end.examples.nengo.overridden_mapping_algorithms.nengo_spinnaker_application_graph_builder</python_module>
-        <python_class>NengoSpiNNakerApplicationGraphBuilder</python_class>
+        <python_module>spinnaker_graph_front_end.examples.nengo.overridden_mapping_algorithms.nengo_application_graph_builder</python_module>
+        <python_class>NengoApplicationGraphBuilder</python_class>
         <input_definitions>
             <parameter>
                 <param_name>nengo_network</param_name>
@@ -57,17 +57,26 @@
         <input_definitions>
             <parameter>
                 <param_name>nengo_operator_graph</param_name>
-                <param_type>MemoryApplicationGraph</param_type>
+                <param_type>NengoOperatorGraph</param_type>
             </parameter>
             <parameter>
                 <param_name>machine</param_name>
-                <param_type>MemoryExtendedMachine</param_type>
+                <param_type>MemoryVirtualMachine</param_type>
+                <param_type>MemoryMachine</param_type>
+            </parameter>
+            <parameter>
+                <param_name>pre_allocated_resources</param_name>
+                <param_type>MemoryPreAllocatedResources</param_type>
             </parameter>
         </input_definitions>
         <required_inputs>
             <param_name>nengo_operator_graph</param_name>
             <param_name>machine</param_name>
         </required_inputs>
+        <optional_inputs>
+            <token>GeneratedPreAllocatedResources</token>
+            <param_name>pre_allocated_resources</param_name>
+        </optional_inputs>
         <outputs>
             <param_type>MemoryMachineGraph</param_type>
             <param_type>NengoGraphMapper</param_type>
@@ -149,7 +158,7 @@
             <param_name>seed</param_name>
         </required_inputs>
         <outputs>
-            <param_type>MemoryApplicationGraph</param_type>
+            <param_type>NengoOperatorGraph</param_type>
         </outputs>
     </algorithm>
     <algorithm name="NengoHostGraphUpdateBuilder">

@@ -1,4 +1,5 @@
 from pacman.model.graphs.machine import MachineGraph, MachineEdge
+from pacman.utilities.utility_objs import ResourceTracker
 from spinnaker_graph_front_end.examples.nengo import constants
 from spinnaker_graph_front_end.examples.nengo.abstracts.\
     abstract_accepts_multicast_signals import AcceptsMulticastSignals
@@ -17,15 +18,20 @@ class NengoPartitioner(object):
     
     """
 
-    def __call__(self, nengo_operator_graph, machine):
+    def __call__(self, nengo_operator_graph, machine,
+                 pre_allocated_resources=None):
         machine_graph = MachineGraph(label=constants.MACHINE_GRAPH_LABEL)
         graph_mapper = GraphMapper()
+
+        resource_tracker = ResourceTracker(
+            machine, preallocated_resources=pre_allocated_resources)
 
         # convert application vertices into machine vertices
         for operator in nengo_operator_graph.vertices:
 
             # create the machine verts
-            machine_vertices = operator.create_machine_vertices()
+            machine_vertices = operator.create_machine_vertices(
+                resource_tracker)
 
             # update data objects
             for machine_vertex in machine_vertices:
@@ -66,3 +72,7 @@ class NengoPartitioner(object):
                     "The vertex {} is not meant to receive connections. But "
                     "it received a connection from {}".format(
                         machine_vertex_sink, edge))
+
+    @staticmethod
+    def partition_set_of_constraints_and_atoms(n_atoms, partition_constraints):
+        pass

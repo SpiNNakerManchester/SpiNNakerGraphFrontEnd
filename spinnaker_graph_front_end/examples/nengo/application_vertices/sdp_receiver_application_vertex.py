@@ -50,17 +50,17 @@ class SDPReceiverApplicationVertex(
             machine_vertex.send_output_to_spinnaker(
                 x, placement, transceiver)
 
-    @inject_items({"application_graph": "MemoryApplicationGraph"})
+    @inject_items({"operator_graph": "NengoOperatorGraph"})
     @overrides(
         AbstractNengoApplicationVertex.create_machine_vertices,
-        additional_arguments="application_graph")
-    def create_machine_vertices(self, application_graph):
+        additional_arguments="operator_graph")
+    def create_machine_vertices(self, resource_tracker, operator_graph):
         # Get all outgoing signals and their associated transmission
         # connection_parameters
 
         machine_verts = list()
 
-        outgoing_partitions = application_graph.\
+        outgoing_partitions = operator_graph.\
             get_outgoing_edge_partitions_starting_at_vertex(self)
 
         # only create vertices for output ports of standard, otherwise raise
@@ -70,8 +70,13 @@ class SDPReceiverApplicationVertex(
                     constants.OUTPUT_PORT.STANDARD:
 
                 # Create a vertex for this connection
-                machine_verts.append(
-                    SDPReceiverMachineVertex(outgoing_partition))
+                machine_vertex = SDPReceiverMachineVertex(outgoing_partition)
+                machine_verts.append(machine_vertex)
+
+                # Allocate resources for this vertex
+                resource_tracker.allocate_constrained_resources(
+                    machine_vertex.resources_required,
+                    machine_vertex.constraints)
             else:
                 raise Exception(
                     "The SDP receiver does not know what to do with output"

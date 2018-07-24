@@ -47,7 +47,7 @@ class AbstractNengoApplicationVertex(
             self.label, self.constraints, self._seed)
 
     @abstractmethod
-    def create_machine_vertices(self):
+    def create_machine_vertices(self, resource_tracker):
         """
         
         :return: 

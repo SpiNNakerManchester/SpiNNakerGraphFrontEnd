@@ -26,9 +26,6 @@ from spinnaker_graph_front_end.examples.nengo.graph_components.\
     connection_application_edge import \
     ConnectionApplicationEdge
 from spinnaker_graph_front_end.examples.nengo.graph_components.\
-    connection_learning_rule_application_edge import \
-    ConnectionLearningRuleApplicationEdge
-from spinnaker_graph_front_end.examples.nengo.graph_components.\
     connection_outgoing_partition import ConnectionOutgoingPartition
 from spinnaker_graph_front_end.examples.nengo.connection_parameters.\
     ensemble_transmission_parameters import EnsembleTransmissionParameters
@@ -380,28 +377,14 @@ class NengoUtiliseInterposers(object):
                     new_outgoing_edge_partition)
 
             # add edge as required
-            if isinstance(original_edge, ConnectionApplicationEdge):
-                interposer_application_graph.add_edge(
-                    ConnectionApplicationEdge(
-                        pre_vertex=source_vertex,
-                        input_port=original_edge.input_port,
-                        post_vertex=destination_vertex,
-                        reception_parameters=(
-                            original_edge.reception_parameters)),
-                    new_outgoing_edge_partition.identifier)
-            elif isinstance(
-                    original_edge, ConnectionLearningRuleApplicationEdge):
-                interposer_application_graph.add_edge(
-                    ConnectionLearningRuleApplicationEdge(
-                        pre_vertex=source_vertex,
-                        input_port=original_edge.input_port,
-                        post_vertex=destination_vertex,
-                        reception_parameters=original_edge.reception_parameters,
-                        learning_rule=original_edge.learning_rule),
-                    new_outgoing_edge_partition.identifier)
-            else:
-                raise Exception("dont know this connection edge type")
-
+            interposer_application_graph.add_edge(
+                ConnectionApplicationEdge(
+                    pre_vertex=source_vertex,
+                    input_port=original_edge.input_port,
+                    post_vertex=destination_vertex,
+                    reception_parameters=(
+                        original_edge.reception_parameters)),
+                new_outgoing_edge_partition.identifier)
         else:
             # If the sink is a pass through node then we consider each outgoing
             # connection in turn. If the connection is to be replaced by an
@@ -487,21 +470,11 @@ class NengoUtiliseInterposers(object):
                 sink_reception_params = \
                     new_destination_edge.reception_parameters.concat(
                         original_edge.reception_parameters)
-                if isinstance(new_destination_edge, ConnectionApplicationEdge):
-                    new_destination_edge = ConnectionApplicationEdge(
-                        pre_vertex=new_destination_edge.pre_vertex,
-                        post_vertex=new_destination_edge.post_vertex,
-                        input_port=new_destination_edge.input_port,
-                        reception_parameters=sink_reception_params)
-                elif isinstance(new_destination_edge,
-                                ConnectionLearningRuleApplicationEdge):
-                    new_destination_edge = \
-                        ConnectionLearningRuleApplicationEdge(
-                            pre_vertex=new_destination_edge.pre_vertex,
-                            post_vertex=new_destination_edge.post_vertex,
-                            input_port=new_destination_edge.input_port,
-                            reception_parameters=sink_reception_params,
-                            learning_rule=new_destination_edge.learning_rule)
+                new_destination_edge = ConnectionApplicationEdge(
+                    pre_vertex=new_destination_edge.pre_vertex,
+                    post_vertex=new_destination_edge.post_vertex,
+                    input_port=new_destination_edge.input_port,
+                    reception_parameters=sink_reception_params)
 
                 # recursive call
                 used_interposers.update(self._copy_connection(
@@ -853,30 +826,14 @@ class NengoUtiliseInterposers(object):
                 for old_app_edge in outgoing_partition.edges:
                     if (old_app_edge.pre_vertex == source_vertex and
                             old_app_edge.post_vertex == connection_destination):
-                        if isinstance(old_app_edge,
-                                      ConnectionApplicationEdge):
-                            stacked_interposer_graph.add_edge(
-                                ConnectionApplicationEdge(
-                                    pre_vertex=source_vertex,
-                                    post_vertex=connection_interposer,
-                                    input_port=old_app_edge.input_port,
-                                    reception_parameters=(
-                                        old_app_edge.reception_parameters)),
-                                outgoing_partition.identifer)
-                        elif isinstance(old_app_edge,
-                                        ConnectionLearningRuleApplicationEdge):
-                            stacked_interposer_graph.add_edge(
-                                ConnectionLearningRuleApplicationEdge(
-                                    pre_vertex=source_vertex,
-                                    post_vertex=connection_interposer,
-                                    input_port=old_app_edge.input_port,
-                                    learning_rule=(
-                                        old_app_edge.learning_rule),
-                                    reception_parameters=(
-                                        old_app_edge.reception_parameters)),
-                                outgoing_partition.identifer)
-                        else:
-                            raise Exception("dont recognise this edge type")
+                        stacked_interposer_graph.add_edge(
+                            ConnectionApplicationEdge(
+                                pre_vertex=source_vertex,
+                                post_vertex=connection_interposer,
+                                input_port=old_app_edge.input_port,
+                                reception_parameters=(
+                                    old_app_edge.reception_parameters)),
+                            outgoing_partition.identifer)
 
             else:  # Otherwise just add the signal unchanged
                 # insert the vertices as required
@@ -912,25 +869,11 @@ class NengoUtiliseInterposers(object):
                     if (old_app_edge.pre_vertex == source_vertex and
                             old_app_edge.post_vertex ==
                             connection_destination):
-                        if isinstance(old_app_edge, ConnectionApplicationEdge):
-                            stacked_interposer_graph.add_edge(
-                                ConnectionApplicationEdge(
-                                    pre_vertex=source_vertex,
-                                    post_vertex=connection_destination,
-                                    input_port=old_app_edge.input_port,
-                                    reception_parameters=(
-                                        old_app_edge.reception_parameters)),
-                                outgoing_partition.identifier)
-                        elif isinstance(old_app_edge,
-                                        ConnectionLearningRuleApplicationEdge):
-                            stacked_interposer_graph.add_edge(
-                                ConnectionLearningRuleApplicationEdge(
-                                    pre_vertex=source_vertex,
-                                    post_vertex=connection_destination,
-                                    input_port=old_app_edge.input_port,
-                                    reception_parameters=(
-                                        old_app_edge.reception_parameters),
-                                    learning_rule=old_app_edge.learning_rule),
+                        stacked_interposer_graph.add_edge(
+                            ConnectionApplicationEdge(
+                                pre_vertex=source_vertex,
+                                post_vertex=connection_destination,
+                                input_port=old_app_edge.input_port,
+                                reception_parameters=(
+                                    old_app_edge.reception_parameters)),
                             outgoing_partition.identifier)
-                        else:
-                            raise Exception("dont recognise this edge type")

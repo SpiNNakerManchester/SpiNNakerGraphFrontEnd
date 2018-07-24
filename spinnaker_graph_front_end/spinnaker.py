@@ -79,9 +79,6 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         self.prepend_extra_pre_run_algorithms(extra_pre_run_algorithms)
         self.extend_extra_post_run_algorithms(extra_post_run_algorithms)
 
-        if n_chips_required is None and _is_allocated_machine(self.config):
-            self.set_n_chips_required(SPALLOC_CORES)
-
         self.set_up_machine_specifics(host_name)
         self.set_up_timings(machine_time_step, time_scale_factor)
 
