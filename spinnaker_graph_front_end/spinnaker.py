@@ -57,7 +57,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         this_default_config_paths.append(
             os.path.join(os.path.dirname(__file__), self.CONFIG_FILE_NAME))
         if default_config_paths is not None:
-            this_default_config_paths.append(default_config_paths)
+            this_default_config_paths.extend(default_config_paths)
 
         super(SpiNNaker, self).__init__(
             configfile=self.CONFIG_FILE_NAME,
