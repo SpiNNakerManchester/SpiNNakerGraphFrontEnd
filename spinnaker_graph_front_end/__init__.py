@@ -33,7 +33,7 @@ __all__ = ['LivePacketGather', 'ReverseIpTagMultiCastSource', 'MachineEdge',
            'has_ran', 'machine_time_step', 'no_machine_time_steps',
            'timescale_factor', 'machine_graph', 'application_graph',
            'routing_infos', 'placements', 'transceiver', 'graph_mapper',
-           'buffer_manager', 'machine', 'is_allocated_machine']
+           'buffer_manager', 'machine', 'is_allocated_machine', 'config']
 
 
 def setup(hostname=None, graph_label=None, model_binary_module=None,
@@ -324,6 +324,13 @@ def get_machine_dimensions():
     returns the x and y dimension of the machine
     """
     return globals_variables.get_simulator().get_machine_dimensions()
+
+
+def get_config():
+    """
+    returns the config object
+    """
+    return globals_variables.get_simulator().config
 
 
 def get_number_of_available_cores_on_machine():

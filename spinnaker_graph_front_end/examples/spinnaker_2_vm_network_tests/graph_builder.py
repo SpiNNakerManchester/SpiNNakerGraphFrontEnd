@@ -1,94 +1,80 @@
 """
-connecitvity tester for SpiNNaker 2 vm
+connectivity tester for SpiNNaker 2
 """
-from collections import defaultdict
-
 import spinnaker_graph_front_end as front_end
 
 import logging
-import os
+import numpy
+import math
+from scipy.spatial.distance import cdist
 
 from pacman.model.graphs.machine import MachineEdge
+from pacman.model.constraints.placer_constraints import ChipAndCoreConstraint
 from spinnaker_graph_front_end.examples.spinnaker_2_vm_network_tests.\
     space_taker_machine_vertex import SpaceTakerMachineVertex
+from spinn_utilities.progress_bar import ProgressBar
+
+numpy.set_printoptions(threshold=numpy.nan, linewidth=1000000)
 
 logger = logging.getLogger(__name__)
 
-class ConnectivityTest(object):
+EXP_CONSTANT = 10.0
+NETWORK_WIDTH = 80
+NETWORK_HEIGHT = 80
 
-    def run(self):
-        front_end.setup(
-            n_chips_required=None,
-            model_binary_folder=os.path.dirname(__file__))
+front_end.setup()
+config = front_end.get_config()
+n_cores_per_chip = config.getint("Machine", "NCoresPerChip") - 1
+n_cores_square = int(math.sqrt(n_cores_per_chip))
 
-        # calculate total number of 'free' cores for the given board
-        # (i.e. does not include those busy with SARK or reinjection)
-        total_number_of_cores = \
-            front_end.get_number_of_available_cores_on_machine()
-        logger.info("building graph for machine with {} cores".format(
-            total_number_of_cores))
+logger.info("Building vertices")
+verts = list()
+for x in xrange(NETWORK_WIDTH):
+    for y in xrange(NETWORK_HEIGHT):
+        vertex = SpaceTakerMachineVertex(x, y)
+        chip_x = x // n_cores_square
+        chip_y = y // n_cores_square
+        vertex.add_constraint(ChipAndCoreConstraint(chip_x, chip_y))
+        front_end.add_machine_vertex_instance(vertex)
+        verts.append(vertex)
 
-        machine = front_end.machine()
+# Get the coordinates
+logger.info("Working out connections")
+coordinates = numpy.array([[v.x, v.y] for v in verts])
 
-        # fill all cores with a HelloWorldVertex each
-        logger.info("building verts")
-        verts = list()
-        for chip in machine.chips:
-            for processor in range(0, chip.n_user_processors - 4):
-                vertex = SpaceTakerMachineVertex(x=chip.x, y=chip.y)
-                front_end.add_machine_vertex_instance(vertex)
-                verts.append(vertex)
+# Find the distances between vertices
+distances = cdist(coordinates, coordinates, metric="cityblock")
 
-        # fill in edges
-        logger.info("building edges")
-        for vertex_x in verts:
-            for vertex_y in verts:
-                if not self._determine_if_edge_needs_removing(
-                        vertex_x.x, vertex_x.y, vertex_y.x, vertex_y.y,
-                        machine):
-                    front_end.add_machine_edge_instance(
-                        MachineEdge(post_vertex=vertex_y, pre_vertex=vertex_x),
-                        "ConnectivityTest")
+# Decide which connections exist based on the distances
+metric = numpy.exp(-distances / EXP_CONSTANT)
+randoms = numpy.random.random(metric.shape)
+connections_to_make = metric >= randoms
 
-        logger.info("setting off run")
-        front_end.run(10)
-        front_end.stop()
+# Get combinations of coordinates
+indices = numpy.arange(len(coordinates))
+combinations = numpy.array(verts)[
+    numpy.stack(numpy.meshgrid(indices, indices)).T]
 
-    def _determine_if_edge_needs_removing(
-            self, pre_x, pre_y, post_x, post_y, machine):
-        shortest_distance = self._calculate_shortest_distance(
-            pre_x, pre_y, post_x, post_y, machine)
-        return self._probability(shortest_distance)
+# Get the connections actually made
+connections = combinations[connections_to_make]
 
-    @staticmethod
-    def _calculate_shortest_distance(
-            source_x, source_y, dest_x, dest_y, machine):
-        look_at = defaultdict(list)
-        distance = dict()
-        hop = -1
-        look_at[0].append((source_x, source_y))
-        distance[(source_x, source_y)] = 0
-        while len(look_at[hop + 1]) > 0:
-            hop += 1
-            next_hop = hop + 1
-            for (source_x, source_y) in look_at[hop]:
-                for link in machine.get_chip_at(
-                        source_x, source_y).router.links:
-                    if (link.destination_x, link.destination_y) not in distance:
-                        distance[
-                            (link.destination_x,
-                             link.destination_y)] = next_hop
-                        look_at[next_hop].append(
-                            (link.destination_x, link.destination_y))
-                    if (link.destination_x == dest_x and
-                            link.destination_y == dest_y):
-                        return next_hop
-        raise Exception("Didnt find the blasted chip")
+# Display a useful histogram of connections made by distance
+connections_possible = numpy.bincount(distances.flatten().astype("int64"))
+connections_made = numpy.bincount(
+    distances[connections_to_make].astype("int64"),
+    minlength=len(connections_possible))
+print numpy.true_divide(connections_made, connections_possible)
 
-    @staticmethod
-    def _probability(shortest_distance):
-        return False
+# fill in edges
+progress = ProgressBar(len(connections), "Building {} of {} Edges"
+                       .format(len(connections),
+                               len(combinations) ** 2))
+for (v1, v2) in connections:
+    front_end.add_machine_edge_instance(
+        MachineEdge(v1, v2), "ConnectivityTest")
+    progress.update()
+progress.end()
 
-if __name__ == "__main__":
-    test = ConnectivityTest()
-    test.run()
+logger.info("setting off run")
+front_end.run(10)
+front_end.stop()
