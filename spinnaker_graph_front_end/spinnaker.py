@@ -29,6 +29,10 @@ def _is_allocated_machine(config):
 
 class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
+    __slots__ = (
+        "_user_dsg_algorithm"
+    )
+
     CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
     VALIDATION_CONFIG_NAME = "validation_config.cfg"
 
