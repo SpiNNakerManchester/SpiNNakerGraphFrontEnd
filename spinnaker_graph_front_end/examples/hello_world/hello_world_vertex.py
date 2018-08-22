@@ -4,16 +4,18 @@ from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
 from pacman.model.resources import ResourceContainer, SDRAMResource
 
 from spinn_front_end_common.utilities import globals_variables
-from spinn_front_end_common.utilities import constants, helpful_functions
-from spinn_front_end_common.interface.simulation import simulation_utilities
+from spinn_front_end_common.utilities.helpful_functions \
+    import locate_memory_region_for_placement, read_config_int
 from spinn_front_end_common.abstract_models.impl \
     import MachineDataSpecableVertex
-from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.interface.buffer_management.buffer_models\
     import AbstractReceiveBuffersToHost
 from spinn_front_end_common.interface.buffer_management\
     import recording_utilities
-from spinn_front_end_common.utilities.utility_objs import ExecutableType
+
+from spinnaker_graph_front_end.utilities import SimulatorVertex
+from spinnaker_graph_front_end.utilities.data_utils \
+    import generate_system_data_region
 
 from enum import Enum
 import logging
@@ -22,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 
 class HelloWorldVertex(
-        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
+        SimulatorVertex, MachineDataSpecableVertex,
         AbstractReceiveBuffersToHost):
 
     DATA_REGIONS = Enum(
@@ -34,7 +36,7 @@ class HelloWorldVertex(
 
     def __init__(self, label, constraints=None):
         super(HelloWorldVertex, self).__init__(
-            label=label, constraints=constraints)
+            label, "hello_world.aplx", constraints=constraints)
 
         config = globals_variables.get_simulator().config
         self._buffer_size_before_receive = None
@@ -45,7 +47,7 @@ class HelloWorldVertex(
             "Buffers", "time_between_requests")
         self._receive_buffer_host = config.get(
             "Buffers", "receive_buffer_host")
-        self._receive_buffer_port = helpful_functions.read_config_int(
+        self._receive_buffer_port = read_config_int(
             config, "Buffers", "receive_buffer_port")
 
         self._string_data_size = 5000
@@ -65,35 +67,22 @@ class HelloWorldVertex(
 
         return resources
 
-    @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
-    def get_binary_file_name(self):
-        return "hello_world.aplx"
-
-    @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
-    def get_binary_start_type(self):
-        return ExecutableType.USES_SIMULATION_INTERFACE
-
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
             reverse_iptags, machine_time_step, time_scale_factor):
-        self.placement = placement
+        # Generate the system data region for simulation .c requirements
+        generate_system_data_region(spec, self.DATA_REGIONS.SYSTEM.value,
+                                    self, machine_time_step, time_scale_factor)
 
-        # Setup words + 1 for flags + 1 for recording size
-        setup_size = constants.SYSTEM_BYTES_REQUIREMENT
+        self.placement = placement
 
         # Reserve SDRAM space for memory areas:
 
         # Create the data regions for hello world
-        self._reserve_memory_regions(spec, setup_size)
+        self._reserve_memory_regions(spec)
 
         # write data for the simulation data item
-        spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
-        spec.write_array(simulation_utilities.get_simulation_header_array(
-            self.get_binary_file_name(), machine_time_step,
-            time_scale_factor))
-
-        # recording data region
         spec.switch_write_focus(self.DATA_REGIONS.STRING_DATA.value)
         spec.write_array(recording_utilities.get_recording_header_array(
             [self._string_data_size], self._time_between_requests,
@@ -102,10 +91,7 @@ class HelloWorldVertex(
         # End-of-Spec:
         spec.end_specification()
 
-    def _reserve_memory_regions(self, spec, system_size):
-        spec.reserve_memory_region(
-            region=self.DATA_REGIONS.SYSTEM.value, size=system_size,
-            label='systemInfo')
+    def _reserve_memory_regions(self, spec):
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.STRING_DATA.value,
             size=recording_utilities.get_recording_header_size(1),
@@ -135,5 +121,5 @@ class HelloWorldVertex(
         return [0]
 
     def get_recording_region_base_address(self, txrx, placement):
-        return helpful_functions.locate_memory_region_for_placement(
+        return locate_memory_region_for_placement(
             placement, self.DATA_REGIONS.STRING_DATA.value, txrx)
