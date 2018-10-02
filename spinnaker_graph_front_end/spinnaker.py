@@ -1,4 +1,5 @@
 # common front end imports
+import spinnaker_graph_front_end
 from spinn_front_end_common.interface.abstract_spinnaker_base \
     import AbstractSpinnakerBase
 from spinn_front_end_common.utilities import globals_variables
@@ -41,7 +42,8 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             database_socket_addresses=None, dsg_algorithm=None,
             n_chips_required=None, extra_pre_run_algorithms=None,
             extra_post_run_algorithms=None, time_scale_factor=None,
-            machine_time_step=None, default_config_paths=None):
+            machine_time_step=None, default_config_paths=None,
+            top_level_module=None):
 
         global CONFIG_FILE_NAME, SPALLOC_CORES
 
@@ -61,6 +63,9 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         if default_config_paths is not None:
             this_default_config_paths.extend(default_config_paths)
 
+        if top_level_module is None:
+            top_level_module = spinnaker_graph_front_end
+
         super(SpiNNaker, self).__init__(
             configfile=self.CONFIG_FILE_NAME,
             executable_finder=executable_finder,
@@ -71,7 +76,8 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             default_config_paths=this_default_config_paths,
             validation_cfg=os.path.join(os.path.dirname(__file__),
                                         self.VALIDATION_CONFIG_NAME),
-            front_end_versions=front_end_versions)
+            front_end_versions=front_end_versions,
+            top_level_module=top_level_module)
 
         extra_mapping_inputs = dict()
         extra_mapping_inputs["CreateAtomToEventIdMapping"] = self.config.\
