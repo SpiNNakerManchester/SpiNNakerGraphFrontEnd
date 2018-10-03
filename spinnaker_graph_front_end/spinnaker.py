@@ -5,6 +5,8 @@ from spinn_front_end_common.interface.abstract_spinnaker_base \
 from spinn_front_end_common.utilities import globals_variables
 
 # graph front end imports
+from spinn_utilities.citation.tool_citation_generation import \
+    CitationAggregator
 from spinnaker_graph_front_end.utilities.graph_front_end_failed_state \
     import GraphFrontEndFailedState
 from spinnaker_graph_front_end.graph_front_end_simulator_interface \
@@ -135,3 +137,22 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
     def __repr__(self):
         return "SpiNNaker Graph Front End object for machine {}"\
             .format(self._hostname)
+
+    def generate_bibtex(self, doi_title, zenodo_access_token, top_module=None):
+        """ helper method for building bibtex from citation.cff's
+
+        :param doi_title: the title of the doi
+        :param top_module: the top module to start all this
+        :type top_module: python module or none if its GFE directly
+        :param zenodo_access_token: the access token for zenodo
+        :rtype: None
+        """
+
+        if top_module is None:
+            import spinnaker_graph_front_end
+            top_module = spinnaker_graph_front_end
+
+        AbstractSpinnakerBase._generate_bibtex(
+            self, top_module=top_module, doi_title=doi_title,
+            zenodo_access_token=zenodo_access_token,
+            tools_doi=CitationAggregator.locate_citation_doi(top_module))
