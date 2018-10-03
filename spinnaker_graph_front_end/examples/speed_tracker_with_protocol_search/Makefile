@@ -1,6 +1,6 @@
 all: packet_gatherer.aplx sdram_reader_and_transmitter_with_protocol.aplx
 
-%.aplx: %.Makefile %.c
+%.aplx: %.Makefile src/%.c
 	"$(MAKE)" -f $<
 
 clean:
