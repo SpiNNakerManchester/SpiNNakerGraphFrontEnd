@@ -150,7 +150,8 @@ class ConwayBasicCell(
     def get_data(self, buffer_manager, placement):
         # for buffering output info is taken form the buffer manager
         # get raw data, convert to list of booleans
-        raw_data, data_missing = buffer_manager.get_data_by_placement(placement, 0)
+        raw_data, data_missing = buffer_manager.get_data_by_placement(
+            placement, 0)
 
         # do check for missing data
         if data_missing:
