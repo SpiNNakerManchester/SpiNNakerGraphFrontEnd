@@ -132,7 +132,7 @@ class TemplateVertex(
         :param buffer_manager: the buffer manager
         :return: The data read, as bytes
         """
-        raw_data, is_missing_data = buffer_manager.get_data_by_vertex(
+        raw_data, is_missing_data = buffer_manager.get_data_by_placement(
             placement, 0)
         if is_missing_data:
             logger.warning("Some data was lost when recording")

@@ -118,7 +118,7 @@ class HelloWorldVertex(
         :param buffer_manager: the buffer manager
         :return: string output
         """
-        raw_data, missing_data = buffer_manager.get_data_by_vertex(
+        raw_data, missing_data = buffer_manager.get_data_by_placement(
             placement, 0)
         if missing_data:
             raise Exception("missing data!")
