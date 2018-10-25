@@ -1,5 +1,6 @@
 .pydevproject
 .project
+.cproject
 .idea/
 .settings/
 *.pyc
@@ -12,3 +13,8 @@ dist/
 /spynnaker_graph_front_end.egg-info/
 /SpiNNakerGraphFrontEnd.egg-info/
 /spinnaker_graph_front_end.egg-info/
+**/Debug/
+__pycache__/
+*.o
+*.so
+*.dylib
