@@ -74,6 +74,6 @@ try:
             start_value += 1
 
 
-except Exception as e:
+except Exception:
     # if boomed. end so that we can get iobuf
     traceback.print_exc()
