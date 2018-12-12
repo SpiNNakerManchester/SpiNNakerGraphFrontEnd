@@ -1,4 +1,5 @@
 import os
+import traceback
 import pytest
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinnman.exceptions import SpinnmanException
@@ -12,4 +13,8 @@ def test_rte_during_run():
         "test_rte_during_run.aplx",
         ExecutableType.USES_SIMULATION_INTERFACE))
     with pytest.raises(SpinnmanException):
-        s.run(1000)
+        try:
+            s.run(1000)
+        except Exception:
+            traceback.print_exc()
+            raise

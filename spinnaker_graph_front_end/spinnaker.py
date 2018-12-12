@@ -22,6 +22,10 @@ def _is_allocated_machine(config):
 
 class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
+    __slots__ = (
+        "_user_dsg_algorithm"
+    )
+
     CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
     VALIDATION_CONFIG_NAME = "validation_config.cfg"
 
@@ -30,7 +34,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             database_socket_addresses=None, dsg_algorithm=None,
             n_chips_required=None, extra_pre_run_algorithms=None,
             extra_post_run_algorithms=None, time_scale_factor=None,
-            machine_time_step=None):
+            machine_time_step=None, default_config_paths=None):
 
         global CONFIG_FILE_NAME, SPALLOC_CORES
 
@@ -43,6 +47,13 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
         front_end_versions = [("SpiNNakerGraphFrontEnd", version)]
 
+        # support extra configs
+        this_default_config_paths = list()
+        this_default_config_paths.append(
+            os.path.join(os.path.dirname(__file__), self.CONFIG_FILE_NAME))
+        if default_config_paths is not None:
+            this_default_config_paths.extend(default_config_paths)
+
         super(SpiNNaker, self).__init__(
             configfile=self.CONFIG_FILE_NAME,
             executable_finder=executable_finder,
@@ -50,9 +61,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             database_socket_addresses=database_socket_addresses,
             extra_algorithm_xml_paths=extra_xml_path,
             n_chips_required=n_chips_required,
-            default_config_paths=[
-                os.path.join(os.path.dirname(__file__),
-                             self.CONFIG_FILE_NAME)],
+            default_config_paths=this_default_config_paths,
             validation_cfg=os.path.join(os.path.dirname(__file__),
                                         self.VALIDATION_CONFIG_NAME),
             front_end_versions=front_end_versions)

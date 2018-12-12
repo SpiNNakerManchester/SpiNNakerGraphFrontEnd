@@ -77,6 +77,6 @@ try:
     print("Read {} MB in {} seconds ({} Mb/s)".format(mbs, seconds, speed))
 
 
-except Exception as e:
+except Exception:
     # if boomed. end so that we can get iobuf
     traceback.print_exc()
