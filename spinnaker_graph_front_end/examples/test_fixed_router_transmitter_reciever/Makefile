@@ -1,6 +1,6 @@
 all: hello_world.aplx hello_world_clone.aplx
 
-%.aplx: %.Makefile %.c
+%.aplx: %.Makefile src/%.c
 	"$(MAKE)" -f $<
 
 clean:
