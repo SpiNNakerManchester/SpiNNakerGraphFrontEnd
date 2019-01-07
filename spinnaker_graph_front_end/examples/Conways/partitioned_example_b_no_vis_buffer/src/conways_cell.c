@@ -125,6 +125,9 @@ void update(uint ticks, uint b) {
             recording_finalise();
         }
 
+        // switch to state where host is ready to read
+        simulation_ready_to_read();
+
         return;
     }
 

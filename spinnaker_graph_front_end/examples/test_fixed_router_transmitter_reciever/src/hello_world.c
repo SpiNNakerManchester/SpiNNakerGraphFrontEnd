@@ -118,6 +118,9 @@ void update(uint ticks, uint b) {
         // falls into the pause resume mode of operating
         simulation_handle_pause_resume(resume_callback);
 
+        // switch to state where host is ready to read
+        simulation_ready_to_read();
+
         return;
 
     }

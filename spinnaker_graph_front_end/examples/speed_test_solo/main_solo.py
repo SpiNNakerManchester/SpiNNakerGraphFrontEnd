@@ -9,7 +9,7 @@ from spinnaker_graph_front_end.examples import speed_test_solo
 from spinnaker_graph_front_end.examples.speed_test_solo.\
     packet_gatherer_cheat import PacketGathererCheat
 
-mbs = 1.0
+mbs = 1
 
 # setup system
 sim.setup(model_binary_module=speed_test_solo)

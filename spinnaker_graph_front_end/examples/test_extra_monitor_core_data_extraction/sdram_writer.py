@@ -38,7 +38,9 @@ class SDRAMWriter(
             self.CONFIG_REGION_SIZE))
 
     def get_binary_start_type(self):
-        return ExecutableType.USES_SIMULATION_INTERFACE
+        return ExecutableType.SYNC
+#        return ExecutableType.USES_SIMULATION_INTERFACE
+
 
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,

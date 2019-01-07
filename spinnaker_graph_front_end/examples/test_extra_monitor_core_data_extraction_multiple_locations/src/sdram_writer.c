@@ -17,8 +17,8 @@ static uint32_t time = 0;
 //! int as a bool to represent if this simulation should run forever
 static uint32_t infinite_run;
 
-//! state for how many bytes it needs to send, gives approx bandwidth if 
-//! round number. 
+//! state for how many bytes it needs to send, gives approx bandwidth if
+//! round number.
 static uint32_t bytes_to_write;
 static address_t *store_address = NULL;
 address_t dsg_main_address;
@@ -103,6 +103,9 @@ void update(uint ticks, uint b) {
 
         // falls into the pause resume mode of operating
         simulation_handle_pause_resume(NULL);
+
+        // switch to state where host is ready to read
+        simulation_ready_to_read();
 
         return;
     }

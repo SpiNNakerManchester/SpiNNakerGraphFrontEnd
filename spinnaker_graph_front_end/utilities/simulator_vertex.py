@@ -22,4 +22,5 @@ class SimulatorVertex(
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):
+#        return ExecutableType.SYNC
         return ExecutableType.USES_SIMULATION_INTERFACE

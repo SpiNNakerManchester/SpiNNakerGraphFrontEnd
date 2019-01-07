@@ -17,7 +17,7 @@ from spinnaker_graph_front_end.examples import \
     test_retransmission_phase_on_multi_cores
 
 # data to write
-mbs = 1.0
+mbs = 1
 
 # setup system
 sim.setup(model_binary_module=test_retransmission_phase_on_multi_cores)
