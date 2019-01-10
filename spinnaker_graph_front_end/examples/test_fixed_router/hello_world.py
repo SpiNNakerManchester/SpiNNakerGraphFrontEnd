@@ -41,4 +41,15 @@ front_end.add_machine_vertex_instance(
 
 front_end.run(10)
 
+placements = front_end.placements()
+buffer_manager = front_end.buffer_manager()
+
+for placement in sorted(placements.placements,
+                        key=lambda p: (p.x, p.y, p.p)):
+
+    if isinstance(placement.vertex, HelloWorldVertex):
+        hello_world = placement.vertex.read(placement, buffer_manager)
+        logger.info("{}, {}, {} > {}".format(
+            placement.x, placement.y, placement.p, hello_world))
+
 front_end.stop()
