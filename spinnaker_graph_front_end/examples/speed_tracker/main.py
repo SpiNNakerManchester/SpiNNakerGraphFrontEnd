@@ -4,7 +4,7 @@ import traceback
 import spinnaker_graph_front_end as sim
 from pacman.model.constraints.placer_constraints import ChipAndCoreConstraint
 from pacman.model.graphs.machine import MachineEdge
-from spinnaker_graph_front_end.examples.speed_tracker.packt_gatherer import \
+from spinnaker_graph_front_end.examples.speed_tracker.packet_gatherer import \
     PacketGatherer
 from spinnaker_graph_front_end.examples.speed_tracker.\
     sdram_reader_and_transmitter import \
