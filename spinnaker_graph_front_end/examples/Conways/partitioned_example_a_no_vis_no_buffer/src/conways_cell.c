@@ -109,6 +109,9 @@ void update(uint ticks, uint b) {
     // killed
     if ((infinite_run != TRUE) && (time >= simulation_ticks)) {
 
+        // fall into the pause resume mode of operating
+        simulation_handle_pause_resume(NULL);
+
         // update recording data
         address_t record_region =
             data_specification_get_region(RECORDED_DATA, address);
@@ -117,9 +120,6 @@ void update(uint ticks, uint b) {
         spin1_memcpy(record_space_address, &size_written, 4);
 
         log_info("Simulation complete.\n");
-
-        // falls into the pause resume mode of operating
-        simulation_handle_pause_resume(NULL);
 
         // switch to state where host is ready to read
         simulation_ready_to_read();

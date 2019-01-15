@@ -113,9 +113,7 @@ void update(uint ticks, uint b) {
     // killed
     if ((infinite_run != TRUE) && (time >= simulation_ticks)) {
 
-        log_info("Simulation complete.\n");
-
-        // falls into the pause resume mode of operating
+        // fall into the pause resume mode of operating
         simulation_handle_pause_resume(NULL);
 
         // Finalise any recordings that are in progress, writing back the final
@@ -124,6 +122,8 @@ void update(uint ticks, uint b) {
             log_info("updating recording regions");
             recording_finalise();
         }
+
+        log_info("Simulation complete.\n");
 
         // switch to state where host is ready to read
         simulation_ready_to_read();
