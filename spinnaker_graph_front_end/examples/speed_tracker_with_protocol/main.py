@@ -14,7 +14,7 @@ import time
 from spinnaker_graph_front_end.examples import speed_tracker_with_protocol
 
 # data to write
-mbs = 20.0
+mbs = 20
 
 # setup system
 sim.setup(model_binary_module=speed_tracker_with_protocol)
