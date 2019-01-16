@@ -34,6 +34,7 @@ def check_data(data):
         else:
             start_value += 1
 
+
 mbs = 20
 
 # setup system
@@ -66,6 +67,7 @@ extra_monitor_gatherers = sim.globals_variables.\
 receiver = None
 gatherer = extra_monitor_gatherers[(writer_nearest_ethernet.x,
                                     writer_nearest_ethernet.y)]
+
 for vertex in extra_monitor_vertices:
     placement = placements.get_placement_of_vertex(vertex)
     if (placement.x == writer_placement.x and
