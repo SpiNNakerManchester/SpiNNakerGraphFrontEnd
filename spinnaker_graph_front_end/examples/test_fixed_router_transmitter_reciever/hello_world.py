@@ -25,7 +25,7 @@ front_end.setup(n_chips_required=None, model_binary_folder=os.getcwd())
 front_end.globals_variables.get_simulator().update_extra_mapping_inputs(
     {"FixedRouteDestinationClass": HelloWorldVertexClone})
 
-# put a single instance of each vertex type on (the first core of) a particular chip
+# put a single instance of each vertex type on a particular chip
 front_end.add_machine_vertex_instance(
     HelloWorldVertex(
         label="transmitter", constraints=[ChipAndCoreConstraint(x=1, y=1)]))

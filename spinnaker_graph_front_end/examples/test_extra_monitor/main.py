@@ -69,9 +69,8 @@ gatherer = extra_monitor_gatherers[(writer_nearest_ethernet.x,
                                     writer_nearest_ethernet.y)]
 
 for vertex in extra_monitor_vertices:
-    placement = placements.get_placement_of_vertex(vertex)
-    if (placement.x == writer_placement.x and
-        placement.y == writer_placement.y):
+    plt = placements.get_placement_of_vertex(vertex)
+    if (plt.x == writer_placement.x and plt.y == writer_placement.y):
         receiver = vertex
 
 start = float(time.time())
