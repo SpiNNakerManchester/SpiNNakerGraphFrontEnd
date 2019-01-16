@@ -119,7 +119,7 @@ class PacketGathererWithProtocol(
         connection = UDPConnection(local_host=None, local_port=self.PORT)
 
         # send
-        transceiver.set_reinjection_router_timeout(15, 15)
+#        transceiver.set_reinjection_router_timeout(15, 15)
         transceiver.send_sdp_message(message=message)
 
         # receive

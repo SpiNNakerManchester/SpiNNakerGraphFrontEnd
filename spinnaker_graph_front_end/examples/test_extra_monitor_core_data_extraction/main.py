@@ -61,7 +61,7 @@ class Runner(object):
         data = gatherer.get_data(
             sim.transceiver(), placements.get_placement_of_vertex(receiver),
             self._get_data_region_address(sim.transceiver(), writer_placement),
-            writer.mbs_in_bytes)
+            writer.mbs_in_bytes, fixed_routes=None)
         gatherer.unset_cores_for_data_extraction(
             sim.transceiver(), extra_monitor_vertices, placements)
         end = float(time.time())
@@ -70,6 +70,8 @@ class Runner(object):
             mbs, end - start, (mbs * 8) / (end - start)))
 
         self._check_data(data)
+
+        sim.stop()
 
     @staticmethod
     def _get_data_region_address(transceiver, placement):
