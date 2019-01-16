@@ -4,7 +4,7 @@ import unittest
 import spinn_utilities.package_loader as package_loader
 
 # These are scripts so can not be tested this way.
-# They are covered in integeration tests
+# They are covered in integration tests
 EXCLUSIONS = ["spinnaker_graph_front_end.examples.Conways."
               "no_edges_examples.conways_no_edges",
 
@@ -20,24 +20,15 @@ EXCLUSIONS = ["spinnaker_graph_front_end.examples.Conways."
               "spinnaker_graph_front_end.examples.hello_world.hello_world",
               "spinnaker_graph_front_end.examples.template.python_template",
 
+              "spinnaker_graph_front_end.examples.test_extra_monitor.main",
+
               "spinnaker_graph_front_end.examples.test_fixed_router."
               "hello_world",
               "spinnaker_graph_front_end.examples.test_fixed_router."
               "hello_world_vertex_clone",
 
-              "spinnaker_graph_front_end.examples.speed_test_solo.main_solo",
-
-              "spinnaker_graph_front_end.examples."
-              "speed_tracker_with_protocol.main",
-
-              "spinnaker_graph_front_end.examples."
-              "speed_tracker.main",
-
               "spinnaker_graph_front_end.examples."
               "test_fixed_router_transmitter_reciever.hello_world",
-
-              "spinnaker_graph_front_end.examples."
-              "test_retransmission_phase_on_multi_cores.main",
 
               "spinnaker_graph_front_end.examples.test_timer_setup_cost."
               "test_timer_setup_cost"]
