@@ -1,22 +1,19 @@
 import struct
-
+import math
+import time
 from enum import Enum
-
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, ConstantSDRAM, \
-    IPtagResource
-from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
-from spinn_front_end_common.abstract_models.impl import \
-    MachineDataSpecableVertex
-from spinn_front_end_common.utilities.utility_objs import ExecutableType
-from spinn_front_end_common.utilities import constants
-from spinn_front_end_common.interface.simulation import simulation_utilities
+from pacman.model.resources import (
+    ConstantSDRAM, IPtagResource, ResourceContainer)
 from spinnman.connections.udp_packet_connections import UDPConnection
 from spinnman.exceptions import SpinnmanTimeoutException
 from spinnman.messages.sdp import SDPMessage, SDPHeader, SDPFlag
-
-import math
-import time
+from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
+from spinn_front_end_common.abstract_models.impl import (
+    MachineDataSpecableVertex)
+from spinn_front_end_common.utilities.utility_objs import ExecutableType
+from spinn_front_end_common.utilities import constants
+from spinn_front_end_common.interface.simulation import simulation_utilities
 
 
 class PacketGathererWithProtocol(

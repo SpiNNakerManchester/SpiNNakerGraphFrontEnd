@@ -1,20 +1,20 @@
 import struct
 import traceback
 import numpy
-
-import spinnaker_graph_front_end as sim
+import time
 from pacman.model.constraints.placer_constraints import ChipAndCoreConstraint
 from pacman.model.graphs.machine import MachineEdge
+import spinnaker_graph_front_end as sim
 from spinnaker_graph_front_end.examples.\
     speed_tracker_with_protocol_search_c_code_version.\
-    packet_gatherer_with_protocol import PacketGathererWithProtocol
+    packet_gatherer_with_protocol import (
+        PacketGathererWithProtocol)
 from spinnaker_graph_front_end.examples.\
     speed_tracker_with_protocol_search_c_code_version.\
-    sdram_reader_and_transmitter_with_protocol import \
-    SDRAMReaderAndTransmitterWithProtocol
-import time
-from spinnaker_graph_front_end.examples import \
-    speed_tracker_with_protocol_search_c_code_version
+    sdram_reader_and_transmitter_with_protocol import (
+        SDRAMReaderAndTransmitterWithProtocol)
+from spinnaker_graph_front_end.examples import (
+    speed_tracker_with_protocol_search_c_code_version)
 
 
 class Runner(object):

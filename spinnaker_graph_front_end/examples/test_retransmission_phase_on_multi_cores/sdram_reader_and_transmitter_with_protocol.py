@@ -1,12 +1,10 @@
 from enum import Enum
-
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, ConstantSDRAM
-from spinn_front_end_common.abstract_models import \
-    AbstractHasAssociatedBinary, \
-    AbstractProvidesNKeysForPartition
-from spinn_front_end_common.abstract_models.impl import \
-    MachineDataSpecableVertex
+from pacman.model.resources import ConstantSDRAM, ResourceContainer
+from spinn_front_end_common.abstract_models import (
+    AbstractHasAssociatedBinary, AbstractProvidesNKeysForPartition)
+from spinn_front_end_common.abstract_models.impl import (
+    MachineDataSpecableVertex)
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.interface.simulation import simulation_utilities
