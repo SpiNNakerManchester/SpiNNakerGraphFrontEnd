@@ -1,31 +1,25 @@
-from spinn_utilities.overrides import overrides
-# pacman imports
-from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, CPUCyclesPerTickResource
-from pacman.model.resources import DTCMResource, SDRAMResource
-from pacman.utilities.utility_calls import is_single
-
-# spinn front end common imports
-from spinn_front_end_common.utilities.constants \
-    import SYSTEM_BYTES_REQUIREMENT, MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP
-from spinn_front_end_common.utilities.exceptions import ConfigurationException
-from spinn_front_end_common.utilities.helpful_functions \
-    import locate_memory_region_for_placement, read_config_int
-from spinn_front_end_common.utilities import globals_variables
-from spinn_front_end_common.interface.buffer_management.buffer_models\
-    import AbstractReceiveBuffersToHost
-from spinn_front_end_common.interface.buffer_management \
-    import recording_utilities
-from spinn_front_end_common.abstract_models.impl \
-    import MachineDataSpecableVertex
-
-from spinnaker_graph_front_end.utilities import SimulatorVertex
-from spinnaker_graph_front_end.utilities.data_utils \
-    import generate_system_data_region
-
-# general imports
-from enum import Enum
 import struct
+from enum import Enum
+from spinn_utilities.overrides import overrides
+from pacman.model.graphs.machine import MachineVertex
+from pacman.model.resources import (
+    ResourceContainer, CPUCyclesPerTickResource, DTCMResource, SDRAMResource)
+from pacman.utilities.utility_calls import is_single
+from spinn_front_end_common.utilities import globals_variables
+from spinn_front_end_common.interface.buffer_management.buffer_models import (
+    AbstractReceiveBuffersToHost)
+from spinn_front_end_common.interface.buffer_management import (
+    recording_utilities)
+from spinn_front_end_common.abstract_models.impl import (
+    MachineDataSpecableVertex)
+from spinn_front_end_common.utilities.constants import (
+    SYSTEM_BYTES_REQUIREMENT, MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP)
+from spinn_front_end_common.utilities.exceptions import ConfigurationException
+from spinn_front_end_common.utilities.helpful_functions import (
+    locate_memory_region_for_placement, read_config_int)
+from spinnaker_graph_front_end.utilities import SimulatorVertex
+from spinnaker_graph_front_end.utilities.data_utils import (
+    generate_system_data_region)
 
 
 class ConwayBasicCell(
