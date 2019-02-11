@@ -1,9 +1,8 @@
-import spinnaker_graph_front_end as front_end
-
-from spinnaker_graph_front_end.examples.hello_world.hello_world_vertex\
-    import HelloWorldVertex
 import time
 import os
+import spinnaker_graph_front_end as front_end
+from spinnaker_graph_front_end.examples.hello_world.hello_world_vertex import (
+    HelloWorldVertex)
 
 front_end.setup(
     n_chips_required=2, model_binary_folder=os.path.dirname(__file__))

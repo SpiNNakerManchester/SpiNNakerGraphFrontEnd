@@ -1,13 +1,11 @@
 import struct
 import traceback
-
-import spinnaker_graph_front_end as sim
 import time
+import spinnaker_graph_front_end as sim
 from spinnaker_graph_front_end.examples import speed_test_solo
-
-# data to write
 from spinnaker_graph_front_end.examples.speed_test_solo.\
-    packet_gatherer_cheat import PacketGathererCheat
+    packet_gatherer_cheat import (
+        PacketGathererCheat)
 
 mbs = 1.0
 
