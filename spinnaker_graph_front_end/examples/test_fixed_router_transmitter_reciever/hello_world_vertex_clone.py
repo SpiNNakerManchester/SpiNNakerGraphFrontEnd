@@ -3,7 +3,7 @@ from enum import Enum
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import (
-    ConstantSDRAM, CPUCyclesPerTickResource, DTCMResource, ResourceContainer, SDRAMResource)
+    ConstantSDRAM, CPUCyclesPerTickResource, DTCMResource, ResourceContainer)
 from spinn_front_end_common.utilities import (
     globals_variables, constants, helpful_functions)
 from spinn_front_end_common.interface.simulation import simulation_utilities

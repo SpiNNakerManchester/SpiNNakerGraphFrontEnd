@@ -12,7 +12,7 @@ from spinn_front_end_common.interface.buffer_management.buffer_models import (
 from spinn_front_end_common.interface.buffer_management.recording_utilities \
     import (
         get_recording_resources, get_recording_header_array,
-        get_recording_header_size, get_n_timesteps_in_buffer_space)
+        get_recording_header_size)
 from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT
 from spinn_front_end_common.utilities.helpful_functions import (
     locate_memory_region_for_placement, read_config_int)
@@ -136,14 +136,6 @@ class TemplateVertex(
         if is_missing_data:
             logger.warning("Some data was lost when recording")
         return data_pointer.read_all()
-
-    @overrides(AbstractReceiveBuffersToHost.get_minimum_buffer_sdram_usage)
-    def get_minimum_buffer_sdram_usage(self):
-        return 1024
-
-    @overrides(AbstractReceiveBuffersToHost.get_n_timesteps_in_buffer_space)
-    def get_n_timesteps_in_buffer_space(self, buffer_space, machine_time_step):
-        return get_n_timesteps_in_buffer_space(buffer_space, 100)
 
     @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)
     def get_recorded_region_ids(self):
