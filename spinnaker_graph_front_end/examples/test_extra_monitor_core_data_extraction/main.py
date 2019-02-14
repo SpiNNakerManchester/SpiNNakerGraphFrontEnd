@@ -1,11 +1,12 @@
 import struct
 import time
-import spinnaker_graph_front_end as sim
 from data_specification.utility_calls import get_region_base_address_offset
-from spinnaker_graph_front_end.examples import \
-    test_extra_monitor_core_data_extraction
+import spinnaker_graph_front_end as sim
+from spinnaker_graph_front_end.examples import (
+    test_extra_monitor_core_data_extraction)
 from spinnaker_graph_front_end.examples.\
-    test_extra_monitor_core_data_extraction.sdram_writer import SDRAMWriter
+    test_extra_monitor_core_data_extraction.sdram_writer import (
+        SDRAMWriter)
 
 _ONE_WORD = struct.Struct("<I")
 

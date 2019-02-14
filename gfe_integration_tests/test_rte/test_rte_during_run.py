@@ -1,11 +1,10 @@
 import os
-import pytest
-
-import spinnaker_graph_front_end as s
-from spinn_front_end_common.utilities.utility_objs import ExecutableType
-from gfe_integration_tests.test_rte.test_run_vertex import TestRunVertex
-from spinnman.exceptions import SpinnmanException
 import traceback
+import pytest
+from spinn_front_end_common.utilities.utility_objs import ExecutableType
+from spinnman.exceptions import SpinnmanException
+import spinnaker_graph_front_end as s
+from gfe_integration_tests.test_rte.test_run_vertex import TestRunVertex
 
 
 def test_rte_during_run():

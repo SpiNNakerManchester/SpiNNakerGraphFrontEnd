@@ -1,28 +1,21 @@
-# pacman imports
+import struct
+from enum import Enum
 from spinn_utilities.overrides import overrides
-
-from pacman.executor.injection_decorator \
-    import supports_injection, inject_items
+from pacman.executor.injection_decorator import (
+    supports_injection, inject_items)
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, CPUCyclesPerTickResource
-from pacman.model.resources import DTCMResource, SDRAMResource
+from pacman.model.resources import (
+    ResourceContainer, CPUCyclesPerTickResource, DTCMResource, SDRAMResource)
 from pacman.utilities.utility_calls import is_single
-
-# spinn front end common imports
 from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
-from spinn_front_end_common.utilities.helpful_functions \
-    import locate_memory_region_for_placement
-from spinn_front_end_common.abstract_models.impl \
-    import MachineDataSpecableVertex
-
+from spinn_front_end_common.abstract_models.impl import (
+    MachineDataSpecableVertex)
+from spinn_front_end_common.utilities.helpful_functions import (
+    locate_memory_region_for_placement)
 from spinnaker_graph_front_end.utilities import SimulatorVertex
-from spinnaker_graph_front_end.utilities.data_utils \
-    import generate_system_data_region
-
-# general imports
-from enum import Enum
-import struct
+from spinnaker_graph_front_end.utilities.data_utils import (
+    generate_system_data_region)
 
 
 @supports_injection

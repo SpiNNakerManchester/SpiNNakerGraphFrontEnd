@@ -1,11 +1,12 @@
 from pacman.model.graphs.machine import SimpleMachineVertex
 from pacman.model.resources import ResourceContainer
-from spinn_front_end_common.abstract_models \
-    import AbstractHasAssociatedBinary, AbstractGeneratesDataSpecification
-from spinn_front_end_common.interface.simulation \
-    import simulation_utilities as utils
-from spinn_front_end_common.utilities.constants \
-    import SYSTEM_BYTES_REQUIREMENT
+from spinn_front_end_common.abstract_models import (
+    AbstractHasAssociatedBinary, AbstractGeneratesDataSpecification)
+from spinn_front_end_common.interface.simulation import (
+    simulation_utilities as
+    utils)
+from spinn_front_end_common.utilities.constants import (
+    SYSTEM_BYTES_REQUIREMENT)
 
 
 class TestRunVertex(
