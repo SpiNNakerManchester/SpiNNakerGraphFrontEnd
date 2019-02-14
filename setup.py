@@ -1,3 +1,4 @@
+from setuptools import setup
 try:
     from collections.abc import defaultdict
 except ImportError:
