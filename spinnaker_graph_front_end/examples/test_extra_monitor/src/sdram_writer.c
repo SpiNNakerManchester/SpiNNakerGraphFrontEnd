@@ -20,7 +20,7 @@ static uint32_t infinite_run;
 //! state for how many bytes it needs to send, gives approx bandwidth if
 //! round number.
 static uint32_t bytes_to_write;
-static address_t *store_address = NULL;
+static address_t store_address = NULL;
 address_t dsg_main_address;
 
 //! human readable definitions of each region in SDRAM
