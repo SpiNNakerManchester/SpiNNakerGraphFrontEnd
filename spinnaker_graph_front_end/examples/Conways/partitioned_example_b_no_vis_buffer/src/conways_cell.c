@@ -160,8 +160,8 @@ void next_state(){
         if(alive_states_recieved_this_tick <= 1){
             my_state = DEAD;
         }
-        if (alive_states_recieved_this_tick == 2 |
-                alive_states_recieved_this_tick == 3){
+        if ((alive_states_recieved_this_tick == 2) |
+                (alive_states_recieved_this_tick == 3)){
             my_state = ALIVE;
         }
         if (alive_states_recieved_this_tick >= 4){
