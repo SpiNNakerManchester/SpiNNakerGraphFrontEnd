@@ -1,23 +1,16 @@
-# graph front end imports
-from spinnaker_graph_front_end._version import \
-    __version__, __version_name__, __version_month__, __version_year__
-from spinnaker_graph_front_end.spinnaker import SpiNNaker
-from spinnaker_graph_front_end import spinnaker as gfe_file
-
-from spinn_utilities.socket_address import SocketAddress
-
-# front end common imports
-from spinn_front_end_common.utilities.utility_objs import ExecutableFinder
-from spinn_front_end_common.utilities import globals_variables
-# utility models for graph front ends
-from spinn_front_end_common.utility_models import LivePacketGather
-from spinn_front_end_common.utility_models import ReverseIpTagMultiCastSource
-
-from pacman.model.graphs.machine import MachineEdge
-
 import os
 import logging
 import sys
+from spinn_utilities.socket_address import SocketAddress
+from pacman.model.graphs.machine import MachineEdge
+from spinn_front_end_common.utilities.utility_objs import ExecutableFinder
+from spinn_front_end_common.utilities import globals_variables
+from spinn_front_end_common.utility_models import (
+    LivePacketGather, ReverseIpTagMultiCastSource)
+from spinnaker_graph_front_end._version import (
+    __version__, __version_name__, __version_month__, __version_year__)
+from spinnaker_graph_front_end.spinnaker import SpiNNaker
+from spinnaker_graph_front_end import spinnaker as gfe_file
 
 logger = logging.getLogger(__name__)
 

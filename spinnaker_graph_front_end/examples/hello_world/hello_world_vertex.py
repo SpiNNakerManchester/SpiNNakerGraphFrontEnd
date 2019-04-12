@@ -1,24 +1,21 @@
+import logging
+from enum import Enum
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
-from pacman.model.resources import ResourceContainer, SDRAMResource
-
+from pacman.model.resources import (
+    CPUCyclesPerTickResource, DTCMResource, ResourceContainer, SDRAMResource)
 from spinn_front_end_common.utilities import globals_variables
-from spinn_front_end_common.utilities.helpful_functions \
-    import locate_memory_region_for_placement, read_config_int
-from spinn_front_end_common.abstract_models.impl \
-    import MachineDataSpecableVertex
-from spinn_front_end_common.interface.buffer_management.buffer_models\
-    import AbstractReceiveBuffersToHost
-from spinn_front_end_common.interface.buffer_management\
-    import recording_utilities
-
+from spinn_front_end_common.abstract_models.impl import (
+    MachineDataSpecableVertex)
+from spinn_front_end_common.interface.buffer_management.buffer_models import (
+    AbstractReceiveBuffersToHost)
+from spinn_front_end_common.interface.buffer_management import (
+    recording_utilities)
+from spinn_front_end_common.utilities.helpful_functions import (
+    locate_memory_region_for_placement, read_config_int)
 from spinnaker_graph_front_end.utilities import SimulatorVertex
-from spinnaker_graph_front_end.utilities.data_utils \
-    import generate_system_data_region
-
-from enum import Enum
-import logging
+from spinnaker_graph_front_end.utilities.data_utils import (
+    generate_system_data_region)
 
 logger = logging.getLogger(__name__)
 

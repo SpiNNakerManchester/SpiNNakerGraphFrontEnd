@@ -7,14 +7,11 @@ Each core stores into its region in SDRAM the string:
 We then fetch the written data and print it on the python console.
 """
 
-import spinnaker_graph_front_end as front_end
-
-from spinnaker_graph_front_end.examples.hello_world.hello_world_vertex\
-    import HelloWorldVertex
-
 import logging
 import os
-
+import spinnaker_graph_front_end as front_end
+from spinnaker_graph_front_end.examples.hello_world.hello_world_vertex import (
+    HelloWorldVertex)
 
 logger = logging.getLogger(__name__)
 

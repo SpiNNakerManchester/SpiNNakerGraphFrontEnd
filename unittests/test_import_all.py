@@ -1,6 +1,5 @@
 import os
 import unittest
-
 import spinn_utilities.package_loader as package_loader
 
 # These are scripts so can not be tested this way.
