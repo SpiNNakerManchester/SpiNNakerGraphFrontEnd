@@ -51,14 +51,14 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         # app specific elements
         self._state = state
 
-    @inject_items({"n_machine_time_steps": "TotalMachineTimeSteps"})
+    @inject_items({"data_n_time_steps": "DataNTimeSteps"})
     @overrides(
         MachineDataSpecableVertex.generate_machine_data_specification,
-        additional_arguments={"n_machine_time_steps"})
+        additional_arguments={"data_n_time_steps"})
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
             reverse_iptags, machine_time_step, time_scale_factor,
-            n_machine_time_steps):
+            data_n_time_steps):
         # Generate the system data region for simulation .c requirements
         generate_system_data_region(spec, self.DATA_REGIONS.SYSTEM.value,
                                     self, machine_time_step, time_scale_factor)
@@ -75,7 +75,7 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
             size=8, label="neighour_states")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.RESULTS.value,
-            size=(n_machine_time_steps + 1) * 4, label="results")
+            size=(data_n_time_steps + 1) * 4, label="results")
 
         # check got right number of keys and edges going into me
         partitions = \
