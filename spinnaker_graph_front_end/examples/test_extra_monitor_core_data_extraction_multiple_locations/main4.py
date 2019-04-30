@@ -57,7 +57,7 @@ class Runner(object):
                 'MemoryMCGatherVertexToEthernetConnectedChipMapping']
         time_out_setter = extra_monitor_gatherers[(0, 0)]
 
-        time_out_setter.set_cores_for_data_extraction(
+        time_out_setter.set_cores_for_data_streaming(
             sim.transceiver(), extra_monitor_vertices, placements)
 
         for _ in range(0, number_of_repeats):
@@ -93,7 +93,7 @@ class Runner(object):
 
                 self._check_data(data)
 
-        time_out_setter.unset_cores_for_data_extraction(
+        time_out_setter.unset_cores_for_data_streaming(
             sim.transceiver(), extra_monitor_vertices, placements)
 
     @staticmethod
