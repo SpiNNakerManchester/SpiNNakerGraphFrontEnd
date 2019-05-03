@@ -76,7 +76,6 @@ class Runner(object):
                 gatherer.set_cores_for_data_streaming(
                     sim.transceiver(), extra_monitor_vertices, placements)
                 data = gatherer.get_data(
-                    sim.transceiver(),
                     placements.get_placement_of_vertex(receiver),
                     self._get_data_region_address(sim.transceiver(),
                                                   writer_placement),
