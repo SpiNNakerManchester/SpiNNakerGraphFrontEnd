@@ -49,12 +49,10 @@ class Runner(object):
         placements = sim.placements()
         machine = sim.machine()
 
-        extra_monitor_vertices = sim.globals_variables. \
-            get_simulator()._last_run_outputs[
-                'MemoryExtraMonitorVertices']
-        extra_monitor_gatherers = sim.globals_variables. \
-            get_simulator()._last_run_outputs[
-                'MemoryMCGatherVertexToEthernetConnectedChipMapping']
+        sim_vars = sim.globals_variables.get_simulator()._last_run_outputs
+        extra_monitor_vertices = sim_vars['MemoryExtraMonitorVertices']
+        extra_monitor_gatherers = sim_vars[
+            'MemoryMCGatherVertexToEthernetConnectedChipMapping']
         time_out_setter = extra_monitor_gatherers[(0, 0)]
 
         time_out_setter.set_cores_for_data_streaming(

@@ -11,11 +11,10 @@ front_end.add_machine_vertex(HelloWorldVertex, {}, label="Hello World")
 
 front_end.run(10)
 
-extra_monitor_vertices = front_end.globals_variables.\
-    get_simulator()._last_run_outputs['MemoryExtraMonitorVertices']
-extra_monitor_gatherers = front_end.globals_variables.\
-    get_simulator()._last_run_outputs[
-        'MemoryMCGatherVertexToEthernetConnectedChipMapping']
+sim_vars = front_end.globals_variables.get_simulator()._last_run_outputs
+extra_monitor_vertices = sim_vars['MemoryExtraMonitorVertices']
+extra_monitor_gatherers = sim_vars[
+    'MemoryMCGatherVertexToEthernetConnectedChipMapping']
 transceiver = front_end.transceiver()
 placements = front_end.placements()
 
@@ -23,13 +22,11 @@ placements = front_end.placements()
 start = float(time.time())
 receiver = extra_monitor_gatherers[0, 0]
 receiver.set_cores_for_data_streaming(
-                    transceiver=transceiver, placements=placements,
-                    extra_monitor_cores_for_router_timeout=(
-                        extra_monitor_vertices))
+    transceiver=transceiver, placements=placements,
+    extra_monitor_cores=extra_monitor_vertices)
 receiver.unset_cores_for_data_streaming(
-                    transceiver=transceiver, placements=placements,
-                    extra_monitor_cores_for_router_timeout=(
-                        extra_monitor_vertices))
+    transceiver=transceiver, placements=placements,
+    extra_monitor_cores=extra_monitor_vertices)
 end = float(time.time())
 
 print("took {} seconds to set and unset the routing timeout".format(
