@@ -118,11 +118,11 @@ class HelloWorldVertexClone(
         :param buffer_manager: the buffer manager
         :return: string output
         """
-        data_pointer, missing_data = buffer_manager.get_data_for_vertex(
+        raw_data, missing_data = buffer_manager.get_data_by_placement(
             placement, 0)
         if missing_data:
             raise Exception("missing data!")
-        return str(data_pointer.read_all())
+        return str(raw_data)
 
     def get_n_timesteps_in_buffer_space(self, buffer_space, machine_time_step):
         return recording_utilities.get_n_timesteps_in_buffer_space(

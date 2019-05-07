@@ -118,11 +118,11 @@ class HelloWorldVertex(
         :param buffer_manager: the buffer manager
         :return: string output
         """
-        data_pointer, missing_data = buffer_manager.get_data_for_vertex(
+        raw_data, missing_data = buffer_manager.get_data_by_placement(
             placement, 0)
         if missing_data:
             raise Exception("missing data!")
-        return str(data_pointer.read_all())
+        return str(raw_data)
 
     def get_recorded_region_ids(self):
         return [0]
