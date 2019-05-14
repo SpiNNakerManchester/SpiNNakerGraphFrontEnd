@@ -1,8 +1,6 @@
-# pacman imports
 from spinn_utilities.overrides import overrides
 
-from pacman.executor.injection_decorator \
-    import supports_injection, inject_items
+from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, VariableSDRAM
 from pacman.utilities.utility_calls import is_single
@@ -48,8 +46,8 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
     def __init__(self, label, state):
         super(ConwayBasicCell, self).__init__(label, "conways_cell.aplx")
 
-        # app specific elements
-        self._state = state
+        # app specific data items
+        self._state = bool(state)
 
     @inject_items({"data_n_time_steps": "DataNTimeSteps"})
     @overrides(
@@ -92,14 +90,7 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
             raise ConfigurationException(
                 "I've not got the right number of connections. I have {} "
                 "instead of 8".format(
-                    len(machine_graph.incoming_subedges_from_subvertex(self))))
-        if len(set(edges)) != 8:
-            output = ""
-            for edge in edges:
-                output += edge.pre_subvertex.label + " : "
-            raise ConfigurationException(
-                "I've got duplicate edges. This is a error. The edges are "
-                "connected to these vertices \n {}".format(output))
+                    len(machine_graph.get_edges_ending_at_vertex(self))))
 
         for edge in edges:
             if edge.pre_vertex == self:
