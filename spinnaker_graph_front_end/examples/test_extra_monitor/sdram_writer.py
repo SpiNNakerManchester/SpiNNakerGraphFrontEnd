@@ -1,10 +1,9 @@
 from enum import Enum
 
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, ConstantSDRAM
+from pacman.model.resources import ResourceContainer, SDRAMResource
 from spinn_front_end_common.abstract_models import \
-    AbstractHasAssociatedBinary, \
-    AbstractProvidesNKeysForPartition
+    AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models.impl import \
     MachineDataSpecableVertex
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
@@ -12,28 +11,31 @@ from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.interface.simulation import simulation_utilities
 
 
-class SDRAMReaderAndTransmitterWithProtocol(
-        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary,
-        AbstractProvidesNKeysForPartition):
+class SDRAMWriter(
+        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
 
     SDRAM_READING_SIZE_IN_BYTES_CONVERTER = 1024*1024
-    KEY_REGION_SIZE = 8
+    CONFIG_REGION_SIZE = 4
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
-               ('CONFIG', 1)])
+               ('CONFIG', 1),
+               ('DATA', 2)])
 
     def __init__(self, mbs):
         self._mbs = mbs * self.SDRAM_READING_SIZE_IN_BYTES_CONVERTER
-        super(SDRAMReaderAndTransmitterWithProtocol, self).__init__(
-            label="speed", constraints=None)
+        super(SDRAMWriter, self).__init__(label="speed", constraints=None)
+
+    @property
+    def mbs_in_bytes(self):
+        return self._mbs
 
     @property
     def resources_required(self):
-        return ResourceContainer(sdram=ConstantSDRAM(
+        return ResourceContainer(sdram=SDRAMResource(
             self._mbs + constants.SYSTEM_BYTES_REQUIREMENT +
-            self.KEY_REGION_SIZE))
+            self.CONFIG_REGION_SIZE))
 
     def get_binary_start_type(self):
         return ExecutableType.USES_SIMULATION_INTERFACE
@@ -56,13 +58,7 @@ class SDRAMReaderAndTransmitterWithProtocol(
             self.get_binary_file_name(), machine_time_step,
             time_scale_factor))
 
-        # write key
-        local_routing_info = \
-            routing_info.get_routing_info_from_pre_vertex(self, "TRANSMIT")
-
         spec.switch_write_focus(self.DATA_REGIONS.CONFIG.value)
-        first_key = local_routing_info.first_key
-        spec.write_value(first_key)
         spec.write_value(self._mbs)
 
         # End-of-Spec:
@@ -74,11 +70,12 @@ class SDRAMReaderAndTransmitterWithProtocol(
             label='systemInfo')
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.CONFIG.value,
-            size=self.KEY_REGION_SIZE,
+            size=self.CONFIG_REGION_SIZE,
             label="config")
+        spec.reserve_memory_region(
+            region=self.DATA_REGIONS.DATA.value,
+            size=self._mbs,
+            label="data region")
 
     def get_binary_file_name(self):
-        return "sdram_reader_and_transmitter_with_protocol.aplx"
-
-    def get_n_keys_for_partition(self, partition, graph_mapper):
-        return 3
+        return "sdram_writer.aplx"
