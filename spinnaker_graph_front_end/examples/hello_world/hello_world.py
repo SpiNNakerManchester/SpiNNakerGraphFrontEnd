@@ -26,10 +26,8 @@ total_number_of_cores = min(16, total_number_of_cores)
 
 # fill all cores with a HelloWorldVertex each
 for x in range(0, total_number_of_cores):
-    front_end.add_machine_vertex(
-        HelloWorldVertex,
-        {},
-        label="Hello World at x {}".format(x))
+    front_end.add_machine_vertex_instance(
+        HelloWorldVertex(label="Hello World at {}".format(x)))
 
 front_end.run(10)
 
