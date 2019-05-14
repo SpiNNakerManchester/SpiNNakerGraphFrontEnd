@@ -108,7 +108,7 @@ class HelloWorldVertex(
             placement, 0)
         if missing_data:
             raise Exception("missing data!")
-        return str(raw_data)
+        return str(bytearray(raw_data))
 
     def get_n_timesteps_in_buffer_space(self, buffer_space, machine_time_step):
         return recording_utilities.get_n_timesteps_in_buffer_space(

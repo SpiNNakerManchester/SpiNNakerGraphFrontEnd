@@ -9,12 +9,12 @@ from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT)
 
 
-class TestRunVertex(
+class RunVertex(
         SimpleMachineVertex, AbstractHasAssociatedBinary,
         AbstractGeneratesDataSpecification):
 
     def __init__(self, aplx_file, executable_type):
-        super(TestRunVertex, self).__init__(ResourceContainer())
+        super(RunVertex, self).__init__(ResourceContainer())
         self._aplx_file = aplx_file
         self._executable_type = executable_type
 
