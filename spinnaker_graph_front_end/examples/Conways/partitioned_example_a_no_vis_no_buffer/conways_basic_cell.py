@@ -4,8 +4,7 @@ from spinn_utilities.overrides import overrides
 from pacman.executor.injection_decorator \
     import supports_injection, inject_items
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, CPUCyclesPerTickResource
-from pacman.model.resources import DTCMResource, VariableSDRAM
+from pacman.model.resources import ResourceContainer, VariableSDRAM
 from pacman.utilities.utility_calls import is_single
 
 # spinn front end common imports
@@ -25,7 +24,6 @@ from enum import Enum
 import struct
 
 
-@supports_injection
 class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
     """ Cell which represents a cell within the 2d fabric
     """
@@ -35,6 +33,8 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
     TRANSMISSION_DATA_SIZE = 2 * 4  # has key and key
     STATE_DATA_SIZE = 1 * 4  # 1 or 2 based off dead or alive
     NEIGHBOUR_INITIAL_STATES_SIZE = 2 * 4  # alive states, dead states
+    RECORDING_HEADER_SIZE = 4  # The size of the size of the recording(!)
+    RECORDING_ELEMENT_SIZE = STATE_DATA_SIZE  # A recording of the state
 
     # Regions for populations
     DATA_REGIONS = Enum(
@@ -72,10 +72,12 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
             size=self.STATE_DATA_SIZE, label="state")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.NEIGHBOUR_INITIAL_STATES.value,
-            size=8, label="neighour_states")
+            size=self.NEIGHBOUR_INITIAL_STATES_SIZE, label="neighour_states")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.RESULTS.value,
-            size=(data_n_time_steps + 1) * 4, label="results")
+            size=(self.RECORDING_HEADER_SIZE +
+                  (data_n_time_steps * self.RECORDING_ELEMENT_SIZE)),
+            label="results")
 
         # check got right number of keys and edges going into me
         partitions = \
@@ -145,13 +147,16 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         # find how many bytes are needed to be read
         number_of_bytes_to_read = \
             struct.unpack("<I", transceiver.read_memory(
-                placement.x, placement.y, record_region_base_address, 4))[0]
+                placement.x, placement.y, record_region_base_address,
+                self.RECORDING_HEADER_SIZE))[0]
 
         # read the bytes
-        if number_of_bytes_to_read != n_machine_time_steps * 4:
+        if number_of_bytes_to_read != (
+                n_machine_time_steps * self.RECORDING_ELEMENT_SIZE):
             raise ConfigurationException("number of bytes seems wrong")
         raw_data = transceiver.read_memory(
-            placement.x, placement.y, record_region_base_address + 4,
+            placement.x, placement.y,
+            record_region_base_address + self.RECORDING_HEADER_SIZE,
             number_of_bytes_to_read)
 
         # convert to booleans
@@ -161,21 +166,17 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
     @property
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
-        (fixed_sdram, per_timestep_sdram) = \
-            self._calculate_sdram_requirement()
+        fixed_sdram = (SYSTEM_BYTES_REQUIREMENT + self.TRANSMISSION_DATA_SIZE +
+                       self.STATE_DATA_SIZE +
+                       self.NEIGHBOUR_INITIAL_STATES_SIZE +
+                       self.RECORDING_HEADER_SIZE)
+        per_timestep_sdram = self.RECORDING_ELEMENT_SIZE
         return ResourceContainer(
-            sdram=VariableSDRAM(fixed_sdram, per_timestep_sdram),
-            dtcm=DTCMResource(0),
-            cpu_cycles=CPUCyclesPerTickResource(0))
+            sdram=VariableSDRAM(fixed_sdram, per_timestep_sdram))
 
     @property
     def state(self):
         return self._state
-
-    def _calculate_sdram_requirement(self):
-        return ((SYSTEM_BYTES_REQUIREMENT +
-                self.TRANSMISSION_DATA_SIZE + self.STATE_DATA_SIZE +
-                self.NEIGHBOUR_INITIAL_STATES_SIZE), 4)
 
     def __repr__(self):
         return self.label
