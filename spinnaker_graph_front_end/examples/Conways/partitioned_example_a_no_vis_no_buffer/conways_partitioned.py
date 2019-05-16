@@ -9,10 +9,11 @@ runtime = 50
 # machine_time_step = 100
 MAX_X_SIZE_OF_FABRIC = 7
 MAX_Y_SIZE_OF_FABRIC = 7
+n_chips = (MAX_X_SIZE_OF_FABRIC * MAX_Y_SIZE_OF_FABRIC) // 15
 
 # set up the front end and ask for the detected machines dimensions
 front_end.setup(
-    n_chips_required=2, model_binary_folder=os.path.dirname(__file__))
+    n_chips_required=n_chips, model_binary_folder=os.path.dirname(__file__))
 
 # figure out if machine can handle simulation
 cores = front_end.get_number_of_available_cores_on_machine()

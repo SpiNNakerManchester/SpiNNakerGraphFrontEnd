@@ -1,24 +1,25 @@
-import logging
-from enum import Enum
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import (
-    CPUCyclesPerTickResource, DTCMResource, ResourceContainer, SDRAMResource)
+from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
+from pacman.model.resources import ResourceContainer, ConstantSDRAM
+
 from spinn_front_end_common.utilities import globals_variables
-from spinn_front_end_common.abstract_models.impl import (
-    MachineDataSpecableVertex)
-from spinn_front_end_common.interface.buffer_management.buffer_models import (
-    AbstractReceiveBuffersToHost)
-from spinn_front_end_common.interface.buffer_management.recording_utilities \
-    import (
-        get_recording_resources, get_recording_header_array,
-        get_recording_header_size, get_n_timesteps_in_buffer_space)
 from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT
-from spinn_front_end_common.utilities.helpful_functions import (
-    locate_memory_region_for_placement, read_config_int)
+from spinn_front_end_common.utilities.helpful_functions \
+    import locate_memory_region_for_placement, read_config_int
+from spinn_front_end_common.abstract_models.impl \
+    import MachineDataSpecableVertex
+from spinn_front_end_common.interface.buffer_management.buffer_models\
+    import AbstractReceiveBuffersToHost
+from spinn_front_end_common.interface.buffer_management\
+    import recording_utilities
+
 from spinnaker_graph_front_end.utilities import SimulatorVertex
-from spinnaker_graph_front_end.utilities.data_utils import (
-    generate_system_data_region)
+from spinnaker_graph_front_end.utilities.data_utils \
+    import generate_system_data_region
+
+from enum import Enum
+import logging
 
 logger = logging.getLogger(__name__)
 
@@ -66,9 +67,9 @@ class TemplateVertex(
         resources = ResourceContainer(
             cpu_cycles=CPUCyclesPerTickResource(45),
             dtcm=DTCMResource(100),
-            sdram=SDRAMResource(
+            sdram=ConstantSDRAM(
                 SYSTEM_BYTES_REQUIREMENT + self.TRANSMISSION_REGION_N_BYTES))
-        resources.extend(get_recording_resources(
+        resources.extend(recording_utilities.get_recording_resources(
             [self._recording_size], self._receive_buffer_host,
             self._receive_buffer_port))
         return resources
@@ -106,7 +107,7 @@ class TemplateVertex(
             size=self.TRANSMISSION_REGION_N_BYTES, label="transmission")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.RECORDED_DATA.value,
-            size=get_recording_header_size(1),
+            size=recording_utilities.get_recording_header_size(1),
             label="recording")
 
     def _write_app_memory_regions(self, spec, routing_info, iptags):
@@ -120,7 +121,7 @@ class TemplateVertex(
 
         # write recording data interface
         spec.switch_write_focus(self.DATA_REGIONS.RECORDED_DATA.value)
-        spec.write_array(get_recording_header_array(
+        spec.write_array(recording_utilities.get_recording_header_array(
             [self._recording_size], self._time_between_requests,
             self._buffer_size_before_receive, iptags))
 
@@ -136,14 +137,6 @@ class TemplateVertex(
         if is_missing_data:
             logger.warning("Some data was lost when recording")
         return raw_data
-
-    @overrides(AbstractReceiveBuffersToHost.get_minimum_buffer_sdram_usage)
-    def get_minimum_buffer_sdram_usage(self):
-        return 1024
-
-    @overrides(AbstractReceiveBuffersToHost.get_n_timesteps_in_buffer_space)
-    def get_n_timesteps_in_buffer_space(self, buffer_space, machine_time_step):
-        return get_n_timesteps_in_buffer_space(buffer_space, 100)
 
     @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)
     def get_recorded_region_ids(self):

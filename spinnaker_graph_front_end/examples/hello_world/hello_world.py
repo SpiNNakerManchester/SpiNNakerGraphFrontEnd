@@ -16,19 +16,18 @@ from spinnaker_graph_front_end.examples.hello_world.hello_world_vertex import (
 logger = logging.getLogger(__name__)
 
 front_end.setup(
-    n_chips_required=None, model_binary_folder=os.path.dirname(__file__))
+    n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
 
 # calculate total number of 'free' cores for the given board
 # (i.e. does not include those busy with SARK or reinjection)
 total_number_of_cores = \
     front_end.get_number_of_available_cores_on_machine()
+total_number_of_cores = min(16, total_number_of_cores)
 
 # fill all cores with a HelloWorldVertex each
 for x in range(0, total_number_of_cores):
-    front_end.add_machine_vertex(
-        HelloWorldVertex,
-        {},
-        label="Hello World at x {}".format(x))
+    front_end.add_machine_vertex_instance(
+        HelloWorldVertex(label="Hello World at {}".format(x)))
 
 front_end.run(10)
 

@@ -1,25 +1,29 @@
-import struct
-from enum import Enum
 from spinn_utilities.overrides import overrides
+
+from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import (
-    ResourceContainer, CPUCyclesPerTickResource, DTCMResource, SDRAMResource)
+from pacman.model.resources import ResourceContainer, VariableSDRAM
 from pacman.utilities.utility_calls import is_single
-from spinn_front_end_common.utilities import globals_variables
-from spinn_front_end_common.interface.buffer_management.buffer_models import (
-    AbstractReceiveBuffersToHost)
-from spinn_front_end_common.interface.buffer_management import (
-    recording_utilities)
-from spinn_front_end_common.abstract_models.impl import (
-    MachineDataSpecableVertex)
-from spinn_front_end_common.utilities.constants import (
-    SYSTEM_BYTES_REQUIREMENT, MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP)
+
+# spinn front end common imports
+from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
-from spinn_front_end_common.utilities.helpful_functions import (
-    locate_memory_region_for_placement, read_config_int)
+from spinn_front_end_common.utilities.helpful_functions \
+    import locate_memory_region_for_placement
+from spinn_front_end_common.abstract_models.impl \
+    import MachineDataSpecableVertex
+from spinn_front_end_common.interface.buffer_management.buffer_models\
+    import AbstractReceiveBuffersToHost
+from spinn_front_end_common.interface.buffer_management \
+    import recording_utilities
+
 from spinnaker_graph_front_end.utilities import SimulatorVertex
-from spinnaker_graph_front_end.utilities.data_utils import (
-    generate_system_data_region)
+from spinnaker_graph_front_end.utilities.data_utils \
+    import generate_system_data_region
+
+# general imports
+from enum import Enum
+import struct
 
 
 class ConwayBasicCell(
@@ -33,6 +37,7 @@ class ConwayBasicCell(
     TRANSMISSION_DATA_SIZE = 2 * 4  # has key and key
     STATE_DATA_SIZE = 1 * 4  # 1 or 2 based off dead or alive
     NEIGHBOUR_INITIAL_STATES_SIZE = 2 * 4  # alive states, dead states
+    RECORDING_ELEMENT_SIZE = STATE_DATA_SIZE  # A recording of the state
 
     # Regions for populations
     DATA_REGIONS = Enum(
@@ -46,25 +51,17 @@ class ConwayBasicCell(
     def __init__(self, label, state):
         super(ConwayBasicCell, self).__init__(label, "conways_cell.aplx")
 
-        config = globals_variables.get_simulator().config
-        self._buffer_size_before_receive = None
-        if config.getboolean("Buffers", "enable_buffered_recording"):
-            self._buffer_size_before_receive = config.getint(
-                "Buffers", "buffer_size_before_receive")
-        self._time_between_requests = config.getint(
-            "Buffers", "time_between_requests")
-        self._receive_buffer_host = config.get(
-            "Buffers", "receive_buffer_host")
-        self._receive_buffer_port = read_config_int(
-            config, "Buffers", "receive_buffer_port")
-
         # app specific data items
         self._state = bool(state)
 
-    @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
+    @inject_items({"data_n_time_steps": "DataNTimeSteps"})
+    @overrides(
+        MachineDataSpecableVertex.generate_machine_data_specification,
+        additional_arguments={"data_n_time_steps"})
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
-            reverse_iptags, machine_time_step, time_scale_factor):
+            reverse_iptags, machine_time_step, time_scale_factor,
+            data_n_time_steps):
         # Generate the system data region for simulation .c requirements
         generate_system_data_region(spec, self.DATA_REGIONS.SYSTEM.value,
                                     self, machine_time_step, time_scale_factor)
@@ -78,7 +75,7 @@ class ConwayBasicCell(
             size=self.STATE_DATA_SIZE, label="state")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.NEIGHBOUR_INITIAL_STATES.value,
-            size=8, label="neighour_states")
+            size=self.NEIGHBOUR_INITIAL_STATES_SIZE, label="neighour_states")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.RESULTS.value,
             size=recording_utilities.get_recording_header_size(1))
@@ -86,9 +83,7 @@ class ConwayBasicCell(
         # get recorded buffered regions sorted
         spec.switch_write_focus(self.DATA_REGIONS.RESULTS.value)
         spec.write_array(recording_utilities.get_recording_header_array(
-            [MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP],
-            self._time_between_requests, self._buffer_size_before_receive,
-            iptags))
+            [self.RECORDING_ELEMENT_SIZE * data_n_time_steps]))
 
         # check got right number of keys and edges going into me
         partitions = \
@@ -103,7 +98,8 @@ class ConwayBasicCell(
             raise ConfigurationException(
                 "I've not got the right number of connections. I have {} "
                 "instead of 8".format(
-                    len(machine_graph.incoming_subedges_from_vertex(self))))
+                    len(machine_graph.get_edges_ending_at_vertex(self))))
+
         for edge in edges:
             if edge.pre_vertex == self:
                 raise ConfigurationException(
@@ -161,37 +157,20 @@ class ConwayBasicCell(
     @property
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
-        resources = ResourceContainer(
-            sdram=SDRAMResource(
-                self._calculate_sdram_requirement()),
-            dtcm=DTCMResource(0),
-            cpu_cycles=CPUCyclesPerTickResource(0))
-        resources.extend(recording_utilities.get_recording_resources(
-            [MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP],
-            self._receive_buffer_host, self._receive_buffer_port))
-        return resources
+        fixed_sdram = (SYSTEM_BYTES_REQUIREMENT + self.TRANSMISSION_DATA_SIZE +
+                       self.STATE_DATA_SIZE +
+                       self.NEIGHBOUR_INITIAL_STATES_SIZE +
+                       recording_utilities.get_recording_header_size(1))
+        per_timestep_sdram = self.RECORDING_ELEMENT_SIZE
+        return ResourceContainer(
+            sdram=VariableSDRAM(fixed_sdram, per_timestep_sdram))
 
     @property
     def state(self):
         return self._state
 
-    def _calculate_sdram_requirement(self):
-        return (SYSTEM_BYTES_REQUIREMENT +
-                self.TRANSMISSION_DATA_SIZE + self.STATE_DATA_SIZE +
-                self.NEIGHBOUR_INITIAL_STATES_SIZE +
-                MAX_SIZE_OF_BUFFERED_REGION_ON_CHIP)
-
     def __repr__(self):
         return self.label
-
-    @overrides(AbstractReceiveBuffersToHost.get_minimum_buffer_sdram_usage)
-    def get_minimum_buffer_sdram_usage(self):
-        return 1024
-
-    @overrides(AbstractReceiveBuffersToHost.get_n_timesteps_in_buffer_space)
-    def get_n_timesteps_in_buffer_space(self, buffer_space, machine_time_step):
-        return recording_utilities.get_n_timesteps_in_buffer_space(
-            buffer_space, [100])
 
     @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)
     def get_recorded_region_ids(self):
