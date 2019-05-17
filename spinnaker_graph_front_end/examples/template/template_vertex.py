@@ -1,12 +1,11 @@
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
-from pacman.model.resources import ResourceContainer, ConstantSDRAM
+from pacman.model.resources import ResourceContainer, VariableSDRAM
 
-from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT
-from spinn_front_end_common.utilities.helpful_functions \
-    import locate_memory_region_for_placement, read_config_int
+from spinn_front_end_common.utilities.helpful_functions import (
+    locate_memory_region_for_placement)
 from spinn_front_end_common.abstract_models.impl \
     import MachineDataSpecableVertex
 from spinn_front_end_common.interface.buffer_management.buffer_models\
@@ -33,6 +32,9 @@ class TemplateVertex(
     # The number of bytes for the has_key flag and the key
     TRANSMISSION_REGION_N_BYTES = 2 * 4
 
+    # The number of bytes recorded per timestep - currently 0 in C code
+    N_RECORDED_PER_TIMESTEP = 0
+
     # TODO: Update with the regions of the application
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
@@ -45,34 +47,20 @@ class TemplateVertex(
             label=label, binary_name="c_template_vertex.aplx",
             constraints=constraints)
 
-        self._recording_size = 5000
-
-        config = globals_variables.get_simulator().config
-        self._buffer_size_before_receive = None
-        if config.getboolean("Buffers", "enable_buffered_recording"):
-            self._buffer_size_before_receive = config.getint(
-                "Buffers", "buffer_size_before_receive")
-        self._time_between_requests = config.getint(
-            "Buffers", "time_between_requests")
-        self._receive_buffer_host = config.get(
-            "Buffers", "receive_buffer_host")
-        self._receive_buffer_port = read_config_int(
-            config, "Buffers", "receive_buffer_port")
-
         self.placement = None
 
     @property
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
-        resources = ResourceContainer(
+        constant_sdram = (
+            SYSTEM_BYTES_REQUIREMENT + self.TRANSMISSION_REGION_N_BYTES +
+            recording_utilities.get_recording_header_size(1) +
+            recording_utilities.get_recording_data_constant_size(1))
+        variable_sdram = self.N_RECORDED_PER_TIMESTEP
+        return ResourceContainer(
             cpu_cycles=CPUCyclesPerTickResource(45),
             dtcm=DTCMResource(100),
-            sdram=ConstantSDRAM(
-                SYSTEM_BYTES_REQUIREMENT + self.TRANSMISSION_REGION_N_BYTES))
-        resources.extend(recording_utilities.get_recording_resources(
-            [self._recording_size], self._receive_buffer_host,
-            self._receive_buffer_port))
-        return resources
+            sdram=VariableSDRAM(constant_sdram, variable_sdram))
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
@@ -122,8 +110,7 @@ class TemplateVertex(
         # write recording data interface
         spec.switch_write_focus(self.DATA_REGIONS.RECORDED_DATA.value)
         spec.write_array(recording_utilities.get_recording_header_array(
-            [self._recording_size], self._time_between_requests,
-            self._buffer_size_before_receive, iptags))
+            [self._recording_size]))
 
     def read(self, placement, buffer_manager):
         """ Get the recorded data
