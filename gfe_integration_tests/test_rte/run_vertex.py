@@ -5,8 +5,7 @@ from spinn_front_end_common.abstract_models import (
 from spinn_front_end_common.interface.simulation import (
     simulation_utilities as
     utils)
-from spinn_front_end_common.utilities.constants import (
-    SYSTEM_BYTES_REQUIREMENT)
+from spinn_front_end_common.utilities.constants import SIMULATION_N_BYTES
 
 
 class RunVertex(
@@ -25,7 +24,7 @@ class RunVertex(
         return self._executable_type
 
     def generate_data_specification(self, spec, placement):
-        spec.reserve_memory_region(0, SYSTEM_BYTES_REQUIREMENT)
+        spec.reserve_memory_region(0, SIMULATION_N_BYTES)
         spec.switch_write_focus(0)
         spec.write_array(utils.get_simulation_header_array(
             self._aplx_file, 1000, time_scale_factor=1))

@@ -160,7 +160,8 @@ class ConwayBasicCell(
         fixed_sdram = (SYSTEM_BYTES_REQUIREMENT + self.TRANSMISSION_DATA_SIZE +
                        self.STATE_DATA_SIZE +
                        self.NEIGHBOUR_INITIAL_STATES_SIZE +
-                       recording_utilities.get_recording_header_size(1))
+                       recording_utilities.get_recording_header_size(1) +
+                       recording_utilities.get_recording_data_constant_size(1))
         per_timestep_sdram = self.RECORDING_ELEMENT_SIZE
         return ResourceContainer(
             sdram=VariableSDRAM(fixed_sdram, per_timestep_sdram))

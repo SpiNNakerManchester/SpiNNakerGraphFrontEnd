@@ -9,6 +9,7 @@ from spinn_front_end_common.abstract_models.impl import \
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.interface.simulation import simulation_utilities
+from spinn_front_end_common.utilities.constants import SIMULATION_N_BYTES
 
 
 class SDRAMWriter(
@@ -44,13 +45,8 @@ class SDRAMWriter(
             self, spec, placement, machine_graph, routing_info, iptags,
             reverse_iptags, machine_time_step, time_scale_factor):
 
-        # Setup words + 1 for flags + 1 for recording size
-        setup_size = constants.SYSTEM_BYTES_REQUIREMENT
-
         # Reserve SDRAM space for memory areas:
-
-        # Create the data regions for hello world
-        self._reserve_memory_regions(spec, setup_size)
+        self._reserve_memory_regions(spec)
 
         # write data for the simulation data item
         spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
@@ -64,9 +60,9 @@ class SDRAMWriter(
         # End-of-Spec:
         spec.end_specification()
 
-    def _reserve_memory_regions(self, spec, system_size):
+    def _reserve_memory_regions(self, spec):
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.SYSTEM.value, size=system_size,
+            region=self.DATA_REGIONS.SYSTEM.value, size=SIMULATION_N_BYTES,
             label='systemInfo')
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.CONFIG.value,
