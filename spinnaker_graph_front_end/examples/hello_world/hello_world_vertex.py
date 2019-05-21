@@ -72,7 +72,7 @@ class HelloWorldVertex(
         spec.end_specification()
 
     def read(self, placement, buffer_manager):
-        """ Get the data written into sdram
+        """ Get the data written into SDRAM
 
         :param placement: the location of this vertex
         :param buffer_manager: the buffer manager

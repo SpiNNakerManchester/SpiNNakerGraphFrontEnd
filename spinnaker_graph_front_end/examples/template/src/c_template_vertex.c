@@ -111,7 +111,7 @@ void resume_callback() {
 static bool initialise_recording() {
     address_t address = data_specification_get_data_address();
 
-    // TODO: Update with the recording region ids
+    // TODO: Update with the recording region IDs
     address_t regions_addresses_to_record = data_specification_get_region(
             RECORDED_DATA, address);
 
@@ -122,8 +122,8 @@ static bool initialise_recording() {
 }
 
 //! \brief timer tick callback functionality
-//! param[in] ticks: the number of timer interrupts received
-//! param[in] unused: unused parameter - ignored
+//! \param[in] ticks: the number of timer interrupts received
+//! \param[in] unused: unused parameter - ignored
 //! \return None
 void update(uint ticks, uint unused) {
     use(unused);
@@ -190,7 +190,7 @@ static bool initialize(uint32_t *timer_period) {
 
 //! \brief main entrance method for the model
 //!        Used to register event callbacks and begin the simulation
-//! return None
+//! \return None
 void c_main() {
     log_info("starting %s\n", app_name);
 
