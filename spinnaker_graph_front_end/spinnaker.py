@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 #: The default number of cores to ask spalloc for
 SPALLOC_CORES = 48
 
+
 def _is_allocated_machine(config):
     return (config.get("Machine", "spalloc_server") != "None" or
             config.get("Machine", "remote_spinnaker_url") != "None")
