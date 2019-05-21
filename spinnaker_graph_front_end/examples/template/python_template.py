@@ -2,14 +2,11 @@
 Template for a Graph Front End program on SpiNNaker
 """
 
-import spinnaker_graph_front_end as front_end
-
-from spinnaker_graph_front_end.examples.template.template_vertex\
-    import TemplateVertex
-
 import logging
 import os
-
+import spinnaker_graph_front_end as front_end
+from spinnaker_graph_front_end.examples.template.template_vertex import (
+    TemplateVertex)
 
 logger = logging.getLogger(__name__)
 

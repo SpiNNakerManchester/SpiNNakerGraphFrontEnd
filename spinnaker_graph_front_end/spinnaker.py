@@ -10,10 +10,8 @@ from spinn_front_end_common.utilities.failed_state import FailedState
 from ._version import __version__ as version
 
 logger = logging.getLogger(__name__)
-
 #: The default number of cores to ask spalloc for
 SPALLOC_CORES = 48
-
 
 def _is_allocated_machine(config):
     return (config.get("Machine", "spalloc_server") != "None" or
@@ -32,6 +30,10 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
     """ The implementation of the SpiNNaker simulation interface.
     """
     #: The base name of the configuration file (but no path)
+    __slots__ = (
+        "_user_dsg_algorithm"
+    )
+
     CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
     #: The name of the configuration validation configuration file
     VALIDATION_CONFIG_NAME = "validation_config.cfg"
