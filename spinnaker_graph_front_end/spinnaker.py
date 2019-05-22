@@ -44,16 +44,13 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             database_socket_addresses=None, dsg_algorithm=None,
             n_chips_required=None, extra_pre_run_algorithms=None,
             extra_post_run_algorithms=None, time_scale_factor=None,
-            machine_time_step=None, default_config_paths=None):
+            machine_time_step=None, default_config_paths=None,
+            extra_xml_paths=None):
 
         global CONFIG_FILE_NAME, SPALLOC_CORES
 
         # DSG algorithm store for user defined algorithms
         self._user_dsg_algorithm = dsg_algorithm
-
-        # create xml path for where to locate GFE related functions when
-        # using auto pause and resume
-        extra_xml_path = list()
 
         front_end_versions = [("SpiNNakerGraphFrontEnd", version)]
 
@@ -69,7 +66,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             executable_finder=executable_finder,
             graph_label=graph_label,
             database_socket_addresses=database_socket_addresses,
-            extra_algorithm_xml_paths=extra_xml_path,
+            extra_algorithm_xml_paths=extra_xml_paths,
             n_chips_required=n_chips_required,
             default_config_paths=this_default_config_paths,
             validation_cfg=os.path.join(os.path.dirname(__file__),
