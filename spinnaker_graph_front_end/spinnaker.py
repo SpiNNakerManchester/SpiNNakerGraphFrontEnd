@@ -52,11 +52,6 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         # DSG algorithm store for user defined algorithms
         self._user_dsg_algorithm = dsg_algorithm
 
-        # create xml path for where to locate GFE related functions when
-        # using auto pause and resume
-        if extra_xml_paths is None:
-            extra_xml_paths = list()
-
         front_end_versions = [("SpiNNakerGraphFrontEnd", version)]
 
         # support extra configs
