@@ -45,7 +45,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             n_chips_required=None, extra_pre_run_algorithms=None,
             extra_post_run_algorithms=None, time_scale_factor=None,
             machine_time_step=None, default_config_paths=None,
-            extra_xml_paths=None, chip_id_allocator=None):
+            extra_xml_paths=None):
 
         global CONFIG_FILE_NAME, SPALLOC_CORES
 
@@ -76,8 +76,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             default_config_paths=this_default_config_paths,
             validation_cfg=os.path.join(os.path.dirname(__file__),
                                         self.VALIDATION_CONFIG_NAME),
-            front_end_versions=front_end_versions,
-            chip_id_allocator=chip_id_allocator)
+            front_end_versions=front_end_versions)
 
         extra_mapping_inputs = dict()
         extra_mapping_inputs["CreateAtomToEventIdMapping"] = self.config.\
