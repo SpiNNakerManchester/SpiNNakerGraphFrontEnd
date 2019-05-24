@@ -1,9 +1,10 @@
 import logging
 from enum import Enum
 from spinn_utilities.overrides import overrides
+from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import (
-    CPUCyclesPerTickResource, DTCMResource, ResourceContainer, SDRAMResource)
+    CPUCyclesPerTickResource, DTCMResource, ResourceContainer, ConstantSDRAM)
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.abstract_models.impl import (
     MachineDataSpecableVertex)
@@ -63,13 +64,18 @@ class HelloWorldVertex(
     @overrides(MachineVertex.resources_required)
     # Kostas :100 bytes only
     def resources_required(self):
-        resources = ResourceContainer(
-            cpu_cycles=CPUCyclesPerTickResource(45),
-            dtcm=DTCMResource(100), sdram=SDRAMResource(100))
+        # resources = ResourceContainer(
+        #     cpu_cycles=CPUCyclesPerTickResource(45),
+        #     dtcm=DTCMResource(100), sdram=SDRAMResource(100))
+        #
+        # resources.extend(recording_utilities.get_recording_resources(
+        #     [self._string_data_size],
+        #     self._receive_buffer_host, self._receive_buffer_port))
 
-        resources.extend(recording_utilities.get_recording_resources(
-            [self._string_data_size],
-            self._receive_buffer_host, self._receive_buffer_port))
+        resources = ResourceContainer(sdram=ConstantSDRAM(
+            SYSTEM_BYTES_REQUIREMENT +
+            recording_utilities.get_recording_header_size(1) +
+            self._string_data_size))
 
         return resources
 
@@ -108,8 +114,7 @@ class HelloWorldVertex(
         # write data for the simulation data item
         spec.switch_write_focus(self.DATA_REGIONS.STRING_DATA.value)
         spec.write_array(recording_utilities.get_recording_header_array(
-            [self._string_data_size], self._time_between_requests,
-            self._string_data_size + 256, iptags))
+            [self._string_data_size]))
 
         # End-of-Spec:
         spec.end_specification()
@@ -129,11 +134,12 @@ class HelloWorldVertex(
         :param buffer_manager: the buffer manager
         :return: string output
         """
-        data_pointer, missing_data = buffer_manager.get_data_for_vertex(
+
+        data_pointer, missing_data = buffer_manager.get_data_by_placement(
             placement, 0)
         if missing_data:
             raise Exception("missing data!")
-        return str(data_pointer.read_all())
+        return str(data_pointer)
 
     # Kostas: Minimum SDRAM usage is 5000
     def get_minimum_buffer_sdram_usage(self):

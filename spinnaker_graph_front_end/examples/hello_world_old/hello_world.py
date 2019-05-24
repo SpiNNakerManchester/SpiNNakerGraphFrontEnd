@@ -11,16 +11,16 @@ from pacman.model.graphs.machine import MachineEdge
 import logging
 import os
 import spinnaker_graph_front_end as front_end
-from spinnaker_graph_front_end.examples.hello_world.hello_world_vertex import (
+from spinnaker_graph_front_end.examples.hello_world_old.hello_world_vertex import (
     HelloWorldVertex)
 
 logger = logging.getLogger(__name__)
 
-# Kostas: Based on the ppt GFE , here we read the cfg parameters and create every
+# Kostas: Based on the ppt GFE, here we read the cfg parameters and create every
 # object that is needed.
 front_end.setup(
     # Kostas: the binary file is the hello_world.aplx
-    n_chips_required=None, model_binary_folder=os.path.dirname(__file__))
+    n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
 
 helloWorldList = []
 nEdges = 2
