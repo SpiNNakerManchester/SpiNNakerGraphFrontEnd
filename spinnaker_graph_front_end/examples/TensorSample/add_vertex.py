@@ -1,20 +1,17 @@
 import logging
 from enum import Enum
-
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
-from spinnaker_graph_front_end.examples.TensorSample.vertex import Vertex
-from spinnaker_graph_front_end.utilities import SimulatorVertex
+from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT
 from spinn_front_end_common.abstract_models.impl import (MachineDataSpecableVertex)
 from spinn_front_end_common.interface.buffer_management.buffer_models import (
     AbstractReceiveBuffersToHost)
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.helpful_functions import (
     locate_memory_region_for_placement, read_config_int)
-from pacman.model.resources import (
-    CPUCyclesPerTickResource, DTCMResource, ResourceContainer, SDRAMResource)
+from pacman.model.resources import (ResourceContainer, ConstantSDRAM)
 from spinn_front_end_common.interface.buffer_management import (
     recording_utilities)
 from spinnaker_graph_front_end.utilities.data_utils import (
@@ -28,13 +25,9 @@ class AdditionVertex(MachineVertex, AbstractHasAssociatedBinary,
                      MachineDataSpecableVertex,
                      AbstractReceiveBuffersToHost):
 
-    INPUT_DATA_SIZE = 4
-    RECORDING_DATA_SIZE = 4
-
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
-        names=[('INPUT_CONST_VALUES', 0),
-               ('RECORDED_ADDITION_RESULT', 1)])
+        names=[('RECORDED_ADDITION_RESULT', 0)])
 
     CORE_APP_IDENTIFIER = 0xBEEF
 
@@ -65,23 +58,20 @@ class AdditionVertex(MachineVertex, AbstractHasAssociatedBinary,
     @property
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
-        resources = ResourceContainer(
-            cpu_cycles=CPUCyclesPerTickResource(45),
-            dtcm=DTCMResource(100), sdram=SDRAMResource(100))
-
-        resources.extend(recording_utilities.get_recording_resources(
-            [self._constant_data_size],
-            self._receive_buffer_host, self._receive_buffer_port))
+        resources = ResourceContainer(sdram=ConstantSDRAM(
+            SYSTEM_BYTES_REQUIREMENT +
+            recording_utilities.get_recording_header_size(1) +
+            self._string_data_size))
 
         return resources
 
-    @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
-    def get_binary_file_name(self):
-        return "tensorFlow_addition.aplx"
+    def _reserve_memory_regions(self, spec):
+        print("\n add_vertex _reserve_memory_regions")
 
-    @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
-    def get_binary_start_type(self):
-        return ExecutableType.SYNC
+        spec.reserve_memory_region(
+            region=self.DATA_REGIONS.RECORDED_ADDITION_RESULT.value,
+            size=recording_utilities.get_recording_header_size(1),
+            label="recorded_addition_result")
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
@@ -100,23 +90,10 @@ class AdditionVertex(MachineVertex, AbstractHasAssociatedBinary,
 
         # write data for the simulation data item
         spec.switch_write_focus(self.DATA_REGIONS.RECORDED_ADDITION_RESULT.value)
-        spec.write_array(recording_utilities.get_recording_header_array(
-            [4], self._time_between_requests,
-             4 + 256, iptags))
+        spec.write_array(recording_utilities.get_recording_header_array([self._string_data_size]))
 
         # End-of-Spec:
         spec.end_specification()
-
-    def _reserve_memory_regions(self, spec):
-        print("\n add_vertex _reserve_memory_regions")
-
-        spec.reserve_memory_region(
-            region=self.DATA_REGIONS.INPUT_CONST_VALUES.value,
-            size=self.INPUT_DATA_SIZE, label="inputs_const_values")
-        spec.reserve_memory_region(
-            region=self.DATA_REGIONS.RECORDED_ADDITION_RESULT.value,
-            size=recording_utilities.get_recording_header_size(1),
-            label="recorded_addition_result")
 
     # Kostas : read the data that are written in SDRAM
     def read(self, placement, buffer_manager):
@@ -126,11 +103,19 @@ class AdditionVertex(MachineVertex, AbstractHasAssociatedBinary,
         :param buffer_manager: the buffer manager
         :return: string output
         """
-        data_pointer, missing_data = buffer_manager.get_data_for_vertex(
+        raw_data, missing_data = buffer_manager.get_data_by_placement(
             placement, 0)
         if missing_data:
             raise Exception("missing data!")
-        return str(data_pointer.read_all())
+        return str(bytearray(raw_data))
+
+    @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
+    def get_binary_file_name(self):
+        return "tensorFlow_addition.aplx"
+
+    @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
+    def get_binary_start_type(self):
+        return ExecutableType.SYNC
 
     def get_minimum_buffer_sdram_usage(self):
         return self._string_data_size

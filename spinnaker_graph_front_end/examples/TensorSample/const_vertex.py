@@ -1,38 +1,33 @@
 import logging
 import struct
 from enum import Enum
-
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
-from spinnaker_graph_front_end.examples.TensorSample.vertex import Vertex
-from spinnaker_graph_front_end.utilities import SimulatorVertex
 from spinn_front_end_common.abstract_models.impl import (MachineDataSpecableVertex)
+from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT
+from pacman.executor.injection_decorator import inject_items
+from pacman.utilities.utility_calls import is_single
 from spinn_front_end_common.interface.buffer_management.buffer_models import (
     AbstractReceiveBuffersToHost)
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.helpful_functions import (
     locate_memory_region_for_placement, read_config_int)
-from pacman.model.resources import (
-    CPUCyclesPerTickResource, DTCMResource, ResourceContainer, SDRAMResource)
+from pacman.model.resources import (ResourceContainer, VariableSDRAM)
 from spinn_front_end_common.interface.buffer_management import (
     recording_utilities)
-from spinnaker_graph_front_end.utilities.data_utils import (
-    generate_system_data_region)
-
 
 logger = logging.getLogger(__name__)
-
 
 class ConstVertex(MachineVertex,
                   AbstractHasAssociatedBinary,
                   MachineDataSpecableVertex,
                   AbstractReceiveBuffersToHost):
 
-    TRANSMISSION_DATA_SIZE = 2 * 4
-    INPUT_DATA_SIZE = 4
+    TRANSMISSION_DATA_SIZE = 2 * 4 # has key and key
+    INPUT_DATA_SIZE = 4 # constant int number
     RECORDING_DATA_SIZE = 4
 
     DATA_REGIONS = Enum(
@@ -67,84 +62,6 @@ class ConstVertex(MachineVertex,
         # app specific elements
         self._constValue = constValue
 
-    def get_data(self, transceiver, placement, n_machine_time_steps):
-        print("\n const_vertex get_data ")
-
-        # Get the data region base address where results are stored for the
-        # core
-        record_region_base_address = locate_memory_region_for_placement(
-            placement, self.DATA_REGIONS.RECORDING_CONST_VALUES.value, transceiver)
-
-        # find how many bytes are needed to be read
-        number_of_bytes_to_read = \
-            struct.unpack("<I", transceiver.read_memory(
-                placement.x, placement.y, record_region_base_address, 4))[0]
-
-        # read the bytes
-        if number_of_bytes_to_read != n_machine_time_steps * 4:
-            raise ConfigurationException("number of bytes seems wrong")
-        raw_data = transceiver.read_memory(
-            placement.x, placement.y, record_region_base_address + 4,
-            number_of_bytes_to_read)
-
-        # elements expected to be integers
-        return [element for element in struct.unpack(
-            "<{}I".format(n_machine_time_steps), raw_data)]
-
-    @property
-    @overrides(MachineVertex.resources_required)
-    def resources_required(self):
-        print("\n const_vertex resources_required")
-
-        resources = ResourceContainer(
-            cpu_cycles=CPUCyclesPerTickResource(45),
-            dtcm=DTCMResource(100), sdram=SDRAMResource(100))
-
-        resources.extend(recording_utilities.get_recording_resources(
-            [self._constant_data_size],
-            self._receive_buffer_host, self._receive_buffer_port))
-
-        return resources
-
-    @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
-    def get_binary_file_name(self):
-        print("\n const_vertex get_binary_file_name")
-
-        return "tensorFlow_const.aplx"
-
-    @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
-    def get_binary_start_type(self):
-        return ExecutableType.SYNC
-
-    def generate_machine_data_specification(self, spec, placement, machine_graph, routing_info, iptags, reverse_iptags,
-                                            machine_time_step, time_scale_factor):
-        print("\n const_vertex generate_machine_data_specification")
-
-        self.placement = placement
-        # reserve memory region
-        self._reserve_memory_regions(spec)
-
-        key = routing_info.get_first_key_from_pre_vertex(
-            self, self.PARTITION_ID)
-        print("\n key is ", key)
-        spec.switch_write_focus(
-            region=self.DATA_REGIONS.TRANSMISSIONS.value)
-        spec.write_value(0 if key is None else 1)
-        spec.write_value(0 if key is None else key)
-
-        # write data for the simulation data item
-        spec.switch_write_focus(self.DATA_REGIONS.INPUT.value)
-        print("\n write constant value ", self._constValue)
-        spec.write_value(int(self._constValue))
-
-        # write data for constant
-        spec.switch_write_focus(self.DATA_REGIONS.RECORDING_CONST_VALUES.value)
-        spec.write_array(recording_utilities.get_recording_header_array(
-            4, self._time_between_requests, 4, iptags))
-
-        # End-of-Spec:
-        spec.end_specification()
-
     def _reserve_memory_regions(self, spec):
         print("\n const_vertex _reserve_memory_regions")
 
@@ -156,7 +73,104 @@ class ConstVertex(MachineVertex,
             size=self.INPUT_DATA_SIZE, label="input_const_values")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.RECORDING_CONST_VALUES.value,
-            size=4, label="recording")
+            size=recording_utilities.get_recording_header_size(1))
+
+    @inject_items({"data_n_time_steps": "DataNTimeSteps"})
+    @overrides(
+        MachineDataSpecableVertex.generate_machine_data_specification,
+        additional_arguments={"data_n_time_steps"})
+    def generate_machine_data_specification(self, spec, placement, machine_graph,
+                                            routing_info, iptags, reverse_iptags,
+                                            machine_time_step, time_scale_factor, data_n_time_steps):
+        print("\n const_vertex generate_machine_data_specification")
+
+        self.placement = placement
+        # reserve memory region
+        self._reserve_memory_regions(spec)
+
+        # write data for constant
+        spec.switch_write_focus(self.DATA_REGIONS.RECORDING_CONST_VALUES.value)
+        spec.write_array(recording_utilities.get_recording_header_array(
+            [self.RECORDING_ELEMENT_SIZE * data_n_time_steps]))
+
+        # check got right number of keys and edges going into me
+        partitions = \
+            machine_graph.get_outgoing_edge_partitions_starting_at_vertex(self)
+        if not is_single(partitions):
+            raise ConfigurationException(
+                "Can only handle one type of partition.")
+
+        # check for duplicates
+        edges = list(machine_graph.get_edges_ending_at_vertex(self))
+        if len(edges) != 8:
+            raise ConfigurationException(
+                "I've not got the right number of connections. I have {} "
+                "instead of 8".format(
+                    len(machine_graph.get_edges_ending_at_vertex(self))))
+
+        for edge in edges:
+            if edge.pre_vertex == self:
+                raise ConfigurationException(
+                    "I'm connected to myself, this is deemed an error"
+                    " please fix.")
+
+        # write key needed to transmit with
+        key = routing_info.get_first_key_from_pre_vertex(
+            self, self.PARTITION_ID)
+        print("\n key is ", key)
+        spec.switch_write_focus(
+            region=self.DATA_REGIONS.TRANSMISSIONS.value)
+        spec.write_value(0 if key is None else 1)
+        spec.write_value(0 if key is None else key)
+
+        # write constant value
+        spec.switch_write_focus(self.DATA_REGIONS.INPUT.value)
+        print("\n write constant value ", self._constValue)
+        spec.write_value(self._constValue)
+
+        # End-of-Spec:
+        spec.end_specification()
+
+
+    def get_data(self, buffer_manager, placement):
+        # for buffering output info is taken form the buffer manager
+        # get raw data, convert to list of booleans
+        raw_data, data_missing = buffer_manager.get_data_by_placement(
+            placement, 0)
+
+        # do check for missing data
+        if data_missing:
+            print("missing_data from ({}, {}, {}); ".format(
+                placement.x, placement.y, placement.p))
+
+        # return the data, converted to list of booleans
+        return [
+            bool(element)
+            for element in struct.unpack(
+                "<{}I".format(len(raw_data) // 4), raw_data)]
+
+    @property
+    @overrides(MachineVertex.resources_required)
+    def resources_required(self):
+        print("\n const_vertex resources_required")
+
+        fixed_sdram = (SYSTEM_BYTES_REQUIREMENT + self.TRANSMISSION_DATA_SIZE +
+                       self.INPUT_DATA_SIZE +
+                       recording_utilities.get_recording_header_size(1) +
+                       recording_utilities.get_recording_data_constant_size(1))
+
+        return ResourceContainer(sdram=VariableSDRAM(fixed_sdram))
+
+
+    @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
+    def get_binary_file_name(self):
+        print("\n const_vertex get_binary_file_name")
+
+        return "tensorFlow_const.aplx"
+
+    @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
+    def get_binary_start_type(self):
+        return ExecutableType.SYNC
 
     def get_minimum_buffer_sdram_usage(self):
         return self._constant_data_size

@@ -55,7 +55,6 @@ graph = tf.get_default_graph()
 # Number of nodes in TensorFlow graph
 number_of_nodes = graph._nodes_by_id.__len__()
 # List of spinnaker vertices
-constant_sample = 5
 
 vertices = {}
 inputs = {}
@@ -76,6 +75,7 @@ for n_id in graph._nodes_by_id:
 
     # in case of constant operation
     elif 'Const' in graph._nodes_by_id[n_id].name:
+        constant_sample = n_id  # ToDo
         vertices[n_id] = ConstVertex("Const vertex at x {}".format(graph._nodes_by_id[n_id].name), constant_sample)
 
     vertices[n_id].name = graph._nodes_by_id[n_id].name
