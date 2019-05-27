@@ -153,7 +153,7 @@ void update(uint ticks, uint b) {
 
     time++;
 
-    log_debug("on tick %d of %d", time, simulation_ticks);
+    log_info("on tick %d of %d", time, simulation_ticks);
 
     // check that the run time hasn't already elapsed and thus needs to be
     // killed
@@ -187,6 +187,8 @@ void update(uint ticks, uint b) {
     log_info("recording flags is %d", recording_flags);
     if (recording_flags > 0) {
         log_info("doing timer tick update\n");
+        //! \brief Call once per timestep to ensure buffering is done - should only
+        //!be called if recording flags is not 0
         recording_do_timestep_update(time);
         log_info("done timer tick update\n");
     }
@@ -196,11 +198,12 @@ void update(uint ticks, uint b) {
 static bool initialize(uint32_t *timer_period) {
     log_info("Initialise: started\n");
 
-    // Get the address this core's DTCM data starts at from SRAM
+    // return the SDRAM start address for this core.
     address_t address = data_specification_get_data_address();
-    log_info("address is %u\n", address);
+    log_info("SDRAM start address is %u\n", address);
 
-    // Read the header
+    //! \return boolean where True is when the header is correct and False if there
+    //!         is a conflict with the DSE magic number
     if (!data_specification_read_header(address)) {
         log_error("failed to read the data spec header");
         return false;
@@ -215,7 +218,8 @@ static bool initialize(uint32_t *timer_period) {
         return false;
     }
 
-    // initialise transmission keys
+    //    #####  initialise transmission keys   #####
+    //! \brief Returns the absolute SDRAM memory address for a given region value.
     address_t transmission_region_address = data_specification_get_region(
             TRANSMISSIONS, address);
     log_info("transmission_region_address  is %u\n", transmission_region_address);

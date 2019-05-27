@@ -37,14 +37,16 @@ typedef enum transmission_region_elements {
 
 
 void receive_data(uint key, uint payload) {
+    log_info("receive_data");
     use(key);
     use(payload);
 }
 
 void iobuf_data(){
-    address_t address = data_specification_get_data_address();
+    log_info("iobuf_data");
+    address_t address = data_specification_get_data_address(); //KA:return the SDRAM start address for this core
     address_t hello_world_address =
-        data_specification_get_region(RECORDED_DATA, address);
+        data_specification_get_region(RECORDED_DATA, address); //KA:Returns the absolute SDRAM memory address for a given region value.
 
     log_info("Hello world address is %08x", hello_world_address);
 
@@ -55,14 +57,14 @@ void iobuf_data(){
 void record_data() {
     log_debug("Recording data...");
 
-    uint chip = spin1_get_chip_id();
+    uint chip = spin1_get_chip_id(); //KA:This function returns the chip ID
 
-    uint core = spin1_get_core_id();
+    uint core = spin1_get_core_id(); //KA:This function returns the core ID
 
     log_debug("Issuing 'Hello World' from chip %d, core %d", chip, core);
 
     bool recorded = recording_record(
-        0, "Hello world", 11 * sizeof(char));
+        0, "Hello world", 11 * sizeof(char));  //KA:Add a packet to the SDRAM
 
     if (recorded) {
         log_debug("Hello World recorded successfully!");
@@ -75,6 +77,7 @@ void record_data() {
 //! \brief Initialises the recording parts of the model
 //! \return True if recording initialisation is successful, false otherwise
 static bool initialise_recording(){
+    log_info("initialise_recording");
     address_t address = data_specification_get_data_address();
     address_t recording_region = data_specification_get_region(
         RECORDED_DATA, address);
@@ -98,6 +101,7 @@ void resume_callback() {
  * SOURCE
  */
 void update(uint ticks, uint b) {
+    log_info("update");
     use(b);
     use(ticks);
 
@@ -132,7 +136,8 @@ void update(uint ticks, uint b) {
     }
 
     // trigger buffering_out_mechanism
-    log_info("recording flags is %d", recording_flags);
+    //log_info("recording flags is %d", recording_flags);
+    log_info("Recording flags = 0x%08x", recording_flags);
     if (recording_flags > 0) {
         log_info("doing timer tick update\n");
         recording_do_timestep_update(time);
@@ -175,7 +180,7 @@ static bool initialize(uint32_t *timer_period) {
  * SOURCE
  */
 void c_main() {
-    log_info("starting heat_demo\n");
+    log_info("starting hello_world demo\n");
 
     // Load DTCM data
     uint32_t timer_period;
