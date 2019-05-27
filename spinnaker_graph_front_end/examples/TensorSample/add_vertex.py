@@ -27,7 +27,8 @@ class AdditionVertex(MachineVertex, AbstractHasAssociatedBinary,
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
-        names=[('RECORDED_ADDITION_RESULT', 0)])
+        names=[('SYSTEM', 0),
+               ('RECORDED_ADDITION_RESULT', 1)])
 
     CORE_APP_IDENTIFIER = 0xBEEF
 

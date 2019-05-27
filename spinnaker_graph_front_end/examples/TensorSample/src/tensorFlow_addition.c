@@ -39,7 +39,7 @@ typedef enum callback_priorities{
 
 
 void record_data(int result) {
-    log_debug("Recording data\n");
+    log_info("Recording data\n");
 
     log_debug("Result %d",result);
     uint chip = spin1_get_chip_id();
@@ -105,7 +105,7 @@ void resume_callback() {
 }
 
 void read_input_buffer(){
-    log_debug("read_input_buffer");
+    log_info("read_input_buffer");
 
     cpsr = spin1_int_disable();
     circular_buffer_print_buffer(input_buffer);

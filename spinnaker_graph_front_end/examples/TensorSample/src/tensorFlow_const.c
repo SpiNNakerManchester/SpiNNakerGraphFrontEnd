@@ -56,8 +56,8 @@ void send_value(uint data){
 
 
 void record_data(int data) {
-    log_debug("Recording data\n");
-    log_debug("data %d",data);
+    log_info("Recording data\n");
+    log_info("data %d",data);
 
 
     uint chip = spin1_get_chip_id(); //KA:This function returns the chip ID
@@ -97,6 +97,7 @@ void resume_callback() {
 
 
 void read_input_buffer(){
+    log_info("read_input_buffer\n");
 
     cpsr = spin1_int_disable();
     circular_buffer_print_buffer(input_buffer);

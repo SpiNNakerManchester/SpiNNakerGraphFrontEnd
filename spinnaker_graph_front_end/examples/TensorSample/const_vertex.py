@@ -91,7 +91,7 @@ class ConstVertex(MachineVertex,
         # write data for constant
         spec.switch_write_focus(self.DATA_REGIONS.RECORDING_CONST_VALUES.value)
         spec.write_array(recording_utilities.get_recording_header_array(
-            [self.RECORDING_ELEMENT_SIZE * data_n_time_steps]))
+            [self.RECORDING_DATA_SIZE * data_n_time_steps]))
 
         # check got right number of keys and edges going into me
         partitions = \
@@ -100,14 +100,14 @@ class ConstVertex(MachineVertex,
             raise ConfigurationException(
                 "Can only handle one type of partition.")
 
-        # check for duplicates
+        ## check for duplicates
         edges = list(machine_graph.get_edges_ending_at_vertex(self))
-        if len(edges) != 8:
-            raise ConfigurationException(
-                "I've not got the right number of connections. I have {} "
-                "instead of 8".format(
-                    len(machine_graph.get_edges_ending_at_vertex(self))))
-
+        # if len(edges) != 8:
+        #     raise ConfigurationException(
+        #         "I've not got the right number of connections. I have {} "
+        #         "instead of 8".format(
+        #             len(machine_graph.get_edges_ending_at_vertex(self))))
+        print(len(machine_graph.get_edges_ending_at_vertex(self)))
         for edge in edges:
             if edge.pre_vertex == self:
                 raise ConfigurationException(
@@ -159,7 +159,8 @@ class ConstVertex(MachineVertex,
                        recording_utilities.get_recording_header_size(1) +
                        recording_utilities.get_recording_data_constant_size(1))
 
-        return ResourceContainer(sdram=VariableSDRAM(fixed_sdram))
+        per_timestep_sdram = self.RECORDING_DATA_SIZE
+        return ResourceContainer(sdram=VariableSDRAM(fixed_sdram,per_timestep_sdram))
 
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
@@ -175,9 +176,6 @@ class ConstVertex(MachineVertex,
     def get_minimum_buffer_sdram_usage(self):
         return self._constant_data_size
 
-    def get_n_timesteps_in_buffer_space(self, buffer_space, machine_time_step):
-        return recording_utilities.get_n_timesteps_in_buffer_space(
-            buffer_space, 4)
 
     def get_recorded_region_ids(self):
         return [0]
