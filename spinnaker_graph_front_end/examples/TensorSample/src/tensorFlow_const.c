@@ -25,8 +25,8 @@ uint cpsr = 0;
 static uint32_t recording_flags = 0;
 
 typedef enum regions_e {
-    SYSTEM_REGION,
     TRANSMISSIONS,
+    INPUT,
     RECORDED_DATA
 } regions_e;
 
@@ -42,18 +42,31 @@ typedef enum transmission_region_elements {
 } transmission_region_elements;
 
 
+void send_value(uint data){
+    log_info("send_value\n", my_key);
+    // send my new state to the simulation neighbours
+    log_debug("sending value via multicast with key %d",
+              my_key);
+    while (!spin1_send_mc_packet(my_key, data, WITH_PAYLOAD)) {
+        spin1_delay_us(1);
+    }
+
+    log_debug("sent value 1 via multicast");
+}
+
+
 void record_data(int data) {
     log_debug("Recording data\n");
     log_debug("data %d",data);
 
 
-    uint chip = spin1_get_chip_id();
+    uint chip = spin1_get_chip_id(); //KA:This function returns the chip ID
 
-    uint core = spin1_get_core_id();
+    uint core = spin1_get_core_id(); //KA:This function returns the core ID
 
     log_debug("Issuing 'Const' from chip %d, core %d", chip, core);
 
-    bool recorded = recording_record(0, &data, 4);
+    bool recorded = recording_record(0, &data, 4); //KA:Add const value to the SDRAM
 
     if (recorded) {
         log_debug("Const recorded successfully!");
@@ -81,17 +94,7 @@ void resume_callback() {
     time = UINT32_MAX;
 }
 
-void send_value(uint data){
-    log_info("send_value\n", my_key);
-    // send my new state to the simulation neighbours
-    log_debug("sending value via multicast with key %d",
-              my_key);
-    while (!spin1_send_mc_packet(my_key, data, WITH_PAYLOAD)) {
-        spin1_delay_us(1);
-    }
 
-    log_debug("sent value 1 via multicast");
-}
 
 void read_input_buffer(){
 
@@ -147,12 +150,10 @@ static bool initialize() {
         return false;
     }
 
-    // initialise my input_buffer for receiving packets
-    input_buffer = circular_buffer_initialize(256);
-    if (input_buffer == 0){
-        return false;
-    }
-    log_info("input_buffer initialised");
+    // read my const value
+    int const_value = data_specification_get_region(
+        INPUT, address);
+    log_info("my const value is %d\n", const_value);
 
     return true;
 }

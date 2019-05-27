@@ -8,8 +8,8 @@
 #include <debug.h>
 #include <circular_buffer.h>
 
-int valueA;
-int valueB;
+int value_a;
+int value_b;
 int counter = 0;
 int result = 0;
 
@@ -18,8 +18,6 @@ uint my_key;
 static circular_buffer input_buffer;
 // KA : Transmitted flag
 uint32_t flag = 0;
-
-
 
 static uint32_t time = 0;
 
@@ -39,10 +37,6 @@ typedef enum callback_priorities{
     MC_PACKET = -1, USER = 3
 } callback_priorities;
 
-//! human readable definitions of each element in the transmission region
-//typedef enum transmission_region_elements {
-//    HAS_KEY, MY_KEY
-//} transmission_region_elements;
 
 void record_data(int result) {
     log_debug("Recording data\n");
@@ -78,11 +72,11 @@ void receive_data(uint key, uint payload) {
     log_info("the payload i've received is %d\n", payload);
     counter +=1;
     if(counter == 1){
-        valueA = payload;
+        value_a = payload;
     }
     else{
-        valueB = payload;
-        result = addition(valueA, valueB);
+        value_b = payload;
+        result = addition(value_a, value_b);
         record_data(result);
     }
 
@@ -90,8 +84,6 @@ void receive_data(uint key, uint payload) {
         log_info("Could not add state");
     }
 }
-
-
 
 
 
