@@ -102,6 +102,7 @@ void resume_callback() {
  */
 void update(uint ticks, uint b) {
     log_info("update");
+    log_debug("update");
     use(b);
     use(ticks);
 

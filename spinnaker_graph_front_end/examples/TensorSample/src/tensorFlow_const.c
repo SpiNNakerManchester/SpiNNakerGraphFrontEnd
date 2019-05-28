@@ -15,6 +15,7 @@ static circular_buffer input_buffer;
 // KA : Transmitted flag
 uint32_t flag = 0;
 
+uint const_value=0;
 
 static uint32_t time = 0;
 
@@ -152,8 +153,7 @@ static bool initialize() {
     }
 
     // read my const value
-    int const_value = data_specification_get_region(
-        INPUT, address);
+    const_value = data_specification_get_region(INPUT, address);
     log_info("my const value is %d\n", const_value);
 
     return true;
@@ -177,7 +177,7 @@ void c_main() {
     uint32_t timer_period;
 
     // initialise the model
-    if (!initialize(&timer_period)) {
+    if (!initialize()) {
         rt_error(RTE_SWERR);
     }
 
