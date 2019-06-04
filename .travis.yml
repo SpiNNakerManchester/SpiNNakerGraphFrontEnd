@@ -2,13 +2,21 @@ language: python
 python:
   - 2.7
   - 3.6
-dist: trusty
+dist: xenial
 matrix:
   include:
     - python: 3.7
-      dist: xenial
       sudo: true
 cache: pip
+
+addons:
+  apt:
+    packages:
+      - libc6:i386
+      - vera++
+      - libxml2-utils
+      - gcc-arm-none-eabi
+      - libnewlib-arm-none-eabi
 
 env:
   # Need this environment if we're doing tests without a config file
@@ -18,7 +26,7 @@ before_install:
   # Work around ludicrous Travis bug
   - git clone https://github.com/SpiNNakerManchester/SupportScripts.git support
   - python support/travis_blocking_stdout.py
-  # Bring pip up to date 
+  # Bring pip up to date
   - pip install --upgrade pip setuptools wheel
   - pip install --only-binary=numpy,scipy numpy scipy
   # SpiNNakerManchester internal dependencies; development mode
@@ -30,8 +38,17 @@ before_install:
   - support/pipinstall.sh git://github.com/SpiNNakerManchester/DataSpecification.git
   - support/pipinstall.sh git://github.com/SpiNNakerManchester/spalloc.git
   - support/pipinstall.sh git://github.com/SpiNNakerManchester/SpiNNFrontEndCommon.git
+  # C dependencies
+  - support/gitclone.sh https://github.com/SpiNNakerManchester/spinnaker_tools.git
+  - support/gitclone.sh https://github.com/SpiNNakerManchester/spinn_common.git
+  - support/gitclone.sh https://github.com/SpiNNakerManchester/SpiNNFrontEndCommon.git
+  - export SPINN_DIRS=$PWD/spinnaker_tools
 
 install:
+  # Initialise builds against spinnaker_tools
+  - make -C $SPINN_DIRS
+  - make -C spinn_common install
+  - make -C SpiNNFrontEndCommon/c_common install
   - pip install -r requirements-test.txt
   - pip install python-coveralls 'coverage>=4.4'
   - python ./setup.py install
@@ -43,6 +60,9 @@ script:
   - flake8 spinnaker_graph_front_end
   - flake8 unittests
   - flake8 gfe_integration_tests
+  # C
+  - CFLAGS=-fdiagnostics-color make -C spinnaker_graph_front_end/examples
+  - CFLAGS=-fdiagnostics-color make -C gfe_integration_tests
   # Documentation build check
   - cd doc/source
   - sphinx-build -T -E -b html -d _build/doctrees-readthedocsdirhtml -D language=en . _build/html

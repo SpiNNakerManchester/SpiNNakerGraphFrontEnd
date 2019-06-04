@@ -1,18 +1,17 @@
 import logging
 import os
+from six import add_metaclass
+from spinn_utilities.abstract_base import AbstractBase
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
+from spinn_front_end_common.utilities import SimulatorInterface
 from spinn_front_end_common.utilities import globals_variables
-from spinnaker_graph_front_end.utilities.graph_front_end_failed_state import (
-    GraphFrontEndFailedState)
-from spinnaker_graph_front_end.graph_front_end_simulator_interface import (
-    GraphFrontEndSimulatorInterface)
+from spinn_front_end_common.utilities.failed_state import FailedState
 from ._version import __version__ as version
 
 logger = logging.getLogger(__name__)
+#: The default number of cores to ask spalloc for
 SPALLOC_CORES = 48
-# At import time change the default FailedState
-globals_variables.set_failed_state(GraphFrontEndFailedState())
 
 
 def _is_allocated_machine(config):
@@ -20,13 +19,24 @@ def _is_allocated_machine(config):
             config.get("Machine", "remote_spinnaker_url") != "None")
 
 
-class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
+@add_metaclass(AbstractBase)
+class GraphFrontEndSimulatorInterface(SimulatorInterface):
+    """ The simulator interface exported by the graph front end. A very thin\
+        layer over the capabilities of the Front End Common package.
+    """
+    __slots__ = ()
 
+
+class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
+    """ The implementation of the SpiNNaker simulation interface.
+    """
+    #: The base name of the configuration file (but no path)
     __slots__ = (
         "_user_dsg_algorithm"
     )
 
     CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
+    #: The name of the configuration validation configuration file
     VALIDATION_CONFIG_NAME = "validation_config.cfg"
 
     def __init__(
@@ -34,16 +44,13 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             database_socket_addresses=None, dsg_algorithm=None,
             n_chips_required=None, extra_pre_run_algorithms=None,
             extra_post_run_algorithms=None, time_scale_factor=None,
-            machine_time_step=None, default_config_paths=None):
+            machine_time_step=None, default_config_paths=None,
+            extra_xml_paths=None):
 
         global CONFIG_FILE_NAME, SPALLOC_CORES
 
-        # dsg algorithm store for user defined algorithms
+        # DSG algorithm store for user defined algorithms
         self._user_dsg_algorithm = dsg_algorithm
-
-        # create xml path for where to locate GFE related functions when
-        # using auto pause and resume
-        extra_xml_path = list()
 
         front_end_versions = [("SpiNNakerGraphFrontEnd", version)]
 
@@ -59,7 +66,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             executable_finder=executable_finder,
             graph_label=graph_label,
             database_socket_addresses=database_socket_addresses,
-            extra_algorithm_xml_paths=extra_xml_path,
+            extra_algorithm_xml_paths=extra_xml_paths,
             n_chips_required=n_chips_required,
             default_config_paths=this_default_config_paths,
             validation_cfg=os.path.join(os.path.dirname(__file__),
@@ -90,7 +97,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
                     .format(self._machine_time_step))
 
     def get_machine_dimensions(self):
-        """ Get the machine dimensions
+        """ Get the machine dimensions.
         """
         machine = self.machine
 
@@ -98,11 +105,13 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
     @property
     def is_allocated_machine(self):
+        """ Is this an allocated machine? Otherwise, it is local.
+        """
         return _is_allocated_machine(self.config)
 
     def add_socket_address(self, socket_address):
-        """ Add a socket address to the list to be checked by the\
-            notification protocol
+        """ Add a socket address to the list to be checked by the notification\
+            protocol.
 
         :param socket_address: the socket address
         :type socket_address:
@@ -111,8 +120,11 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         self._add_socket_address(socket_address)
 
     def run(self, run_time):
+        """ Run a simulation for a fixed amount of time
 
-        # set up the correct dsg algorithm
+        :param run_time: the run duration in milliseconds.
+        """
+        # set up the correct DSG algorithm
         if self._user_dsg_algorithm is not None:
             self.dsg_algorithm = self._user_dsg_algorithm
 
@@ -122,3 +134,13 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
     def __repr__(self):
         return "SpiNNaker Graph Front End object for machine {}"\
             .format(self._hostname)
+
+
+class _GraphFrontEndFailedState(GraphFrontEndSimulatorInterface, FailedState):
+    """ The special object that indicates that the simulator has failed.
+    """
+    __slots__ = ()
+
+
+# At import time change the default FailedState
+globals_variables.set_failed_state(_GraphFrontEndFailedState())

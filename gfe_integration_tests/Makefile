@@ -1,4 +1,4 @@
-BUILD_DIRS = hello_world Conways template
+BUILD_DIRS = test_rte test_extra_monitor
 all: $(BUILD_DIRS)
 	for d in $(BUILD_DIRS); do (cd $$d; "$(MAKE)") || exit $$?; done
 
