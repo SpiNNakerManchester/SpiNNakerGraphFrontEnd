@@ -22,7 +22,7 @@ __all__ = ['LivePacketGather', 'ReverseIpTagMultiCastSource', 'MachineEdge',
            'add_vertex', 'add_machine_vertex', 'add_machine_vertex_instance',
            'add_edge', 'add_application_edge_instance', 'add_machine_edge',
            'add_machine_edge_instance', 'add_socket_address', 'get_txrx',
-           'get_machine_dimensions', 'has_ran', 'machine_time_step',
+           'has_ran', 'machine_time_step',
            'get_number_of_available_cores_on_machine', 'no_machine_time_steps',
            'timescale_factor', 'machine_graph', 'application_graph',
            'routing_infos', 'placements', 'transceiver', 'graph_mapper',
@@ -320,13 +320,6 @@ def get_txrx():
     """ Gets the transceiver used by the tool chain.
     """
     return _sim().transceiver
-
-
-def get_machine_dimensions():
-    """ Gets the x and y dimension of the machine.
-    """
-    return _sim().get_machine_dimensions()
-
 
 def get_number_of_available_cores_on_machine():
     """ Gets the number of cores on this machine that are available to the\
