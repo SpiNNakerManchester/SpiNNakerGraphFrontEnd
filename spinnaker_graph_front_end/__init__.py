@@ -321,6 +321,7 @@ def get_txrx():
     """
     return _sim().transceiver
 
+
 def get_number_of_available_cores_on_machine():
     """ Gets the number of cores on this machine that are available to the\
         simulation.
