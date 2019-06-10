@@ -114,19 +114,3 @@ for placement in sorted(placements.placements,
             placement.x, placement.y, placement.p, addition_results))
 
 front_end.stop()
-
-# Save the computational graph to a event file
-# writer = tf.summary.FileWriter('C:/Users/konst/Documents')
-# writer.add_graph(tf.get_default_graph())
-# writer.flush()
-
-# Create the session and invoke run method to evaluate the TensorFlow.
-# sess = tf.Session()
-# print(sess.run(total))
-
-# Print the operation names
-# for op in sess.graph.get_operations():
-#         print(op.name)
-#
-# print(sess.run({'ab':(a, b), 'total':total}))
-

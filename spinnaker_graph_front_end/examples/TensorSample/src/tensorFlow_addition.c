@@ -21,12 +21,6 @@ uint32_t flag = 0;
 
 address_t address = NULL;
 
-// value for turning on and off interrupts
-uint cpsr = 0;
-
-//! The recording flags
-static uint32_t recording_flags = 0;
-
 typedef enum regions_e {
     INPUT_CONST_VALUES,
     RECORDED_DATA
@@ -45,7 +39,7 @@ void record_data(int result) {
         data_specification_get_region(RECORDED_DATA, address);
     uint8_t* record_space_address = (uint8_t*) record_region;
     spin1_memcpy(record_space_address, &result, 4);
-    log_info("recorded result \n");
+    log_info("recorded result %d\n", result);
 
 }
 
@@ -54,6 +48,7 @@ int addition(int a, int b){
     int total;
     log_info("Addition of A %d and B %d \n", a , b);
     total = a + b;
+    log_info("Addition Result : %d \n", total);
     return total;
 }
 
@@ -72,19 +67,7 @@ void receive_data(uint key, uint payload) {
         record_data(result);
         spin1_exit(0);
     }
-
 }
-
-
-void read_input_buffer(){
-    log_info("read_input_buffer");
-
-    cpsr = spin1_int_disable();
-    circular_buffer_print_buffer(input_buffer);
-
-    spin1_mode_restore(cpsr);
-}
-
 
 static bool initialize() {
     log_info("Initialise addition: started\n");
@@ -128,15 +111,9 @@ void c_main() {
         rt_error(RTE_SWERR);
     }
 
-    read_input_buffer();
     spin1_callback_on(MCPL_PACKET_RECEIVED, receive_data, MC_PACKET);
 
     log_info("Starting\n");
 
-
-    // Wait till all the binaries are loaded before sending messages.
-    // simulation_run() creates a barrier till all binaries are loaded and initialised.
-    // So you NEED to use a user interrupt to start things off, because your not using a timer
-//    simulation_run();
 spin1_start(SYNC_WAIT);
 }

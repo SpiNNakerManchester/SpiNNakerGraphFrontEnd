@@ -16,15 +16,7 @@ uint32_t flag = 0;
 
 uint32_t const_value=0;
 
-static uint32_t time = 0;
-
 address_t address = NULL;
-
-// value for turning on and off interrupts
-uint cpsr = 0;
-
-//! The recording flags
-static uint32_t recording_flags = 0;
 
 typedef enum regions_e {
     TRANSMISSIONS,
@@ -62,17 +54,12 @@ void send_value(uint data){
 
 
 void record_data(){
-    //* record const value in sdram
+    //* record const value in SDRAM
     address_t record_region =
         data_specification_get_region(RECORDED_DATA, address);
     uint8_t* record_space_address = (uint8_t*) record_region;
     spin1_memcpy(record_space_address, &const_value, 4);
     log_debug("recorded my const_valuet \n");
-}
-
-
-void resume_callback() {
-    time = UINT32_MAX;
 }
 
 /****f*
@@ -111,7 +98,8 @@ static bool initialize() {
     address_t transmission_region_address = data_specification_get_region(
             TRANSMISSIONS, address);
     log_info("transmission_region_address  is %u\n", transmission_region_address);
-    if (transmission_region_address[HAS_KEY] == 1) { // a pointer to uint32 and if the first element of this array exists so has key do the code bellow
+    // a pointer to uint32 and if the first element of this array exists so has key do the code bellow
+    if (transmission_region_address[HAS_KEY] == 1) {
         my_key = transmission_region_address[MY_KEY];
         log_info("my key is %d\n", my_key);
     } else {
@@ -153,9 +141,6 @@ void c_main() {
 
     // start execution
     log_info("Starting\n");
-
-    // Start the time at "-1" so that the first tick will be 0
-    time = UINT32_MAX;
 
 spin1_start(SYNC_WAIT);
 
