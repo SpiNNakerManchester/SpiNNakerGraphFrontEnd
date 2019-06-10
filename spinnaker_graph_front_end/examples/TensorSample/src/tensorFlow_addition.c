@@ -19,7 +19,7 @@ static circular_buffer input_buffer;
 // KA : Transmitted flag
 uint32_t flag = 0;
 
-static uint32_t time = 0;
+address_t address = NULL;
 
 // value for turning on and off interrupts
 uint cpsr = 0;
@@ -41,20 +41,12 @@ typedef enum callback_priorities{
 void record_data(int result) {
     log_info("Recording data\n");
 
-    log_debug("Result %d",result);
-    uint chip = spin1_get_chip_id();
+    address_t record_region =
+        data_specification_get_region(RECORDED_DATA, address);
+    uint8_t* record_space_address = (uint8_t*) record_region;
+    spin1_memcpy(record_space_address, &result, 4);
+    log_info("recorded result \n");
 
-    uint core = spin1_get_core_id();
-
-    log_debug("Issuing 'Result' from chip %d, core %d", chip, core);
-
-    bool recorded = recording_record(0, &result, 4);
-
-    if (recorded) {
-        log_debug("Result recorded successfully!");
-    } else {
-        log_error("Result was not recorded...");
-    }
 }
 
 int addition(int a, int b){
@@ -78,31 +70,11 @@ void receive_data(uint key, uint payload) {
         value_b = payload;
         result = addition(value_a, value_b);
         record_data(result);
+        spin1_exit(0);
     }
 
-    if (!circular_buffer_add(input_buffer, payload)) {
-        log_info("Could not add state");
-    }
 }
 
-
-
-//! \brief Initialises the recording parts of the model
-//! \return True if recording initialisation is successful, false otherwise
-static bool initialise_recording(){
-    log_info("initialise_recording\n");
-    address_t address = data_specification_get_data_address();
-    address_t recording_region = data_specification_get_region(
-        RECORDED_DATA, address);
-
-    bool success = recording_initialize(recording_region, &recording_flags);
-    log_info("Recording flags = 0x%08x", recording_flags);
-    return success;
-}
-
-void resume_callback() {
-    time = UINT32_MAX;
-}
 
 void read_input_buffer(){
     log_info("read_input_buffer");
@@ -151,28 +123,20 @@ static bool initialize() {
 void c_main() {
     log_info("starting Tensor addition\n");
 
-    // Load DTCM data
-    uint32_t timer_period;
-
     // initialise the model
-    if (!initialize(&timer_period)) {
+    if (!initialize()) {
         rt_error(RTE_SWERR);
     }
 
-    if(!initialise_recording()){
-         rt_error(RTE_SWERR);
-    }
     read_input_buffer();
     spin1_callback_on(MCPL_PACKET_RECEIVED, receive_data, MC_PACKET);
 
     log_info("Starting\n");
 
-    // Start the time at "-1" so that the first tick will be 0
-    time = UINT32_MAX;
-
 
     // Wait till all the binaries are loaded before sending messages.
     // simulation_run() creates a barrier till all binaries are loaded and initialised.
     // So you NEED to use a user interrupt to start things off, because your not using a timer
-    simulation_run();
+//    simulation_run();
+spin1_start(SYNC_WAIT);
 }

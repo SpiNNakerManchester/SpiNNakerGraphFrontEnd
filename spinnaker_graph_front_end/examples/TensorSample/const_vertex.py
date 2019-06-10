@@ -7,24 +7,19 @@ from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from spinn_front_end_common.abstract_models.impl import (MachineDataSpecableVertex)
-from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT
+from spinn_front_end_common.utilities.constants import DATA_SPECABLE_BASIC_SETUP_INFO_N_BYTES
 from pacman.executor.injection_decorator import inject_items
 from pacman.utilities.utility_calls import is_single
-from spinn_front_end_common.interface.buffer_management.buffer_models import (
-    AbstractReceiveBuffersToHost)
-from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.helpful_functions import (
     locate_memory_region_for_placement, read_config_int)
-from pacman.model.resources import (ResourceContainer, VariableSDRAM)
-from spinn_front_end_common.interface.buffer_management import (
-    recording_utilities)
+from pacman.model.resources import (ResourceContainer, ConstantSDRAM)
 
 logger = logging.getLogger(__name__)
 
+
 class ConstVertex(MachineVertex,
                   AbstractHasAssociatedBinary,
-                  MachineDataSpecableVertex,
-                  AbstractReceiveBuffersToHost):
+                  MachineDataSpecableVertex):
 
     TRANSMISSION_DATA_SIZE = 2 * 4 # has key and key
     INPUT_DATA_SIZE = 4 # constant int number
@@ -42,25 +37,15 @@ class ConstVertex(MachineVertex,
         MachineVertex.__init__(self, )
         AbstractHasAssociatedBinary.__init__(self)
         MachineDataSpecableVertex.__init__(self)
-        AbstractReceiveBuffersToHost.__init__(self)
 
         print("\n const_vertex init")
 
-        config = globals_variables.get_simulator().config
-        self._buffer_size_before_receive = None
-        if config.getboolean("Buffers", "enable_buffered_recording"):
-            self._buffer_size_before_receive = config.getint(
-                "Buffers", "buffer_size_before_receive")
-        self._time_between_requests = config.getint(
-            "Buffers", "time_between_requests")
-        self._receive_buffer_host = config.get(
-            "Buffers", "receive_buffer_host")
-        self._receive_buffer_port = read_config_int(
-            config, "Buffers", "receive_buffer_port")
         self._constant_data_size = 4
         self.placement = None
         # app specific elements
         self._constValue = constValue
+        self._label = label
+        print("const_value in the instance :",self._constValue)
 
     def _reserve_memory_regions(self, spec):
         print("\n const_vertex _reserve_memory_regions")
@@ -73,7 +58,7 @@ class ConstVertex(MachineVertex,
             size=self.INPUT_DATA_SIZE, label="input_const_values")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.RECORDING_CONST_VALUES.value,
-            size=recording_utilities.get_recording_header_size(1))
+            size=self.RECORDING_DATA_SIZE)
 
     @inject_items({"data_n_time_steps": "DataNTimeSteps"})
     @overrides(
@@ -88,20 +73,18 @@ class ConstVertex(MachineVertex,
         # reserve memory region
         self._reserve_memory_regions(spec)
 
-        # write data for constant
-        spec.switch_write_focus(self.DATA_REGIONS.RECORDING_CONST_VALUES.value)
-        spec.write_array(recording_utilities.get_recording_header_array(
-            [self.RECORDING_DATA_SIZE * data_n_time_steps]))
-
         # check got right number of keys and edges going into me
         partitions = \
             machine_graph.get_outgoing_edge_partitions_starting_at_vertex(self)
+
+        print("const_partitions :", partitions)
         if not is_single(partitions):
             raise ConfigurationException(
                 "Can only handle one type of partition.")
 
         ## check for duplicates
         edges = list(machine_graph.get_edges_ending_at_vertex(self))
+        print("edges : ", edges)
         # if len(edges) != 8:
         #     raise ConfigurationException(
         #         "I've not got the right number of connections. I have {} "
@@ -131,37 +114,16 @@ class ConstVertex(MachineVertex,
         # End-of-Spec:
         spec.end_specification()
 
-
-    def get_data(self, buffer_manager, placement):
-        # for buffering output info is taken form the buffer manager
-        # get raw data, convert to list of booleans
-        raw_data, data_missing = buffer_manager.get_data_by_placement(
-            placement, 0)
-
-        # do check for missing data
-        if data_missing:
-            print("missing_data from ({}, {}, {}); ".format(
-                placement.x, placement.y, placement.p))
-
-        # return the data, converted to list of booleans
-        return [
-            bool(element)
-            for element in struct.unpack(
-                "<{}I".format(len(raw_data) // 4), raw_data)]
-
     @property
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
-        print("\n const_vertex resources_required")
+        print("\n {} resources_required".format(self._label))
 
-        fixed_sdram = (SYSTEM_BYTES_REQUIREMENT + self.TRANSMISSION_DATA_SIZE +
-                       self.INPUT_DATA_SIZE +
-                       recording_utilities.get_recording_header_size(1) +
-                       recording_utilities.get_recording_data_constant_size(1))
+        fixed_sdram = (self.TRANSMISSION_DATA_SIZE + self.INPUT_DATA_SIZE + self.RECORDING_DATA_SIZE +
+                       DATA_SPECABLE_BASIC_SETUP_INFO_N_BYTES)
 
-        per_timestep_sdram = self.RECORDING_DATA_SIZE
-        return ResourceContainer(sdram=VariableSDRAM(fixed_sdram,per_timestep_sdram))
-
+        print("fixed_sdram : ",fixed_sdram)
+        return ResourceContainer(sdram=ConstantSDRAM(fixed_sdram))
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):

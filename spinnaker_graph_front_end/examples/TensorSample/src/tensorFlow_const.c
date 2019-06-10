@@ -10,14 +10,15 @@
 
 
 uint my_key;
-// KA : set parameters that will be used in the receive data method
-static circular_buffer input_buffer;
+
 // KA : Transmitted flag
 uint32_t flag = 0;
 
-uint const_value=0;
+uint32_t const_value=0;
 
 static uint32_t time = 0;
+
+address_t address = NULL;
 
 // value for turning on and off interrupts
 uint cpsr = 0;
@@ -36,6 +37,10 @@ typedef enum callback_priorities{
     USER = 3
 } callback_priorities;
 
+
+typedef enum initial_input_region_elements {
+    INITIAL_INPUT
+} initial_state_region_elements;
 
 //! human readable definitions of each element in the transmission region
 typedef enum transmission_region_elements {
@@ -56,56 +61,18 @@ void send_value(uint data){
 }
 
 
-void record_data(int data) {
-    log_info("Recording data\n");
-    log_info("data %d",data);
-
-
-    uint chip = spin1_get_chip_id(); //KA:This function returns the chip ID
-
-    uint core = spin1_get_core_id(); //KA:This function returns the core ID
-
-    log_debug("Issuing 'Const' from chip %d, core %d", chip, core);
-
-    bool recorded = recording_record(0, &data, 4); //KA:Add const value to the SDRAM
-
-    if (recorded) {
-        log_debug("Const recorded successfully!");
-    } else {
-        log_error("Const was not recorded...");
-    }
+void record_data(){
+    //* record const value in sdram
+    address_t record_region =
+        data_specification_get_region(RECORDED_DATA, address);
+    uint8_t* record_space_address = (uint8_t*) record_region;
+    spin1_memcpy(record_space_address, &const_value, 4);
+    log_debug("recorded my const_valuet \n");
 }
 
-
-//! \brief Initialises the recording parts of the model
-//! \return True if recording initialisation is successful, false otherwise
-static bool initialise_recording(){
-    log_info("initialise_recording\n");
-    address_t address = data_specification_get_data_address();
-    address_t recording_region = data_specification_get_region(
-        RECORDED_DATA, address);
-    log_info("recording_region address  is %u\n", recording_region);
-
-    bool success = recording_initialize(recording_region, &recording_flags);
-    log_info("Recording flags = 0x%08x", recording_flags);
-    return success;
-}
 
 void resume_callback() {
     time = UINT32_MAX;
-}
-
-
-
-void read_input_buffer(){
-    log_info("read_input_buffer\n");
-
-    cpsr = spin1_int_disable();
-    circular_buffer_print_buffer(input_buffer);
-    // pull payloads from input_buffer. Filter for alive and dead states
-
-    log_debug("read_input_buffer");
-    spin1_mode_restore(cpsr);
 }
 
 /****f*
@@ -120,8 +87,9 @@ void read_input_buffer(){
 void update() {
     log_info("update\n");
 
-        send_value(1);
-        record_data(1);
+        send_value(const_value);
+        record_data(const_value);
+        spin1_exit(0);
 
 }
 
@@ -130,7 +98,7 @@ static bool initialize() {
     log_info("Initialise const: started\n");
 
     // Get the address this core's DTCM data starts at from SDRAM
-    address_t address = data_specification_get_data_address();
+    address = data_specification_get_data_address();
     log_info("address is %u\n", address);
 
     // Read the header
@@ -153,7 +121,9 @@ static bool initialize() {
     }
 
     // read my const value
-    const_value = data_specification_get_region(INPUT, address);
+    address_t my_input_region_address = data_specification_get_region(
+        INPUT, address);
+    const_value = my_input_region_address[INITIAL_INPUT];
     log_info("my const value is %d\n", const_value);
 
     return true;
@@ -173,18 +143,9 @@ static bool initialize() {
 void c_main() {
     log_info("starting Tensor const \n");
 
-    // Load DTCM data
-    uint32_t timer_period;
-
     // initialise the model
     if (!initialize()) {
         rt_error(RTE_SWERR);
-    }
-
-    // initialise the recording section
-    // set up recording data structures
-    if(!initialise_recording()){
-         rt_error(RTE_SWERR);
     }
 
     // kick-start the process
@@ -196,5 +157,6 @@ void c_main() {
     // Start the time at "-1" so that the first tick will be 0
     time = UINT32_MAX;
 
-    simulation_run();
+spin1_start(SYNC_WAIT);
+
 }

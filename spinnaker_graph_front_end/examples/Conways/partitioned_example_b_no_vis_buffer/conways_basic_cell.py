@@ -110,6 +110,8 @@ class ConwayBasicCell(
         key = routing_info.get_first_key_from_pre_vertex(
             self, self.PARTITION_ID)
 
+        print("conways key : ", key)
+
         spec.switch_write_focus(
             region=self.DATA_REGIONS.TRANSMISSIONS.value)
         spec.write_value(0 if key is None else 1)

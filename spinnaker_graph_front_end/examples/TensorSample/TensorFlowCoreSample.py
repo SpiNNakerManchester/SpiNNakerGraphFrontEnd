@@ -75,8 +75,8 @@ for n_id in graph._nodes_by_id:
 
     # in case of constant operation
     elif 'Const' in graph._nodes_by_id[n_id].name:
-        constant_sample = n_id  # ToDo
-        vertices[n_id] = ConstVertex("Const vertex at x {}".format(graph._nodes_by_id[n_id].name), constant_sample)
+        constant_sample = n_id
+        vertices[n_id] = ConstVertex("Const vertex {}".format(graph._nodes_by_id[n_id].name), constant_sample)
 
     vertices[n_id].name = graph._nodes_by_id[n_id].name
     front_end.add_machine_vertex_instance(vertices[n_id])
@@ -101,8 +101,7 @@ print("run simulation")
 front_end.run(2)
 
 placements = front_end.placements()
-buffer_manager = front_end.buffer_manager()
-print("buffer_manager is %s" % buffer_manager)
+txrx = front_end.transceiver()
 
 print("read the SDRAM after the simulation run")
 for placement in sorted(placements.placements,
@@ -110,7 +109,7 @@ for placement in sorted(placements.placements,
     # Kostas : After the run of the simulation, read
     # from SDRAM all the texts that were stored in SDRAM.
     if isinstance(placement.vertex, AdditionVertex):
-        addition_results = placement.vertex.read(placement, buffer_manager)
+        addition_results = placement.vertex.read(placement, txrx)
         logger.info("{}, {}, {} > {}".format(
             placement.x, placement.y, placement.p, addition_results))
 

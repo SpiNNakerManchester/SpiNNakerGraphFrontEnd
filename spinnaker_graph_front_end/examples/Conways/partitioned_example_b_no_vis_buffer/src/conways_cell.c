@@ -261,6 +261,7 @@ static bool initialize(uint32_t *timer_period) {
 
     // Get the address this core's DTCM data starts at from SRAM
     address = data_specification_get_data_address();
+    log_info("address is %u\n", address);
 
     // Read the header
     if (!data_specification_read_header(address)) {
