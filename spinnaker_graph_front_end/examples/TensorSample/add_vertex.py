@@ -20,7 +20,7 @@ class AdditionVertex(MachineVertex, AbstractHasAssociatedBinary,
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
-        names=[('RECORDED_ADDITION_RESULT', 1)])
+        names=[('RECORDED_ADDITION_RESULT', 0)])
 
     CORE_APP_IDENTIFIER = 0xBEEF
 
@@ -81,6 +81,7 @@ class AdditionVertex(MachineVertex, AbstractHasAssociatedBinary,
             app_data_base_address, self.DATA_REGIONS.RECORDED_ADDITION_RESULT.value)
         address = self._ONE_WORD.unpack(txrx.read_memory(
             placement.x, placement.y, base_address_offset, self._ONE_WORD.size))[0]
+        print("read address from recording:",address)
         data = self._ONE_WORD.unpack(txrx.read_memory(
             placement.x, placement.y, address, self._ONE_WORD.size))[0]
 

@@ -22,7 +22,6 @@ uint32_t flag = 0;
 address_t address = NULL;
 
 typedef enum regions_e {
-    INPUT_CONST_VALUES,
     RECORDED_DATA
 } regions_e;
 
@@ -39,7 +38,7 @@ void record_data(int result) {
         data_specification_get_region(RECORDED_DATA, address);
     uint8_t* record_space_address = (uint8_t*) record_region;
     spin1_memcpy(record_space_address, &result, 4);
-    log_info("recorded result %d\n", result);
+    log_info("recorded result %d address: %u\n", result ,record_space_address);
 
 }
 
@@ -73,7 +72,7 @@ static bool initialize() {
     log_info("Initialise addition: started\n");
 
     // Get the address this core's DTCM data starts at from SDRAM
-    address_t address = data_specification_get_data_address();
+    address = data_specification_get_data_address();
     log_info("address is %u\n", address);
 
     // Read the header
