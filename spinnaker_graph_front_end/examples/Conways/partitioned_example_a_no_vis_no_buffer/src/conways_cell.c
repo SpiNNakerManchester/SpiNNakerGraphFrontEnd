@@ -80,70 +80,12 @@ typedef enum initial_state_region_elements {
  * SOURCE
  */
 void receive_data(uint key, uint payload) {
+	use(key);
     //log_info("the key i've received is %d\n", key);
     //log_info("the payload i've received is %d\n", payload);
     // If there was space to add spike to incoming spike queue
     if (!circular_buffer_add(input_buffer, payload)) {
         log_info("Could not add state");
-    }
-}
-
-/****f* conways.c/update
- *
- * SUMMARY
- *
- * SYNOPSIS
- *  void update (uint ticks, uint b)
- *
- * SOURCE
- */
-void update(uint ticks, uint b) {
-    use(b);
-    use(ticks);
-
-    time++;
-
-    log_info("on tick %d of %d", time, simulation_ticks);
-
-    // check that the run time hasn't already elapsed and thus needs to be
-    // killed
-    if ((infinite_run != TRUE) && (time >= simulation_ticks)) {
-
-        // update recording data
-        address_t record_region =
-            data_specification_get_region(RECORDED_DATA, address);
-        uint8_t* record_space_address = (uint8_t*) record_region;
-        log_info("wrote final store of %d bytes", size_written);
-        spin1_memcpy(record_space_address, &size_written, 4);
-
-        log_info("Simulation complete.\n");
-
-        // falls into the pause resume mode of operating
-        simulation_handle_pause_resume(NULL);
-
-        return;
-    }
-
-    if (time == 0){
-        next_state();
-        send_state();
-        record_state();
-        log_info("Send my first state!");
-    }
-    else{
-
-        read_input_buffer();
-
-        // find my next state
-        next_state();
-
-        // do a safety check on number of states. Not like we can fix it
-        // if we've missed events
-        do_safety_check();
-
-        send_state();
-
-        record_state();
     }
 }
 
@@ -224,8 +166,8 @@ void next_state(){
         if(alive_states_recieved_this_tick <= 1){
             my_state = DEAD;
         }
-        if (alive_states_recieved_this_tick == 2 |
-                alive_states_recieved_this_tick == 3){
+        if ((alive_states_recieved_this_tick == 2) |
+                (alive_states_recieved_this_tick == 3)){
             my_state = ALIVE;
         }
         if (alive_states_recieved_this_tick >= 4){
@@ -234,6 +176,68 @@ void next_state(){
     }
     else if (alive_states_recieved_this_tick == 3){
         my_state = ALIVE;
+    }
+}
+
+/****f* conways.c/update
+ *
+ * SUMMARY
+ *
+ * SYNOPSIS
+ *  void update (uint ticks, uint b)
+ *
+ * SOURCE
+ */
+void update(uint ticks, uint b) {
+    use(b);
+    use(ticks);
+
+    time++;
+
+    log_info("on tick %d of %d", time, simulation_ticks);
+
+    // check that the run time hasn't already elapsed and thus needs to be
+    // killed
+    if ((infinite_run != TRUE) && (time >= simulation_ticks)) {
+
+        // fall into the pause resume mode of operating
+        simulation_handle_pause_resume(NULL);
+
+        // update recording data
+        address_t record_region =
+            data_specification_get_region(RECORDED_DATA, address);
+        uint8_t* record_space_address = (uint8_t*) record_region;
+        log_info("wrote final store of %d bytes", size_written);
+        spin1_memcpy(record_space_address, &size_written, 4);
+
+        log_info("Simulation complete.\n");
+
+        // switch to state where host is ready to read
+        simulation_ready_to_read();
+
+        return;
+    }
+
+    if (time == 0){
+        next_state();
+        send_state();
+        record_state();
+        log_info("Send my first state!");
+    }
+    else{
+
+        read_input_buffer();
+
+        // find my next state
+        next_state();
+
+        // do a safety check on number of states. Not like we can fix it
+        // if we've missed events
+        do_safety_check();
+
+        send_state();
+
+        record_state();
     }
 }
 
