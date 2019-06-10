@@ -95,10 +95,9 @@ for n_id in vertices:
                                 label=vertices[input_node_id].name + ': to ' + vertices[n_id].name),
                     "ADDITION_PARTITION")
 
-
 # Run for 2 milliseconds
 print("run simulation")
-front_end.run(2)
+front_end.run(1)
 
 placements = front_end.placements()
 txrx = front_end.transceiver()

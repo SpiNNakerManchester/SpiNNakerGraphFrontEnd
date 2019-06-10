@@ -6,7 +6,7 @@ from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
-from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT, DATA_SPECABLE_BASIC_SETUP_INFO_N_BYTES
+from spinn_front_end_common.utilities.constants import DATA_SPECABLE_BASIC_SETUP_INFO_N_BYTES
 from spinn_front_end_common.abstract_models.impl import (MachineDataSpecableVertex)
 from pacman.model.resources import (ResourceContainer, ConstantSDRAM)
 
@@ -65,7 +65,6 @@ class AdditionVertex(MachineVertex, AbstractHasAssociatedBinary,
         # End-of-Spec:
         spec.end_specification()
 
-    # Kostas : read the data that are written in SDRAM
     def read(self, placement, txrx):
         """ Get the data written into sdram
 
@@ -76,7 +75,7 @@ class AdditionVertex(MachineVertex, AbstractHasAssociatedBinary,
         # Get the App Data for the core
         app_data_base_address = txrx.get_cpu_information_from_core(
             placement.x, placement.y, placement.p).user[0]
-
+        print("app_data_base_address ", app_data_base_address)
         # Get the provenance region base address
         base_address_offset = get_region_base_address_offset(
             app_data_base_address, self.DATA_REGIONS.RECORDED_ADDITION_RESULT.value)
@@ -84,6 +83,9 @@ class AdditionVertex(MachineVertex, AbstractHasAssociatedBinary,
             placement.x, placement.y, base_address_offset, self._ONE_WORD.size))[0]
         data = self._ONE_WORD.unpack(txrx.read_memory(
             placement.x, placement.y, address, self._ONE_WORD.size))[0]
+
+        print("read data :", data)
+
         return data
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)

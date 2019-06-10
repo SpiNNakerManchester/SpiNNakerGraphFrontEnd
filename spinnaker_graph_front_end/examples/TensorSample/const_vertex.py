@@ -1,5 +1,4 @@
 import logging
-import struct
 from enum import Enum
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
@@ -11,7 +10,7 @@ from spinn_front_end_common.utilities.constants import DATA_SPECABLE_BASIC_SETUP
 from pacman.executor.injection_decorator import inject_items
 from pacman.utilities.utility_calls import is_single
 from spinn_front_end_common.utilities.helpful_functions import (
-    locate_memory_region_for_placement, read_config_int)
+    locate_memory_region_for_placement)
 from pacman.model.resources import (ResourceContainer, ConstantSDRAM)
 
 logger = logging.getLogger(__name__)
