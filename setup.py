@@ -44,5 +44,7 @@ setup(
                       'SpiNNaker_PACMAN >= 1!4.0.1, < 1!5.0.0',
                       'SpiNNaker_DataSpecification >= 1!4.0.1, < 1!5.0.0',
                       'SpiNNFrontEndCommon >= 1!4.0.1, < 1!5.0.0',
-                      'lxml']
+                      'lxml'],
+    maintainer="SpiNNakerTeam",
+    maintainer_email="spinnakerusers@googlegroups.com"
 )

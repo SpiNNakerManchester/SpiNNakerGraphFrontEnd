@@ -1,0 +1,58 @@
+authors:
+- affiliation: University Of Manchester
+  email: alan.stokes-2@manchester.ac.uk
+  family-names: Stokes
+  given-names: Alan
+  orcid: https://orcid.org/0000-0002-6110-1484
+  website: http://www.cs.man.ac.uk/~stokesa6/
+- affiliation: University Of Manchester
+  email: Andrew.Rowley@manchester.ac.uk
+  family-names: Rowley
+  given-names: Andrew
+  orcid: https://orcid.org/0000-0002-2646-8520
+  website: https://www.researchgate.net/profile/Andrew_Rowley2
+- affiliation: University Of Manchester
+  email: Andrew.Gait@manchester.ac.uk
+  family-names: Gait
+  given-names: Andrew
+  orcid: http://orcid.org/0000-0001-9349-1096
+  website: https://personalpages.manchester.ac.uk/staff/Andrew.Gait/
+- affiliation: University Of Manchester
+  email: christian.brenninkmeijer@manchester.ac.uk
+  family-names: Brenninkmeijer
+  given-names: Christian Y.
+  orcid: https://orcid.org/0000-0002-2937-7819
+  website: https://www.researchgate.net/profile/Christian_Brenninkmeijer
+- affiliation: University Of Manchester
+  email: donal.k.fellows@manchester.ac.uk
+  family-names: Fellows
+  given-names: Donal
+  orcid: https://orcid.org/0000-0002-9091-5938
+  website: http://www.cs.manchester.ac.uk/about-us/staff/profile/?ea=donal.k.fellows
+- affiliation: University Of Manchester
+  email: arthur.ceccotti@student.manchester.ac.uk
+  family-names: Ceccotti
+  given-names: Arthur
+  website: https://www.linkedin.com/in/arthur-ceccotti-07359483
+- affiliation: University Of Manchester
+  email: sergio.davies@gmail.com
+  family-names: Davies
+  given-names: Sergio
+  orcid: https://orcid.org/0000-0001-5330-5527
+  website: http://apt.cs.manchester.ac.uk/people/daviess/
+cff-version: 1.0.3
+contact:
+- address: University of Manchester, Oxford Road
+  city: Manchester
+  country: GB
+  name: SpiNNaker Software Team
+  post-code: M13 9PL
+date-released:
+email: spinnakerusers@googlegroups.com
+identifier:
+message: If you use this software, please cite it as below.
+repository: https://github.com/SpiNNakerManchester/SpiNNakerGraphFrontEnd
+title: The Front end interface for SpiNNaker machines which represnet the application
+  as a graph
+url: http://spinnakermanchester.github.io/
+version:
