@@ -2,15 +2,12 @@ import logging
 import os
 from six import add_metaclass
 from spinn_utilities.abstract_base import AbstractBase
-from spinn_utilities.citation.tool_citation_generation import (
-    CitationAggregator)
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
 from spinn_front_end_common.utilities import SimulatorInterface
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.failed_state import FailedState
 from ._version import __version__ as version
-import spinnaker_graph_front_end
 
 logger = logging.getLogger(__name__)
 #: The default number of cores to ask spalloc for
@@ -48,7 +45,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             n_chips_required=None, extra_pre_run_algorithms=None,
             extra_post_run_algorithms=None, time_scale_factor=None,
             machine_time_step=None, default_config_paths=None,
-            extra_xml_paths=None, top_level_module=None):
+            extra_xml_paths=None):
 
         global CONFIG_FILE_NAME, SPALLOC_CORES
 
@@ -64,9 +61,6 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         if default_config_paths is not None:
             this_default_config_paths.extend(default_config_paths)
 
-        if top_level_module is None:
-            top_level_module = spinnaker_graph_front_end
-
         super(SpiNNaker, self).__init__(
             configfile=self.CONFIG_FILE_NAME,
             executable_finder=executable_finder,
@@ -77,8 +71,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             default_config_paths=this_default_config_paths,
             validation_cfg=os.path.join(os.path.dirname(__file__),
                                         self.VALIDATION_CONFIG_NAME),
-            front_end_versions=front_end_versions,
-            top_level_module=top_level_module)
+            front_end_versions=front_end_versions)
 
         extra_mapping_inputs = dict()
         extra_mapping_inputs["CreateAtomToEventIdMapping"] = self.config.\
@@ -141,24 +134,6 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
     def __repr__(self):
         return "SpiNNaker Graph Front End object for machine {}"\
             .format(self._hostname)
-
-    def generate_bibtex(self, doi_title, zenodo_access_token, top_module=None):
-        """ helper method for building bibtex from citation.cff's
-
-        :param doi_title: the title of the doi
-        :param top_module: the top module to start all this
-        :type top_module: python module or none if its GFE directly
-        :param zenodo_access_token: the access token for zenodo
-        :rtype: None
-        """
-
-        if top_module is None:
-            top_module = spinnaker_graph_front_end
-
-        AbstractSpinnakerBase._generate_bibtex(
-            self, top_module=top_module, doi_title=doi_title,
-            zenodo_access_token=zenodo_access_token,
-            tools_doi=CitationAggregator.locate_citation_doi(top_module))
 
 
 class _GraphFrontEndFailedState(GraphFrontEndSimulatorInterface, FailedState):
