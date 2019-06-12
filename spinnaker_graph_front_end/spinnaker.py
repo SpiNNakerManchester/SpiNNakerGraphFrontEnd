@@ -96,13 +96,6 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         logger.info("Setting machine time step to {} micro-seconds."
                     .format(self._machine_time_step))
 
-    def get_machine_dimensions(self):
-        """ Get the machine dimensions.
-        """
-        machine = self.machine
-
-        return {'x': machine.max_chip_x, 'y': machine.max_chip_y}
-
     @property
     def is_allocated_machine(self):
         """ Is this an allocated machine? Otherwise, it is local.
