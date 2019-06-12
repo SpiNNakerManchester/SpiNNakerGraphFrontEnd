@@ -31,16 +31,22 @@ logger = logging.getLogger(__name__)
 front_end.setup(
     n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
 
-# Create 3 constant operations , one addition operation, then one extra addition
-# here is just a representation of the graph.
 
-a = tf.constant(19, dtype=tf.int32)
-b = tf.constant(23, dtype=tf.int32)
-# c = tf.constant(65, dtype=tf.int32)
+a = tf.constant(5, dtype=tf.int32)
+b = tf.constant(6, dtype=tf.int32)
 result = a + b
-# total = result + c
 
-graph = tf.get_default_graph()
+# Launch the graph in a session.
+sess = tf.Session()
+sess.run(result)
+
+# nodes = [n for n in tf.get_default_graph().as_graph_def().node]
+
+const = {}
+for n in tf.get_default_graph().as_graph_def().node:
+    if 'Const' in n.name:
+        const[n.name] = n.attr.get('value').tensor.int_val[0]
+
 
 # string formatters in python:   .format  , ex: '{} {}'.format(1, 2) , output: 1 2
 
@@ -52,18 +58,17 @@ graph = tf.get_default_graph()
 # The underscore prefix is meant as a hint to another programmer that a variable or method
 # starting with a single underscore is intended for internal use
 
-# Number of nodes in TensorFlow graph
-number_of_nodes = graph._nodes_by_id.__len__()
-# List of spinnaker vertices
+graph = tf.get_default_graph()
 
+# List of spinnaker vertices
 vertices = {}
 inputs = {}
 
-
+# [n.name for n in tf.get_default_graph().as_graph_def().node]
 # Add Vertices
 for n_id in graph._nodes_by_id:
     print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
-    # in case of addition operation
+    # addition operation
     if 'add' in graph._nodes_by_id[n_id].name:
         vertices[n_id] = AdditionVertex("Addition vertex {}".format(graph._nodes_by_id[n_id].name))
         # Store input node ids for the current node
@@ -73,10 +78,9 @@ for n_id in graph._nodes_by_id:
                 current_inputs.append(index._id)
         inputs[n_id] = current_inputs
 
-    # in case of constant operation
+    # constant operation
     elif 'Const' in graph._nodes_by_id[n_id].name:
-        constant_sample = n_id
-        vertices[n_id] = ConstVertex("Const vertex {}".format(graph._nodes_by_id[n_id].name), constant_sample)
+        vertices[n_id] = ConstVertex("Const vertex {}".format(graph._nodes_by_id[n_id].name), const[graph._nodes_by_id[n_id].name])
 
     vertices[n_id].name = graph._nodes_by_id[n_id].name
     front_end.add_machine_vertex_instance(vertices[n_id])
