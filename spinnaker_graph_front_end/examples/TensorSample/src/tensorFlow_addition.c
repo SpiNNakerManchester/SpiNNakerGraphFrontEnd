@@ -6,7 +6,6 @@
 #include <recording.h>
 #include <simulation.h>
 #include <debug.h>
-#include <circular_buffer.h>
 
 int value_a;
 int value_b;
@@ -14,10 +13,6 @@ int counter = 0;
 int result = 0;
 
 uint my_key;
-// KA : set parameters that will be used in the receive data method
-static circular_buffer input_buffer;
-// KA : Transmitted flag
-uint32_t flag = 0;
 
 address_t address = NULL;
 
@@ -80,13 +75,6 @@ static bool initialize() {
         log_error("failed to read the data spec header");
         return false;
     }
-
-    // initialise my input_buffer for receiving packets
-    input_buffer = circular_buffer_initialize(256);
-    if (input_buffer == 0){
-        return false;
-    }
-    log_info("input_buffer initialised");
 
     return true;
 }

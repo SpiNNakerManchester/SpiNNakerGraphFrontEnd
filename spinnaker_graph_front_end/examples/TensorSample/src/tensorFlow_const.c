@@ -6,13 +6,9 @@
 #include <recording.h>
 #include <simulation.h>
 #include <debug.h>
-#include <circular_buffer.h>
 
 
 uint my_key;
-
-// KA : Transmitted flag
-uint32_t flag = 0;
 
 uint32_t const_value=0;
 
@@ -34,7 +30,7 @@ typedef enum initial_input_region_elements {
     INITIAL_INPUT
 } initial_state_region_elements;
 
-//! human readable definitions of each element in the transmission region
+
 typedef enum transmission_region_elements {
     HAS_KEY, MY_KEY
 } transmission_region_elements;
@@ -42,14 +38,13 @@ typedef enum transmission_region_elements {
 
 void send_value(uint data){
     log_info("send_value\n", my_key);
-    // send my new state to the simulation neighbours
-    log_debug("sending value via multicast with key %d",
+
+    log_info("sending value via multicast with key %d",
               my_key);
     while (!spin1_send_mc_packet(my_key, data, WITH_PAYLOAD)) {
         spin1_delay_us(1);
     }
 
-    log_debug("sent value 1 via multicast");
 }
 
 

@@ -107,9 +107,14 @@ for placement in sorted(placements.placements,
                         key=lambda p: (p.x, p.y, p.p)):
     # Kostas : After the run of the simulation, read
     # from SDRAM all the texts that were stored in SDRAM.
+    if isinstance(placement.vertex, ConstVertex):
+        const_value = placement.vertex.read(placement, txrx)
+        logger.info("CONST {}, {}, {} > {}".format(
+            placement.x, placement.y, placement.p, const_value))
+
     if isinstance(placement.vertex, AdditionVertex):
         addition_results = placement.vertex.read(placement, txrx)
-        logger.info("{}, {}, {} > {}".format(
+        logger.info("ADDITION {}, {}, {} > {}".format(
             placement.x, placement.y, placement.p, addition_results))
 
 front_end.stop()

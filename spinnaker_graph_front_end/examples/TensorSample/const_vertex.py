@@ -1,5 +1,7 @@
 import logging
+import struct
 from enum import Enum
+from data_specification.utility_calls import get_region_base_address_offset
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
@@ -19,6 +21,7 @@ logger = logging.getLogger(__name__)
 class ConstVertex(MachineVertex,
                   AbstractHasAssociatedBinary,
                   MachineDataSpecableVertex):
+    _ONE_WORD = struct.Struct("<I")
 
     TRANSMISSION_DATA_SIZE = 2 * 4 # has key and key
     INPUT_DATA_SIZE = 4 # constant int number
@@ -123,6 +126,30 @@ class ConstVertex(MachineVertex,
 
         print("fixed_sdram : ",fixed_sdram)
         return ResourceContainer(sdram=ConstantSDRAM(fixed_sdram))
+
+    def read(self, placement, txrx):
+        """ Get the data written into sdram
+
+        :param placement: the location of this vertex
+        :param txrx: the buffer manager
+        :return: string output
+        """
+        # Get the App Data for the core
+        app_data_base_address = txrx.get_cpu_information_from_core(
+            placement.x, placement.y, placement.p).user[0]
+        print("app_data_base_address ", app_data_base_address)
+        # Get the provenance region base address
+        base_address_offset = get_region_base_address_offset(
+            app_data_base_address, self.DATA_REGIONS.RECORDING_CONST_VALUES.value)
+        address = self._ONE_WORD.unpack(txrx.read_memory(
+            placement.x, placement.y, base_address_offset, self._ONE_WORD.size))[0]
+        print("read address from recording:", address)
+        data = self._ONE_WORD.unpack(txrx.read_memory(
+            placement.x, placement.y, address, self._ONE_WORD.size))[0]
+
+        print("read data :", data)
+
+        return data
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
