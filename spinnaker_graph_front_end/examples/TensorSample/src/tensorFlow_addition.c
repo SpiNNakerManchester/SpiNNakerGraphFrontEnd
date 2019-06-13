@@ -111,7 +111,7 @@ static bool initialize() {
         my_key = transmission_region_address[MY_KEY];
         log_info("my key is %d\n", my_key);
     } else {
-        log_info("Addition vertex without key");
+        log_info("Addition vertex without key, just perform the addition and record the result");
     }
 
     return true;

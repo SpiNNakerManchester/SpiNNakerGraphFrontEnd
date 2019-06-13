@@ -71,23 +71,14 @@ class AdditionVertex(MachineVertex, AbstractHasAssociatedBinary,
 
         self._reserve_memory_regions(spec)
 
-        # check got right number of keys and edges going into me
-        partitions = \
-            machine_graph.get_outgoing_edge_partitions_starting_at_vertex(self)
-
-        print("addition_partitions :", partitions)
-        if not is_single(partitions):
-            raise ConfigurationException(
-                "Can only handle one type of partition.")
-
         ## check for duplicates
         edges = list(machine_graph.get_edges_ending_at_vertex(self))
         print("edges : ", edges)
-        # if len(edges) != 8:
-        #     raise ConfigurationException(
-        #         "I've not got the right number of connections. I have {} "
-        #         "instead of 8".format(
-        #             len(machine_graph.get_edges_ending_at_vertex(self))))
+        if len(edges) != 2:
+            raise ConfigurationException(
+                "I've not got the right number of connections. I have {} "
+                "instead of 2".format(
+                    len(machine_graph.get_edges_ending_at_vertex(self))))
         print(len(machine_graph.get_edges_ending_at_vertex(self)))
         for edge in edges:
             if edge.pre_vertex == self:
