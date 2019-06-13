@@ -9,6 +9,9 @@ from pacman.model.graphs.machine import MachineVertex
 from spinn_front_end_common.utilities.constants import DATA_SPECABLE_BASIC_SETUP_INFO_N_BYTES
 from spinn_front_end_common.abstract_models.impl import (MachineDataSpecableVertex)
 from pacman.model.resources import (ResourceContainer, ConstantSDRAM)
+from pacman.utilities.utility_calls import is_single
+from spinn_front_end_common.utilities.exceptions import ConfigurationException
+
 
 
 logger = logging.getLogger(__name__)
@@ -18,11 +21,15 @@ class AdditionVertex(MachineVertex, AbstractHasAssociatedBinary,
                      MachineDataSpecableVertex):
     _ONE_WORD = struct.Struct("<I")
 
+    TRANSMISSION_DATA_SIZE = 2 * 4 # has key and key
+    RECORDING_DATA_SIZE = 4 # int result
+
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
-        names=[('RECORDED_ADDITION_RESULT', 0)])
+        names=[('TRANSMISSIONS', 0),
+               ('RECORDED_ADDITION_RESULT', 1)])
 
-    CORE_APP_IDENTIFIER = 0xBEEF
+    PARTITION_ID = "ADDITION_PARTITION"
 
     def __init__(self, label, constraints=None):
         MachineVertex.__init__(self)
@@ -31,7 +38,6 @@ class AdditionVertex(MachineVertex, AbstractHasAssociatedBinary,
 
         print("\n add_vertex __init__")
 
-        self._string_data_size = 5000
         self._constant_data_size = 4
         self.placement = None
         self._label = label
@@ -40,7 +46,8 @@ class AdditionVertex(MachineVertex, AbstractHasAssociatedBinary,
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
         resources = ResourceContainer(sdram=ConstantSDRAM(
-            DATA_SPECABLE_BASIC_SETUP_INFO_N_BYTES + 4))
+             self.TRANSMISSION_DATA_SIZE + self.RECORDING_DATA_SIZE +
+             DATA_SPECABLE_BASIC_SETUP_INFO_N_BYTES ))
 
         return resources
 
@@ -48,9 +55,11 @@ class AdditionVertex(MachineVertex, AbstractHasAssociatedBinary,
         print("\n add_vertex _reserve_memory_regions")
 
         spec.reserve_memory_region(
+            region=self.DATA_REGIONS.TRANSMISSIONS.value,
+            size=self.TRANSMISSION_DATA_SIZE, label="keys")
+        spec.reserve_memory_region(
             region=self.DATA_REGIONS.RECORDED_ADDITION_RESULT.value,
-            size=4,
-            label="recorded_addition_result")
+            size=self.RECORDING_DATA_SIZE, label="recorded_addition_result")
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
@@ -61,6 +70,39 @@ class AdditionVertex(MachineVertex, AbstractHasAssociatedBinary,
         self.placement = placement
 
         self._reserve_memory_regions(spec)
+
+        # check got right number of keys and edges going into me
+        partitions = \
+            machine_graph.get_outgoing_edge_partitions_starting_at_vertex(self)
+
+        print("addition_partitions :", partitions)
+        if not is_single(partitions):
+            raise ConfigurationException(
+                "Can only handle one type of partition.")
+
+        ## check for duplicates
+        edges = list(machine_graph.get_edges_ending_at_vertex(self))
+        print("edges : ", edges)
+        # if len(edges) != 8:
+        #     raise ConfigurationException(
+        #         "I've not got the right number of connections. I have {} "
+        #         "instead of 8".format(
+        #             len(machine_graph.get_edges_ending_at_vertex(self))))
+        print(len(machine_graph.get_edges_ending_at_vertex(self)))
+        for edge in edges:
+            if edge.pre_vertex == self:
+                raise ConfigurationException(
+                    "I'm connected to myself, this is deemed an error"
+                    " please fix.")
+
+        # write key needed to transmit with
+        key = routing_info.get_first_key_from_pre_vertex(
+            self, self.PARTITION_ID)
+        print("\n key is ", key)
+        spec.switch_write_focus(
+            region=self.DATA_REGIONS.TRANSMISSIONS.value)
+        spec.write_value(0 if key is None else 1)
+        spec.write_value(0 if key is None else key)
 
         # End-of-Spec:
         spec.end_specification()

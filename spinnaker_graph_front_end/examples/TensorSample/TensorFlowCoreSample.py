@@ -32,15 +32,15 @@ front_end.setup(
     n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
 
 
-a = tf.constant(5, dtype=tf.int32)
-b = tf.constant(6, dtype=tf.int32)
-result = a + b
+a = tf.constant(9, dtype=tf.int32)
+b = tf.constant(13, dtype=tf.int32)
+c = tf.constant(10, dtype=tf.int32)
+
+result = a + b + c
 
 # Launch the graph in a session.
 sess = tf.Session()
 sess.run(result)
-
-# nodes = [n for n in tf.get_default_graph().as_graph_def().node]
 
 const = {}
 for n in tf.get_default_graph().as_graph_def().node:
@@ -91,12 +91,11 @@ for n_id in vertices:
     # Check if this vertex has inputs nodes
     if n_id in inputs :
         # Iterate over input ids of the nodes
-        for input_key in inputs:
-            for input_node_id in inputs[input_key]:
+        for input_key in inputs[n_id]:
                 # add the edge
                 front_end.add_machine_edge_instance(
-                    MachineEdge(vertices[input_node_id], vertices[n_id],
-                                label=vertices[input_node_id].name + ': to ' + vertices[n_id].name),
+                    MachineEdge(vertices[input_key], vertices[n_id],
+                                label=vertices[input_key].name + ': to ' + vertices[n_id].name),
                     "ADDITION_PARTITION")
 
 # Run for 2 milliseconds

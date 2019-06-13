@@ -14,9 +14,12 @@ int result = 0;
 
 uint my_key;
 
+uint key_exist = 0; 
+
 address_t address = NULL;
 
 typedef enum regions_e {
+    TRANSMISSIONS,
     RECORDED_DATA
 } regions_e;
 
@@ -25,6 +28,22 @@ typedef enum callback_priorities{
     MC_PACKET = -1, USER = 3
 } callback_priorities;
 
+
+typedef enum transmission_region_elements {
+    HAS_KEY, MY_KEY
+} transmission_region_elements;
+
+
+void send_value(uint data){
+    log_info("addition send_value\n", my_key);
+
+    log_info("sending value via multicast with key %d",
+              my_key);
+    while (!spin1_send_mc_packet(my_key, data, WITH_PAYLOAD)) {
+        spin1_delay_us(1);
+    }
+
+}
 
 void record_data(int result) {
     log_info("Recording data\n");
@@ -58,8 +77,14 @@ void receive_data(uint key, uint payload) {
     else{
         value_b = payload;
         result = addition(value_a, value_b);
+
+        if(key_exist == 1){
+            send_value(result);
+        }
+  
         record_data(result);
         spin1_exit(0);
+
     }
 }
 
@@ -74,6 +99,19 @@ static bool initialize() {
     if (!data_specification_read_header(address)) {
         log_error("failed to read the data spec header");
         return false;
+    }
+
+        // initialise transmission keys
+    address_t transmission_region_address = data_specification_get_region(
+            TRANSMISSIONS, address);
+    log_info("transmission_region_address  is %u\n", transmission_region_address);
+    // a pointer to uint32 and if the first element of this array exists so has key do the code bellow
+    if (transmission_region_address[HAS_KEY] == 1) {
+        key_exist = 1;
+        my_key = transmission_region_address[MY_KEY];
+        log_info("my key is %d\n", my_key);
+    } else {
+        log_info("Addition vertex without key");
     }
 
     return true;

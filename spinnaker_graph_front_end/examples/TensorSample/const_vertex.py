@@ -60,7 +60,7 @@ class ConstVertex(MachineVertex,
             size=self.INPUT_DATA_SIZE, label="input_const_values")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.RECORDING_CONST_VALUES.value,
-            size=self.RECORDING_DATA_SIZE)
+            size=self.RECORDING_DATA_SIZE, label="recorded_const")
 
     @inject_items({"data_n_time_steps": "DataNTimeSteps"})
     @overrides(
