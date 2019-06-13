@@ -75,30 +75,6 @@ class ConstVertex(MachineVertex,
         # reserve memory region
         self._reserve_memory_regions(spec)
 
-        # check got right number of keys and edges going into me
-        partitions = \
-            machine_graph.get_outgoing_edge_partitions_starting_at_vertex(self)
-
-        print("const_partitions :", partitions)
-        if not is_single(partitions):
-            raise ConfigurationException(
-                "Can only handle one type of partition.")
-
-        ## check for duplicates
-        edges = list(machine_graph.get_edges_ending_at_vertex(self))
-        print("edges : ", edges)
-        # if len(edges) != 8:
-        #     raise ConfigurationException(
-        #         "I've not got the right number of connections. I have {} "
-        #         "instead of 8".format(
-        #             len(machine_graph.get_edges_ending_at_vertex(self))))
-        print(len(machine_graph.get_edges_ending_at_vertex(self)))
-        for edge in edges:
-            if edge.pre_vertex == self:
-                raise ConfigurationException(
-                    "I'm connected to myself, this is deemed an error"
-                    " please fix.")
-
         # write key needed to transmit with
         key = routing_info.get_first_key_from_pre_vertex(
             self, self.PARTITION_ID)
@@ -160,14 +136,3 @@ class ConstVertex(MachineVertex,
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):
         return ExecutableType.SYNC
-
-    def get_minimum_buffer_sdram_usage(self):
-        return self._constant_data_size
-
-
-    def get_recorded_region_ids(self):
-        return [0]
-
-    def get_recording_region_base_address(self, txrx, placement):
-        return locate_memory_region_for_placement(
-            placement, self.DATA_REGIONS.RECORDING.value, txrx)
