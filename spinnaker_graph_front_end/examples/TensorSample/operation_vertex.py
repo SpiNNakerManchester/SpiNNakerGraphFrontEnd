@@ -15,8 +15,8 @@ from spinn_front_end_common.utilities.exceptions import ConfigurationException
 logger = logging.getLogger(__name__)
 
 
-class AdditionVertex(MachineVertex, AbstractHasAssociatedBinary,
-                     MachineDataSpecableVertex):
+class OperationVertex(MachineVertex, AbstractHasAssociatedBinary,
+                      MachineDataSpecableVertex):
     _ONE_WORD = struct.Struct("<I")
 
     TRANSMISSION_DATA_SIZE = 2 * 4 # has key and key
@@ -27,18 +27,18 @@ class AdditionVertex(MachineVertex, AbstractHasAssociatedBinary,
         names=[('TRANSMISSIONS', 0),
                ('RECORDED_ADDITION_RESULT', 1)])
 
-    PARTITION_ID = "ADDITION_PARTITION"
+    PARTITION_ID = "OPERATION_PARTITION"
 
     def __init__(self, label, constraints=None):
         MachineVertex.__init__(self)
         AbstractHasAssociatedBinary.__init__(self)
         MachineDataSpecableVertex.__init__(self)
 
-        print("\n add_vertex __init__")
-
         self._constant_data_size = 4
         self.placement = None
         self._label = label
+        print("\n {}_vertex __init__".format(self._label))
+
 
     @property
     @overrides(MachineVertex.resources_required)

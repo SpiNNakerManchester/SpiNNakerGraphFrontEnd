@@ -9,7 +9,7 @@ import logging
 import os
 import spinnaker_graph_front_end as front_end
 import tensorflow as tf
-from spinnaker_graph_front_end.examples.TensorSample.add_vertex import (AdditionVertex)
+from spinnaker_graph_front_end.examples.TensorSample.operation_vertex import (OperationVertex)
 from spinnaker_graph_front_end.examples.TensorSample.const_vertex import (ConstVertex)
 
 
@@ -19,12 +19,13 @@ front_end.setup(
     n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
 
 
-a = tf.constant(9, dtype=tf.int32)
-b = tf.constant(13, dtype=tf.int32)
-c = tf.constant(7, dtype=tf.int32)
-d = tf.constant(1, dtype=tf.int32)
+a = tf.constant(1, dtype=tf.int32)
+b = tf.constant(2, dtype=tf.int32)
+c = tf.constant(3, dtype=tf.int32)
+d = tf.constant(4, dtype=tf.int32)
 
-result = a + b + c + d
+sum = b * c
+result = a + sum + d
 
 # Launch the graph in a session.
 sess = tf.Session()
@@ -44,9 +45,9 @@ inputs = {}
 # Add Vertices
 for n_id in graph._nodes_by_id:
     print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
-    # addition operation
-    if 'add' in graph._nodes_by_id[n_id].name:
-        vertices[n_id] = AdditionVertex("Addition vertex {}".format(graph._nodes_by_id[n_id].name))
+    # math operation
+    if 'add' or 'mul' in graph._nodes_by_id[n_id].name:
+        vertices[n_id] = OperationVertex("{} vertex ".format(graph._nodes_by_id[n_id].name))
         # Store input node ids for the current node
         current_inputs = []
         if graph._nodes_by_id[n_id]._inputs:
@@ -56,7 +57,7 @@ for n_id in graph._nodes_by_id:
 
     # constant operation
     elif 'Const' in graph._nodes_by_id[n_id].name:
-        vertices[n_id] = ConstVertex("Const vertex {}".format(graph._nodes_by_id[n_id].name),
+        vertices[n_id] = ConstVertex("{} vertex ".format(graph._nodes_by_id[n_id].name),
                                      const[graph._nodes_by_id[n_id].name])
 
     vertices[n_id].name = graph._nodes_by_id[n_id].name
@@ -73,7 +74,7 @@ for n_id in vertices:
                 front_end.add_machine_edge_instance(
                     MachineEdge(vertices[input_key], vertices[n_id],
                                 label=vertices[input_key].name + ': to ' + vertices[n_id].name),
-                    "ADDITION_PARTITION")
+                    "OPERATION_PARTITION")
 
 print("run simulation")
 front_end.run(1)
@@ -90,7 +91,7 @@ for placement in sorted(placements.placements,
         logger.info("CONST {}, {}, {} > {}".format(
             placement.x, placement.y, placement.p, const_value))
 
-    if isinstance(placement.vertex, AdditionVertex):
+    if isinstance(placement.vertex, OperationVertex):
         addition_results = placement.vertex.read(placement, txrx)
         logger.info("ADDITION {}, {}, {} > {}".format(
             placement.x, placement.y, placement.p, addition_results))
