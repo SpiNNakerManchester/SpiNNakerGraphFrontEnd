@@ -14,11 +14,14 @@ int result = 0;
 
 uint my_key;
 
+uint32_t oper_type = 0;
+
 uint key_exist = 0; 
 
 address_t address = NULL;
 
 typedef enum regions_e {
+    OPER_TYPE,
     TRANSMISSIONS,
     RECORDED_DATA
 } regions_e;
@@ -27,6 +30,11 @@ typedef enum regions_e {
 typedef enum callback_priorities{
     MC_PACKET = -1, USER = 3
 } callback_priorities;
+
+
+typedef enum oper_type_region_element {
+    OPER_TYPE_POSITION
+} initial_state_region_elements;
 
 
 typedef enum transmission_region_elements {
@@ -84,7 +92,12 @@ void receive_data(uint key, uint payload) {
     }
     else{
         value_b = payload;
-        result = addition(value_a, value_b);
+        if(oper_type == 1){
+            result = addition(value_a, value_b);
+        }
+        if(oper_type == 2){
+            result = mul(value_a, value_b);
+        }
 
         if(key_exist == 1){
             send_value(result);
@@ -109,7 +122,12 @@ static bool initialize() {
         return false;
     }
 
-        // initialise transmission keys
+    // read my oper type value
+    address_t oper_type_region_address = data_specification_get_region(OPER_TYPE, address);
+    oper_type = oper_type_region_address[OPER_TYPE_POSITION];
+    log_info("my oper type value is %d\n", oper_type);
+
+    // initialise transmission keys
     address_t transmission_region_address = data_specification_get_region(
             TRANSMISSIONS, address);
     log_info("transmission_region_address  is %u\n", transmission_region_address);

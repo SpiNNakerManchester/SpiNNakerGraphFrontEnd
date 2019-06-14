@@ -1,4 +1,4 @@
-APPS = addition.mk const.mk
+APPS = operation.mk const.mk
 
 all: $(APPS)
 	for f in $(APPS); do $(MAKE) -f $$f || exit $$?; done

@@ -10,9 +10,6 @@ from pacman.model.graphs.machine import MachineVertex
 from spinn_front_end_common.abstract_models.impl import (MachineDataSpecableVertex)
 from spinn_front_end_common.utilities.constants import DATA_SPECABLE_BASIC_SETUP_INFO_N_BYTES
 from pacman.executor.injection_decorator import inject_items
-from pacman.utilities.utility_calls import is_single
-from spinn_front_end_common.utilities.helpful_functions import (
-    locate_memory_region_for_placement)
 from pacman.model.resources import (ResourceContainer, ConstantSDRAM)
 
 logger = logging.getLogger(__name__)

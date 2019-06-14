@@ -19,17 +19,19 @@ class OperationVertex(MachineVertex, AbstractHasAssociatedBinary,
                       MachineDataSpecableVertex):
     _ONE_WORD = struct.Struct("<I")
 
+    OPER_TYPE_DATA_SIZE = 4  # int number
     TRANSMISSION_DATA_SIZE = 2 * 4 # has key and key
     RECORDING_DATA_SIZE = 4 # int result
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
-        names=[('TRANSMISSIONS', 0),
-               ('RECORDED_OPER_RESULT', 1)])
+        names=[('OPER_TYPE', 0),
+               ('TRANSMISSIONS', 1),
+               ('RECORDED_OPER_RESULT', 2)])
 
     PARTITION_ID = "OPERATION_PARTITION"
 
-    def __init__(self, label, constraints=None):
+    def __init__(self, label, oper_type):
         MachineVertex.__init__(self)
         AbstractHasAssociatedBinary.__init__(self)
         MachineDataSpecableVertex.__init__(self)
@@ -37,6 +39,7 @@ class OperationVertex(MachineVertex, AbstractHasAssociatedBinary,
         self._constant_data_size = 4
         self.placement = None
         self._label = label
+        self._oper_type = oper_type
         print("\n {}_vertex __init__".format(self._label))
 
 
@@ -44,14 +47,16 @@ class OperationVertex(MachineVertex, AbstractHasAssociatedBinary,
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
         resources = ResourceContainer(sdram=ConstantSDRAM(
-             self.TRANSMISSION_DATA_SIZE + self.RECORDING_DATA_SIZE +
+             self.OPER_TYPE_DATA_SIZE + self.TRANSMISSION_DATA_SIZE + self.RECORDING_DATA_SIZE +
              DATA_SPECABLE_BASIC_SETUP_INFO_N_BYTES ))
 
         return resources
 
     def _reserve_memory_regions(self, spec):
         print("\n oper_vertex _reserve_memory_regions")
-
+        spec.reserve_memory_region(
+            region=self.DATA_REGIONS.OPER_TYPE.value,
+            size=self.OPER_TYPE_DATA_SIZE, label="oper_type_values")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.TRANSMISSIONS.value,
             size=self.TRANSMISSION_DATA_SIZE, label="keys")
@@ -83,6 +88,10 @@ class OperationVertex(MachineVertex, AbstractHasAssociatedBinary,
                 raise ConfigurationException(
                     "I'm connected to myself, this is deemed an error"
                     " please fix.")
+        # write oper type value
+        spec.switch_write_focus(self.DATA_REGIONS.OPER_TYPE.value)
+        print("\n write oper type value ", self._oper_type)
+        spec.write_value(self._oper_type)
 
         # write key needed to transmit with
         key = routing_info.get_first_key_from_pre_vertex(

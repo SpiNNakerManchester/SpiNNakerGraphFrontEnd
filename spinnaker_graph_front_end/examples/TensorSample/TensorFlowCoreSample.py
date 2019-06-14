@@ -20,12 +20,12 @@ front_end.setup(
 
 
 a = tf.constant(1, dtype=tf.int32)
-b = tf.constant(2, dtype=tf.int32)
+b = tf.constant(5, dtype=tf.int32)
 c = tf.constant(3, dtype=tf.int32)
-d = tf.constant(4, dtype=tf.int32)
+# d = tf.constant(4, dtype=tf.int32)
 
-sum = b * c
-result = a + sum + d
+
+result = a + b + c
 
 # Launch the graph in a session.
 sess = tf.Session()
@@ -42,12 +42,25 @@ graph = tf.get_default_graph()
 vertices = {}
 inputs = {}
 
+
+operations = { "add": 1,
+               "mul": 2}
+
 # Add Vertices
 for n_id in graph._nodes_by_id:
     print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
     # math operation
-    if 'add' or 'mul' in graph._nodes_by_id[n_id].name:
-        vertices[n_id] = OperationVertex("{} vertex ".format(graph._nodes_by_id[n_id].name))
+    if 'add' in graph._nodes_by_id[n_id].name:
+        vertices[n_id] = OperationVertex("{} vertex ".format(graph._nodes_by_id[n_id].name), operations["add"])
+        # Store input node ids for the current node
+        current_inputs = []
+        if graph._nodes_by_id[n_id]._inputs:
+            for index in graph._nodes_by_id[n_id]._inputs:
+                current_inputs.append(index._id)
+        inputs[n_id] = current_inputs
+
+    if 'mul' in graph._nodes_by_id[n_id].name:
+        vertices[n_id] = OperationVertex("{} vertex ".format(graph._nodes_by_id[n_id].name), operations["mul"])
         # Store input node ids for the current node
         current_inputs = []
         if graph._nodes_by_id[n_id]._inputs:
