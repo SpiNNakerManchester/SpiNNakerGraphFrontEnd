@@ -58,13 +58,21 @@ void record_data(int result) {
 
 int addition(int a, int b){
     log_info("addition\n");
-    int total;
+    int sum;
     log_info("Addition of A %d and B %d \n", a , b);
-    total = a + b;
-    log_info("Addition Result : %d \n", total);
-    return total;
+    sum = a + b;
+    log_info("Addition Result : %d \n", sum);
+    return sum;
 }
 
+int mul(int a, int b){
+    log_info("multiplication\n");
+    int res;
+    log_info("Mul of A %d and B %d \n", a , b);
+    res = a * b;
+    log_info("Mul Result : %d \n", res);
+    return res;
+}
 
 void receive_data(uint key, uint payload) {
     log_info("receive_data\n");
