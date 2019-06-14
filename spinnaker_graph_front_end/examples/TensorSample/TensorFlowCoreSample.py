@@ -92,8 +92,8 @@ for placement in sorted(placements.placements,
             placement.x, placement.y, placement.p, const_value))
 
     if isinstance(placement.vertex, OperationVertex):
-        addition_results = placement.vertex.read(placement, txrx)
-        logger.info("ADDITION {}, {}, {} > {}".format(
-            placement.x, placement.y, placement.p, addition_results))
+        oper_results = placement.vertex.read(placement, txrx)
+        logger.info("OPERATION {}, {}, {} > {}".format(
+            placement.x, placement.y, placement.p, oper_results))
 
 front_end.stop()

@@ -33,7 +33,7 @@ class ConstVertex(MachineVertex,
                ('INPUT', 1),
                ('RECORDING_CONST_VALUES', 2)])
 
-    PARTITION_ID = "ADDITION_PARTITION"
+    PARTITION_ID = "OPERATION_PARTITION"
 
     def __init__(self, label, constValue):
         MachineVertex.__init__(self, )

@@ -25,7 +25,7 @@ class OperationVertex(MachineVertex, AbstractHasAssociatedBinary,
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('TRANSMISSIONS', 0),
-               ('RECORDED_ADDITION_RESULT', 1)])
+               ('RECORDED_OPER_RESULT', 1)])
 
     PARTITION_ID = "OPERATION_PARTITION"
 
@@ -50,21 +50,21 @@ class OperationVertex(MachineVertex, AbstractHasAssociatedBinary,
         return resources
 
     def _reserve_memory_regions(self, spec):
-        print("\n add_vertex _reserve_memory_regions")
+        print("\n oper_vertex _reserve_memory_regions")
 
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.TRANSMISSIONS.value,
             size=self.TRANSMISSION_DATA_SIZE, label="keys")
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.RECORDED_ADDITION_RESULT.value,
-            size=self.RECORDING_DATA_SIZE, label="recorded_addition_result")
+            region=self.DATA_REGIONS.RECORDED_OPER_RESULT.value,
+            size=self.RECORDING_DATA_SIZE, label="recorded_operation_result")
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
             reverse_iptags, machine_time_step, time_scale_factor):
 
-        print("\n add_vertex generate_machine_data_specification")
+        print("\n oper_vertex generate_machine_data_specification")
         self.placement = placement
 
         self._reserve_memory_regions(spec)
@@ -109,7 +109,7 @@ class OperationVertex(MachineVertex, AbstractHasAssociatedBinary,
         print("app_data_base_address ", app_data_base_address)
         # Get the provenance region base address
         base_address_offset = get_region_base_address_offset(
-            app_data_base_address, self.DATA_REGIONS.RECORDED_ADDITION_RESULT.value)
+            app_data_base_address, self.DATA_REGIONS.RECORDED_OPER_RESULT.value)
         address = self._ONE_WORD.unpack(txrx.read_memory(
             placement.x, placement.y, base_address_offset, self._ONE_WORD.size))[0]
         print("read address from recording:",address)
@@ -122,7 +122,7 @@ class OperationVertex(MachineVertex, AbstractHasAssociatedBinary,
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
-        return "tensorFlow_addition.aplx"
+        return "tensorFlow_operation.aplx"
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):
