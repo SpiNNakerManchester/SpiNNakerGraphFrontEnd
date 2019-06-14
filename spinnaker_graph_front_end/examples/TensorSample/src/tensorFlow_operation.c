@@ -155,7 +155,7 @@ static bool initialize() {
  * SOURCE
  */
 void c_main() {
-    log_info("starting Tensor addition\n");
+    log_info("starting Tensor operation\n");
 
     // initialise the model
     if (!initialize()) {

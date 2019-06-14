@@ -21,11 +21,11 @@ front_end.setup(
 
 a = tf.constant(1, dtype=tf.int32)
 b = tf.constant(5, dtype=tf.int32)
-c = tf.constant(3, dtype=tf.int32)
+# c = tf.constant(3, dtype=tf.int32)
 # d = tf.constant(4, dtype=tf.int32)
 
 
-result = a + b + c
+result = a + b
 
 # Launch the graph in a session.
 sess = tf.Session()
@@ -46,32 +46,33 @@ inputs = {}
 operations = { "add": 1,
                "mul": 2}
 
+def store_Spinnaker_vertices(n_id, oper_type):
+    vertices[n_id] = OperationVertex("{} vertex ".format(graph._nodes_by_id[n_id].name), oper_type)
+
+def store_input_node_ids (n_id):
+    current_inputs = []
+    if graph._nodes_by_id[n_id]._inputs:
+        for index in graph._nodes_by_id[n_id]._inputs:
+            current_inputs.append(index._id)
+    inputs[n_id] = current_inputs
+
+
 # Add Vertices
 for n_id in graph._nodes_by_id:
     print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
-    # math operation
+    # math operations
     if 'add' in graph._nodes_by_id[n_id].name:
-        vertices[n_id] = OperationVertex("{} vertex ".format(graph._nodes_by_id[n_id].name), operations["add"])
-        # Store input node ids for the current node
-        current_inputs = []
-        if graph._nodes_by_id[n_id]._inputs:
-            for index in graph._nodes_by_id[n_id]._inputs:
-                current_inputs.append(index._id)
-        inputs[n_id] = current_inputs
+        store_Spinnaker_vertices(n_id, operations["add"])
 
     if 'mul' in graph._nodes_by_id[n_id].name:
-        vertices[n_id] = OperationVertex("{} vertex ".format(graph._nodes_by_id[n_id].name), operations["mul"])
-        # Store input node ids for the current node
-        current_inputs = []
-        if graph._nodes_by_id[n_id]._inputs:
-            for index in graph._nodes_by_id[n_id]._inputs:
-                current_inputs.append(index._id)
-        inputs[n_id] = current_inputs
+        store_Spinnaker_vertices(n_id, operations["mul"])
 
     # constant operation
-    elif 'Const' in graph._nodes_by_id[n_id].name:
+    if 'Const' in graph._nodes_by_id[n_id].name:
         vertices[n_id] = ConstVertex("{} vertex ".format(graph._nodes_by_id[n_id].name),
                                      const[graph._nodes_by_id[n_id].name])
+
+    store_input_node_ids(n_id)
 
     vertices[n_id].name = graph._nodes_by_id[n_id].name
     front_end.add_machine_vertex_instance(vertices[n_id])
