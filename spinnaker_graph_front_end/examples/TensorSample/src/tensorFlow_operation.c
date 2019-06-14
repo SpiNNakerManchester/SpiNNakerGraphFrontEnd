@@ -73,6 +73,15 @@ int addition(int a, int b){
     return sum;
 }
 
+int sub(int a, int b){
+    log_info("subtraction\n");
+    int res;
+    log_info("Subtraction from A %d the value B %d \n", a , b);
+    res = a - b;
+    log_info("Subtraction Result : %d \n", res);
+    return res;
+}
+
 int mul(int a, int b){
     log_info("multiplication\n");
     int res;
@@ -92,11 +101,17 @@ void receive_data(uint key, uint payload) {
     }
     else{
         value_b = payload;
+
         if(oper_type == 1){
             result = addition(value_a, value_b);
         }
+
         if(oper_type == 2){
             result = mul(value_a, value_b);
+        }
+
+        if(oper_type == 3){
+            result = sub(value_a, value_b);
         }
 
         if(key_exist == 1){

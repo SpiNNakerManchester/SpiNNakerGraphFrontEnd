@@ -21,11 +21,9 @@ front_end.setup(
 
 a = tf.constant(1, dtype=tf.int32)
 b = tf.constant(5, dtype=tf.int32)
-# c = tf.constant(3, dtype=tf.int32)
-# d = tf.constant(4, dtype=tf.int32)
 
 
-result = a + b
+result = a - b
 
 # Launch the graph in a session.
 sess = tf.Session()
@@ -44,7 +42,8 @@ inputs = {}
 
 
 operations = { "add": 1,
-               "mul": 2}
+               "mul": 2,
+               "sub": 3}
 
 def store_Spinnaker_vertices(n_id, oper_type):
     vertices[n_id] = OperationVertex("{} vertex ".format(graph._nodes_by_id[n_id].name), oper_type)
@@ -66,6 +65,9 @@ for n_id in graph._nodes_by_id:
 
     if 'mul' in graph._nodes_by_id[n_id].name:
         store_Spinnaker_vertices(n_id, operations["mul"])
+
+    if 'sub' in graph._nodes_by_id[n_id].name:
+        store_Spinnaker_vertices(n_id, operations["sub"])
 
     # constant operation
     if 'Const' in graph._nodes_by_id[n_id].name:
