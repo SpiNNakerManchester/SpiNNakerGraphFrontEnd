@@ -19,11 +19,14 @@ front_end.setup(
     n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
 
 
-a = tf.constant(1, dtype=tf.int32)
-b = tf.constant(5, dtype=tf.int32)
+a = tf.constant(-1, dtype=tf.int32)
+b = tf.constant(-2, dtype=tf.int32)
+# c = tf.constant(3, dtype=tf.int32)
+# d = tf.constant(4, dtype=tf.int32)
+# e = tf.constant(5, dtype=tf.int32)
 
 
-result = a - b
+result = a + b
 
 # Launch the graph in a session.
 sess = tf.Session()

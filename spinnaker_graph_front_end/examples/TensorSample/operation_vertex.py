@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 
 class OperationVertex(MachineVertex, AbstractHasAssociatedBinary,
                       MachineDataSpecableVertex):
-    _ONE_WORD = struct.Struct("<I")
+
+    _ONE_WORD = struct.Struct("<i")
 
     OPER_TYPE_DATA_SIZE = 4  # int number
     TRANSMISSION_DATA_SIZE = 2 * 4 # has key and key

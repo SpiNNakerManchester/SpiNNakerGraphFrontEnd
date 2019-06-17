@@ -2,7 +2,6 @@ import logging
 import struct
 from enum import Enum
 from data_specification.utility_calls import get_region_base_address_offset
-from spinn_front_end_common.utilities.exceptions import ConfigurationException
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_utilities.overrides import overrides
@@ -11,6 +10,8 @@ from spinn_front_end_common.abstract_models.impl import (MachineDataSpecableVert
 from spinn_front_end_common.utilities.constants import DATA_SPECABLE_BASIC_SETUP_INFO_N_BYTES
 from pacman.executor.injection_decorator import inject_items
 from pacman.model.resources import (ResourceContainer, ConstantSDRAM)
+from data_specification.enums import DataType
+
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,8 @@ logger = logging.getLogger(__name__)
 class ConstVertex(MachineVertex,
                   AbstractHasAssociatedBinary,
                   MachineDataSpecableVertex):
-    _ONE_WORD = struct.Struct("<I")
+
+    _ONE_WORD = struct.Struct("<i")
 
     TRANSMISSION_DATA_SIZE = 2 * 4 # has key and key
     INPUT_DATA_SIZE = 4 # constant int number
@@ -84,7 +86,7 @@ class ConstVertex(MachineVertex,
         # write constant value
         spec.switch_write_focus(self.DATA_REGIONS.INPUT.value)
         print("\n write constant value ", self._constValue)
-        spec.write_value(self._constValue)
+        spec.write_value(self._constValue, data_type=DataType.INT32)
 
         # End-of-Spec:
         spec.end_specification()
