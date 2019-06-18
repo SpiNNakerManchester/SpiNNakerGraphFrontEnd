@@ -8,10 +8,10 @@ from pacman.model.graphs.machine import MachineEdge
 import logging
 import os
 import spinnaker_graph_front_end as front_end
-import tensorflow as tf
 from spinnaker_graph_front_end.examples.TensorSample.operation_vertex import (OperationVertex)
 from spinnaker_graph_front_end.examples.TensorSample.const_vertex import (ConstVertex)
-
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()   # use functions of TensorFlow version 1 into TensorFlow version 2.
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +25,15 @@ b = tf.constant(-2, dtype=tf.int32)
 # d = tf.constant(4, dtype=tf.int32)
 # e = tf.constant(5, dtype=tf.int32)
 
+my_data = [
+    [0, 1,],
+    [2, 3,],
+    [4, 5,],
+    [6, 7,],
+]
 
-result = a + b
+
+result = a+b
 
 # Launch the graph in a session.
 sess = tf.Session()
@@ -43,10 +50,12 @@ graph = tf.get_default_graph()
 vertices = {}
 inputs = {}
 
-
 operations = { "add": 1,
                "mul": 2,
-               "sub": 3}
+               "sub": 3,
+               # "truediv":4,
+               # "Placeholder"
+               }
 
 def store_Spinnaker_vertices(n_id, oper_type):
     vertices[n_id] = OperationVertex("{} vertex ".format(graph._nodes_by_id[n_id].name), oper_type)
@@ -66,16 +75,22 @@ for n_id in graph._nodes_by_id:
     if 'add' in graph._nodes_by_id[n_id].name:
         store_Spinnaker_vertices(n_id, operations["add"])
 
-    if 'mul' in graph._nodes_by_id[n_id].name:
+    elif 'mul' in graph._nodes_by_id[n_id].name:
         store_Spinnaker_vertices(n_id, operations["mul"])
 
-    if 'sub' in graph._nodes_by_id[n_id].name:
+    elif 'sub' in graph._nodes_by_id[n_id].name:
         store_Spinnaker_vertices(n_id, operations["sub"])
 
+    # elif 'truediv' == graph._nodes_by_id[n_id].name:
+    #     store_Spinnaker_vertices(n_id, operations["truediv"])
+
     # constant operation
-    if 'Const' in graph._nodes_by_id[n_id].name:
+    elif 'Const' in graph._nodes_by_id[n_id].name:
         vertices[n_id] = ConstVertex("{} vertex ".format(graph._nodes_by_id[n_id].name),
                                      const[graph._nodes_by_id[n_id].name])
+
+    else:
+        break
 
     store_input_node_ids(n_id)
 
