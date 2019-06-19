@@ -35,7 +35,7 @@ class ConstVertex(MachineVertex,
 
     PARTITION_ID = "OPERATION_PARTITION"
 
-    def __init__(self, label, constValue):
+    def __init__(self, label, const_value):
         MachineVertex.__init__(self, )
         AbstractHasAssociatedBinary.__init__(self)
         MachineDataSpecableVertex.__init__(self)
@@ -44,14 +44,16 @@ class ConstVertex(MachineVertex,
 
         self._constant_data_size = 4
         self.placement = None
-        self._constValue = constValue
-        if type(constValue) is np.ndarray:
+        self._const_value = const_value
+        self.tensor_size = 1
+        if type(const_value) is np.ndarray:
             print("ndarray type")
+            self.tensor_size = const_value.size
         else:
             print("constant type")
 
         self._label = label
-        print("const_value in the instance :",self._constValue)
+        print("const_value in the instance :", self._const_value)
 
     def _reserve_memory_regions(self, spec):
         print("\n const_vertex _reserve_memory_regions")
@@ -61,7 +63,7 @@ class ConstVertex(MachineVertex,
             size=self.TRANSMISSION_DATA_SIZE, label="keys")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.INPUT.value,
-            size=self.INPUT_DATA_SIZE, label="input_const_values")
+            size=self.INPUT_DATA_SIZE * self.tensor_size, label="input_const_values")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.RECORDING_CONST_VALUES.value,
             size=self.RECORDING_DATA_SIZE, label="recorded_const")
@@ -90,8 +92,11 @@ class ConstVertex(MachineVertex,
 
         # write constant value
         spec.switch_write_focus(self.DATA_REGIONS.INPUT.value)
-        print("\n write constant value ", self._constValue)
-        spec.write_value(self._constValue, data_type=DataType.INT32)
+        print("\n write constant value ", self._const_value)
+        if self.tensor_size == 1:
+            spec.write_value(self._const_value, data_type=DataType.INT32)
+        else:
+            spec.write_array(self._const_value, data_type=DataType.INT32)
 
         # End-of-Spec:
         spec.end_specification()
@@ -101,8 +106,8 @@ class ConstVertex(MachineVertex,
     def resources_required(self):
         print("\n {} resources_required".format(self._label))
 
-        fixed_sdram = (self.TRANSMISSION_DATA_SIZE + self.INPUT_DATA_SIZE + self.RECORDING_DATA_SIZE +
-                       DATA_SPECABLE_BASIC_SETUP_INFO_N_BYTES)
+        fixed_sdram = (self.TRANSMISSION_DATA_SIZE + self.INPUT_DATA_SIZE * self.tensor_size +
+                       self.RECORDING_DATA_SIZE + DATA_SPECABLE_BASIC_SETUP_INFO_N_BYTES)
 
         print("fixed_sdram : ",fixed_sdram)
         return ResourceContainer(sdram=ConstantSDRAM(fixed_sdram))

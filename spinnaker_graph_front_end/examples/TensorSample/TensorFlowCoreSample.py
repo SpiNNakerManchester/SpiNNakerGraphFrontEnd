@@ -44,7 +44,7 @@ k = tf.constant([1, 2, 3, 4, 5, 6], shape=[2, 3])
 # c = tf.matmul(k, l)
 
 
-# result = a+b
+# result = a + b
 
 # Launch the graph in a session.
 sess = tf.Session()
