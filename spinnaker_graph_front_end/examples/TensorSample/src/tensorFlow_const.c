@@ -11,6 +11,7 @@
 uint my_key;
 
 uint32_t const_value=0;
+uint32_t const_value1=0;
 
 address_t address = NULL;
 
@@ -97,17 +98,20 @@ static bool initialize() {
     if (transmission_region_address[HAS_KEY] == 1) {
         my_key = transmission_region_address[MY_KEY];
         log_info("my key is %d\n", my_key);
-    } else {
-        log_error(
-            "cannot find the keys in the regions\n");
-        return false;
-    }
+    } 
+    // else {
+    //     log_error(
+    //         "cannot find the keys in the regions\n");
+    //     return false;
+    // }
 
     // read my const value
     address_t my_input_region_address = data_specification_get_region(
         INPUT, address);
-    const_value = my_input_region_address[INITIAL_INPUT];
+    const_value = my_input_region_address[0];
     log_info("my const value is %d\n", const_value);
+    const_value1 = my_input_region_address[1];
+    log_info("my const value1 is %d\n", const_value1);
 
     return true;
 }

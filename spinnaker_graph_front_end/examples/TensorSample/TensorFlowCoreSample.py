@@ -30,7 +30,7 @@ front_end.setup(n_chips_required=1, model_binary_folder=os.path.dirname(__file__
 # 2-D tensor `a`
 # [[1, 2, 3],
 #  [4, 5, 6]]
-k = tf.constant([1, 2, 3, 4, 5, 6], shape=[2, 3])
+k = tf.constant([9, 4, 3, 4, 5, 6], shape=[1, 6])
 
 # 2-D tensor `b`
 # [[ 7,  8],
