@@ -11,6 +11,7 @@ from spinn_front_end_common.utilities.constants import DATA_SPECABLE_BASIC_SETUP
 from pacman.executor.injection_decorator import inject_items
 from pacman.model.resources import (ResourceContainer, ConstantSDRAM)
 from data_specification.enums import DataType
+import numpy as np
 
 
 logger = logging.getLogger(__name__)
@@ -43,8 +44,12 @@ class ConstVertex(MachineVertex,
 
         self._constant_data_size = 4
         self.placement = None
-        # app specific elements
         self._constValue = constValue
+        if type(constValue) is np.ndarray:
+            print("ndarray type")
+        else:
+            print("constant type")
+
         self._label = label
         print("const_value in the instance :",self._constValue)
 

@@ -7,42 +7,57 @@
 from pacman.model.graphs.machine import MachineEdge
 import logging
 import os
+import unittest
 import spinnaker_graph_front_end as front_end
 from spinnaker_graph_front_end.examples.TensorSample.operation_vertex import (OperationVertex)
 from spinnaker_graph_front_end.examples.TensorSample.const_vertex import (ConstVertex)
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()   # use functions of TensorFlow version 1 into TensorFlow version 2.
+from tensorflow.python.framework import tensor_util
 
 logger = logging.getLogger(__name__)
 
-front_end.setup(
-    n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
+
+front_end.setup(n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
 
 
-a = tf.constant(-1, dtype=tf.int32)
-b = tf.constant(-2, dtype=tf.int32)
+# a = tf.constant(-1, dtype=tf.int32)
+# b = tf.constant(-2, dtype=tf.int32)
 # c = tf.constant(3, dtype=tf.int32)
 # d = tf.constant(4, dtype=tf.int32)
 # e = tf.constant(5, dtype=tf.int32)
 
-my_data = [
-    [0, 1,],
-    [2, 3,],
-    [4, 5,],
-    [6, 7,],
-]
+# 2-D tensor `a`
+# [[1, 2, 3],
+#  [4, 5, 6]]
+k = tf.constant([1, 2, 3, 4, 5, 6], shape=[2, 3])
+
+# 2-D tensor `b`
+# [[ 7,  8],
+#  [ 9, 10],
+#  [11, 12]]
+# l = tf.constant([7, 8, 9, 10, 11, 12], shape=[3, 2])
+
+# `a` * `b`
+# [[ 58,  64],
+#  [139, 154]]
+# c = tf.matmul(k, l)
 
 
-result = a+b
+# result = a+b
 
 # Launch the graph in a session.
 sess = tf.Session()
-sess.run(result)
+sess.run(k)
 
 const = {}
 for n in tf.get_default_graph().as_graph_def().node:
     if 'Const' in n.name:
-        const[n.name] = n.attr.get('value').tensor.int_val[0]
+        if not (n.attr["value"].tensor.tensor_shape.dim):
+            const[n.name] = n.attr.get('value').tensor.int_val[0]
+        else:
+            const[n.name] = tensor_util.MakeNdarray(n.attr['value'].tensor)
+
 
 graph = tf.get_default_graph()
 
@@ -131,3 +146,4 @@ for placement in sorted(placements.placements,
             placement.x, placement.y, placement.p, oper_results))
 
 front_end.stop()
+

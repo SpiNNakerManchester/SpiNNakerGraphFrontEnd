@@ -91,6 +91,15 @@ int mul(int a, int b){
     return res;
 }
 
+int div(int a, int b){
+    log_info("division\n");
+    int res;
+    log_info("Division from A %d the value B %d \n", a , b);
+    res = a / b;
+    log_info("Division Result : %d \n", res);
+    return res;
+}
+
 void receive_data(uint key, uint payload) {
     log_info("receive_data\n");
     log_info("the key i've received is %d\n", key);
@@ -112,6 +121,10 @@ void receive_data(uint key, uint payload) {
 
         if(oper_type == 3){
             result = sub(value_a, value_b);
+        }
+
+        if(oper_type == 4){
+            result = div(value_a, value_b);
         }
 
         if(key_exist == 1){
