@@ -10,8 +10,10 @@
 
 uint my_key;
 
-int *const_value;
+int const_value;
 int shape_size;
+int *shape_addr_dtcm;
+int *input_addr_dtcm;
 
 address_t address = NULL;
 
@@ -107,26 +109,30 @@ static bool initialize() {
     // }
 
     // read my shape
-    address_t shape_region_address = data_specification_get_region(
-        SHAPE, address);
+    address_t shape_region_address = data_specification_get_region(SHAPE, address);
     log_info("my shape value is %d\n", shape_region_address[0]);
-    log_info("my shape value1 is %d\n", shape_region_address[1]);
-        log_info("my shape value1 is %d\n", shape_region_address[2]);
-
+    // Reserve memory for DTCM
+    shape_addr_dtcm = (uint32_t*) spin1_malloc(shape_region_address[0] * sizeof(uint32_t));
+    for(int i=1; i<shape_region_address[0]; i++){
+        //Store values in DTCM
+        spin1_memcpy(shape_addr_dtcm[i-1], &shape_region_address[i], 4);
+    }
 
     // read my const value
-    address_t input_region_address = data_specification_get_region(
-        INPUT, address);
+    address_t input_region_address = data_specification_get_region(INPUT, address);
     log_info("my const value is %d\n", input_region_address[0]);
-    log_info("my const value1 is %d\n", input_region_address[1]);
-        log_info("my const value1 is %d\n", input_region_address[2]);
+    //Reserve memory for DTCM
+    input_addr_dtcm = (uint32_t*) spin1_malloc(input_region_address[0] * sizeof(uint32_t));
+    for(int i=1; i<input_region_address[0]; i++){
+        //Store values in DTCM
+        spin1_memcpy(input_addr_dtcm[i-1], &input_region_address[i], 4);
+    }
+    const_value = input_region_address[1];
 
-    log_info("my const value1 is %d\n", input_region_address[3]);
-
-    log_info("my const value1 is %d\n", input_region_address[4]);
-
-    log_info("my const value1 is %d\n", input_region_address[5]);
-
+    for(int i=0; i<input_region_address[0]; i++){
+        //Store values in DTCM
+        log_info("array value %d\n", input_addr_dtcm[i]);
+    }
 
     return true;
 }
