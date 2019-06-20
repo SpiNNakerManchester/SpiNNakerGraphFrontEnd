@@ -10,13 +10,14 @@
 
 uint my_key;
 
-uint32_t const_value=0;
-uint32_t const_value1=0;
+int *const_value;
+int shape_size;
 
 address_t address = NULL;
 
 typedef enum regions_e {
     TRANSMISSIONS,
+    SHAPE,
     INPUT,
     RECORDED_DATA
 } regions_e;
@@ -105,13 +106,27 @@ static bool initialize() {
     //     return false;
     // }
 
+    // read my shape
+    address_t shape_region_address = data_specification_get_region(
+        SHAPE, address);
+    log_info("my shape value is %d\n", shape_region_address[0]);
+    log_info("my shape value1 is %d\n", shape_region_address[1]);
+        log_info("my shape value1 is %d\n", shape_region_address[2]);
+
+
     // read my const value
-    address_t my_input_region_address = data_specification_get_region(
+    address_t input_region_address = data_specification_get_region(
         INPUT, address);
-    const_value = my_input_region_address[0];
-    log_info("my const value is %d\n", const_value);
-    const_value1 = my_input_region_address[1];
-    log_info("my const value1 is %d\n", const_value1);
+    log_info("my const value is %d\n", input_region_address[0]);
+    log_info("my const value1 is %d\n", input_region_address[1]);
+        log_info("my const value1 is %d\n", input_region_address[2]);
+
+    log_info("my const value1 is %d\n", input_region_address[3]);
+
+    log_info("my const value1 is %d\n", input_region_address[4]);
+
+    log_info("my const value1 is %d\n", input_region_address[5]);
+
 
     return true;
 }

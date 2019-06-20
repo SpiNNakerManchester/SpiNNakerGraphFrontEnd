@@ -18,132 +18,143 @@ from tensorflow.python.framework import tensor_util
 logger = logging.getLogger(__name__)
 
 
-front_end.setup(n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
+class TestingTensorGraph(unittest.TestCase):
+
+    def test_Tensor_graph(self):
+
+        front_end.setup(n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
+
+        # a = tf.constant(-1, dtype=tf.int32)
+        # b = tf.constant(-2, dtype=tf.int32)
+        # c = tf.constant(3, dtype=tf.int32)
+        # d = tf.constant(4, dtype=tf.int32)
+        # e = tf.constant(5, dtype=tf.int32)
+
+        # 2-D tensor `a`
+        # [[1, 2, 3],
+        #  [4, 5, 6]]
+        k = tf.constant([9, 4, 3, 4, 5, 6], shape=[2, 3])
 
 
-# a = tf.constant(-1, dtype=tf.int32)
-# b = tf.constant(-2, dtype=tf.int32)
-# c = tf.constant(3, dtype=tf.int32)
-# d = tf.constant(4, dtype=tf.int32)
-# e = tf.constant(5, dtype=tf.int32)
+        # 2-D tensor `b`
+        # [[ 7,  8],
+        #  [ 9, 10],
+        #  [11, 12]]
+        # l = tf.constant([7, 8, 9, 10, 11, 12], shape=[3, 2])
 
-# 2-D tensor `a`
-# [[1, 2, 3],
-#  [4, 5, 6]]
-k = tf.constant([9, 4, 3, 4, 5, 6], shape=[1, 6])
-
-# 2-D tensor `b`
-# [[ 7,  8],
-#  [ 9, 10],
-#  [11, 12]]
-# l = tf.constant([7, 8, 9, 10, 11, 12], shape=[3, 2])
-
-# `a` * `b`
-# [[ 58,  64],
-#  [139, 154]]
-# c = tf.matmul(k, l)
+        # `a` * `b`
+        # [[ 58,  64],
+        #  [139, 154]]
+        # c = tf.matmul(k, l)
 
 
-# result = a + b
+        # result = a + b
 
-# Launch the graph in a session.
-sess = tf.Session()
-sess.run(k)
+        # Launch the graph in a session.
+        sess = tf.Session()
+        sess.run(k)
 
-const = {}
-for n in tf.get_default_graph().as_graph_def().node:
-    if 'Const' in n.name:
-        if not (n.attr["value"].tensor.tensor_shape.dim):
-            const[n.name] = n.attr.get('value').tensor.int_val[0]
-        else:
-            const[n.name] = tensor_util.MakeNdarray(n.attr['value'].tensor)
-
-
-graph = tf.get_default_graph()
-
-# List of spinnaker vertices
-vertices = {}
-inputs = {}
-
-operations = { "add": 1,
-               "mul": 2,
-               "sub": 3,
-               # "truediv":4,
-               # "Placeholder"
-               }
-
-def store_Spinnaker_vertices(n_id, oper_type):
-    vertices[n_id] = OperationVertex("{} vertex ".format(graph._nodes_by_id[n_id].name), oper_type)
-
-def store_input_node_ids (n_id):
-    current_inputs = []
-    if graph._nodes_by_id[n_id]._inputs:
-        for index in graph._nodes_by_id[n_id]._inputs:
-            current_inputs.append(index._id)
-    inputs[n_id] = current_inputs
+        const = {}
+        for n in tf.get_default_graph().as_graph_def().node:
+            if 'Const' in n.name:
+                if not (n.attr["value"].tensor.tensor_shape.dim):
+                    const[n.name] = n.attr.get('value').tensor.int_val[0]
+                else:
+                    const[n.name] = tensor_util.MakeNdarray(n.attr['value'].tensor)
+                    # tensor_shape = [x.size for x in n.attr["value"].tensor.tensor_shape.dim]
+                    # const[n.name] = n.attr.get('value').tensor.tensor_content  # Binary form String of the tensor
 
 
-# Add Vertices
-for n_id in graph._nodes_by_id:
-    print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
-    # math operations
-    if 'add' in graph._nodes_by_id[n_id].name:
-        store_Spinnaker_vertices(n_id, operations["add"])
 
-    elif 'mul' in graph._nodes_by_id[n_id].name:
-        store_Spinnaker_vertices(n_id, operations["mul"])
+        graph = tf.get_default_graph()
 
-    elif 'sub' in graph._nodes_by_id[n_id].name:
-        store_Spinnaker_vertices(n_id, operations["sub"])
+        # List of spinnaker vertices
+        vertices = {}
+        inputs = {}
 
-    # elif 'truediv' == graph._nodes_by_id[n_id].name:
-    #     store_Spinnaker_vertices(n_id, operations["truediv"])
+        operations = { "add": 1,
+                       "mul": 2,
+                       "sub": 3,
+                       # "truediv":4,
+                       # "Placeholder"
+                       }
 
-    # constant operation
-    elif 'Const' in graph._nodes_by_id[n_id].name:
-        vertices[n_id] = ConstVertex("{} vertex ".format(graph._nodes_by_id[n_id].name),
-                                     const[graph._nodes_by_id[n_id].name])
+        def store_Spinnaker_vertices(n_id, oper_type):
+            vertices[n_id] = OperationVertex("{} vertex ".format(graph._nodes_by_id[n_id].name), oper_type)
 
-    else:
-        break
-
-    store_input_node_ids(n_id)
-
-    vertices[n_id].name = graph._nodes_by_id[n_id].name
-    front_end.add_machine_vertex_instance(vertices[n_id])
+        def store_input_node_ids (n_id):
+            current_inputs = []
+            if graph._nodes_by_id[n_id]._inputs:
+                for index in graph._nodes_by_id[n_id]._inputs:
+                    current_inputs.append(index._id)
+            inputs[n_id] = current_inputs
 
 
-# Add Edges
-for n_id in vertices:
-    # Check if this vertex has inputs nodes
-    if n_id in inputs :
-        # Iterate over input ids of the nodes
-        for input_key in inputs[n_id]:
-                # add the edge
-                front_end.add_machine_edge_instance(
-                    MachineEdge(vertices[input_key], vertices[n_id],
-                                label=vertices[input_key].name + ': to ' + vertices[n_id].name),
-                    "OPERATION_PARTITION")
+        # Add Vertices
+        for n_id in graph._nodes_by_id:
+            print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
+            # math operations
+            if 'add' in graph._nodes_by_id[n_id].name:
+                store_Spinnaker_vertices(n_id, operations["add"])
 
-print("run simulation")
-front_end.run(1)
+            elif 'mul' in graph._nodes_by_id[n_id].name:
+                store_Spinnaker_vertices(n_id, operations["mul"])
 
-placements = front_end.placements()
-txrx = front_end.transceiver()
+            elif 'sub' in graph._nodes_by_id[n_id].name:
+                store_Spinnaker_vertices(n_id, operations["sub"])
 
-print("read SDRAM after run")
-for placement in sorted(placements.placements,
-                        key=lambda p: (p.x, p.y, p.p)):
+            # elif 'truediv' == graph._nodes_by_id[n_id].name:
+            #     store_Spinnaker_vertices(n_id, operations["truediv"])
 
-    if isinstance(placement.vertex, ConstVertex):
-        const_value = placement.vertex.read(placement, txrx)
-        logger.info("CONST {}, {}, {} > {}".format(
-            placement.x, placement.y, placement.p, const_value))
+            # constant operation
+            elif 'Const' in graph._nodes_by_id[n_id].name:
+                vertices[n_id] = ConstVertex("{} vertex ".format(graph._nodes_by_id[n_id].name),
+                                             const[graph._nodes_by_id[n_id].name])
 
-    if isinstance(placement.vertex, OperationVertex):
-        oper_results = placement.vertex.read(placement, txrx)
-        logger.info("OPERATION {}, {}, {} > {}".format(
-            placement.x, placement.y, placement.p, oper_results))
+            else:
+                break
 
-front_end.stop()
+            store_input_node_ids(n_id)
 
+            vertices[n_id].name = graph._nodes_by_id[n_id].name
+            front_end.add_machine_vertex_instance(vertices[n_id])
+
+
+        # Add Edges
+        for n_id in vertices:
+            # Check if this vertex has inputs nodes
+            if n_id in inputs :
+                # Iterate over input ids of the nodes
+                for input_key in inputs[n_id]:
+                        # add the edge
+                        front_end.add_machine_edge_instance(
+                            MachineEdge(vertices[input_key], vertices[n_id],
+                                        label=vertices[input_key].name + ': to ' + vertices[n_id].name),
+                            "OPERATION_PARTITION")
+
+        print("run simulation")
+        front_end.run(1)
+
+        placements = front_end.placements()
+        txrx = front_end.transceiver()
+
+        print("read SDRAM after run")
+        for placement in sorted(placements.placements,
+                                key=lambda p: (p.x, p.y, p.p)):
+
+            if isinstance(placement.vertex, ConstVertex):
+                const_value = placement.vertex.read(placement, txrx)
+                logger.info("CONST {}, {}, {} > {}".format(
+                    placement.x, placement.y, placement.p, const_value))
+                self.assertEqual(const_value,3)
+
+            if isinstance(placement.vertex, OperationVertex):
+                oper_results = placement.vertex.read(placement, txrx)
+                logger.info("OPERATION {}, {}, {} > {}".format(
+                    placement.x, placement.y, placement.p, oper_results))
+
+        front_end.stop()
+
+
+if __name__ == '__main__':
+    unittest.main()
