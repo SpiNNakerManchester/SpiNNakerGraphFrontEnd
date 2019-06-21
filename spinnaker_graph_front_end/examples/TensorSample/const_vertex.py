@@ -49,8 +49,8 @@ class ConstVertex(MachineVertex,
         self.shape_length = 1
         self.size = 1
         if type(self._const_value) is np.ndarray:
-            self.shape_length = len(self._const_value.shape)
             self._shape = self._const_value.shape
+            self.shape_length = len(self._const_value.shape)
             self.size = self._const_value.size
 
         print("init const shape:", self._shape)

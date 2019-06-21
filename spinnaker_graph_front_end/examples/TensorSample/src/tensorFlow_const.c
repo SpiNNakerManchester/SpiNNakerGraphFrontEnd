@@ -12,6 +12,7 @@ uint my_key;
 
 int const_value;
 int shape_size;
+int input_size;
 int *shape_addr_dtcm;
 int *input_addr_dtcm;
 
@@ -110,23 +111,24 @@ static bool initialize() {
 
     // read my shape
     address_t shape_region_address = data_specification_get_region(SHAPE, address);
-    log_info("my shape value is %d\n", shape_region_address[0]);
-    // Reserve memory for DTCM
-    shape_addr_dtcm = (uint32_t*) spin1_malloc(shape_region_address[0] * sizeof(uint32_t));
-    for(int i=1; i<shape_region_address[0]; i++){
-        //Store values in DTCM
-        spin1_memcpy(shape_addr_dtcm[i-1], &shape_region_address[i], 4);
-    }
+    shape_size = shape_region_address[0] * sizeof(uint32_t);
+    log_info("shape_size %d\n", shape_size);
+
+    // Reserve memory to DTCM
+    shape_addr_dtcm = (uint32_t*) spin1_malloc(shape_size);
+    // Copy values to DTCM
+    spin1_memcpy(shape_addr_dtcm, &shape_region_address[1], shape_size);
 
     // read my const value
     address_t input_region_address = data_specification_get_region(INPUT, address);
-    log_info("my const value is %d\n", input_region_address[0]);
-    //Reserve memory for DTCM
-    input_addr_dtcm = (uint32_t*) spin1_malloc(input_region_address[0] * sizeof(uint32_t));
-    for(int i=1; i<input_region_address[0]; i++){
-        //Store values in DTCM
-        spin1_memcpy(input_addr_dtcm[i-1], &input_region_address[i], 4);
-    }
+    input_size = input_region_address[0] * sizeof(uint32_t);
+    log_info("input_size %d\n", input_size);
+
+    // Reserve memory for DTCM
+    input_addr_dtcm = (uint32_t*) spin1_malloc(input_size);
+    // Copy values to DTCM
+    spin1_memcpy(input_addr_dtcm, &input_region_address[1], input_size);
+
     const_value = input_region_address[1];
 
     for(int i=0; i<input_region_address[0]; i++){
