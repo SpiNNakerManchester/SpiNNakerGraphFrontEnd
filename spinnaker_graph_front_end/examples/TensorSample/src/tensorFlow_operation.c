@@ -73,6 +73,7 @@ int addition(int a, int b){
     return sum;
 }
 
+// Todo : specify which value is Substracted after the reception.
 int sub(int a, int b){
     log_info("subtraction\n");
     int res;
@@ -80,6 +81,39 @@ int sub(int a, int b){
     res = a - b;
     log_info("Subtraction Result : %d \n", res);
     return res;
+}
+
+
+int a[2][3] = {
+    {1, 2, 3},
+    {4, 5, 6}
+};
+
+int b[3][2] = {
+    {7, 8},
+    {9, 10},
+    {11,12}
+};
+
+int multiply[][2];
+
+// int* mat_mul(int a[][N], int* shape_a, int b[][N], int* shape_b){
+void mat_mul(){
+
+    log_info("mat_mul\n");
+
+    for(int row=0; row<2; row++){
+        for(int col=0; col<2; col++){
+            for(int i=0; i<3; i++){
+                multiply[row][col] += a[row][i] * b[i][col];
+                log_info("Mul %d", multiply[row][col]);
+            }
+        }
+    }
+    // for(int row=0; i<shape_a[0]; i++)
+    //     for(int col=0; j<shape_b[1]; j++)
+    //         for(int i=0; i<shape_a[1] ;i++)
+    //             multiply[row][col] = a[row][i] + b[i][col]
 }
 
 int mul(int a, int b){
@@ -91,6 +125,7 @@ int mul(int a, int b){
     return res;
 }
 
+// Todo : Handling of cast values of Tensorflow.
 int div(int a, int b){
     log_info("division\n");
     int res;
@@ -167,6 +202,8 @@ static bool initialize() {
     } else {
         log_info("Addition vertex without key, just perform the addition and record the result");
     }
+
+    mat_mul();
 
     return true;
 }
