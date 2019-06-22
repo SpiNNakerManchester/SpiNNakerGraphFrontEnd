@@ -102,8 +102,10 @@ class ConstVertex(MachineVertex,
         spec.write_value(0 if key is None else 1)
         spec.write_value(0 if key is None else key)
 
-        routing_info = routing_info.get_routing_info_from_pre_vertex(
-            self, self.PARTITION_ID)
+        # routing_info = routing_info.get_routing_info_from_pre_vertex(
+        #     self, self.PARTITION_ID)
+
+        # test = ~routing_info.first_mask & 0xFFFFFFFF
 
         # write shape
         spec.switch_write_focus(self.DATA_REGIONS.SHAPE.value)

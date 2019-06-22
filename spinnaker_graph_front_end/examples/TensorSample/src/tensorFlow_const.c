@@ -111,23 +111,23 @@ static bool initialize() {
 
     // read my shape
     address_t shape_region_address = data_specification_get_region(SHAPE, address);
-    shape_size = shape_region_address[0] * sizeof(uint32_t);
+    shape_size = shape_region_address[0];
     log_info("shape_size %d\n", shape_size);
 
     // Reserve memory to DTCM
-    shape_addr_dtcm = (uint32_t*) spin1_malloc(shape_size);
+    shape_addr_dtcm = (uint32_t*) spin1_malloc(shape_size * sizeof(uint32_t));
     // Copy values to DTCM
-    spin1_memcpy(shape_addr_dtcm, &shape_region_address[1], shape_size);
+    spin1_memcpy(shape_addr_dtcm, &shape_region_address[1], shape_size * sizeof(uint32_t));
 
     // read my const value
     address_t input_region_address = data_specification_get_region(INPUT, address);
-    input_size = input_region_address[0] * sizeof(uint32_t);
+    input_size = input_region_address[0];
     log_info("input_size %d\n", input_size);
 
     // Reserve memory for DTCM
-    input_addr_dtcm = (uint32_t*) spin1_malloc(input_size);
+    input_addr_dtcm = (uint32_t*) spin1_malloc(input_size * sizeof(uint32_t));
     // Copy values to DTCM
-    spin1_memcpy(input_addr_dtcm, &input_region_address[1], input_size);
+    spin1_memcpy(input_addr_dtcm, &input_region_address[1], input_size * sizeof(uint32_t));
 
     const_value = input_region_address[1];
 
