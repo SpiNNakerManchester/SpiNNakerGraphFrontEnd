@@ -41,15 +41,15 @@ typedef enum transmission_region_elements {
 } transmission_region_elements;
 
 
-void send_value(uint data){
+void send_value(){
     log_info("send_value\n", my_key);
-
-    log_info("sending value via multicast with key %d",
-              my_key);
-    while (!spin1_send_mc_packet(my_key, data, WITH_PAYLOAD)) {
+    
+    for(int i=0; i<input_size; i++){
+        log_info("send array value %d\n", input_addr_dtcm[i]);
+        while (!spin1_send_mc_packet(i+my_key, input_addr_dtcm[i], WITH_PAYLOAD)) {
         spin1_delay_us(1);
+        }
     }
-
 }
 
 
@@ -74,8 +74,8 @@ void record_data(){
 void update() {
     log_info("update\n");
 
-        send_value(const_value);
-        record_data(const_value);
+        send_value();
+        // record_data();
         spin1_exit(0);
 
 }
@@ -129,9 +129,9 @@ static bool initialize() {
     // Copy values to DTCM
     spin1_memcpy(input_addr_dtcm, &input_region_address[1], input_size * sizeof(uint32_t));
 
-    const_value = input_region_address[1];
+    // const_value = input_region_address[1];
 
-    for(int i=0; i<input_region_address[0]; i++){
+    for(int i=0; i<input_size; i++){
         //Store values in DTCM
         log_info("array value %d\n", input_addr_dtcm[i]);
     }

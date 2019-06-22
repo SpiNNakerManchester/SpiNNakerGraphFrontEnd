@@ -140,40 +140,40 @@ void receive_data(uint key, uint payload) {
     log_info("the key i've received is %d\n", key);
     log_info("the payload i've received is %d\n", payload);
     counter +=1;
-    if(counter == 1){
-        value_a = payload;
-    }
-    else{
-        value_b = payload;
+    // if(counter == 1){
+    //     value_a = payload;
+    // }
+    // else{
+    //     value_b = payload;
 
-        if(oper_type == 1){
-            result = addition(value_a, value_b);
-        }
+    //     if(oper_type == 1){
+    //         result = addition(value_a, value_b);
+    //     }
 
-        if(oper_type == 2){
-            result = mul(value_a, value_b);
-        }
+    //     if(oper_type == 2){
+    //         result = mul(value_a, value_b);
+    //     }
 
-        if(oper_type == 3){
-            result = sub(value_a, value_b);
-        }
+    //     if(oper_type == 3){
+    //         result = sub(value_a, value_b);
+    //     }
 
-        // if(oper_type == 4){
-        //     
-        // }
+    //     // if(oper_type == 4){
+    //     //     
+    //     // }
 
-        // if(oper_type == 5){
-        //     result = div(value_a, value_b);
-        // }
+    //     // if(oper_type == 5){
+    //     //     result = div(value_a, value_b);
+    //     // }
 
-        if(key_exist == 1){
-            send_value(result);
-        }
+    //     if(key_exist == 1){
+    //         send_value(result);
+    //     }
   
-        record_data(result);
-        spin1_exit(0);
+    //     record_data(result);
+    //     spin1_exit(0);
 
-    }
+    // }
 }
 
 static bool initialize() {
