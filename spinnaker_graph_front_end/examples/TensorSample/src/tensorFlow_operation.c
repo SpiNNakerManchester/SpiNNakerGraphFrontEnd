@@ -158,9 +158,13 @@ void receive_data(uint key, uint payload) {
             result = sub(value_a, value_b);
         }
 
-        if(oper_type == 4){
-            result = div(value_a, value_b);
-        }
+        // if(oper_type == 4){
+        //     
+        // }
+
+        // if(oper_type == 5){
+        //     result = div(value_a, value_b);
+        // }
 
         if(key_exist == 1){
             send_value(result);

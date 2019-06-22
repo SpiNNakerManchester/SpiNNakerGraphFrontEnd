@@ -40,19 +40,18 @@ class TestingTensorGraph(unittest.TestCase):
         # [[ 7,  8],
         #  [ 9, 10],
         #  [11, 12]]
-        # l = tf.constant([7, 8, 9, 10, 11, 12], shape=[3, 2])
+        l = tf.constant([7, 8, 9, 10, 11, 12], shape=[3, 2])
 
         # `a` * `b`
         # [[ 58,  64],
         #  [139, 154]]
         # c = tf.matmul(k, l)
 
-
-        # result = a + b
+        result = tf.matmul(k, l)
 
         # Launch the graph in a session.
         sess = tf.Session()
-        sess.run(k)
+        t = sess.run(result)
 
         const = {}
         for n in tf.get_default_graph().as_graph_def().node:
@@ -75,7 +74,8 @@ class TestingTensorGraph(unittest.TestCase):
         operations = { "add": 1,
                        "mul": 2,
                        "sub": 3,
-                       # "truediv":4,
+                       "MatMul": 4,
+                       # "truediv":5,
                        # "Placeholder"
                        }
 
@@ -102,6 +102,9 @@ class TestingTensorGraph(unittest.TestCase):
 
             elif 'sub' in graph._nodes_by_id[n_id].name:
                 store_Spinnaker_vertices(n_id, operations["sub"])
+
+            elif 'MatMul' in graph._nodes_by_id[n_id].name:
+                store_Spinnaker_vertices(n_id, operations["MatMul"])
 
             # elif 'truediv' == graph._nodes_by_id[n_id].name:
             #     store_Spinnaker_vertices(n_id, operations["truediv"])

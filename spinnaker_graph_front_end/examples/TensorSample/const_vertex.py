@@ -3,7 +3,7 @@ import struct
 from enum import Enum
 from data_specification.utility_calls import get_region_base_address_offset
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
-from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
+from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary, AbstractProvidesNKeysForPartition
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from spinn_front_end_common.abstract_models.impl import (MachineDataSpecableVertex)
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class ConstVertex(MachineVertex,
-                  AbstractHasAssociatedBinary,
+                  AbstractHasAssociatedBinary, AbstractProvidesNKeysForPartition,
                   MachineDataSpecableVertex):
 
     _ONE_WORD = struct.Struct("<i")
@@ -39,6 +39,8 @@ class ConstVertex(MachineVertex,
 
     PARTITION_ID = "OPERATION_PARTITION"
 
+
+
     def __init__(self, label, const_value):
         MachineVertex.__init__(self, )
         AbstractHasAssociatedBinary.__init__(self)
@@ -57,6 +59,10 @@ class ConstVertex(MachineVertex,
         self.placement = None
         self._label = label
         print("_const_value in the instance :", self._const_value)
+
+    @overrides(AbstractProvidesNKeysForPartition.get_n_keys_for_partition)
+    def get_n_keys_for_partition(self, partition, graph_mapper):
+        return self.size
 
     def _reserve_memory_regions(self, spec):
         print("\n const_vertex _reserve_memory_regions")
@@ -95,6 +101,9 @@ class ConstVertex(MachineVertex,
             region=self.DATA_REGIONS.TRANSMISSIONS.value)
         spec.write_value(0 if key is None else 1)
         spec.write_value(0 if key is None else key)
+
+        routing_info = routing_info.get_routing_info_from_pre_vertex(
+            self, self.PARTITION_ID)
 
         # write shape
         spec.switch_write_focus(self.DATA_REGIONS.SHAPE.value)
