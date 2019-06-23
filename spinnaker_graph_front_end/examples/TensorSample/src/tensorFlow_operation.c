@@ -11,7 +11,8 @@ int value_a;
 int value_b;
 int counter = 0;
 int result = 0;
-
+int pre_vertex1_key;
+int pre_vertex2_key;
 uint my_key;
 
 uint32_t oper_type = 0;
@@ -21,6 +22,7 @@ uint key_exist = 0;
 address_t address = NULL;
 
 typedef enum regions_e {
+    PREVERTEX_KEYS,
     OPER_TYPE,
     TRANSMISSIONS,
     RECORDED_DATA
@@ -140,6 +142,9 @@ void receive_data(uint key, uint payload) {
     log_info("the key i've received is %d\n", key);
     log_info("the payload i've received is %d\n", payload);
     counter +=1;
+
+
+    // if ()
     // if(counter == 1){
     //     value_a = payload;
     // }
@@ -188,6 +193,13 @@ static bool initialize() {
         log_error("failed to read the data spec header");
         return false;
     }
+
+    // read prevertex keys
+    address_t prevertex_keys_region_address = data_specification_get_region(PREVERTEX_KEYS, address);
+    pre_vertex1_key = prevertex_keys_region_address[0];
+    pre_vertex2_key = prevertex_keys_region_address[1];
+    log_info("prevertex 1 key is %d\n", pre_vertex1_key);
+    log_info("prevertex 2 key is %d\n", pre_vertex2_key);
 
     // read my oper type value
     address_t oper_type_region_address = data_specification_get_region(OPER_TYPE, address);

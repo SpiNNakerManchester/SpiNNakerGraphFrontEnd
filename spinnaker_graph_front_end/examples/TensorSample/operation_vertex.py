@@ -10,6 +10,7 @@ from spinn_front_end_common.utilities.constants import DATA_SPECABLE_BASIC_SETUP
 from spinn_front_end_common.abstract_models.impl import (MachineDataSpecableVertex)
 from pacman.model.resources import (ResourceContainer, ConstantSDRAM)
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
+from data_specification.enums import DataType
 
 
 logger = logging.getLogger(__name__)
@@ -20,15 +21,17 @@ class OperationVertex(MachineVertex, AbstractHasAssociatedBinary,
 
     _ONE_WORD = struct.Struct("<i")
 
+    PREVERTEX_KEYS_DATA_SIZE = 2 * 4
     OPER_TYPE_DATA_SIZE = 4  # int number
     TRANSMISSION_DATA_SIZE = 2 * 4 # has key and key
     RECORDING_DATA_SIZE = 4 # int result
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
-        names=[('OPER_TYPE', 0),
-               ('TRANSMISSIONS', 1),
-               ('RECORDED_OPER_RESULT', 2)])
+        names=[('PREVERTEX_KEYS',0),
+               ('OPER_TYPE', 1),
+               ('TRANSMISSIONS', 2),
+               ('RECORDED_OPER_RESULT', 3)])
 
     PARTITION_ID = "OPERATION_PARTITION"
 
@@ -48,13 +51,17 @@ class OperationVertex(MachineVertex, AbstractHasAssociatedBinary,
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
         resources = ResourceContainer(sdram=ConstantSDRAM(
-             self.OPER_TYPE_DATA_SIZE + self.TRANSMISSION_DATA_SIZE + self.RECORDING_DATA_SIZE +
+             self.PREVERTEX_KEYS_DATA_SIZE + self.OPER_TYPE_DATA_SIZE +
+             self.TRANSMISSION_DATA_SIZE + self.RECORDING_DATA_SIZE +
              DATA_SPECABLE_BASIC_SETUP_INFO_N_BYTES ))
 
         return resources
 
     def _reserve_memory_regions(self, spec):
         print("\n oper_vertex _reserve_memory_regions")
+        spec.reserve_memory_region(
+            region=self.DATA_REGIONS.PREVERTEX_KEYS.value,
+            size=self.PREVERTEX_KEYS_DATA_SIZE, label="prevertex_keys")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.OPER_TYPE.value,
             size=self.OPER_TYPE_DATA_SIZE, label="oper_type_values")
@@ -83,17 +90,20 @@ class OperationVertex(MachineVertex, AbstractHasAssociatedBinary,
                 "I've not got the right number of connections. I have {} "
                 "instead of 2".format(
                     len(machine_graph.get_edges_ending_at_vertex(self))))
-        print(len(machine_graph.get_edges_ending_at_vertex(self)))
+
         for edge in edges:
             if edge.pre_vertex == self:
                 raise ConfigurationException(
                     "I'm connected to myself, this is deemed an error"
                     " please fix.")
+
         # write pre-vertex information
         pre_vertices_first_keys=[]
         for edge in edges:
             pre_vertices_first_keys.append(routing_info.get_routing_info_for_edge(edge).first_key)
+        spec.switch_write_focus(self.DATA_REGIONS.PREVERTEX_KEYS.value)
         print("pre_vertices_first_keys",pre_vertices_first_keys)
+        spec.write_array(pre_vertices_first_keys, data_type=DataType.INT32)
 
         # write oper type value
         spec.switch_write_focus(self.DATA_REGIONS.OPER_TYPE.value)

@@ -59,7 +59,7 @@ void send_value(){
    }
         
     if(input_size > 1){
-        my_key+ = 1;
+        my_key+= 1;
         for(int i=0; i<rank; i++){
             log_info("send key %d and shape_addr_dtcm %d\n", i+my_key, shape_addr_dtcm[i]);
             while (!spin1_send_mc_packet(i+my_key, shape_addr_dtcm[i], WITH_PAYLOAD)) {
