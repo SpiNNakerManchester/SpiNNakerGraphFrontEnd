@@ -46,32 +46,33 @@ void send_value(){
     log_info("first key %d\n", my_key);
 
     // send size
+    log_info("send key %d and input_size %d\n", my_key, input_size);
     while (!spin1_send_mc_packet(my_key, input_size, WITH_PAYLOAD)) {
        spin1_delay_us(1);
     }
 
     // send rank and shape
-
-    ++my_key;
-    log_info("send rank value %d\n", rank);
+    my_key += 1;
+    log_info("send key %d and rank %d\n", my_key, rank);
     while (!spin1_send_mc_packet(my_key, rank, WITH_PAYLOAD)) {
        spin1_delay_us(1);
    }
         
-    if(rank != 0){
-        ++my_key;
+    if(input_size > 1){
+        my_key+ = 1;
         for(int i=0; i<rank; i++){
-            log_info("send dimension value %d\n", shape_addr_dtcm[i]);
+            log_info("send key %d and shape_addr_dtcm %d\n", i+my_key, shape_addr_dtcm[i]);
             while (!spin1_send_mc_packet(i+my_key, shape_addr_dtcm[i], WITH_PAYLOAD)) {
                 spin1_delay_us(1);
         }
         }
     }
-    
+    log_info("current key %d ", my_key );
+
     // send tensor values
-    ++my_key;
+    my_key += 1;
     for(int i=0; i<input_size; i++){
-        log_info("send array value %d\n", input_addr_dtcm[i]);
+        log_info("send key %d and input_addr_dtcm %d\n", i+my_key, input_addr_dtcm[i]);
         while (!spin1_send_mc_packet(i+my_key, input_addr_dtcm[i], WITH_PAYLOAD)) {
             spin1_delay_us(1);
         }
@@ -129,21 +130,12 @@ static bool initialize() {
         my_key = transmission_region_address[MY_KEY];
         log_info("my key is %d\n", my_key);
     } 
-    // else {
-    //     log_error(
-    //         "cannot find the keys in the regions\n");
-    //     return false;
-    // }
+    else {
+        log_error(
+            "cannot find the keys in the regions\n");
+        return false;
+    }
 
-    // read my shape
-    address_t shape_region_address = data_specification_get_region(TENSOR_PROPERTIES, address);
-    rank = shape_region_address[0];
-    log_info("rank %d\n", rank);
-
-    // Reserve memory to DTCM
-    shape_addr_dtcm = (uint32_t*) spin1_malloc(rank * sizeof(uint32_t));
-    // Copy values to DTCM
-    spin1_memcpy(shape_addr_dtcm, &shape_region_address[1], rank * sizeof(uint32_t));
 
     // read my const value
     address_t input_region_address = data_specification_get_region(INPUT, address);
@@ -155,9 +147,17 @@ static bool initialize() {
     // Copy values to DTCM
     spin1_memcpy(input_addr_dtcm, &input_region_address[1], input_size * sizeof(uint32_t));
 
-    for(int i=0; i<input_size; i++){
-        //Store values in DTCM
-        log_info("array value %d\n", input_addr_dtcm[i]);
+
+    if (input_size >1){
+        // read my shape
+        address_t shape_region_address = data_specification_get_region(TENSOR_PROPERTIES, address);
+        rank = shape_region_address[0];
+        log_info("rank %d\n", rank);
+
+        // Reserve memory to DTCM
+        shape_addr_dtcm = (uint32_t*) spin1_malloc(rank * sizeof(uint32_t));
+        // Copy values to DTCM
+        spin1_memcpy(shape_addr_dtcm, &shape_region_address[1], rank * sizeof(uint32_t));
     }
 
     return true;

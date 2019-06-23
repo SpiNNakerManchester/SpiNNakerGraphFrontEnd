@@ -57,7 +57,7 @@ class ConstVertex(MachineVertex,
 
     @overrides(AbstractProvidesNKeysForPartition.get_n_keys_for_partition)
     def get_n_keys_for_partition(self, partition, graph_mapper):
-        return self.size + 1 + self.rank
+        return self.size + (1 + self.rank if self.size != 1 else 0)
 
     def _reserve_memory_regions(self, spec):
         print("\n const_vertex _reserve_memory_regions")
@@ -98,10 +98,10 @@ class ConstVertex(MachineVertex,
         spec.write_value(0 if key is None else key)
 
         # write tensor properties
-        spec.switch_write_focus(self.DATA_REGIONS.TENSOR_PROPERTIES.value)
-        print("\n rank :", self.rank)
-        spec.write_value(self.rank, data_type=DataType.INT32)
         if self.size > 1:
+            spec.switch_write_focus(self.DATA_REGIONS.TENSOR_PROPERTIES.value)
+            print("\n rank :", self.rank)
+            spec.write_value(self.rank, data_type=DataType.INT32)
             print("\n write shape :", self._shape)
             spec.write_array(self._shape, data_type=DataType.INT32)
 

@@ -93,6 +93,7 @@ class OperationVertex(MachineVertex, AbstractHasAssociatedBinary,
         pre_vertices_first_keys=[]
         for edge in edges:
             pre_vertices_first_keys.append(routing_info.get_routing_info_for_edge(edge).first_key)
+        print("pre_vertices_first_keys",pre_vertices_first_keys)
 
         # write oper type value
         spec.switch_write_focus(self.DATA_REGIONS.OPER_TYPE.value)
