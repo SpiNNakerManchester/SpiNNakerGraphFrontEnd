@@ -75,7 +75,7 @@ class OperationVertex(MachineVertex, AbstractHasAssociatedBinary,
 
         self._reserve_memory_regions(spec)
 
-        ## check for duplicates
+        # check for duplicates
         edges = list(machine_graph.get_edges_ending_at_vertex(self))
         print("edges : ", edges)
         if len(edges) != 2:
@@ -89,6 +89,7 @@ class OperationVertex(MachineVertex, AbstractHasAssociatedBinary,
                 raise ConfigurationException(
                     "I'm connected to myself, this is deemed an error"
                     " please fix.")
+        # write pre-vertex information
         pre_vertices_first_keys=[]
         for edge in edges:
             pre_vertices_first_keys.append(routing_info.get_routing_info_for_edge(edge).first_key)

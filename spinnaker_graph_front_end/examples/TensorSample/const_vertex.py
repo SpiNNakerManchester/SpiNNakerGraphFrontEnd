@@ -27,19 +27,15 @@ class ConstVertex(MachineVertex,
     DIMENSION = 4 # first dimension int number
     INPUT_DATA_SIZE = 4 # constant int number
     RECORDING_DATA_SIZE = 4
-    SIZE_ONE = 1
-    ONE_DIMENSION_SHAPE = [1]
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('TRANSMISSIONS', 0),
-               ('SHAPE', 1),
+               ('TENSOR_PROPERTIES', 1),
                ('INPUT', 2),
                ('RECORDING_CONST_VALUES', 3)])
 
     PARTITION_ID = "OPERATION_PARTITION"
-
-
 
     def __init__(self, label, const_value):
         MachineVertex.__init__(self, )
@@ -47,22 +43,21 @@ class ConstVertex(MachineVertex,
         MachineDataSpecableVertex.__init__(self)
         print("\n const_vertex init")
         self._const_value = const_value
-        self._shape = 1
-        self.shape_length = 1
+        self.rank = 0
         self.size = 1
         if type(self._const_value) is np.ndarray:
-            self._shape = self._const_value.shape
-            self.shape_length = len(self._const_value.shape)
+            self.rank = self._const_value.ndim
             self.size = self._const_value.size
+            self._shape = self._const_value.shape
+            print("init const shape:", self._shape)
 
-        print("init const shape:", self._shape)
         self.placement = None
         self._label = label
         print("_const_value in the instance :", self._const_value)
 
     @overrides(AbstractProvidesNKeysForPartition.get_n_keys_for_partition)
     def get_n_keys_for_partition(self, partition, graph_mapper):
-        return self.size
+        return self.size + 1 + self.rank
 
     def _reserve_memory_regions(self, spec):
         print("\n const_vertex _reserve_memory_regions")
@@ -71,8 +66,8 @@ class ConstVertex(MachineVertex,
             region=self.DATA_REGIONS.TRANSMISSIONS.value,
             size=self.TRANSMISSION_DATA_SIZE, label="keys")
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.SHAPE.value,
-            size=4 + self.DIMENSION * self.shape_length, label="shape")
+            region=self.DATA_REGIONS.TENSOR_PROPERTIES.value,
+            size=4 + self.DIMENSION * self.rank, label="shape")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.INPUT.value,
             size=4 + self.INPUT_DATA_SIZE * self.size, label="input_const_values")
@@ -102,29 +97,25 @@ class ConstVertex(MachineVertex,
         spec.write_value(0 if key is None else 1)
         spec.write_value(0 if key is None else key)
 
-        # routing_info = routing_info.get_routing_info_from_pre_vertex(
-        #     self, self.PARTITION_ID)
-
-        # test = ~routing_info.first_mask & 0xFFFFFFFF
-
-        # write shape
-        spec.switch_write_focus(self.DATA_REGIONS.SHAPE.value)
-        print("\n write shape ", self._shape)
-        spec.write_value(self.shape_length, data_type=DataType.INT32)
-        spec.write_array(self._shape, data_type=DataType.INT32)
+        # write tensor properties
+        spec.switch_write_focus(self.DATA_REGIONS.TENSOR_PROPERTIES.value)
+        print("\n rank :", self.rank)
+        spec.write_value(self.rank, data_type=DataType.INT32)
+        if self.size > 1:
+            print("\n write shape :", self._shape)
+            spec.write_array(self._shape, data_type=DataType.INT32)
 
         # write constant value
         spec.switch_write_focus(self.DATA_REGIONS.INPUT.value)
-        print("\n write constant value ", self._const_value)
+        print("\n write size :", self.size)
         spec.write_value(self.size, data_type=DataType.INT32)
 
-        if type(self._const_value) is np.ndarray:
+        if self.size > 1:
             print("\n write array ", self._const_value)
             spec.write_array(self._const_value, data_type=DataType.INT32)
         else:
             print("\n write const val ", self._const_value)
             spec.write_value(self._const_value, data_type=DataType.INT32)
-
 
         # End-of-Spec:
         spec.end_specification()
@@ -135,11 +126,11 @@ class ConstVertex(MachineVertex,
         print("\n {} resources_required".format(self._label))
 
         fixed_sdram = (self.TRANSMISSION_DATA_SIZE +
-                       4 + self.DIMENSION * self.shape_length +
+                       4 + self.DIMENSION * self.rank +
                        4 + self.INPUT_DATA_SIZE * self.size +
                        self.RECORDING_DATA_SIZE + DATA_SPECABLE_BASIC_SETUP_INFO_N_BYTES)
 
-        print("fixed_sdram : ",fixed_sdram)
+        print("fixed_sdram : ", fixed_sdram)
         return ResourceContainer(sdram=ConstantSDRAM(fixed_sdram))
 
     def read(self, placement, txrx):

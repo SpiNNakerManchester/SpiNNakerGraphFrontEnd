@@ -5,6 +5,7 @@
 #   https://gist.github.com/dustinvtran/cf34557fb9388da4c9442ae25c2373c9
 
 from pacman.model.graphs.machine import MachineEdge
+from tensorflow.python.framework import tensor_util
 import logging
 import os
 import unittest
@@ -12,8 +13,8 @@ import spinnaker_graph_front_end as front_end
 from spinnaker_graph_front_end.examples.TensorSample.operation_vertex import (OperationVertex)
 from spinnaker_graph_front_end.examples.TensorSample.const_vertex import (ConstVertex)
 import tensorflow.compat.v1 as tf
-tf.disable_v2_behavior()   # use functions of TensorFlow version 1 into TensorFlow version 2.
-from tensorflow.python.framework import tensor_util
+# use functions of TensorFlow version 1 into TensorFlow version 2.
+tf.disable_v2_behavior()
 
 logger = logging.getLogger(__name__)
 
@@ -30,18 +31,19 @@ class TestingTensorGraph(unittest.TestCase):
         # d = tf.constant(4, dtype=tf.int32)
         # e = tf.constant(5, dtype=tf.int32)
 
+        # constant_int_tensor = tf.constant(-255, shape=[1, 2, 3], dtype="int32")
+
         # 2-D tensor `a`
         # [[1, 2, 3],
         #  [4, 5, 6]]
         k = tf.constant([9, 4, 3, 4, 5, 6], shape=[2, 3])
-
 
         # 2-D tensor `b`
         # [[ 7,  8],
         #  [ 9, 10],
         #  [11, 12]]
         l = tf.constant([7, 8, 9, 10, 11, 12], shape=[3, 2])
-
+        # p = tf.rank(k)
         # `a` * `b`
         # [[ 58,  64],
         #  [139, 154]]
@@ -51,19 +53,19 @@ class TestingTensorGraph(unittest.TestCase):
 
         # Launch the graph in a session.
         sess = tf.Session()
+
+        # sess.run(tf.global_variables_initializer())
         t = sess.run(result)
 
         const = {}
         for n in tf.get_default_graph().as_graph_def().node:
             if 'Const' in n.name:
-                if not (n.attr["value"].tensor.tensor_shape.dim):
+                if not n.attr["value"].tensor.tensor_shape.dim:
                     const[n.name] = n.attr.get('value').tensor.int_val[0]
                 else:
                     const[n.name] = tensor_util.MakeNdarray(n.attr['value'].tensor)
                     # tensor_shape = [x.size for x in n.attr["value"].tensor.tensor_shape.dim]
                     # const[n.name] = n.attr.get('value').tensor.tensor_content  # Binary form String of the tensor
-
-
 
         graph = tf.get_default_graph()
 
@@ -79,7 +81,7 @@ class TestingTensorGraph(unittest.TestCase):
                        # "Placeholder"
                        }
 
-        def store_Spinnaker_vertices(n_id, oper_type):
+        def store_spinnaker_vertices(n_id, oper_type):
             vertices[n_id] = OperationVertex("{} vertex ".format(graph._nodes_by_id[n_id].name), oper_type)
 
         def store_input_node_ids (n_id):
@@ -89,25 +91,24 @@ class TestingTensorGraph(unittest.TestCase):
                     current_inputs.append(index._id)
             inputs[n_id] = current_inputs
 
-
         # Add Vertices
         for n_id in graph._nodes_by_id:
             print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
             # math operations
             if 'add' in graph._nodes_by_id[n_id].name:
-                store_Spinnaker_vertices(n_id, operations["add"])
+                store_spinnaker_vertices(n_id, operations["add"])
 
             elif 'mul' in graph._nodes_by_id[n_id].name:
-                store_Spinnaker_vertices(n_id, operations["mul"])
+                store_spinnaker_vertices(n_id, operations["mul"])
 
             elif 'sub' in graph._nodes_by_id[n_id].name:
-                store_Spinnaker_vertices(n_id, operations["sub"])
+                store_spinnaker_vertices(n_id, operations["sub"])
 
             elif 'MatMul' in graph._nodes_by_id[n_id].name:
-                store_Spinnaker_vertices(n_id, operations["MatMul"])
+                store_spinnaker_vertices(n_id, operations["MatMul"])
 
             # elif 'truediv' == graph._nodes_by_id[n_id].name:
-            #     store_Spinnaker_vertices(n_id, operations["truediv"])
+            #     store_spinnaker_vertices(n_id, operations["truediv"])
 
             # constant operation
             elif 'Const' in graph._nodes_by_id[n_id].name:
@@ -122,18 +123,18 @@ class TestingTensorGraph(unittest.TestCase):
             vertices[n_id].name = graph._nodes_by_id[n_id].name
             front_end.add_machine_vertex_instance(vertices[n_id])
 
-
         # Add Edges
         for n_id in vertices:
             # Check if this vertex has inputs nodes
             if n_id in inputs :
                 # Iterate over input ids of the nodes
                 for input_key in inputs[n_id]:
-                        # add the edge
-                        front_end.add_machine_edge_instance(
-                            MachineEdge(vertices[input_key], vertices[n_id],
-                                        label=vertices[input_key].name + ': to ' + vertices[n_id].name),
-                            "OPERATION_PARTITION")
+                    # add the edge
+                    front_end.add_machine_edge_instance(MachineEdge(vertices[input_key], vertices[n_id],
+                                                        label=vertices[input_key].name + ': to ' + vertices[n_id].name),
+                                                        "OPERATION_PARTITION")
+
+        sess.close()
 
         print("run simulation")
         front_end.run(1)
