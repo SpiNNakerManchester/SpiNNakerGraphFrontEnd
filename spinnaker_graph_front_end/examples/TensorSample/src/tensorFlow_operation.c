@@ -11,9 +11,11 @@ int value_a;
 int value_b;
 int counter = 0;
 int result = 0;
-int pre_vertex1_key;
-int pre_vertex2_key;
+uint32_t pre_vertex1_key;
+uint32_t pre_vertex2_key;
 uint my_key;
+int is_matrix=0;
+int rank =0;
 
 uint32_t oper_type = 0;
 
@@ -144,7 +146,19 @@ void receive_data(uint key, uint payload) {
     counter +=1;
 
 
-    // if ()
+    if (key == pre_vertex1_key && payload > 1){
+        log_info("size is greater than 1, matrix reception");
+        is_matrix = 1;
+    }
+
+    if (is_matrix ==1 && key == pre_vertex1_key+1)
+    {
+        log_info("rank received %d\n", payload);
+        rank = payload;
+    }
+        log_info("rank received %d\n", rank);
+
+
     // if(counter == 1){
     //     value_a = payload;
     // }
@@ -179,6 +193,7 @@ void receive_data(uint key, uint payload) {
     //     spin1_exit(0);
 
     // }
+    
 }
 
 static bool initialize() {

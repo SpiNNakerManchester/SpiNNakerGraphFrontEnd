@@ -11,7 +11,7 @@
 uint my_key;
 
 int const_value;
-int rank;
+int rank=0;
 int input_size;
 uint32_t *shape_addr_dtcm;
 uint32_t *input_addr_dtcm;
@@ -53,27 +53,28 @@ void send_value(){
 
     // send rank and shape
     my_key += 1;
-    log_info("send key %d and rank %d\n", my_key, rank);
-    while (!spin1_send_mc_packet(my_key, rank, WITH_PAYLOAD)) {
-       spin1_delay_us(1);
-   }
-        
+
     if(input_size > 1){
-        my_key+= 1;
-        for(int i=0; i<rank; i++){
-            log_info("send key %d and shape_addr_dtcm %d\n", i+my_key, shape_addr_dtcm[i]);
-            while (!spin1_send_mc_packet(i+my_key, shape_addr_dtcm[i], WITH_PAYLOAD)) {
-                spin1_delay_us(1);
+        log_info("send key %d and rank %d\n", my_key, rank);
+        while (!spin1_send_mc_packet(my_key, rank, WITH_PAYLOAD)) {
+            spin1_delay_us(1);
         }
+    
+
+        for(int i=0; i<rank; i++){
+            my_key += 1;
+            log_info("send key %d and shape_addr_dtcm %d\n", my_key, shape_addr_dtcm[i]);
+            while (!spin1_send_mc_packet(my_key, shape_addr_dtcm[i], WITH_PAYLOAD)) {
+                spin1_delay_us(1);
+            }
         }
     }
-    log_info("current key %d ", my_key );
 
     // send tensor values
-    my_key += 1;
     for(int i=0; i<input_size; i++){
-        log_info("send key %d and input_addr_dtcm %d\n", i+my_key, input_addr_dtcm[i]);
-        while (!spin1_send_mc_packet(i+my_key, input_addr_dtcm[i], WITH_PAYLOAD)) {
+        my_key += 1;
+        log_info("send key %d and input_addr_dtcm %d\n", my_key, input_addr_dtcm[i]);
+        while (!spin1_send_mc_packet(my_key, input_addr_dtcm[i], WITH_PAYLOAD)) {
             spin1_delay_us(1);
         }
     }
