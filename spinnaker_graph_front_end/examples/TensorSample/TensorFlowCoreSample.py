@@ -25,8 +25,8 @@ class TestingTensorGraph(unittest.TestCase):
 
         front_end.setup(n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
 
-        # a = tf.constant(-1, dtype=tf.int32)
-        # b = tf.constant(-2, dtype=tf.int32)
+        # a = tf.constant(1, dtype=tf.int32)
+        # b = tf.constant(2, dtype=tf.int32)
         # c = tf.constant(3, dtype=tf.int32)
         # d = tf.constant(4, dtype=tf.int32)
         # e = tf.constant(5, dtype=tf.int32)
@@ -47,15 +47,15 @@ class TestingTensorGraph(unittest.TestCase):
         # `a` * `b`
         # [[ 58,  64],
         #  [139, 154]]
-        # c = tf.matmul(k, l)
+        c = tf.matmul(k, l)
 
-        result = tf.matmul(k, l)
-
+        # result = tf.matmul(k, l)
+        # result = a+b
         # Launch the graph in a session.
         sess = tf.Session()
 
         # sess.run(tf.global_variables_initializer())
-        t = sess.run(result)
+        t = sess.run(c)
 
         const = {}
         for n in tf.get_default_graph().as_graph_def().node:

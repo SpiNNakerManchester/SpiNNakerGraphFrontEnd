@@ -57,7 +57,8 @@ class ConstVertex(MachineVertex,
 
     @overrides(AbstractProvidesNKeysForPartition.get_n_keys_for_partition)
     def get_n_keys_for_partition(self, partition, graph_mapper):
-        return self.size + (1 + self.rank if self.size != 1 else 0)
+        # reserve keys
+        return self.size + 1 + (self.rank + 1 if self.size != 1 else 0)
 
     def _reserve_memory_regions(self, spec):
         print("\n const_vertex _reserve_memory_regions")

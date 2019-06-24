@@ -16,6 +16,9 @@ uint32_t pre_vertex2_key;
 uint my_key;
 int is_matrix=0;
 int rank =0;
+// key | value
+int** shape1;
+int shape_counter=0;
 
 uint32_t oper_type = 0;
 
@@ -140,24 +143,33 @@ int div(int a, int b){
 }
 
 void receive_data(uint key, uint payload) {
-    log_info("receive_data\n");
-    log_info("the key i've received is %d\n", key);
-    log_info("the payload i've received is %d\n", payload);
+    log_info("receive key %d and data %d\n", key, payload);
+
     counter +=1;
 
-
+    // Check size of vertex 1
     if (key == pre_vertex1_key && payload > 1){
-        log_info("size is greater than 1, matrix reception");
+        log_info("V1:size is greater than 1, matrix reception");
         is_matrix = 1;
     }
-
-    if (is_matrix ==1 && key == pre_vertex1_key+1)
-    {
-        log_info("rank received %d\n", payload);
+    // If matrix get rank
+    if (is_matrix ==1 && key == pre_vertex1_key+1){
+        log_info("V1:rank received %d\n", payload);
         rank = payload;
+        shape1 = (uint32_t*) spin1_malloc(rank * sizeof(uint32_t));
     }
-        log_info("rank received %d\n", rank);
+    // Get Shape of Tensor
+    if (is_matrix ==1 && key > pre_vertex1_key+1 && key <= pre_vertex1_key+1+ rank){
+        log_info("V1:Dimesion Received %d\n", payload);
+        shape1[shape_counter] = (uint32_t*) spin1_malloc(2 * sizeof(uint32_t));
+        shape1[shape_counter][0] = key;
+        shape1[shape_counter][1] = payload;
+        log_info("V1:shape_counter%d\n", shape_counter);
+        log_info("V1:Shape packet, key     [%d][0]%d\n",shape_counter, shape1[shape_counter][0]);
+        log_info("V1:Shape packet, payload [%d][1]%d\n",shape_counter, shape1[shape_counter][1]);
 
+        ++shape_counter;
+    }
 
     // if(counter == 1){
     //     value_a = payload;
@@ -234,7 +246,7 @@ static bool initialize() {
         log_info("Addition vertex without key, just perform the addition and record the result");
     }
 
-    mat_mul();
+    // mat_mul();
 
     return true;
 }
