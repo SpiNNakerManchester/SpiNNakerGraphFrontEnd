@@ -7,6 +7,7 @@
 #include <simulation.h>
 #include <debug.h>
 
+int size = 0;
 int value_a;
 int value_b;
 int counter = 0;
@@ -19,6 +20,9 @@ int rank =0;
 // key | value
 int** shape1;
 int shape_counter=0;
+
+int** tensor1;
+int tensor_counter=0;
 
 uint32_t oper_type = 0;
 
@@ -150,16 +154,17 @@ void receive_data(uint key, uint payload) {
     // Check size of vertex 1
     if (key == pre_vertex1_key && payload > 1){
         log_info("V1:size is greater than 1, matrix reception");
+        size = payload;
         is_matrix = 1;
     }
     // If matrix get rank
-    if (is_matrix ==1 && key == pre_vertex1_key+1){
+    else if (is_matrix ==1 && key == pre_vertex1_key+1){
         log_info("V1:rank received %d\n", payload);
         rank = payload;
         shape1 = (uint32_t*) spin1_malloc(rank * sizeof(uint32_t));
     }
     // Get Shape of Tensor
-    if (is_matrix ==1 && key > pre_vertex1_key+1 && key <= pre_vertex1_key+1+ rank){
+    else if (is_matrix ==1 && key > pre_vertex1_key+1 && key <= pre_vertex1_key+1+ rank){
         log_info("V1:Dimesion Received %d\n", payload);
         shape1[shape_counter] = (uint32_t*) spin1_malloc(2 * sizeof(uint32_t));
         shape1[shape_counter][0] = key;
@@ -169,6 +174,19 @@ void receive_data(uint key, uint payload) {
         log_info("V1:Shape packet, payload [%d][1]%d\n",shape_counter, shape1[shape_counter][1]);
 
         ++shape_counter;
+    }
+
+    // Get Tensor values
+    else if (key > pre_vertex1_key+1+ rank && key <= pre_vertex1_key+1+ rank + size){
+        log_info("V1:Tensor value Received %d\n", payload);
+        tensor1[tensor_counter] = (uint32_t*) spin1_malloc(2 * sizeof(uint32_t));
+        tensor1[tensor_counter][0] = key;
+        tensor1[tensor_counter][1] = payload;
+        log_info("V1:tensor_counter%d\n", tensor_counter);
+        log_info("V1:tensor1 packet, key     [%d][0]%d\n",tensor_counter, tensor1[tensor_counter][0]);
+        log_info("V1:tensor1 packet, payload [%d][1]%d\n",tensor_counter, tensor1[tensor_counter][1]);
+
+        ++tensor_counter;
     }
 
     // if(counter == 1){
