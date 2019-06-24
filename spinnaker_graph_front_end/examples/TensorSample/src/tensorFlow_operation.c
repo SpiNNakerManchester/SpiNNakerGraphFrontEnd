@@ -17,12 +17,9 @@ uint32_t pre_vertex2_key;
 uint my_key;
 int is_matrix=0;
 int rank =0;
-// key | value
-int** shape1;
-int shape_counter=0;
 
+int* shape1;
 int* tensor1;
-int tensor_counter=0;
 
 uint32_t oper_type = 0;
 
@@ -169,22 +166,14 @@ void receive_data(uint key, uint payload) {
     // Get Shape of Tensor
     else if (is_matrix ==1 && key > pre_vertex1_key+1 && key <= pre_vertex1_key+1+ rank){
         log_info("V1:Dimesion Received %d\n", payload);
-        shape1[shape_counter] = (uint32_t*) spin1_malloc(2 * sizeof(uint32_t));
-        shape1[shape_counter][0] = key;
-        shape1[shape_counter][1] = payload;
-        log_info("V1:shape_counter%d\n", shape_counter);
-        log_info("V1:Shape packet, key     [%d][0]%d\n",shape_counter, shape1[shape_counter][0]);
-        log_info("V1:Shape packet, payload [%d][1]%d\n",shape_counter, shape1[shape_counter][1]);
-
-        ++shape_counter;
+        shape1[key-2] = payload;
+        log_info("V1:shape1 value %d\n", shape1[key-2]);
     }
 
     // Get Tensor values
     else if (key > pre_vertex1_key+1+ rank && key <= pre_vertex1_key+1+ rank + size){
         log_info("V1:Tensor value Received %d\n", payload);
         tensor1[key-pre_vertex1_key] = payload;
-        log_info("V1:tensor_counter%d\n", tensor_counter);
-        log_info("V1:key received  %d\n", key);
         log_info("V1:tensor1 value %d\n", tensor1[key-pre_vertex1_key]);
     }
 
