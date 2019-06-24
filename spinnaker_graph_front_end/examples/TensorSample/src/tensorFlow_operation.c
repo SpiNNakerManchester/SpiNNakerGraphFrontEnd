@@ -21,7 +21,7 @@ int rank =0;
 int** shape1;
 int shape_counter=0;
 
-int** tensor1;
+int* tensor1;
 int tensor_counter=0;
 
 uint32_t oper_type = 0;
