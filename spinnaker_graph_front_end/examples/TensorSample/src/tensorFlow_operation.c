@@ -155,6 +155,9 @@ void receive_data(uint key, uint payload) {
     if (key == pre_vertex1_key && payload > 1){
         log_info("V1:size is greater than 1, matrix reception");
         size = payload;
+        // reserve space for tensor
+        tensor1 = (uint32_t*) spin1_malloc(size * sizeof(uint32_t));
+
         is_matrix = 1;
     }
     // If matrix get rank
@@ -179,14 +182,10 @@ void receive_data(uint key, uint payload) {
     // Get Tensor values
     else if (key > pre_vertex1_key+1+ rank && key <= pre_vertex1_key+1+ rank + size){
         log_info("V1:Tensor value Received %d\n", payload);
-        tensor1[tensor_counter] = (uint32_t*) spin1_malloc(2 * sizeof(uint32_t));
-        tensor1[tensor_counter][0] = key;
-        tensor1[tensor_counter][1] = payload;
+        tensor1[key-pre_vertex1_key] = payload;
         log_info("V1:tensor_counter%d\n", tensor_counter);
-        log_info("V1:tensor1 packet, key     [%d][0]%d\n",tensor_counter, tensor1[tensor_counter][0]);
-        log_info("V1:tensor1 packet, payload [%d][1]%d\n",tensor_counter, tensor1[tensor_counter][1]);
-
-        ++tensor_counter;
+        log_info("V1:key received  %d\n", key);
+        log_info("V1:tensor1 value %d\n", tensor1[key-pre_vertex1_key]);
     }
 
     // if(counter == 1){
