@@ -15,11 +15,19 @@ int result = 0;
 uint32_t pre_vertex1_key;
 uint32_t pre_vertex2_key;
 uint my_key;
-int is_matrix=0;
-int rank =0;
+
+// Tensor properties
+int is_matrix1=0;
+int is_matrix2=0;
+
+int rank1 =0;
+int rank2 =0;
 
 int* shape1;
 int* tensor1;
+
+int* shape2;
+int* tensor2;
 
 uint32_t oper_type = 0;
 
@@ -143,10 +151,8 @@ int div(int a, int b){
     return res;
 }
 
-void receive_data(uint key, uint payload) {
-    log_info("receive key %d and data %d\n", key, payload);
 
-    counter +=1;
+void receive_data(uint key, uint payload) {
 
     // Check size of vertex 1
     if (key == pre_vertex1_key && payload > 1){
@@ -155,24 +161,22 @@ void receive_data(uint key, uint payload) {
         // reserve space for tensor
         tensor1 = (uint32_t*) spin1_malloc(size * sizeof(uint32_t));
 
-        is_matrix = 1;
+        is_matrix1 = 1;
     }
-    // If matrix get rank
-    else if (is_matrix ==1 && key == pre_vertex1_key+1){
-        log_info("V1:rank received %d\n", payload);
-        rank = payload;
-        shape1 = (uint32_t*) spin1_malloc(rank * sizeof(uint32_t));
+    // If matrix get rank1
+    else if (is_matrix1 ==1 && key == pre_vertex1_key+1){
+        log_info("V1:rank1 received %d\n", payload);
+        rank1 = payload;
+        shape1 = (uint32_t*) spin1_malloc(rank1 * sizeof(uint32_t));
     }
     // Get Shape of Tensor
-    else if (is_matrix ==1 && key > pre_vertex1_key+1 && key <= pre_vertex1_key+1+ rank){
-        log_info("V1:Dimesion Received %d\n", payload);
+    else if (is_matrix1 ==1 && key > pre_vertex1_key+1 && key <= pre_vertex1_key+1+ rank1){
         shape1[key-2] = payload;
         log_info("V1:shape1 value %d\n", shape1[key-2]);
     }
 
     // Get Tensor values
-    else if (key > pre_vertex1_key+1+ rank && key <= pre_vertex1_key+1+ rank + size){
-        log_info("V1:Tensor value Received %d\n", payload);
+    else if (key > pre_vertex1_key+1+ rank1 && key <= pre_vertex1_key+1+ rank1 + size){
         tensor1[key-pre_vertex1_key] = payload;
         log_info("V1:tensor1 value %d\n", tensor1[key-pre_vertex1_key]);
     }
