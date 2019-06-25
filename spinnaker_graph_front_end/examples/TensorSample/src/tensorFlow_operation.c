@@ -7,32 +7,31 @@
 #include <simulation.h>
 #include <debug.h>
 
-int size = 0;
+
 int value_a;
 int value_b;
 int counter = 0;
 int result = 0;
+
+// Transmission info
+uint my_key;
 uint32_t pre_vertex1_key;
 uint32_t pre_vertex2_key;
-uint my_key;
-
-// Tensor properties
 int is_matrix1=0;
 int is_matrix2=0;
 
+// Tensor properties
+int size1 = 0;
+int size2 = 0;
 int rank1 =0;
 int rank2 =0;
-
 int* shape1;
-int* tensor1;
-
 int* shape2;
+int* tensor1;
 int* tensor2;
 
 uint32_t oper_type = 0;
-
 uint key_exist = 0; 
-
 address_t address = NULL;
 
 typedef enum regions_e {
@@ -154,12 +153,12 @@ int div(int a, int b){
 
 void receive_data(uint key, uint payload) {
 
-    // Check size of vertex 1
+    // Check size1 of vertex 1
     if (key == pre_vertex1_key && payload > 1){
-        log_info("V1:size is greater than 1, matrix reception");
-        size = payload;
+        log_info("V1:size1 is greater than 1, matrix reception");
+        size1 = payload;
         // reserve space for tensor
-        tensor1 = (uint32_t*) spin1_malloc(size * sizeof(uint32_t));
+        tensor1 = (uint32_t*) spin1_malloc(size1 * sizeof(uint32_t));
 
         is_matrix1 = 1;
     }
@@ -176,10 +175,39 @@ void receive_data(uint key, uint payload) {
     }
 
     // Get Tensor values
-    else if (key > pre_vertex1_key+1+ rank1 && key <= pre_vertex1_key+1+ rank1 + size){
+    else if (key > pre_vertex1_key+1+ rank1 && key <= pre_vertex1_key+1+ rank1 + size1){
         tensor1[key-pre_vertex1_key] = payload;
         log_info("V1:tensor1 value %d\n", tensor1[key-pre_vertex1_key]);
     }
+
+
+    // Check size2 of vertex 2
+    if (key == pre_vertex2_key && payload > 1){
+        log_info("V2:size2 is greater than 1, matrix reception");
+        size2 = payload;
+        // reserve space for tensor
+        tensor2 = (uint32_t*) spin1_malloc(size2 * sizeof(uint32_t));
+
+        is_matrix2 = 1;
+    }
+    // If matrix get rank2
+    else if (is_matrix2 ==1 && key == pre_vertex2_key+1){
+        log_info("V2:rank2 received %d\n", payload);
+        rank2 = payload;
+        shape2 = (uint32_t*) spin1_malloc(rank2 * sizeof(uint32_t));
+    }
+    // Get Shape of Tensor
+    else if (is_matrix2 ==1 && key > pre_vertex2_key+1 && key <= pre_vertex2_key+1+ rank2){
+        shape2[key-2] = payload;
+        log_info("V2:shape2 value %d\n", shape2[key-2]);
+    }
+
+    // Get Tensor values
+    else if (key > pre_vertex2_key+1+ rank2 && key <= pre_vertex2_key+1+ rank2 + size2){
+        tensor2[key-pre_vertex2_key] = payload;
+        log_info("V2:tensor2 value %d\n", tensor2[key-pre_vertex2_key]);
+    }
+
 
     // if(counter == 1){
     //     value_a = payload;

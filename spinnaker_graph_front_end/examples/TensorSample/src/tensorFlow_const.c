@@ -63,7 +63,7 @@ void send_value(){
 
         for(int i=0; i<rank; i++){
             my_key += 1;
-            log_info("send key %d and shape_addr_dtcm %d\n", my_key, shape_addr_dtcm[i]);
+            log_info("send key %d and dim value %d\n", my_key, shape_addr_dtcm[i]);
             while (!spin1_send_mc_packet(my_key, shape_addr_dtcm[i], WITH_PAYLOAD)) {
                 spin1_delay_us(1);
             }
@@ -73,7 +73,7 @@ void send_value(){
     // send tensor values
     for(int i=0; i<input_size; i++){
         my_key += 1;
-        log_info("send key %d and input_addr_dtcm %d\n", my_key, input_addr_dtcm[i]);
+        log_info("send key %d and tensor value %d\n", my_key, input_addr_dtcm[i]);
         while (!spin1_send_mc_packet(my_key, input_addr_dtcm[i], WITH_PAYLOAD)) {
             spin1_delay_us(1);
         }
