@@ -195,50 +195,52 @@ void receive_data(uint key, uint payload) {
     // Get Shape of Tensor
     else if (is_matrix1 ==1 && key > pre_vertex1_key+1 && key <= pre_vertex1_key+1+ rank1){
         shape1[key-2] = payload;
-        log_info("V1:key-2 %d\n", key-2);
-        log_info("V1:shape1 value %d\n", shape1[key-2]);
+        log_info("V1:index %d ,V1:shape1 value %d \n", key-2, shape1[key-2]);
     }
 
     // Get Tensor values
     else if (key > pre_vertex1_key+1+ rank1 && key <= pre_vertex1_key+1+ rank1 + size1){
-        tensor1[key-pre_vertex1_key] = payload;
-        log_info("V1:tensor1 value %d\n", tensor1[key-pre_vertex1_key]);
+        tensor1[key-2-pre_vertex1_key-rank1] = payload;
+        log_info("V1:index %d ,V1:tensor1 value %d\n", key-2-pre_vertex1_key-rank1, tensor1[key-pre_vertex1_key]);
     }
 
 
     // Check size2 of vertex 2
-    // if (key == pre_vertex2_key && payload > 1){
-    //     log_info("V2:size2 is greater than 1, matrix reception");
-    //     size2 = payload;
-    //     // reserve space for tensor
-    //     tensor2 = (uint32_t*) spin1_malloc(size2 * sizeof(uint32_t));
+    if (key == pre_vertex2_key && payload > 1){
+        log_info("V2:size2 is greater than 1, matrix reception");
+        size2 = payload;
+        // reserve space for tensor
+        tensor2 = (uint32_t*) spin1_malloc(size2 * sizeof(uint32_t));
 
-    //     is_matrix2 = 1;
-    // }
+        is_matrix2 = 1;
+    }
     // If matrix get rank2
-    // else if (is_matrix2 ==1 && key == pre_vertex2_key+1){
-    //     log_info("V2:rank2 received %d\n", payload);
-    //     rank2 = payload;
-    //     shape2 = (uint32_t*) spin1_malloc(rank2 * sizeof(uint32_t));
-    // }
-    // // Get Shape of Tensor
-    // else if (is_matrix2 ==1 && key > pre_vertex2_key+1 && key <= pre_vertex2_key+1+ rank2){
-    //     shape2[key-2] = payload;
-    //     log_info("V2:shape2 value %d\n", shape2[key-2]);
-    // }
+    else if (is_matrix2 ==1 && key == pre_vertex2_key+1){
+        log_info("V2:rank2 received %d\n", payload);
+        rank2 = payload;
+        shape2 = (uint32_t*) spin1_malloc(rank2 * sizeof(uint32_t));
+    }
+    // Get Shape of Tensor
+    else if (is_matrix2 ==1 && key > pre_vertex2_key+1 && key <= pre_vertex2_key+1+ rank2){
+        shape2[key-2-pre_vertex2_key] = payload;
+        log_info("V2:key-2-pre_vertex2_key %d , V2:shape2 value %d \n", key-2-pre_vertex2_key, shape2[key-2-pre_vertex2_key]);
+    }
 
-    // // Get Tensor values
-    // else if (key > pre_vertex2_key+1+ rank2 && key <= pre_vertex2_key+1+ rank2 + size2){
-    //     tensor2[key-pre_vertex2_key] = payload;
-    //     log_info("V2:tensor2 value %d\n", tensor2[key-pre_vertex2_key]);
-    // }
+    // Get Tensor values
+    else if (key > pre_vertex2_key+1+ rank2 && key <= pre_vertex2_key+1+ rank2 + size2){
+        tensor2[key-2-pre_vertex2_key-rank2] = payload;
+        log_info("V2:index %d ,V2:tensor2 value %d\n", key-2-pre_vertex2_key-rank2, tensor2[key-pre_vertex2_key]);
+    }
 
-    if (is_matrix1 ==1){
+    if (is_matrix1 ==1 && is_matrix2 ==1){
 
-        if(counter == (2 + size1 + rank1)) {
+        if(counter == (2 + size1 + rank1 + 2 + size2 + rank2)) {
             log_info("Both tensors received\n");
             log_info("V1:shape1 test value %d\n", shape1[0]);
+            log_info("V1:shape1 test value %d\n", shape1[1]);
 
+            log_info("V2:shape2 test value %d\n", shape2[0]);
+            log_info("V2:shape2 test value %d\n", shape2[1]);
             //mat_mul_2D();
 
         }
