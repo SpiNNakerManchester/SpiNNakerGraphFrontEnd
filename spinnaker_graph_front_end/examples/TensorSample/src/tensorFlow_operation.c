@@ -13,6 +13,8 @@ int value_b;
 int counter = 0;
 int result = 0;
 
+int expected_packets=0;
+
 // Transmission info
 uint my_key;
 uint32_t pre_vertex1_key;
@@ -25,10 +27,10 @@ int size1 = 0;
 int size2 = 0;
 int rank1 =0;
 int rank2 =0;
-int* shape1;
-int* shape2;
-int* tensor1;
-int* tensor2;
+uint32_t* shape1;
+uint32_t* shape2;
+uint32_t* tensor1;
+uint32_t* tensor2;
 
 uint32_t oper_type = 0;
 uint key_exist = 0; 
@@ -110,25 +112,47 @@ int b[3][2] = {
     {11,12}
 };
 
-int multiply[][2];
+//int multiply[][2];
 
 // int* mat_mul(int a[][N], int* shape_a, int b[][N], int* shape_b){
-void mat_mul(){
+//void mat_mul(){
 
-    log_info("mat_mul\n");
+  //  log_info("mat_mul\n");
 
-    for(int row=0; row<2; row++){
-        for(int col=0; col<2; col++){
-            for(int i=0; i<3; i++){
-                multiply[row][col] += a[row][i] * b[i][col];
-                log_info("Mul %d", multiply[row][col]);
-            }
-        }
-    }
+//    for(int row=0; row<2; row++){
+//        for(int col=0; col<2; col++){
+//            for(int i=0; i<3; i++){
+//                multiply[row][col] += a[row][i] * b[i][col];
+//                log_info("Mul %d", multiply[row][col]);
+//            }
+//        }
+//    }
     // for(int row=0; i<shape_a[0]; i++)
     //     for(int col=0; j<shape_b[1]; j++)
     //         for(int i=0; i<shape_a[1] ;i++)
     //             multiply[row][col] = a[row][i] + b[i][col]
+//}
+
+void mat_mul_2D(){
+    log_info("mat_mul_2D\n");
+
+    int multiply[4];
+    int sum=0;
+    int l = 0;
+    log_info("shape1[0] %d \n", shape1[0]);
+    for(int i=0; i<shape1[0]; i++){
+        for(int j=0; j<shape2[1]; j++){
+            for(int k=0; k<shape1[0]; k++){
+                log_info(" i, j, k %d %d %d :\n", i, j, k);
+                log_info(" k+ a_dim2*i*j  : (k * b_dim2) + i  %d %d :\n", tensor1[k+ shape1[1]*i], tensor2[(k * shape2[1]) + j] );
+                sum += tensor1[k+ shape1[1]*i] * tensor2[(k * shape2[1]) + j];
+            }
+            multiply[l] = sum;
+            log_info(" multiply[%d] %d :\n", l, multiply[l]);
+            sum=0;
+            l++;
+        }
+    }
 }
 
 int mul(int a, int b){
@@ -150,9 +174,9 @@ int div(int a, int b){
     return res;
 }
 
-
 void receive_data(uint key, uint payload) {
-
+    log_info("key %d , data %d\n", key, payload);
+    ++counter;
     // Check size1 of vertex 1
     if (key == pre_vertex1_key && payload > 1){
         log_info("V1:size1 is greater than 1, matrix reception");
@@ -171,6 +195,7 @@ void receive_data(uint key, uint payload) {
     // Get Shape of Tensor
     else if (is_matrix1 ==1 && key > pre_vertex1_key+1 && key <= pre_vertex1_key+1+ rank1){
         shape1[key-2] = payload;
+        log_info("V1:key-2 %d\n", key-2);
         log_info("V1:shape1 value %d\n", shape1[key-2]);
     }
 
@@ -182,32 +207,43 @@ void receive_data(uint key, uint payload) {
 
 
     // Check size2 of vertex 2
-    if (key == pre_vertex2_key && payload > 1){
-        log_info("V2:size2 is greater than 1, matrix reception");
-        size2 = payload;
-        // reserve space for tensor
-        tensor2 = (uint32_t*) spin1_malloc(size2 * sizeof(uint32_t));
+    // if (key == pre_vertex2_key && payload > 1){
+    //     log_info("V2:size2 is greater than 1, matrix reception");
+    //     size2 = payload;
+    //     // reserve space for tensor
+    //     tensor2 = (uint32_t*) spin1_malloc(size2 * sizeof(uint32_t));
 
-        is_matrix2 = 1;
-    }
+    //     is_matrix2 = 1;
+    // }
     // If matrix get rank2
-    else if (is_matrix2 ==1 && key == pre_vertex2_key+1){
-        log_info("V2:rank2 received %d\n", payload);
-        rank2 = payload;
-        shape2 = (uint32_t*) spin1_malloc(rank2 * sizeof(uint32_t));
-    }
-    // Get Shape of Tensor
-    else if (is_matrix2 ==1 && key > pre_vertex2_key+1 && key <= pre_vertex2_key+1+ rank2){
-        shape2[key-2] = payload;
-        log_info("V2:shape2 value %d\n", shape2[key-2]);
-    }
+    // else if (is_matrix2 ==1 && key == pre_vertex2_key+1){
+    //     log_info("V2:rank2 received %d\n", payload);
+    //     rank2 = payload;
+    //     shape2 = (uint32_t*) spin1_malloc(rank2 * sizeof(uint32_t));
+    // }
+    // // Get Shape of Tensor
+    // else if (is_matrix2 ==1 && key > pre_vertex2_key+1 && key <= pre_vertex2_key+1+ rank2){
+    //     shape2[key-2] = payload;
+    //     log_info("V2:shape2 value %d\n", shape2[key-2]);
+    // }
 
-    // Get Tensor values
-    else if (key > pre_vertex2_key+1+ rank2 && key <= pre_vertex2_key+1+ rank2 + size2){
-        tensor2[key-pre_vertex2_key] = payload;
-        log_info("V2:tensor2 value %d\n", tensor2[key-pre_vertex2_key]);
-    }
+    // // Get Tensor values
+    // else if (key > pre_vertex2_key+1+ rank2 && key <= pre_vertex2_key+1+ rank2 + size2){
+    //     tensor2[key-pre_vertex2_key] = payload;
+    //     log_info("V2:tensor2 value %d\n", tensor2[key-pre_vertex2_key]);
+    // }
 
+    if (is_matrix1 ==1){
+
+        if(counter == (2 + size1 + rank1)) {
+            log_info("Both tensors received\n");
+            log_info("V1:shape1 test value %d\n", shape1[0]);
+
+            //mat_mul_2D();
+
+        }
+    }
+    // mat_mul();
 
     // if(counter == 1){
     //     value_a = payload;
@@ -283,8 +319,6 @@ static bool initialize() {
     } else {
         log_info("Addition vertex without key, just perform the addition and record the result");
     }
-
-    // mat_mul();
 
     return true;
 }
