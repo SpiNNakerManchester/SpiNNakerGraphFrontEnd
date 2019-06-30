@@ -36,7 +36,7 @@ class TestingTensorGraph(unittest.TestCase):
         # 2-D tensor `a`
         # [[1, 2, 3],
         #  [4, 5, 6]]
-        k = tf.constant([9, 4, 3, 4, 5, 6], shape=[2, 3])
+        k = tf.constant([1, 2, 3, 4, 5, 6], shape=[2, 3])
 
         # 2-D tensor `b`
         # [[ 7,  8],
