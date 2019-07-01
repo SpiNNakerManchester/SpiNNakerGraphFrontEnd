@@ -12,6 +12,8 @@ import unittest
 import spinnaker_graph_front_end as front_end
 from spinnaker_graph_front_end.examples.TensorSample.operation_vertex import (OperationVertex)
 from spinnaker_graph_front_end.examples.TensorSample.const_vertex import (ConstVertex)
+import numpy as np
+import mnistdata
 import tensorflow.compat.v1 as tf
 # use functions of TensorFlow version 1 into TensorFlow version 2.
 tf.disable_v2_behavior()
@@ -24,6 +26,7 @@ class TestingTensorGraph(unittest.TestCase):
     def test_Tensor_graph(self):
 
         front_end.setup(n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
+        tf.set_random_seed(0)
 
         # a = tf.constant(1, dtype=tf.int32)
         # b = tf.constant(2, dtype=tf.int32)
@@ -53,8 +56,6 @@ class TestingTensorGraph(unittest.TestCase):
         # result = a+b
         # Launch the graph in a session.
         sess = tf.Session()
-
-        # sess.run(tf.global_variables_initializer())
         t = sess.run(c)
 
         const = {}
