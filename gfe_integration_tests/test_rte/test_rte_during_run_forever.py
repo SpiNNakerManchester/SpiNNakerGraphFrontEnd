@@ -17,12 +17,7 @@ def start():
     s.stop_run()
 
 
-def stop():
-    global conn
-    conn.close()
-
-
-conn = DatabaseConnection(start, stop, local_port=None)
+conn = DatabaseConnection(start, local_port=None)
 
 
 def test_rte_during_run_forever():
@@ -32,6 +27,7 @@ def test_rte_during_run_forever():
         ExecutableType.USES_SIMULATION_INTERFACE))
     s.add_socket_address(None, "localhost", conn.local_port)
     s.run(None)
+    conn.close()
     with pytest.raises(ExecutableFailedToStopException):
         s.stop()
 
