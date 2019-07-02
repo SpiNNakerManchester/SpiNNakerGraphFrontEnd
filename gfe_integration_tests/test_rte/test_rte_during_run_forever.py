@@ -6,21 +6,23 @@ from spinn_front_end_common.utilities.exceptions import (
 from spinn_front_end_common.utilities.database import DatabaseConnection
 import spinnaker_graph_front_end as s
 from gfe_integration_tests.test_rte.run_vertex import RunVertex
+import pytest
 
 
-exception = None
+conn = None
 
 
 def start():
     sleep(2.0)
-    try:
-        s.stop()
-    except Exception as e:
-        global exception
-        exception = e
+    s.stop_run()
 
 
-conn = DatabaseConnection(start, local_port=None)
+def stop():
+    global conn
+    conn.close()
+
+
+conn = DatabaseConnection(start, stop, local_port=None)
 
 
 def test_rte_during_run_forever():
@@ -30,8 +32,8 @@ def test_rte_during_run_forever():
         ExecutableType.USES_SIMULATION_INTERFACE))
     s.add_socket_address(None, "localhost", conn.local_port)
     s.run(None)
-    conn.close()
-    assert(isinstance(exception, ExecutableFailedToStopException))
+    with pytest.raises(ExecutableFailedToStopException):
+        s.stop()
 
 
 if __name__ == "__main__":
