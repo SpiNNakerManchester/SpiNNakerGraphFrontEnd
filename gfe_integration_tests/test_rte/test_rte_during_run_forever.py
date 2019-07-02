@@ -1,11 +1,23 @@
 import os
 from time import sleep
-import pytest
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_front_end_common.utilities.exceptions import (
     ExecutableFailedToStopException)
+from spinn_front_end_common.utilities.database import DatabaseConnection
 import spinnaker_graph_front_end as s
 from gfe_integration_tests.test_rte.run_vertex import RunVertex
+
+
+exception = None
+
+
+def start():
+    sleep(2.0)
+    try:
+        s.stop()
+    except Exception as e:
+        global exception
+        exception = e
 
 
 def test_rte_during_run_forever():
@@ -13,7 +25,11 @@ def test_rte_during_run_forever():
     s.add_machine_vertex_instance(RunVertex(
         "test_rte_during_run.aplx",
         ExecutableType.USES_SIMULATION_INTERFACE))
+    conn = DatabaseConnection(start, local_port=None)
+    s.add_socket_address(None, "localhost", conn.local_port)
     s.run(None)
-    sleep(2.0)
-    with pytest.raises(ExecutableFailedToStopException):
-        s.stop()
+    assert(isinstance(exception, ExecutableFailedToStopException))
+
+
+if __name__ == "__main__":
+    test_rte_during_run_forever()

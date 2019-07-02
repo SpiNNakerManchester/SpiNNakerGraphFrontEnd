@@ -102,16 +102,6 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         """
         return _is_allocated_machine(self.config)
 
-    def add_socket_address(self, socket_address):
-        """ Add a socket address to the list to be checked by the notification\
-            protocol.
-
-        :param socket_address: the socket address
-        :type socket_address:
-        :rtype: None
-        """
-        self._add_socket_address(socket_address)
-
     def run(self, run_time):
         """ Run a simulation for a fixed amount of time
 
