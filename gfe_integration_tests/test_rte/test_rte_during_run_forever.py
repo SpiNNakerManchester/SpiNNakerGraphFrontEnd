@@ -13,7 +13,7 @@ conn = None
 
 
 def start():
-    sleep(2.0)
+    sleep(5.0)
     s.stop_run()
 
 
