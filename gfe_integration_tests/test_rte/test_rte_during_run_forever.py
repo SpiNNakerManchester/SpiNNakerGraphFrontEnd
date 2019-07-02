@@ -20,14 +20,17 @@ def start():
         exception = e
 
 
+conn = DatabaseConnection(start, local_port=None)
+
+
 def test_rte_during_run_forever():
     s.setup(model_binary_folder=os.path.dirname(__file__))
     s.add_machine_vertex_instance(RunVertex(
         "test_rte_during_run.aplx",
         ExecutableType.USES_SIMULATION_INTERFACE))
-    conn = DatabaseConnection(start, local_port=None)
     s.add_socket_address(None, "localhost", conn.local_port)
     s.run(None)
+    conn.close()
     assert(isinstance(exception, ExecutableFailedToStopException))
 
 
