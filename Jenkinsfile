@@ -115,7 +115,7 @@ pipeline {
         }
         stage('Test') {
             steps {
-                run_pytest('SpiNNakerGraphFrontEnd/gfe_integration_tests/', 1200, 'SpiNNakerGraphFrontEnd_Integration', 'auto')
+                run_pytest('SpiNNakerGraphFrontEnd/gfe_integration_tests/', 1200, 'SpiNNakerGraphFrontEnd_Integration', '1')
             }
         }
         stage('Reports') {
