@@ -52,7 +52,7 @@ pipeline {
                 sh 'make -C spinn_common install'
                 sh 'make -C SpiNNFrontEndCommon/c_common'
                 sh 'make -C SpiNNFrontEndCommon/c_common install'
-                sh 'make -C SpiNNakerGraphFrontEnd/examples'
+                sh 'make -C SpiNNakerGraphFrontEnd/spinnaker_graph_front_end/examples'
                 sh 'make -C SpiNNakerGraphFrontEnd/gfe_integration_tests'
                 // Python install
                 sh 'cd SpiNNMachine && python setup.py develop'
