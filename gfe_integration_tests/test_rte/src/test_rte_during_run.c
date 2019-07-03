@@ -8,7 +8,7 @@ uint32_t infinite_run;
 uint32_t time;
 
 void timer_callback(uint time, uint unused1) {
-    if (((time * 2) == simulation_ticks) || (infinite_run && (time == 500))) {
+    if (((time * 2) == simulation_ticks) || (infinite_run && (time == 2000))) {
         log_error("Generating Error at time %u", time);
         rt_error(RTE_SWERR);
     }

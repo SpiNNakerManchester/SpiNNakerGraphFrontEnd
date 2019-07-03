@@ -14,7 +14,7 @@ conn = None
 
 
 def start():
-    sleep(2.0)
+    sleep(3.0)
     s.stop_run()
 
 
