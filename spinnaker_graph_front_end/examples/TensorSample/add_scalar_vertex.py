@@ -27,7 +27,7 @@ class AdditionVertex(MachineVertex, AbstractHasAssociatedBinary,
         names=[('TRANSMISSIONS', 0),
                ('RECORDED_ADDITION_RESULT', 1)])
 
-    PARTITION_ID = "ADDITION_PARTITION"
+    PARTITION_ID = "OPERATION"
 
     def __init__(self, label, constraints=None):
         MachineVertex.__init__(self)

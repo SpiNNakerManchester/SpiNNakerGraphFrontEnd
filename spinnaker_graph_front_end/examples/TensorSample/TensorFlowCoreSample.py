@@ -11,7 +11,7 @@ import os
 import unittest
 import spinnaker_graph_front_end as front_end
 from spinnaker_graph_front_end.examples.TensorSample.operation_vertex import (OperationVertex)
-from spinnaker_graph_front_end.examples.TensorSample.const_vertex import (ConstVertex)
+from spinnaker_graph_front_end.examples.TensorSample.const_scalar_vertex import (ConstScalarVertex)
 import numpy as np
 import mnistdata
 import tensorflow.compat.v1 as tf
@@ -113,8 +113,8 @@ class TestingTensorGraph(unittest.TestCase):
 
             # constant operation
             elif 'Const' in graph._nodes_by_id[n_id].name:
-                vertices[n_id] = ConstVertex("{} vertex ".format(graph._nodes_by_id[n_id].name),
-                                             const[graph._nodes_by_id[n_id].name])
+                vertices[n_id] = ConstScalarVertex("{} vertex ".format(graph._nodes_by_id[n_id].name),
+                                                   const[graph._nodes_by_id[n_id].name])
 
             else:
                 break
@@ -147,7 +147,7 @@ class TestingTensorGraph(unittest.TestCase):
         for placement in sorted(placements.placements,
                                 key=lambda p: (p.x, p.y, p.p)):
 
-            if isinstance(placement.vertex, ConstVertex):
+            if isinstance(placement.vertex, ConstScalarVertex):
                 const_value = placement.vertex.read(placement, txrx)
                 logger.info("CONST {}, {}, {} > {}".format(
                     placement.x, placement.y, placement.p, const_value))

@@ -1,4 +1,4 @@
-APPS = operation.mk const.mk
+APPS = add.mk const_scalar.mk mul.mk
 
 all: $(APPS)
 	for f in $(APPS); do $(MAKE) -f $$f || exit $$?; done

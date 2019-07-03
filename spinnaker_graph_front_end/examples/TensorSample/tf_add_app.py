@@ -36,23 +36,28 @@ graph = tf.get_default_graph()
 vertices = {}
 inputs = {}
 
+
+# Store input node ids for the current node
+def store_input_node_ids(n_id):
+    current_inputs = []
+    if graph._nodes_by_id[n_id]._inputs:
+        for index in graph._nodes_by_id[n_id]._inputs:
+            current_inputs.append(index._id)
+    inputs[n_id] = current_inputs
+
 # Add Vertices
 for n_id in graph._nodes_by_id:
     print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
     # addition operation
     if 'add' in graph._nodes_by_id[n_id].name:
         vertices[n_id] = AdditionVertex("Addition vertex {}".format(graph._nodes_by_id[n_id].name))
-        # Store input node ids for the current node
-        current_inputs = []
-        if graph._nodes_by_id[n_id]._inputs:
-            for index in graph._nodes_by_id[n_id]._inputs:
-                current_inputs.append(index._id)
-        inputs[n_id] = current_inputs
 
     # constant operation
     elif 'Const' in graph._nodes_by_id[n_id].name:
         vertices[n_id] = ConstScalarVertex("Const vertex {}".format(graph._nodes_by_id[n_id].name),
                                            const[graph._nodes_by_id[n_id].name])
+
+    store_input_node_ids(n_id)
 
     vertices[n_id].name = graph._nodes_by_id[n_id].name
     front_end.add_machine_vertex_instance(vertices[n_id])
@@ -68,7 +73,7 @@ for n_id in vertices:
                 front_end.add_machine_edge_instance(
                     MachineEdge(vertices[input_key], vertices[n_id],
                                 label=vertices[input_key].name + ': to ' + vertices[n_id].name),
-                    "ADDITION_PARTITION")
+                                "OPERATION")
 
 print("run simulation")
 front_end.run(1)
