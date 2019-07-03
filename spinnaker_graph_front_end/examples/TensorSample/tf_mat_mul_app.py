@@ -3,8 +3,8 @@ from tensorflow.python.framework import tensor_util
 import logging
 import os
 import spinnaker_graph_front_end as front_end
-from spinnaker_graph_front_end.examples.TensorSample.operation_vertex import (OperationVertex)
-from spinnaker_graph_front_end.examples.TensorSample.const_scalar_vertex import (ConstScalarVertex)
+from spinnaker_graph_front_end.examples.TensorSample.mat_mul_vertex import (MatMulVertex)
+from spinnaker_graph_front_end.examples.TensorSample.const_tensor_vertex import (ConstTensorVertex)
 import tensorflow.compat.v1 as tf
 # use functions of TensorFlow version 1 into TensorFlow version 2.
 tf.disable_v2_behavior()
@@ -48,14 +48,6 @@ graph = tf.get_default_graph()
 vertices = {}
 inputs = {}
 
-operations = { "add": 1,
-               "mul": 2,
-               "sub": 3,
-               "MatMul": 4,
-               }
-
-def store_spinnaker_vertices(n_id, oper_type):
-    vertices[n_id] = OperationVertex("{} vertex ".format(graph._nodes_by_id[n_id].name), oper_type)
 
 def store_input_node_ids (n_id):
     current_inputs = []
@@ -64,25 +56,17 @@ def store_input_node_ids (n_id):
             current_inputs.append(index._id)
     inputs[n_id] = current_inputs
 
+
 # Add Vertices
 for n_id in graph._nodes_by_id:
     print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
     # math operations
-    if 'add' in graph._nodes_by_id[n_id].name:
-        store_spinnaker_vertices(n_id, operations["add"])
-
-    elif 'mul' in graph._nodes_by_id[n_id].name:
-        store_spinnaker_vertices(n_id, operations["mul"])
-
-    elif 'sub' in graph._nodes_by_id[n_id].name:
-        store_spinnaker_vertices(n_id, operations["sub"])
-
-    elif 'MatMul' in graph._nodes_by_id[n_id].name:
-        store_spinnaker_vertices(n_id, operations["MatMul"])
+    if 'MatMul' in graph._nodes_by_id[n_id].name:
+        vertices[n_id] = MatMulVertex("{} vertex ".format(graph._nodes_by_id[n_id].name))
 
     # constant operation
     elif 'Const' in graph._nodes_by_id[n_id].name:
-        vertices[n_id] = ConstScalarVertex("{} vertex ".format(graph._nodes_by_id[n_id].name),
+        vertices[n_id] = ConstTensorVertex("{} vertex ".format(graph._nodes_by_id[n_id].name),
                                            const[graph._nodes_by_id[n_id].name])
     else:
         break
@@ -115,14 +99,14 @@ print("read SDRAM after run")
 for placement in sorted(placements.placements,
                         key=lambda p: (p.x, p.y, p.p)):
 
-    if isinstance(placement.vertex, ConstScalarVertex):
+    if isinstance(placement.vertex, ConstTensorVertex):
         const_value = placement.vertex.read(placement, txrx)
         logger.info("CONST {}, {}, {} > {}".format(
             placement.x, placement.y, placement.p, const_value))
 
-    if isinstance(placement.vertex, OperationVertex):
+    if isinstance(placement.vertex, MatMulVertex):
         oper_results = placement.vertex.read(placement, txrx)
-        logger.info("OPERATION {}, {}, {} > {}".format(
+        logger.info("Mat Mul {}, {}, {} > {}".format(
             placement.x, placement.y, placement.p, oper_results))
 
 front_end.stop()

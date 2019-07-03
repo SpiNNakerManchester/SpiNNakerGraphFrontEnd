@@ -17,25 +17,23 @@ logger = logging.getLogger(__name__)
 
 
 class MatMulVertex(MachineVertex, AbstractHasAssociatedBinary,
-                      MachineDataSpecableVertex):
+                   MachineDataSpecableVertex):
 
     _ONE_WORD = struct.Struct("<i")
 
     PREVERTEX_KEYS_DATA_SIZE = 2 * 4
-    OPER_TYPE_DATA_SIZE = 4  # int number
     TRANSMISSION_DATA_SIZE = 2 * 4 # has key and key
     RECORDING_DATA_SIZE = 4 # int result
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('PREVERTEX_KEYS',0),
-               ('OPER_TYPE', 1),
-               ('TRANSMISSIONS', 2),
-               ('RECORDED_OPER_RESULT', 3)])
+               ('TRANSMISSIONS', 1),
+               ('RECORDED_OPER_RESULT', 2)])
 
     PARTITION_ID = "OPERATION_PARTITION"
 
-    def __init__(self, label, oper_type):
+    def __init__(self, label):
         MachineVertex.__init__(self)
         AbstractHasAssociatedBinary.__init__(self)
         MachineDataSpecableVertex.__init__(self)
@@ -43,7 +41,6 @@ class MatMulVertex(MachineVertex, AbstractHasAssociatedBinary,
         self._constant_data_size = 4
         self.placement = None
         self._label = label
-        self._oper_type = oper_type
         print("\n {}_vertex __init__".format(self._label))
 
 
@@ -51,20 +48,17 @@ class MatMulVertex(MachineVertex, AbstractHasAssociatedBinary,
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
         resources = ResourceContainer(sdram=ConstantSDRAM(
-             self.PREVERTEX_KEYS_DATA_SIZE + self.OPER_TYPE_DATA_SIZE +
+             self.PREVERTEX_KEYS_DATA_SIZE +
              self.TRANSMISSION_DATA_SIZE + self.RECORDING_DATA_SIZE +
              DATA_SPECABLE_BASIC_SETUP_INFO_N_BYTES ))
 
         return resources
 
     def _reserve_memory_regions(self, spec):
-        print("\n oper_vertex _reserve_memory_regions")
+        print("\n mat_mul_vertex _reserve_memory_regions")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.PREVERTEX_KEYS.value,
             size=self.PREVERTEX_KEYS_DATA_SIZE, label="prevertex_keys")
-        spec.reserve_memory_region(
-            region=self.DATA_REGIONS.OPER_TYPE.value,
-            size=self.OPER_TYPE_DATA_SIZE, label="oper_type_values")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.TRANSMISSIONS.value,
             size=self.TRANSMISSION_DATA_SIZE, label="keys")
@@ -77,7 +71,7 @@ class MatMulVertex(MachineVertex, AbstractHasAssociatedBinary,
             self, spec, placement, machine_graph, routing_info, iptags,
             reverse_iptags, machine_time_step, time_scale_factor):
 
-        print("\n oper_vertex generate_machine_data_specification")
+        print("\n mat_mul_vertex generate_machine_data_specification")
         self.placement = placement
 
         self._reserve_memory_regions(spec)
@@ -104,11 +98,6 @@ class MatMulVertex(MachineVertex, AbstractHasAssociatedBinary,
         spec.switch_write_focus(self.DATA_REGIONS.PREVERTEX_KEYS.value)
         print("pre_vertices_first_keys",pre_vertices_first_keys)
         spec.write_array(pre_vertices_first_keys, data_type=DataType.INT32)
-
-        # write oper type value
-        spec.switch_write_focus(self.DATA_REGIONS.OPER_TYPE.value)
-        print("\n write oper type value ", self._oper_type)
-        spec.write_value(self._oper_type)
 
         # write key needed to transmit with
         key = routing_info.get_first_key_from_pre_vertex(
@@ -148,7 +137,7 @@ class MatMulVertex(MachineVertex, AbstractHasAssociatedBinary,
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
-        return "tensorFlow_operation.aplx"
+        return "mat_mul.aplx"
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):

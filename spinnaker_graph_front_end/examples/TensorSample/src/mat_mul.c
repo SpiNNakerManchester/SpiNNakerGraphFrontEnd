@@ -1,4 +1,3 @@
-
 //! imports
 #include "spin1_api.h"
 #include "common-typedefs.h"
@@ -11,8 +10,6 @@
 int value_a;
 int value_b;
 int counter = 0;
-int result = 0;
-
 int expected_packets=0;
 
 // Transmission info
@@ -34,35 +31,25 @@ uint32_t* tensor2;
 
 uint32_t* multiply;
 
-uint32_t oper_type = 0;
-uint key_exist = 0; 
+uint key_exist = 0;
 address_t address = NULL;
 
 typedef enum regions_e {
     PREVERTEX_KEYS,
-    OPER_TYPE,
     TRANSMISSIONS,
     RECORDED_DATA
 } regions_e;
-
 
 typedef enum callback_priorities{
     MC_PACKET = -1, USER = 3
 } callback_priorities;
 
-
-typedef enum oper_type_region_element {
-    OPER_TYPE_POSITION
-} initial_state_region_elements;
-
-
 typedef enum transmission_region_elements {
     HAS_KEY, MY_KEY
 } transmission_region_elements;
 
-
 void send_value(uint data){
-    log_info("addition send_value\n", my_key);
+    log_info("mat_mul send_value\n", my_key);
 
     log_info("sending value via multicast with key %d",
               my_key);
@@ -72,36 +59,16 @@ void send_value(uint data){
 
 }
 
-void record_data(int result) {
+void record_data() {
     log_info("Recording data\n");
 
     address_t record_region =
         data_specification_get_region(RECORDED_DATA, address);
     uint8_t* record_space_address = (uint8_t*) record_region;
-    spin1_memcpy(record_space_address, &result, 4);
-    log_info("recorded result %d address: %u\n", result ,record_space_address);
+    spin1_memcpy(record_space_address, multiply, 4);
+    log_info("recorded result %d address: %u\n", multiply[0] ,record_space_address);
 
 }
-
-int addition(int a, int b){
-    log_info("addition\n");
-    int sum;
-    log_info("Addition of A %d and B %d \n", a , b);
-    sum = a + b;
-    log_info("Addition Result : %d \n", sum);
-    return sum;
-}
-
-// Todo : specify which value is Substracted after the reception.
-int sub(int a, int b){
-    log_info("subtraction\n");
-    int res;
-    log_info("Subtraction from A %d the value B %d \n", a , b);
-    res = a - b;
-    log_info("Subtraction Result : %d \n", res);
-    return res;
-}
-
 
 void mat_mul_2D(){
     log_info("mat_mul_2D\n");
@@ -111,9 +78,9 @@ void mat_mul_2D(){
     int sum=0;
     int l = 0;
 
-    for(int i=0; i<shape1[0]; i++){
-        for(int j=0; j<shape2[1]; j++){
-            for(int k=0; k<shape1[1]; k++){
+    for(uint32_t i=0; i<shape1[0]; i++){
+        for(uint32_t j=0; j<shape2[1]; j++){
+            for(uint32_t k=0; k<shape1[1]; k++){
                 // log_info(" i, j, k %d %d %d :\n", i, j, k);
                 // log_info(" k+ a_dim2*i*j  : (k * b_dim2) + i  %d %d :\n", tensor1[k+ shape1[1]*i], tensor2[(k * shape2[1]) + j] );
                 sum += tensor1[k+ shape1[1]*i] * tensor2[(k * shape2[1]) + j];
@@ -124,25 +91,6 @@ void mat_mul_2D(){
             l++;
         }
     }
-}
-
-int mul(int a, int b){
-    log_info("multiplication\n");
-    int res;
-    log_info("Mul of A %d and B %d \n", a , b);
-    res = a * b;
-    log_info("Mul Result : %d \n", res);
-    return res;
-}
-
-// Todo : Handling of cast values of Tensorflow.
-int div(int a, int b){
-    log_info("division\n");
-    int res;
-    log_info("Division from A %d the value B %d \n", a , b);
-    res = a / b;
-    log_info("Division Result : %d \n", res);
-    return res;
 }
 
 void receive_data(uint key, uint payload) {
@@ -175,7 +123,6 @@ void receive_data(uint key, uint payload) {
         // log_info("V1:index %d ,V1:tensor1 value %d\n", key-2-pre_vertex1_key-rank1, tensor1[key-2-pre_vertex1_key-rank1]);
     }
 
-
     // Check size2 of vertex 2
     if (key == pre_vertex2_key && payload > 1){
         // log_info("V2:size2 is greater than 1, matrix reception");
@@ -207,56 +154,15 @@ void receive_data(uint key, uint payload) {
 
         if(counter == (2 + size1 + rank1 + 2 + size2 + rank2)) {
             log_info("Both tensors received\n");
-            // log_info("V1:shape1 test value %d\n", shape1[0]);
-            // log_info("V1:shape1 test value %d\n", shape1[1]);
-
-            // log_info("V2:shape2 test value %d\n", shape2[0]);
-            // log_info("V2:shape2 test value %d\n", shape2[1]);
             mat_mul_2D();
-
+            record_data();
+            spin1_exit(0);
         }
     }
-    // mat_mul();
-
-    // if(counter == 1){
-    //     value_a = payload;
-    // }
-    // else{
-    //     value_b = payload;
-
-    //     if(oper_type == 1){
-    //         result = addition(value_a, value_b);
-    //     }
-
-    //     if(oper_type == 2){
-    //         result = mul(value_a, value_b);
-    //     }
-
-    //     if(oper_type == 3){
-    //         result = sub(value_a, value_b);
-    //     }
-
-    //     // if(oper_type == 4){
-    //     //     
-    //     // }
-
-    //     // if(oper_type == 5){
-    //     //     result = div(value_a, value_b);
-    //     // }
-
-    //     if(key_exist == 1){
-    //         send_value(result);
-    //     }
-  
-    //     record_data(result);
-    //     spin1_exit(0);
-
-    // }
-    
 }
 
 static bool initialize() {
-    log_info("Initialise addition: started\n");
+    log_info("Initialise mat_mul: started\n");
 
     // Get the address this core's DTCM data starts at from SDRAM
     address = data_specification_get_data_address();
@@ -275,11 +181,6 @@ static bool initialize() {
     log_info("prevertex 1 key is %d\n", pre_vertex1_key);
     log_info("prevertex 2 key is %d\n", pre_vertex2_key);
 
-    // read my oper type value
-    address_t oper_type_region_address = data_specification_get_region(OPER_TYPE, address);
-    oper_type = oper_type_region_address[OPER_TYPE_POSITION];
-    log_info("my oper type value is %d\n", oper_type);
-
     // initialise transmission keys
     address_t transmission_region_address = data_specification_get_region(
             TRANSMISSIONS, address);
@@ -290,7 +191,7 @@ static bool initialize() {
         my_key = transmission_region_address[MY_KEY];
         log_info("my key is %d\n", my_key);
     } else {
-        log_info("Addition vertex without key, just perform the addition and record the result");
+        log_info("Mat_mul vertex without key, just perform the addition and record the result");
     }
 
     return true;
@@ -308,7 +209,7 @@ static bool initialize() {
  * SOURCE
  */
 void c_main() {
-    log_info("starting Tensor operation\n");
+    log_info("starting mat_mul operation\n");
 
     // initialise the model
     if (!initialize()) {

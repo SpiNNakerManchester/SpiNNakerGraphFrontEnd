@@ -17,9 +17,9 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-class ConstVertex(MachineVertex,
-                  AbstractHasAssociatedBinary, AbstractProvidesNKeysForPartition,
-                  MachineDataSpecableVertex):
+class ConstTensorVertex(MachineVertex,
+                        AbstractHasAssociatedBinary, AbstractProvidesNKeysForPartition,
+                        MachineDataSpecableVertex):
 
     _ONE_WORD = struct.Struct("<i")
 

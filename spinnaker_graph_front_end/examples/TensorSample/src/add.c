@@ -1,4 +1,3 @@
-
 //! imports
 #include "spin1_api.h"
 #include "common-typedefs.h"
@@ -13,7 +12,6 @@ int counter = 0;
 int result = 0;
 
 uint my_key;
-
 uint key_exist = 0;
 
 address_t address = NULL;
