@@ -45,10 +45,6 @@ tf.set_random_seed(0)
 # Download images and labels into mnist.test (10K images+labels) and mnist.train (60K images+labels)
 mnist = mnistdata.read_data_sets("data", one_hot=True, reshape=False) # 66 nodes
 
-mnist_test_uint8 = mnist.test.images.astype(np.uint8)
-
-mnist_train_uint8 = mnist.train.images.astype(np.uint8)
-
 # input X: 28x28 grayscale images, the first dimension (None) will index the images in the mini-batch
 X = tf.placeholder(tf.float32, [None, 28, 28, 1]) # 1 node 67
 # correct answers will go here
