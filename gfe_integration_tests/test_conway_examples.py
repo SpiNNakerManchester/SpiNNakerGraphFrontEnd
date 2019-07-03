@@ -1,8 +1,12 @@
 import os
 import unittest
+from spinn_front_end_common.utilities import globals_variables
 
 
 class TestConwayExamples(unittest.TestCase):
+
+    def setUp(self):
+        globals_variables.unset_simulator()
 
     def test_one_no_graph(self):
         import spinnaker_graph_front_end.examples.Conways.no_edges_examples.conways_basic_cell  # NOQA

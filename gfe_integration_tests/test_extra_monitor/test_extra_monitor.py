@@ -2,6 +2,7 @@ import struct
 import time
 import os
 import spinnaker_graph_front_end as sim
+from spinn_front_end_common.utilities import globals_variables
 from data_specification.utility_calls import get_region_base_address_offset
 from gfe_integration_tests.test_extra_monitor.sdram_writer import SDRAMWriter
 
@@ -37,6 +38,7 @@ def test_extra_monitor():
     mbs = 20
 
     # setup system
+    globals_variables.unset_simulator()
     sim.setup(model_binary_folder=os.path.dirname(__file__),
               n_chips_required=2)
 
