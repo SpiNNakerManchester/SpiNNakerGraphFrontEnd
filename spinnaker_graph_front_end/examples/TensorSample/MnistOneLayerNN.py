@@ -92,13 +92,13 @@ for i in range(10000):
 
     #success on test data ?
 
-    test_batch_X = np.reshape(mnist.test.images, (-1, 28, 28, 1))
-
-    test_batch_Y = np.reshape(mnist.test.labels, (-1, 10))
-
-    test_data = {X:test_batch_X, Y_:test_batch_Y}
-
-    a,c = sess.run([accuracy, cross_entropy], feed_dict=test_data)
+    # test_batch_X = np.reshape(mnist.test.images, (-1, 28, 28, 1))
+    #
+    # test_batch_Y = np.reshape(mnist.test.labels, (-1, 10))
+    #
+    # test_data = {X:test_batch_X, Y_:test_batch_Y}
+    #
+    # a,c = sess.run([accuracy, cross_entropy], feed_dict=test_data)
 
 
 # In[4]:
