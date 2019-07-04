@@ -3,7 +3,9 @@
 
 import numpy as np
 import tensorflow as tf
-
+import tensorflow.compat.v1 as tf
+# use functions of TensorFlow version 1 into TensorFlow version 2.
+tf.disable_v2_behavior()
 
 def load_data(path):
     with np.load(path) as f:
