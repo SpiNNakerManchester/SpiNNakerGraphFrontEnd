@@ -1,0 +1,5087 @@
+[33mcommit 6a1397b65911424eb40341bfaa89b902e070869c[m[33m ([m[1;36mHEAD -> [m[1;32mGFEAdditionGraph[m[33m, [m[1;31morigin/GFEAdditionGraph[m[33m)[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Wed Jul 3 14:09:43 2019 +0100
+
+    1) Separate the operations in different files and classes
+
+[33mcommit b3cfd5b78fe5a0eed6b273e41425fc100a814313[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Wed Jul 3 12:28:00 2019 +0100
+
+    1) Insert sample files for MNIST in order to import the dataset
+    2) Split add and mul scalar operations
+
+[33mcommit e43f27f837673cfdad150ed667e2fb4107a01274[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Wed Jul 3 11:36:20 2019 +0100
+
+    Create separate file for scalar addition
+
+[33mcommit f4eaa4e7eab07c0a8dfa250ace0376a360cc5f03[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Mon Jul 1 17:28:37 2019 +0100
+
+    1) Introduce the files that is loading the mnist dataset mnistdata.py
+    2) Introduce new file for MnistVertex that is going to write in SDRAM
+    the mnist values of batch 100 of type unit8.
+    3) Introduce the file softmax that has an example of training with core
+    tesnsorFlow.
+    4) Next steps starting to split the operation individually to make the
+    implementation easier.
+
+[33mcommit 4f85e6081111a979bbb85bfd665008be348a6dd6[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Sun Jun 30 21:39:43 2019 +0100
+
+    Allocate dynamically the multiply array
+
+[33mcommit e5499bb0302a8e04b05cba922e04c86032b2772d[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Sun Jun 30 21:19:47 2019 +0100
+
+    fix indexing in shape arrays
+
+[33mcommit 38b22c7ed60bdcff8e31e8fda8829b21231e611f[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Sun Jun 30 20:39:55 2019 +0100
+
+    update for 2D matmul
+
+[33mcommit e1850dda35a922c30c7dc4668e6d583112d3bea8[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Tue Jun 25 14:52:33 2019 +0100
+
+    Reception both arrays ( todo refactoring )
+
+[33mcommit de57250422f174a4acffce9c1dca9b2717dcde2e[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Tue Jun 25 14:38:53 2019 +0100
+
+    prepare to handle two tensors
+
+[33mcommit 72deffbe3be99c67a6227bf4e8ec3d2e893b101f[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Mon Jun 24 16:47:29 2019 +0100
+
+    1) Update storing procedure of shape to avoid later on sorting
+    procedure.
+    
+    The keys are used as indexes to preserve the correct order.
+    
+    The first shape dimension is the third packet received for each Tensor.
+    So based on this the allocation of dimensions to the array positions is
+    done.
+    
+    In the Tensor value reception:
+    The start the indexing form zero, every time from the received
+    key the pre-vertex key is removed.
+
+[33mcommit c19f1a3ce5f05a32e68d6727e97041179b77791e[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Mon Jun 24 16:08:15 2019 +0100
+
+    1) update the tensor to be just one pointer. Not a pointer of pointers.
+
+[33mcommit 35f2653ee8136e79b820eb4c83261492c4c5ab9b[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Mon Jun 24 16:05:29 2019 +0100
+
+    1) Update code to reserve the array memory size when I receive the size
+    of Tensor and not later on.
+
+[33mcommit 6122f834806aee5bb54085ac55f486fc933908ed[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Mon Jun 24 15:26:24 2019 +0100
+
+    receive the first array and log info the elements
+
+[33mcommit d3d1156beb717776f25e6ec11c995f2a1ae627a9[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Mon Jun 24 14:50:55 2019 +0100
+
+    1) Receive the shape of the matrix 1.
+
+[33mcommit 810ae4d754b263078ee1e674336b239216ff709e[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Sun Jun 23 19:30:57 2019 +0100
+
+    1) Fix sending keys.
+
+[33mcommit 0678c05773e5e1a039788e8971f7451dca33ade6[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Sun Jun 23 18:13:18 2019 +0100
+
+    store in SDRAM of operation vertex the keys of the prevertices in order to associate each multicast packet with particular prevertex.
+
+[33mcommit 41b451a1fd8f7326fb216233d0747e5a9dc22a08[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Sun Jun 23 17:38:54 2019 +0100
+
+    In progress transferring array
+
+[33mcommit b302345451c7887476c6885484845a488ec00a95[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Sun Jun 23 15:39:44 2019 +0100
+
+    in progress handling rank and shape that will be sent to operation
+
+[33mcommit 9c96c2f91ce00f865e0685f7b6cd3f7704814396[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Sat Jun 22 22:27:58 2019 +0100
+
+    1) In python operation vertex ,write in SDRAM the pre-vertices first keys, so in case that current
+    operation vertex receives an array will be able to associate the data
+    with particular array.
+
+[33mcommit 7aa42adf7d38cf1296cc7745f74367752d2d04d8[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Sat Jun 22 19:41:00 2019 +0100
+
+    1) Minor refactoring
+
+[33mcommit dc558f4dc29804ed4e7006700f6342241f186367[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Sat Jun 22 12:08:21 2019 +0100
+
+    1) Introduce MatMul from tensorflow operation in python.
+    2) In const vertex get routing info to retrieve mask and key info.
+    3) In operation c file comment out the division since needs update the
+    handling of truediv tensorFlow operation.
+
+[33mcommit b6882f593990cd6e04bf6c078b007fa60c816d03[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Fri Jun 21 14:14:32 2019 +0100
+
+    1) Introduce simple example of matrix multiplication in c code.
+
+[33mcommit b9b608330af9fb7fb3b12b92160e04202310d19e[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Fri Jun 21 10:49:57 2019 +0100
+
+    1) Update the code to store an array from SDRAM to DTCM.
+
+[33mcommit 594d02f8d8a4fd58aacf22f1d20c488a8c1919a2[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Thu Jun 20 22:58:56 2019 +0100
+
+    update c code to reserve space in DTCM and write array values from SDRAM to DTCM
+
+[33mcommit bf79cd5ea376ede6434ccd3089d181363bd2b0e7[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Thu Jun 20 15:54:07 2019 +0100
+
+    In progress saving array in DTCM
+
+[33mcommit b0c8a6b83715521dc4792c2ab8d203e2f1b116db[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Wed Jun 19 16:44:16 2019 +0100
+
+    1) In progress the creation of const tensor 2D etc. Currently I read
+    successfully the values of a Tensor in c code for a simple shape of the
+    tensor.
+
+[33mcommit b41e2266291e60b76cfea47442b4a2cbf3033934[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Wed Jun 19 16:08:59 2019 +0100
+
+    Prepare python code to write the array in the SDRAM
+
+[33mcommit f2337b5d26e462f6fcc8a8786ebdb90ea0a18ad6[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Wed Jun 19 14:49:23 2019 +0100
+
+    1) Insert algebric tensors, run session and retrieve the values.
+    2) Add division function in c code. Division needs further handing in
+    python since TensorFlow creates additionaly two cast nodes that cast the
+    denominator and numerator.
+
+[33mcommit 20cf750df43f61a33a759d3ba8a783c19e1fb748[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Tue Jun 18 16:06:19 2019 +0100
+
+    1) After Upgrade to TensorFlow version 2 the Session does not exist so a function added to let run version 1 into version 2. 2) Remove redundant files
+
+[33mcommit 0d6cd23feade4e084ba65f09836cb78d3886a6a2[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Mon Jun 17 17:56:13 2019 +0100
+
+    1)Update code to handle the signed ints operations.
+    2)In progress unit test in python
+
+[33mcommit 88dfd958f00bfee7046c8a370adfaf8e1c586a0a[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Fri Jun 14 17:25:05 2019 +0100
+
+    Introduce subtraction vertex
+
+[33mcommit 5f2420087b9c302fab9a7749465ea58889be15d0[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Fri Jun 14 16:53:47 2019 +0100
+
+    update the loop using the functions
+
+[33mcommit be162be98dbbf8854b9078c8e71bc3bc5bfc0f66[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Fri Jun 14 16:25:10 2019 +0100
+
+    rename the make files for operation accordingly, upate the C code and python code to experiment with the mul operation
+
+[33mcommit a231f9c44004c2c99fce3a35100d4dfb4c7a431b[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Fri Jun 14 14:45:29 2019 +0100
+
+    replace addition c file with operation c file name
+
+[33mcommit 5c6393f8bfa0884686dd2280e32426e4bddc788e[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Fri Jun 14 14:43:15 2019 +0100
+
+    Introduce the mul method in c code
+
+[33mcommit d80bf1de8243a37d5016d9c72c3fd0ff73218173[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Fri Jun 14 14:38:54 2019 +0100
+
+    replace all add related elements with operation
+
+[33mcommit a71fe41f0ad0b4f692e8070ba3b7e8fe2c9bfc7e[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Fri Jun 14 14:32:55 2019 +0100
+
+    in progress transform addition vertex to operation vertex in python
+
+[33mcommit bf779d8b8c41be3ad46552380d53e0fba30e88e6[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Thu Jun 13 16:58:46 2019 +0100
+
+    Remove redundant methods from add and const vertex python files
+
+[33mcommit d8d2054310a093ad50b97ad861e026aae1644bec[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Thu Jun 13 16:39:44 2019 +0100
+
+    Remove redundant exception check not is_single(partitions)
+
+[33mcommit 989982b87320a4c2dad22a02197f533424c2e68b[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Thu Jun 13 15:24:43 2019 +0100
+
+    1) Update the loop that created the edges, fix.
+    2) In addition vertex introduce transmission region in SDRAM and keys in
+    order to send the addition result to another vertex.
+    3) Update the c code of addition vertex to send the result in case that
+    it has a key in its transmission region.
+
+[33mcommit f6cd02bbb4cfca4856403606cfbb210cc225e925[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Wed Jun 12 14:58:42 2019 +0100
+
+    Introduce the TensorFlow session which will let me evaluate and retrieve
+    the actual integer values of constant Tensors.
+    Then a loop was added that identifies the constant Tensors and
+    stores their values to a dictionary with key the name of the constant
+    Tensor and value the integer number.
+
+[33mcommit 9664709863ca96f54e1e2028be1b129188e14f58[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Wed Jun 12 10:10:28 2019 +0100
+
+    1) Remove unnecessary comments.
+    2) Replace some log debug to log info.
+    3) Insert the read method also in const python file.
+
+[33mcommit 49f17dd9620bebbca2fea0528b2b47cb515addf8[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Mon Jun 10 14:17:24 2019 +0100
+
+    Fix : side effect of local variable to global variable.
+
+[33mcommit 2df499bb549c05e0d74a4a7d2921decf3d25cb75[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Mon Jun 10 12:03:45 2019 +0100
+
+    print additional elements to debug the addition. The result has extra large total sum.
+
+[33mcommit 7b285abd0914bd3aad43649abeb4e0ab6d8ed221[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Mon Jun 10 11:41:16 2019 +0100
+
+    Remove time related variables, remove redundant comments.
+
+[33mcommit 61bbf2e70d3afcbda7a152b7231318e6b5972d5e[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Mon Jun 10 10:50:54 2019 +0100
+
+    1) Remove buffer from python const and addition files.
+    2) Use executable SYNC and remove all time related variables.
+    3) Const Vertex has 3 regions: Transmission for the keys
+                                   Input to set the initial integer values
+                                   Record to record the integer values
+    4) Addition Vertex has 1 region: Recorded addition result
+    5) Only the const vertices have the addition_partition for their edges
+    6) In add_vertex.py the read method uses the tranceiver.
+
+[33mcommit 5bfab6e1c65d1d001ecb1de2cd32250088d6a4c5[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Tue May 28 11:55:08 2019 +0100
+
+    debugging note for spinnaker
+
+[33mcommit a05c06f84fd4fe93b76d86a0b8c8525130f5f349[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Tue May 28 11:05:43 2019 +0100
+
+    introduce new make file that enables the debug log level
+
+[33mcommit f96c4ecc6617302a34611247d4e1276ef2a90652[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Mon May 27 18:21:24 2019 +0100
+
+    update the files accordingly to comly with conways example for packet transmission and hello world record data
+
+[33mcommit 78059ee401c0b4c5b31c254666ada35bf8450c37[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Mon May 27 17:43:45 2019 +0100
+
+    update c files
+
+[33mcommit 9105c1d81449938e49d9195f249fac7905af6b63[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Mon May 27 16:59:02 2019 +0100
+
+    update files for TensorSample after master merge
+
+[33mcommit 80d0de8009a57711d1654f2d661931c6a9a483c9[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Mon May 27 08:53:43 2019 +0100
+
+    insert useful comments
+
+[33mcommit 9678867746dac87ad479ed96238f8442faeba3a8[m[33m ([m[1;32mmaster[m[33m)[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Fri May 24 16:17:31 2019 +0100
+
+    insert the TensorSample directory to master branch
+
+[33mcommit b9b6209df15908c12bfb89416eb6feddd590f541[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Fri May 24 15:18:28 2019 +0100
+
+    Update the modified hello world to work after merge of branches
+
+[33mcommit 54997e52d669afa3bcb1c812940548d2edc572e7[m
+Author: Konstantinos Alvertis <konstantinos.alvertis@gmail.com>
+Date:   Thu May 23 15:49:04 2019 +0100
+
+    insert old examples before the merge of interface fix branch to master branch
+
+[33mcommit 16f29733895a16a069fa4af3609f3e70645da74a[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Merge: 020146e 5881e10
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed May 22 10:53:26 2019 +0100
+
+    Merge pull request #91 from SpiNNakerManchester/nengo_spinnaker
+    
+    supports front ends having extra xmls.
+
+[33mcommit 5881e107ed462d5bf96668dcc60f429a7078340c[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed May 22 10:21:16 2019 +0100
+
+    Re-insert another change
+
+[33mcommit bdcba9bf942f3b91c7b25952449961b6b1a3bc61[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed May 22 10:16:35 2019 +0100
+
+    No need to check for None here as that is supported beneath
+
+[33mcommit 1783d5fce3ecdc206d797072ba4f30d6c1263ea0[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed May 22 10:11:21 2019 +0100
+
+    Remove chip_id_allocator as this is only supported elsewhere
+
+[33mcommit ddd346ddb9f30034140084592a52421ac0db3702[m
+Merge: f08ad24 020146e
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed May 22 10:07:01 2019 +0100
+
+    Merge branch 'master' into nengo_spinnaker
+
+[33mcommit 020146e636f5fff682e170fd0f88e0f237e3445a[m
+Merge: 041521d efab20a
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue May 21 18:05:54 2019 +0100
+
+    Merge pull request #89 from SpiNNakerManchester/doc-tweak
+    
+    Tweaking the documentation strings
+
+[33mcommit efab20a0eaa1da724f636608e96d064615ad7426[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue May 21 15:59:12 2019 +0100
+
+    flake8 fix
+
+[33mcommit 5ccc00b7e134e67a7aab4610f03dd0db112265d4[m
+Merge: b7016c1 041521d
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue May 21 15:53:26 2019 +0100
+
+    Merge branch 'master' into doc-tweak
+    
+    Conflicts:
+            spinnaker_graph_front_end/examples/Conways/partitioned_example_a_no_vis_no_buffer/conways_cell.c
+            spinnaker_graph_front_end/examples/speed_test_solo/main_solo.py
+            spinnaker_graph_front_end/examples/speed_test_solo/packet_gatherer_cheat.c
+            spinnaker_graph_front_end/examples/speed_test_solo/packet_gatherer_cheat.py
+            spinnaker_graph_front_end/examples/speed_tracker/main.py
+            spinnaker_graph_front_end/examples/speed_tracker/sdram_reader_and_transmitter.c
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol/main.py
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol/packet_gatherer.c
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol/packet_gatherer_with_protocol.py
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol/sdram_reader_and_transmitter_with_protocol.c
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol_search/packet_gatherer.c
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol_search/packet_gatherer_with_protocol.py
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol_search/sdram_reader_and_transmitter_with_protocol.c
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol_search_c_code_version/packet_gatherer.c
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol_search_c_code_version/packet_gatherer_with_protocol.py
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol_search_c_code_version/sdram_reader_and_transmitter_with_protocol.c
+            spinnaker_graph_front_end/examples/template/c_template_vertex.c
+            spinnaker_graph_front_end/examples/test_extra_monitor_core_data_extraction/sdram_writer.c
+            spinnaker_graph_front_end/examples/test_fixed_router/hello_world.py
+            spinnaker_graph_front_end/examples/test_fixed_router/hello_world_vertex.py
+            spinnaker_graph_front_end/examples/test_fixed_router/hello_world_vertex_clone.py
+            spinnaker_graph_front_end/examples/test_fixed_router_transmitter_reciever/hello_world.py
+            spinnaker_graph_front_end/examples/test_fixed_router_transmitter_reciever/hello_world_vertex.py
+            spinnaker_graph_front_end/examples/test_fixed_router_transmitter_reciever/hello_world_vertex_clone.py
+            spinnaker_graph_front_end/examples/test_retransmission_phase_on_multi_cores/main.py
+            spinnaker_graph_front_end/examples/test_retransmission_phase_on_multi_cores/packet_gatherer.c
+            spinnaker_graph_front_end/examples/test_retransmission_phase_on_multi_cores/packet_gatherer_with_protocol.py
+            spinnaker_graph_front_end/examples/test_retransmission_phase_on_multi_cores/sdram_reader_and_transmitter_with_protocol.c
+            spinnaker_graph_front_end/graph_front_end_simulator_interface.py
+            spinnaker_graph_front_end/spinnaker.py
+            spinnaker_graph_front_end/utilities/__init__.py
+            spinnaker_graph_front_end/utilities/graph_front_end_failed_state.py
+
+[33mcommit 041521dd641667aa2876fc13300be9ab7d206e74[m
+Merge: 0ce0194 74f2160
+Author: Christian Y. Brenninkmeijer <Christian-B@users.noreply.github.com>
+Date:   Mon May 20 11:32:29 2019 +0100
+
+    Merge pull request #106 from SpiNNakerManchester/fix_sdram_allocations
+    
+    Use the right constants at the right time
+
+[33mcommit 74f216093b3df8a75eff4fecd3d3951507d6baea[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri May 17 11:31:46 2019 +0100
+
+    Use the right constants at the right time
+
+[33mcommit 0ce0194c1c76cdfb763299ddba99f9353c933c71[m
+Merge: a829de6 a4167b2
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu May 16 14:40:54 2019 +0100
+
+    Merge pull request #102 from SpiNNakerManchester/sdram_per_timestep
+    
+    Sdram per timestep
+
+[33mcommit a4167b28f4188625970bd87a8c535b72e28b8352[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue May 14 14:37:05 2019 +0100
+
+    Make these cases basically the same
+
+[33mcommit 0dc98e175339efb711a558bf266d3d1af5533198[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue May 14 14:19:09 2019 +0100
+
+    This should now have the correct SDRAM requirements
+
+[33mcommit bfe867d8f6d5741defad718596667b1fd20cf5f3[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue May 14 14:14:41 2019 +0100
+
+    Ensured correct for SDRAM
+
+[33mcommit d89ff6c24f58fdc582938bb83be2ee9ed861af86[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue May 14 13:29:29 2019 +0100
+
+    Removed old tests, moved things to where they belong and fixed travis
+
+[33mcommit 29fc959803f81ec36994dba55d9966b407de9f9e[m
+Merge: 7403df3 a829de6
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue May 14 10:29:24 2019 +0100
+
+    Merge branch 'master' into sdram_per_timestep
+    
+    Conflicts:
+            spinnaker_graph_front_end/examples/speed_test_solo/packet_gatherer_cheat.py
+            spinnaker_graph_front_end/examples/speed_tracker/packt_gatherer.py
+            spinnaker_graph_front_end/examples/speed_tracker/sdram_reader_and_transmitter.py
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol/packet_gatherer_with_protocol.py
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol/sdram_reader_and_transmitter_with_protocol.py
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol_search/packet_gatherer_with_protocol.py
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol_search/sdram_reader_and_transmitter_with_protocol.py
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol_search_c_code_version/packet_gatherer_with_protocol.py
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol_search_c_code_version/sdram_reader_and_transmitter_with_protocol.py
+            spinnaker_graph_front_end/examples/test_extra_monitor_core_data_extraction/sdram_writer.py
+            spinnaker_graph_front_end/examples/test_extra_monitor_core_data_extraction_multiple_locations/sdram_writer.py
+            spinnaker_graph_front_end/examples/test_retransmission_phase_on_multi_cores/packet_gatherer_with_protocol.py
+            spinnaker_graph_front_end/examples/test_retransmission_phase_on_multi_cores/sdram_reader_and_transmitter_with_protocol.py
+
+[33mcommit a829de6763d193654af98a659889df726eedf828[m
+Merge: fb02f9e 3869749
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue May 14 10:26:14 2019 +0100
+
+    Merge pull request #100 from SpiNNakerManchester/simulation_interface_fix
+    
+    Simulation interface fix
+
+[33mcommit 7403df3e39ebd591668edcfbc82e6e953c574bad[m
+Merge: 7ac2434 fb02f9e
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Tue May 7 08:53:53 2019 +0100
+
+    merge
+
+[33mcommit fb02f9e65e50e38ecdceeb0e0af43cb7465c942a[m
+Merge: dd56175 841dda2
+Author: Alan Stokes <alan.barry.stokes@gmail.com>
+Date:   Fri May 3 14:53:12 2019 +0100
+
+    Merge pull request #97 from SpiNNakerManchester/extractor2
+    
+    KaBLAM!
+
+[33mcommit 7ac243459d26e77503220ce80907eb9074e04550[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Tue Apr 16 10:20:54 2019 +0100
+
+    Untested change from Total to data timesteps
+
+[33mcommit 3869749ac507587db6e280152f35dee5ffa8d3c5[m
+Merge: 2e367ab dd56175
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Fri Apr 12 13:08:22 2019 +0100
+
+    Merge remote-tracking branch 'origin/master' into
+    simulation_interface_fix
+    
+    Conflicts:
+            spinnaker_graph_front_end/examples/speed_test_solo/main_solo.py
+            spinnaker_graph_front_end/examples/speed_test_solo/packet_gatherer_cheat.py
+            spinnaker_graph_front_end/examples/speed_tracker/main.py
+            spinnaker_graph_front_end/examples/speed_tracker/packt_gatherer.py
+            spinnaker_graph_front_end/examples/speed_tracker/sdram_reader_and_transmitter.py
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol/main.py
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol/packet_gatherer_with_protocol.py
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol/sdram_reader_and_transmitter_with_protocol.py
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol_search/main.py
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol_search/packet_gatherer_with_protocol.py
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol_search/sdram_reader_and_transmitter_with_protocol.py
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol_search_c_code_version/main.py
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol_search_c_code_version/packet_gatherer_with_protocol.py
+            spinnaker_graph_front_end/examples/speed_tracker_with_protocol_search_c_code_version/sdram_reader_and_transmitter_with_protocol.py
+            spinnaker_graph_front_end/examples/test_extra_monitor_core_data_extraction/main.py
+            spinnaker_graph_front_end/examples/test_extra_monitor_core_data_extraction/sdram_writer.py
+            spinnaker_graph_front_end/examples/test_retransmission_phase_on_multi_cores/main.py
+            spinnaker_graph_front_end/examples/test_retransmission_phase_on_multi_cores/packet_gatherer_with_protocol.py
+            spinnaker_graph_front_end/examples/test_retransmission_phase_on_multi_cores/sdram_reader_and_transmitter_with_protocol.py
+
+[33mcommit 44f3d7ccdd35b04181ef131980179a122a320c09[m
+Merge: fa6e1ba dd56175
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Mon Apr 8 16:16:27 2019 +0100
+
+    merged in master
+
+[33mcommit 841dda23aab5efefc9ba08fe8ac8697c31ff323b[m[33m ([m[1;31morigin/extractor2[m[33m)[m
+Merge: 319d080 dd56175
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Mon Apr 1 09:25:20 2019 +0100
+
+    merged in master
+
+[33mcommit dd56175412ec423b54cbd54e138ebb4d3d591ea2[m
+Merge: 0f9ce06 6a53ee3
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Thu Mar 28 10:59:21 2019 +0000
+
+    Merge pull request #103 from SpiNNakerManchester/DeprecationWarning
+    
+    Depriaction Warning
+
+[33mcommit 2e367ab58eb92081a7c990e681d7b2b528f77ce7[m[33m ([m[1;31morigin/simulation_interface_fix[m[33m, [m[1;32mremotes/origin/simulation_interface_fix[m[33m)[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Tue Feb 19 09:38:45 2019 +0000
+
+    Deal with another compiler warning
+
+[33mcommit 96732073dab2358e4157d4ee51e3c753e3879deb[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Tue Feb 19 09:36:38 2019 +0000
+
+    Suppress compiler warnings
+
+[33mcommit 319d080a3944d90c58eea2ae52306bb5bc457235[m
+Merge: 553e222 0f9ce06
+Author: christian-B <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Thu Feb 14 16:56:20 2019 +0000
+
+    merge
+
+[33mcommit 6a53ee34867d4302c6d07608d7a0f64a3e4d21a0[m
+Author: christian-B <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Thu Feb 14 08:57:12 2019 +0000
+
+    replace incorrectly removed import
+
+[33mcommit 64da3c125e5b68e14ad1d4836dcc14af4f49f58e[m[33m ([m[1;31morigin/DeprecationWarning[m[33m)[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Tue Feb 12 12:42:50 2019 +0000
+
+    Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated
+
+[33mcommit fa6e1bace49d755a036736cdfab9df2148e1b124[m[33m ([m[1;31morigin/sdram_per_timestep[m[33m)[m
+Merge: fb78a77 0f9ce06
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Mon Feb 11 16:03:22 2019 +0000
+
+    merge lossing many import fixes
+
+[33mcommit 0f9ce06fccd1677dfab4e53e421983acd93a25e2[m
+Merge: e5fe263 7a18bc3
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Feb 8 14:32:20 2019 +0000
+
+    Merge pull request #85 from SpiNNakerManchester/minor-import-improvements
+    
+    Make import statements use PEP 328 better
+
+[33mcommit fb78a77b5784a846f45bc02298d79d00c404c178[m
+Merge: a92fd0e e5fe263
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Thu Feb 7 16:50:47 2019 +0000
+
+    merged in master
+
+[33mcommit 553e222b662923bcd73b1ccd0514066e78a84403[m
+Merge: 29ebe95 e5fe263
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Thu Feb 7 16:50:46 2019 +0000
+
+    merged in master
+
+[33mcommit e5fe263b19dcbe1c245112aa4c7bfafd03337bf9[m
+Merge: 57afc26 7289aa4
+Author: Christian Y. Brenninkmeijer <Christian-B@users.noreply.github.com>
+Date:   Thu Feb 7 13:47:15 2019 +0000
+
+    Merge pull request #101 from SpiNNakerManchester/py3.7
+    
+    Enable testing with Python 3.7
+
+[33mcommit 7289aa4f9c2c473dee2ad5dedf9ac0820e3e7a08[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Thu Feb 7 11:41:57 2019 +0000
+
+    Enable testing with Python 3.7
+
+[33mcommit 46c2ca94b1642d1ef073ee79091f0c3bdb9c1f65[m[33m ([m[1;32msimulation_interface_fix[m[33m)[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Fri Jan 18 16:23:52 2019 +0000
+
+    remove deleted tests etc. from the Makefile
+
+[33mcommit 7a18bc3b113b152500782092ca72348b1eb4a94b[m
+Merge: 535cc62 57afc26
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Thu Jan 17 09:07:42 2019 +0000
+
+    Merge branch 'master' into minor-import-improvements
+
+[33mcommit 2af1d73d48cf91b6796d05e49c968ab29dea20f2[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Wed Jan 16 11:30:37 2019 +0000
+
+    flake8 (E129 is annoying...)
+
+[33mcommit dff5493ffb794c184bfc6d48ea1dea4e8f28ca7e[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Wed Jan 16 11:17:23 2019 +0000
+
+    update unittests
+
+[33mcommit 88dadda7466094a32411ff8320f55e3f27fb02e4[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Wed Jan 16 11:14:23 2019 +0000
+
+    flake8 missing blank line
+
+[33mcommit 208d67e3ef5671df94f5ebf6c36377762f1a569c[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Wed Jan 16 11:08:27 2019 +0000
+
+    Nuke unneeded old tests and versions of speed up
+
+[33mcommit 0d4cb1b1618c9b163ff367906be6f9fb98bd2f2e[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Wed Jan 16 11:05:30 2019 +0000
+
+    Refactor extra_monitor to work like other tests
+
+[33mcommit c7cbb31d6f3ef4154423f1b47d12820232659736[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Wed Jan 16 10:50:44 2019 +0000
+
+    Rename test directory
+
+[33mcommit 391a80bfa3e4368274cf04c2716fd1ed895403c4[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Wed Jan 16 10:43:06 2019 +0000
+
+    Rename test
+
+[33mcommit da3327c32ce815b0eaa0dc84d1a41f8a12158b78[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Wed Jan 16 10:42:12 2019 +0000
+
+    Update tests
+
+[33mcommit 027dd7c5376d2339073e87cef004d3950c97df7e[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Tue Jan 15 14:20:58 2019 +0000
+
+    python3
+
+[33mcommit 3791a9dfeb2b5567cb71810f9139919eff224f9f[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Tue Jan 15 14:10:59 2019 +0000
+
+    Update order of calls to simulation interface functions
+
+[33mcommit c1af337efa22d49470bfa5792fb7e2f43b5ce8fc[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Thu Jan 10 16:15:44 2019 +0000
+
+    Add output to show these are working
+
+[33mcommit 2d12831ef704d153bd0b9eed24592c7140609a13[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Thu Jan 10 15:52:38 2019 +0000
+
+    actually use the rename properly
+
+[33mcommit fe6c71f2e0d0aec03aa7949b9a5f8196a4f5b442[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Thu Jan 10 15:47:35 2019 +0000
+
+    rename file
+
+[33mcommit a10ec79927391b1d2f4b0b702e920ead90e16666[m
+Merge: 8c03994 57afc26
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Thu Jan 10 15:04:52 2019 +0000
+
+    Merge remote-tracking branch 'origin/master' into
+    simulation_interface_fix
+    
+    Conflicts:
+            requirements-test.txt
+
+[33mcommit a92fd0e12f31f8a99f889ef078f8ec12ebd4d72a[m
+Merge: 26c7f0d 57afc26
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Thu Jan 10 12:04:27 2019 +0000
+
+    merged in master
+
+[33mcommit 29ebe958ed32286dcfe876d3915f43f0acd21fa2[m
+Merge: edfa1e2 57afc26
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Thu Jan 10 12:04:27 2019 +0000
+
+    merged in master
+
+[33mcommit 57afc269400a96bd1e1ec033748139e151f2fa8e[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Thu Jan 10 12:03:32 2019 +0000
+
+    pytest will be brought in by pytest-cov
+
+[33mcommit 8c03994cbedf36dcfc7174f460f16c150e26bd62[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Mon Jan 7 16:42:50 2019 +0000
+
+    flake8 blank lines, correct executable type
+
+[33mcommit 45c01432858ffc386752a6689a05f528bd811a33[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Mon Jan 7 16:30:00 2019 +0000
+
+    flake8 update pytest version, add to gitignore
+
+[33mcommit 175ed6fabd1a14503d527e993f4c511ec775b429[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Mon Jan 7 16:21:04 2019 +0000
+
+    Fixes to match changes to simulation interface.
+    
+    Also some minor python3 edits.
+
+[33mcommit 26c7f0ded5a4a2263dc500031dbc31d5fa948b8a[m
+Author: christian-B <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Fri Jan 4 16:51:05 2019 +0000
+
+    fixed ConstantSDRAM
+
+[33mcommit 13c8997c5adf7b9a058d93d4c0bc976b33702c70[m
+Merge: 6001bf7 5b31194
+Author: christian-B <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Thu Jan 3 11:39:38 2019 +0000
+
+    Major merged in master
+
+[33mcommit 535cc626e07a6179fbb2b3a43de48d93969aefb8[m
+Merge: 63db979 5b31194
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Wed Dec 12 15:14:29 2018 +0000
+
+    Merge branch 'master' into minor-import-improvements
+
+[33mcommit f08ad240831bb9a773b411b4ec463cad691316e1[m[33m ([m[1;31morigin/nengo_spinnaker[m[33m)[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Nov 23 13:58:16 2018 +0000
+
+    bits to make nengo work with spalloc with real machines etc
+    
+    added a [i] to recorder as otherwise it blows up
+
+[33mcommit c32d59077672ee523689286a966bc0b2eda9701e[m
+Merge: aaf7f63 5b31194
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Fri Oct 26 16:13:48 2018 +0100
+
+    Merge remote-tracking branch 'remotes/origin/master' into nengo_spinnaker
+
+[33mcommit edfa1e2ea77f857deb17951fbacfa3e12a5ed846[m
+Merge: 4dafdb0 5b31194
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Fri Oct 26 09:16:44 2018 +0100
+
+    merged in master
+
+[33mcommit 5b31194af597679512109def71759908eb232c59[m
+Merge: d410d63 95223e5
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Thu Oct 25 14:17:27 2018 +0100
+
+    Merge pull request #94 from SpiNNakerManchester/F841
+    
+    F841
+
+[33mcommit 95223e578145db04dc24d5a95072554450fc7334[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Thu Oct 25 13:48:38 2018 +0100
+
+    F841
+
+[33mcommit 4dafdb0e9b0e24c916b30c3995025cca1984c150[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Wed Oct 24 16:58:35 2018 +0100
+
+    flake8
+
+[33mcommit ae52a8bec03a716debeb53db5b9b1424a1383ce1[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Wed Oct 24 15:34:58 2018 +0100
+
+    recording by placements
+
+[33mcommit 38a2296d3bbebade5fe2d4e4108ced46c62eec84[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Wed Oct 24 14:55:43 2018 +0100
+
+    Get Data directly from buffered_receiving_data
+
+[33mcommit aaf7f63ed8153caf258c460d72e61a8e8c3a7b16[m
+Merge: 0fe7d08 d410d63
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Oct 10 14:14:13 2018 +0100
+
+    Merge remote-tracking branch 'remotes/origin/master' into nengo
+
+[33mcommit d410d6372b78c390ff756d56804e371cd56007d0[m
+Merge: 1378aeb dc32121
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Sep 27 14:07:53 2018 +0100
+
+    Merge pull request #93 from SpiNNakerManchester/test_multilocation_fix
+    
+    Change test makefile / directory structure to match others
+
+[33mcommit dc3212150957bc80678251e20d529f925a2502ed[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Thu Sep 27 14:03:30 2018 +0100
+
+    Change test makefile / directory structure to match others
+
+[33mcommit 1378aebcaa9a1af7d12ac94164d64b088fc777ab[m
+Merge: 9eb53ee 9e69c3b
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Sep 27 10:58:38 2018 +0100
+
+    Merge pull request #83 from SpiNNakerManchester/convertor
+    
+    Dictionary for log messages
+
+[33mcommit 9eb53ee780a159868c16fdc440c0c9a119d76bdc[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Fri Sep 7 13:17:50 2018 +0100
+
+    Work around version pinning in python-coveralls
+
+[33mcommit 0fe7d0870f8c901f103d9c2923510ec79b51be3c[m
+Merge: 24910df c0b1afd
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Aug 22 10:10:50 2018 +0100
+
+    merged master into nengo gfe
+
+[33mcommit c0b1afdfdcd405617d3315ef1688fb98ac448de6[m
+Merge: dccec36 b596919
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Aug 22 10:09:30 2018 +0100
+
+    merged master into gfe slot change
+
+[33mcommit dccec3692924b41b9ef5c2089c775150dde95b31[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Aug 22 10:07:49 2018 +0100
+
+    adding slots
+
+[33mcommit 24910dfe8f896de85ad51ecc60b80c649a28ea81[m
+Merge: 61c072d b596919
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Jul 24 15:26:09 2018 +0100
+
+    updated master into nengo, and now removed all of nengo to fit into the new repo.
+    
+    left over is the xml paths required to make nengo spinnaker work and removal of a spalloc cores which i need to discuss
+
+[33mcommit 61c072de0d7296971ef7eb2d55ec82c67b2613ec[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Jul 24 14:15:01 2018 +0100
+
+    rewried so that works with the new setup for interface
+
+[33mcommit 0a70c03ba1d14f2f55c459eac09b940ff006da22[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jul 20 13:34:23 2018 +0100
+
+    completed the partitioning of the sdp reciever. needs to sort out key issues.
+    
+    fixed issue with basic execution and thus the bodge on the nengo simulator which is removed now
+
+[33mcommit 073d507efa1b487f265996181e5314cc7b57a122[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jul 20 10:34:10 2018 +0100
+
+    more clean up. time to start partitioner fully.
+
+[33mcommit 2f4d4760f67b81232836d0a0accf7a46829ef8c4[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jul 20 10:12:26 2018 +0100
+
+    flows to partitioner, few niggles with constraints and allocator expecting algorithms in different order. but sorted now.
+    
+    need to solve the partitioner and then figure out if we can fit into a normal graph mapper.
+
+[33mcommit 3b273928fb410dcb743aedef79d73c4b5063a3c4[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jul 20 10:01:39 2018 +0100
+
+    nearly flowing down to the partitioner. issues with reports.
+
+[33mcommit 63671cc7b21808ae68fc19489d37d253fde2d40b[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jul 19 11:07:56 2018 +0100
+
+    docs for the graph builder
+
+[33mcommit c0070cf24307f7349ccd2b894e3d0b895dce1bfb[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Jul 18 16:37:00 2018 +0100
+
+    modded the tests so that theres a way to run them as examples. also, added a parttioner graph. but not got that floowwing yet.
+    
+    added a value soreuce test.
+
+[33mcommit 45068ca876bdb05d9c7e46fd6868ba0dae291401[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Jul 18 16:35:25 2018 +0100
+
+    fixed logic flow so that it gets to app graph building
+
+[33mcommit 437ef7bb20baf743a697885f767d014331f7712c[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Jul 18 16:34:28 2018 +0100
+
+    changed name of app graph, so itll match more when the logic flow works
+
+[33mcommit 722d584745cb1a7c247249acc6d8bf45e5d67b4c[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Jul 18 16:33:46 2018 +0100
+
+    updated the xml and more stuff for live io
+
+[33mcommit ff1cc639b85d962ad6a2510f774c06b2bf0ca15b[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Jul 18 16:33:03 2018 +0100
+
+    added a connection for auot pause and resume mode. but currently its not pritty
+
+[33mcommit b5969195bb925dd6754080eb86814c20639f99d8[m
+Merge: 18e5f34 effaa7c
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Jul 17 18:02:35 2018 +0100
+
+    Merge pull request #76 from SpiNNakerManchester/test_for_multiple_reads_to_prove_hypothesis
+    
+    major test suite
+
+[33mcommit effaa7cb97db17473ebe282d5417aab4529e83c6[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Jul 17 17:59:32 2018 +0100
+
+    More py3
+
+[33mcommit d0893da3841f6baee0639926ec628e88f28f3620[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Jul 17 15:25:58 2018 +0100
+
+    py3
+
+[33mcommit dad513f12e293106c3799588d8513a2e5978d812[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Jul 17 15:19:50 2018 +0100
+
+    flake8
+
+[33mcommit cf5182aa1569f1074125a00f73a7e4cd8b1cdfff[m
+Merge: bafd138 18e5f34
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Jul 17 15:15:18 2018 +0100
+
+    Merge branch 'master' into test_for_multiple_reads_to_prove_hypothesis
+    
+    Conflicts:
+            spinnaker_graph_front_end/examples/test_extra_monitor_core_data_extraction/sdram_writer.py
+
+[33mcommit 18e5f34a79bb9e1268a3395bf07739944a637c2b[m
+Merge: 2604f24 dde19b2
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Jul 17 14:03:15 2018 +0100
+
+    Merge pull request #66 from SpiNNakerManchester/dkf/simplify
+    
+    Factor out a common feature of our current GFE vertices
+
+[33mcommit 0b37b4ff8c01b18aaf766d16f3d2284a7f0b7fd7[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jul 12 17:25:29 2018 +0100
+
+    added support for secret stealth command code.
+
+[33mcommit b7520bbffa1a2811dc0e988d1e678115a7658b5b[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jul 12 16:26:55 2018 +0100
+
+    added more support for tests.
+    added the better interface for the function of time and time epriod magic commands.
+
+[33mcommit 82e429b4d096a1e3f3476133e66e878aba50de6d[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jul 12 15:07:38 2018 +0100
+
+    interposers work (tests say yes....at least). havent ran spaun, as graph is not yet consistent at that level
+
+[33mcommit f8f8d2132b57e9a9b1bda63a0f73f3860821f16f[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jul 12 13:54:23 2018 +0100
+
+    getting closer to having the interposers sorted. 3 tests error. (and the spaun hasnt been tested yet)
+
+[33mcommit d0584590b5e707be781b7c9c6f7d08875fd328bc[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jun 29 11:32:05 2018 +0100
+
+    fixed test suite
+
+[33mcommit b7016c175659009c96a3f0650580b3e7b49c79d8[m[33m ([m[1;31morigin/doc-tweak[m[33m)[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Fri Jun 29 10:23:34 2018 +0100
+
+    Rework the core of the GFE to produce much clearer documentation
+    
+    Note that this moves two classes into spinnaker.py as they were very
+    small and uninteresting in themselves. Moving them in (and making one be
+    private/undocumented) helps make the documentation quite a bit simpler.
+
+[33mcommit 66f6cedf48f47b131056b5390a98ee6627977ee5[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jun 28 17:33:28 2018 +0100
+
+    more attempts. the tests run succesfully most of the time (excluding spaun). but sometimes learn assocations fail and to date, have yet to figure out why
+
+[33mcommit 2d44fcf2eadb29327ee1fa160fa5474190198a72[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Jun 27 17:18:32 2018 +0100
+
+    more changes getting closer to the app graph mapping. spaun adn a learning rule issue to fix
+
+[33mcommit d9f6e7d6b40e7813489a4648212fa9f4d8720a3d[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Jun 25 16:08:49 2018 +0100
+
+    fixes a missing link that i didnt think was inportant till now
+
+[33mcommit a363c7ea97d3bde5ae45dc4430229c9dbc9d2237[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Jun 25 15:32:01 2018 +0100
+
+    more seed and removal of those odd params.
+
+[33mcommit 0eeadb2d5c78e35208071edb366dc0d3111dc3c3[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Jun 25 14:41:19 2018 +0100
+
+    removed the config as it wasnt node based. set up via the simulator main interface now.
+    
+    still havent figured what period is used for a source vertex.
+
+[33mcommit 59d2562ae67d0f592efe8302e71c99cc1915bec3[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Jun 25 14:10:17 2018 +0100
+
+    sorted missing seed stuff.
+
+[33mcommit 09d8846407608251474ab8eebe1c894135196d37[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Jun 25 11:59:43 2018 +0100
+
+    more fixes to the test utilities. if you ignore the random value issue. it seems to concur with each other now
+
+[33mcommit 6001bf73fb91a24966917c3ff38e0dd09bce272a[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Mon Jun 25 11:06:54 2018 +0100
+
+    removed assumed timesteps
+
+[33mcommit 6c640b04b0fc82eabf8507d40c8f382ef0961eaf[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jun 22 15:57:32 2018 +0100
+
+    remapped to have complicated partition identifier
+
+[33mcommit 5e7871fe766cd80e42e54ae5884d095873f54510[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jun 21 15:01:55 2018 +0100
+
+    added a test for a graph. seems to support the logic that the app graph before interposers are correct.
+
+[33mcommit 5cbc75ec9a8142135475f826f12ce7f038ef1239[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Thu Jun 21 10:00:57 2018 +0100
+
+    Tweaking the documentation strings
+
+[33mcommit d2a91f33621d8864f3d762cbb775ea048b4831bc[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Jun 20 11:55:58 2018 +0100
+
+    refining the app graph converter to reflect nengo spinnaker version
+
+[33mcommit 24f55b1f92046843894c5232b700675e79e50ea3[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Jun 19 17:23:57 2018 +0100
+
+    think ive fixed basic mapping
+
+[33mcommit 524df8f97a8bd95f228fd80e07670d625e57bb70[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Tue Jun 19 16:56:17 2018 +0100
+
+    Tweaking the documentation strings
+
+[33mcommit b6eaa1ebbee7d97024c9a270361608fe48fdeac0[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Jun 19 12:22:52 2018 +0100
+
+    more fixes for app graph builder
+
+[33mcommit 64629826c43e4077491c42ea7b2b660196cbec26[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Jun 19 12:14:02 2018 +0100
+
+    getting closer, keep finding bits that are hidden away. but least it looks like the vertex builder may be close to correct. lol
+
+[33mcommit b799d32c4f8067148479e7a8adac340dd9e047c4[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Jun 18 14:11:59 2018 +0100
+
+    interposers done (well till testing blows it all up)
+
+[33mcommit 1ce7392c00f2b42dbf98c2d9613a3deeaf4a2a9a[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jun 14 17:37:39 2018 +0100
+
+    more bits of this interposers stuff
+
+[33mcommit 6afd5bd69580e2bccae5f1562c967c30bf29cf6f[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jun 14 17:11:34 2018 +0100
+
+    started filters.
+    
+    started interposers.
+    
+    moved connection data to outgoing partition.
+    
+    handled probeable components.
+    
+    tried to fill out value sink machine vert stuff
+    
+    finished the create machine verts method, for value sink application vertex
+
+[33mcommit dfa4cdca391f97c90b738fc475d0fc3e08ca2c4a[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Jun 13 15:08:14 2018 +0100
+
+    cleaned up abstracts, sorted out slots more, started building the machine verts structure, so that i can build the app verts make_machine-verts functions
+
+[33mcommit 521b292e02e8ba77b5b9bef16214ecc0d72cefbd[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Jun 13 12:05:43 2018 +0100
+
+    changed names of abstracts to reflect abstracts.
+    
+    made new abstract edge that encapsulates the data any nengo app edge contains
+    
+    started the edge partitioning
+
+[33mcommit 1aed846863076e0a5ac0ca4c8f4ddf9a95887e75[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Jun 13 11:48:46 2018 +0100
+
+    lots of wirings. interface functions xml partly filled in.
+    
+    added a new edge to handle sdp port learning rule. also added a new enum component for consistency sake (missing in mundy code).
+    
+    added slots where missing
+
+[33mcommit e70cddf351b39d6417ab43df2bb696a15324070a[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Jun 12 15:43:26 2018 +0100
+
+    just way too much. more work on trying to get the app verts built.
+    
+    found 2 implicit interfaces from nengo, made explicit for readability.
+    modded some of the algorithms. loads of wrok on app graph builder, still massive, but least each function is managable now.
+    foudn the io stuff, tied itnos dp reciever and sender, isntead of a level of indirection used by nengo_spinnaker.
+    added a fudge for avoiding a god object.
+    more cosntants.
+    added some helpful fucntions that look like they'll lie everywhere.
+
+[33mcommit 4a3e9a6c062cd15daa1ae304c5e818ebc0c2ddfb[m
+Merge: 9afaeea dd277aa
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jun 8 15:05:31 2018 +0100
+
+    merged master into nengo
+
+[33mcommit 9afaeea631fcf8a0ca785eba6d22a0c88d0f6e7c[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jun 8 15:03:09 2018 +0100
+
+    comemnts.
+
+[33mcommit c9c4e2fe8edbbafcb1a2c047bd7b977cea09eeea[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jun 8 15:02:51 2018 +0100
+
+    plonked code found for the interposers optimisation
+
+[33mcommit 91ba4b748f3ca3fffc4d57a3153bd8c727c2fd87[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jun 8 15:02:21 2018 +0100
+
+    more work on allogmating all the building code into here (with the graph based approach).
+    
+    current view is that we can wipe out a load of data structures with what we already have.
+    
+    but i likely missing something criticle.
+    
+    also, dont like this multiple state variable thats going on
+
+[33mcommit a01d6bb23b5b960f4561bb4c023ae05b0cdc2d29[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jun 8 15:00:56 2018 +0100
+
+    added constants that have been found all over the place
+
+[33mcommit 4c1b1bdf28a5e147757ca33f8de73b601ad59bf4[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jun 8 15:00:06 2018 +0100
+
+    added outgoing edge partition, with data i think is the equiv of all these dicts.
+
+[33mcommit 742cc3210fd6487bfb6e708c387e78931d7286d7[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jun 8 14:59:30 2018 +0100
+
+    sorted out seeding of the spinnaker objects.
+
+[33mcommit d8b7386aa6d993a11172b46f30912bc72e362615[m
+Merge: 31387ad 2604f24
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Fri Jun 8 13:45:51 2018 +0100
+
+    merged in master
+
+[33mcommit 2ab012fa08e57a04500733feac4f484be89bebef[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jun 7 17:43:47 2018 +0100
+
+    started work on partitioner.
+
+[33mcommit 55fdd5f859169c3f4df7c0781b60e1b6c8a0d970[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jun 7 17:43:30 2018 +0100
+
+    started connection conversion. which requires more exploration of spaces
+
+[33mcommit a2678507a8cf39a5099d26179e35c071d283dfab[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jun 7 17:42:49 2018 +0100
+
+    split functions a bit, and moved some code around
+
+[33mcommit eed352ff51151df1f899f42dc15a56f1599f5cfb[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jun 7 17:42:18 2018 +0100
+
+    moved over the transmission and reception parameters. included abstract interface, overrides etc.
+    
+    includes the parameter transformer
+
+[33mcommit 2ccfe8feb1e5ed82c546e5876501adfec17b4e90[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jun 7 17:41:28 2018 +0100
+
+    added a nengo applciatione dge, as itll hold reception and transmission parameters.
+
+[33mcommit 2604f24bc69770fb57e3af39a44a00b4a5be4150[m
+Merge: dd277aa b0261ab
+Author: Christian Y. Brenninkmeijer <Christian-B@users.noreply.github.com>
+Date:   Thu Jun 7 14:01:00 2018 +0100
+
+    Merge pull request #88 from SpiNNakerManchester/multi_cfgs
+    
+    allowing multiple cfgs
+
+[33mcommit b0261ab89e50c10bb8ad3f01ec84f71a4a568cda[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jun 7 13:51:28 2018 +0100
+
+    allowing multiple cfgs
+
+[33mcommit 881e08a5fd7e368bbbf0022b2d5923f5a87b9959[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jun 7 13:49:06 2018 +0100
+
+    added stupid with requirement
+
+[33mcommit 0a41f89984961d952e21070997eb711679fda5f5[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jun 7 13:41:00 2018 +0100
+
+    more fiddles.
+    
+    this time got a random seed support
+    added more exceptions
+    added more inputs to the sim
+    added a passthrough node vertex which should not be partitioned currently
+    added the state for the value source.
+
+[33mcommit 246d7ad353ff84bbf15b82900e3f596daee732ea[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jun 7 11:58:26 2018 +0100
+
+    added config params to the logic. so no longer needing mundy hardcoded config params
+
+[33mcommit 631cd7cdf2c289365ff22356aef127480b4e153c[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jun 7 11:18:08 2018 +0100
+
+    supprots top elvel FE's to put new configs in
+
+[33mcommit 4638f5526f0cf4bf1a2d4454d125354551aca891[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jun 7 11:13:16 2018 +0100
+
+    more fiddles
+
+[33mcommit 8c3bcde894e627e43b634f6655190be7c4441819[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Jun 6 17:17:36 2018 +0100
+
+    more bits. this is a struggle
+
+[33mcommit 7773646e66d4de9c28271252562b90617578e2bd[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Jun 4 15:45:11 2018 +0100
+
+    started work, trying to understand the input verts
+
+[33mcommit d0eb3f436ffa225f57af9a4bd7b27dec80db1d74[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue May 29 09:30:38 2018 +0100
+
+    holder for the host graph to be tied in
+
+[33mcommit 282b62480d72e46e2c41b2a62cbdade2050a2820[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri May 25 16:21:21 2018 +0100
+
+    starting of the nengo conversion. most of the day searching nengo code to figure out how it works
+
+[33mcommit dde19b2b99d4d25418a0bba6bdf546886d0be737[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Thu May 24 14:20:13 2018 +0100
+
+    Make an easier-to-understand inheritance hierarchy
+
+[33mcommit 22ab7db1daa1276febd2b2e565f9f695ee91cc47[m
+Merge: 8eddf9a dd277aa
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Thu May 24 14:00:06 2018 +0100
+
+    Merge branch 'master' into dkf/simplify
+
+[33mcommit 31387ad6d281158511eda0f0ca4ff2ba485db6ac[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Thu May 24 10:56:18 2018 +0100
+
+    fixed sdram costs
+
+[33mcommit 5fb10d9563f0409a64d79a6fc3207967225f1f69[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Fri May 18 15:35:52 2018 +0100
+
+    nuked get_minimum_buffer_sdram_usage
+
+[33mcommit fc8f2aac3bfdc189a3e10af224afe6583c062ba9[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Fri May 18 15:29:05 2018 +0100
+
+    nuked get_n_timesteps_in_buffer_space
+
+[33mcommit 22cf55fa942a5f6db46cf0ded2bd93b505932425[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Thu May 17 15:28:35 2018 +0100
+
+    use more specicif sdram resource
+
+[33mcommit 458dccfacfbaa5129b64367437865dc4832ab9cd[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Wed May 16 16:51:33 2018 +0100
+
+    different types of SDRAM resource
+
+[33mcommit 63db979bdbd27a38e5223a027c6370ee244fd4af[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Mon May 14 13:30:24 2018 +0100
+
+    Make import statements use PEP 328 better
+    
+    https://www.python.org/dev/peps/pep-0328/#rationale-for-parentheses
+
+[33mcommit 9e69c3b85d23ab8604f85edda2984ad6647b651e[m
+Merge: 1994be3 dd277aa
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Tue May 8 09:06:51 2018 +0100
+
+    merged in master
+
+[33mcommit dd277aa455c211299e8867a00b09465804a4186d[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Fri May 4 16:25:52 2018 +0100
+
+    remove test script that was never committed
+
+[33mcommit 02d084c5fc819b0df8d1ed053e083722c44253b7[m
+Merge: 027249d 0f9ad33
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Apr 24 11:31:34 2018 +0200
+
+    Merge remote-tracking branch 'origin/master'
+
+[33mcommit 1994be3d9d187912a33a83ba5423c57e90f1363f[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Mon Apr 23 16:35:45 2018 +0100
+
+    build_dir from default
+
+[33mcommit 0851cd3c78f5e25c0eb178ee81e9a4403d507366[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Mon Apr 23 16:30:30 2018 +0100
+
+    build_dir from default
+
+[33mcommit c95aa88a26197ba6acf5336c4b00512b4e330018[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Fri Apr 20 14:34:19 2018 +0100
+
+    major refactoring to all for conversion of log_ code before building
+
+[33mcommit 0f9ad3356e64ae502cec3605a98ffa6ce9464c6e[m
+Merge: dc6c070 53e5e69
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Apr 16 15:57:43 2018 +0100
+
+    Merge pull request #80 from SpiNNakerManchester/py3
+    
+    Python 3 support
+
+[33mcommit 027249d7bcf34777443a8e6b69c6e5db10ce1678[m
+Merge: 36e5034 dc6c070
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Mar 22 10:36:17 2018 +0000
+
+    Merge remote-tracking branch 'origin/master'
+
+[33mcommit dc6c07040be3180674f61ea8998e86e77cd42a73[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Mon Mar 19 11:08:12 2018 +0000
+
+    Added two repositories to the list
+
+[33mcommit 36e50343b765126b4afda740b522b8de45e4f993[m
+Merge: d2b5d67 0a2240f
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Mar 19 10:06:35 2018 +0000
+
+    Merge remote-tracking branch 'origin/master'
+
+[33mcommit 0a2240f8368598178d6cd59d2a175acc18ac0e76[m
+Merge: d03c7ec 82199ee
+Author: Alan Stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Mar 19 09:46:50 2018 +0000
+
+    Merge pull request #81 from SpiNNakerManchester/github-metadata-cleanup
+    
+    rubbered (y)
+
+[33mcommit 82199ee6271088ec40a40526fb716d6070a51651[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Mon Mar 19 09:42:50 2018 +0000
+
+    Add a template for issues and move to subdir for cleanliness
+
+[33mcommit 53e5e6967e4bbfc998cb1643942f0d314df8a6be[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Tue Mar 13 15:39:02 2018 +0000
+
+    Stop using pure Python 2 methods to get exception messages
+
+[33mcommit dd872479875f2ba80eb222a024f58061e54d274d[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Tue Mar 13 15:27:09 2018 +0000
+
+    Python 3 is stricter about module path shenanigans
+
+[33mcommit def495347dfb38e9f644df743da6372932942532[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Tue Mar 13 15:01:41 2018 +0000
+
+    Update Travis config
+
+[33mcommit 88b77cde68c7b92a992b47cbd9a8b1ae28bf609b[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Tue Mar 13 15:00:28 2018 +0000
+
+    Many Python-2-isms fixed
+
+[33mcommit d03c7ec2dd3ce0bcb51231fbffb7b45cd0625d69[m
+Merge: 34caed1 1105384
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Feb 22 16:08:07 2018 +0000
+
+    Merge pull request #75 from SpiNNakerManchester/lint
+    
+    Lint
+
+[33mcommit 34caed19acb9f9aaf1fe33c6090d5a185952dcec[m
+Merge: e7d2cc7 a707206
+Author: Alan Stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Feb 20 08:37:20 2018 +0000
+
+    Merge pull request #78 from SpiNNakerManchester/warning
+    
+    rubber malleted
+
+[33mcommit a7072062a6804926b52eb812af09f5d6a7ba5160[m
+Author: christian-B <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Fri Feb 16 16:13:45 2018 +0000
+
+    fixed depricated logger.warn as it does not work with FormatAdapter
+
+[33mcommit e7d2cc7ddeb7ad34993f64f09259241f7bd43acd[m
+Merge: 49ad648 7d10719
+Author: Alan Stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Feb 9 09:32:07 2018 +0000
+
+    Merge pull request #77 from SpiNNakerManchester/coverage
+    
+    rubber
+
+[33mcommit 7d107199e7aa4c03763fb60f99ff3ab9a655062d[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Fri Feb 9 09:22:26 2018 +0000
+
+    Add support for test coverage reporting
+
+[33mcommit bafd13880130b739c8d0eb79d423a5ce0f4254e0[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Feb 7 15:54:11 2018 +0000
+
+    modifed for 3 board setup
+
+[33mcommit 62f5e1b98274c5e4fcb364795d11fe6efe10cd6e[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Feb 7 14:31:32 2018 +0000
+
+    mega uber test. cant run any more par iterations. if this dont do it, then im willing to bet its not the issue.
+
+[33mcommit e903b9ab4a3ffa222d56d9d2e689fa27dc4aa5d5[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Feb 7 14:26:22 2018 +0000
+
+    4 tests. 2 with the sets at beginnign and end, instead of throughout as tests 1 and 2 did
+
+[33mcommit acdaa16be898cb0dde3915f5ae6579e3d2ab7262[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Feb 7 14:21:57 2018 +0000
+
+    2 tests to try to verify speed up out issue.
+
+[33mcommit 800938193828d02b3d57f6a02bc4aa206c6c466f[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Feb 7 14:17:28 2018 +0000
+
+    fixed citations adn last comment. ready for review
+
+[33mcommit 110538426deaebe34cd741601809316841059251[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Mon Feb 5 13:23:24 2018 +0000
+
+    Bool↔︎int conversion is well-defined in Python.
+
+[33mcommit 2277d0999d6edde2c211e696e216657574e7029e[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Fri Feb 2 15:48:55 2018 +0000
+
+    Use the right @overrides
+
+[33mcommit 1e6351dc316bbb38cd6d8878e924e873b9e5d5f3[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Mon Jan 29 10:48:22 2018 +0000
+
+    super() usage
+
+[33mcommit 254c0c2c53e82c496ab1ebff1c7be1f7c49f1152[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Fri Jan 19 15:32:12 2018 +0000
+
+    Call __init__ via super() in non-diamond cases
+
+[33mcommit d2b5d678ffd4ae79c12f50011dd203fc77f61766[m
+Merge: 984f107 49ad648
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jan 12 15:32:14 2018 +0000
+
+    Merge remote-tracking branch 'origin/master'
+
+[33mcommit 49ad648e29e9ca6294e1b7063f6b6019dfa4395e[m
+Merge: 3973e6c 414e382
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Mon Jan 8 16:54:30 2018 +0000
+
+    Merge pull request #74 from SpiNNakerManchester/travis-test
+    
+    Travis has a new nasty trick: it puts stdout in nonblock mode
+
+[33mcommit 414e382a29112ce5d49458f119c6fd2d05cd2200[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Mon Jan 8 14:38:31 2018 +0000
+
+    Travis has a new nasty trick: it puts stdout in nonblock mode
+    
+    Fix as in sPyNNaker.
+
+[33mcommit 984f107c0150e72197352b5b004b5db67aec37c5[m
+Merge: 41517f0 3973e6c
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Nov 30 15:38:41 2017 +0000
+
+    Merge remote-tracking branch 'origin/master'
+
+[33mcommit 3973e6cbe2045328d680e6ac592483fd3ab16df0[m
+Merge: e5b3d76 60bec34
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Thu Nov 30 15:33:15 2017 +0000
+
+    Merge pull request #72 from SpiNNakerManchester/sep_n_keys_partition_grouper
+    
+    Sep n keys partition grouper
+
+[33mcommit 41517f0824d97d369d807f725a4b7564888a84e6[m
+Merge: 70e398d e5b3d76
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Nov 29 15:05:43 2017 +0000
+
+    Merge remote-tracking branch 'origin/master'
+
+[33mcommit e5b3d76f2a6abb99264ad89e5a55ccd4582fee3f[m
+Merge: f250e82 44a1c18
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed Nov 29 14:46:53 2017 +0000
+
+    Merge pull request #73 from SpiNNakerManchester/updated-travis-config
+    
+    Update the Travis configuration with new support tools
+
+[33mcommit 44a1c18909a9349ccc46d5a29e014836c7606ec1[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Wed Nov 29 13:20:48 2017 +0000
+
+    Update the Travis configuration with new support tools
+
+[33mcommit 8eddf9ab04d233546fd7cd00c7071fa417f9d019[m
+Merge: 7281d73 f250e82
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Wed Nov 22 13:57:32 2017 +0000
+
+    Merge branch 'master' into dkf/simplify
+
+[33mcommit 60bec34f90b15247fb2e8d4a878ddbf8c7a7940e[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Nov 22 11:01:41 2017 +0000
+
+    seperated out edge n keys and partition grouper
+
+[33mcommit 70e398d1c9fe0cc0a13106f6c3f5391cfeb2dbab[m
+Merge: c2cf980 f250e82
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Nov 21 13:58:06 2017 +0000
+
+    Merge remote-tracking branch 'origin/master'
+
+[33mcommit f250e823698dcdcb9505ea534f59b7ee756847c9[m
+Merge: cbcfcfa 84a80b1
+Author: Christian Y. Brenninkmeijer <Christian-B@users.noreply.github.com>
+Date:   Tue Nov 21 09:55:38 2017 +0000
+
+    Merge pull request #71 from SpiNNakerManchester/speed_up_data_extractor
+    
+    Speed up data extractor
+
+[33mcommit 84a80b1bc13fac840df6e8035f4eb6c1f01d9231[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Mon Nov 20 12:05:37 2017 +0000
+
+    flake8
+
+[33mcommit ff8280f39edef9630137c9c260c3779ee5fce3e7[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Mon Nov 20 12:00:30 2017 +0000
+
+    flake8
+
+[33mcommit 3dafba0e158ec7d3481af2eebd401d8b0f2e6a88[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Mon Nov 20 11:55:48 2017 +0000
+
+    converted test_speed_examples-router to a Integration but it FAILS!
+
+[33mcommit e4f7d7c7f6c0b706cdc7d92d474da431da59da77[m
+Merge: 9d818e2 cbcfcfa
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Mon Nov 20 11:46:59 2017 +0000
+
+    Merge branch 'master' into speed_up_data_extractor
+
+[33mcommit cbcfcfa810bf57670a7296b5b08764db21b3b6c4[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Mon Nov 20 11:11:43 2017 +0000
+
+    fixed environ check
+
+[33mcommit 9d818e204157fd25b78459106bcdd5a270f4e5e1[m
+Merge: 6d70e96 7f9c4c0
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Nov 17 14:23:17 2017 +0000
+
+    Merge remote-tracking branch 'remotes/origin/master' into speed_up_data_extractor
+
+[33mcommit 7f9c4c0b96397ca96b954627860a0bc13786a6a1[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Fri Nov 17 11:05:34 2017 +0000
+
+    flake8 integration tests too
+
+[33mcommit 58414b324452b79c3ea42a3fc5c82e7ef0d69a2a[m
+Merge: 5853ebf 7d53f16
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Fri Nov 17 09:53:59 2017 +0000
+
+    Merge pull request #69 from SpiNNakerManchester/mc_vs_fr_safety
+    
+    allows mc partitions and fr partitions to be mapped separately and therefore not interfere in key alloc
+
+[33mcommit 7d53f16602a96e69145467a9359737dae4c36c23[m
+Merge: 9b5d3dc 142f6b6
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Thu Nov 16 15:10:12 2017 +0000
+
+    Merge remote-tracking branch 'origin/mc_vs_fr_safety' into mc_vs_fr_safety
+
+[33mcommit 9b5d3dcba563087495848a1ca48a36c9a3814214[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Thu Nov 16 15:08:54 2017 +0000
+
+    skipped import scripts and made integration tests
+
+[33mcommit f1d1dd56c020dc95296ab857a816bd778b9dc5ed[m
+Merge: b836b88 5853ebf
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Thu Nov 16 14:45:30 2017 +0000
+
+    Merge remote-tracking branch 'remotes/origin/master' into mc_vs_fr_safety
+
+[33mcommit b836b88c7f04cdd7feba41b61a07ea51281a60be[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Thu Nov 16 14:36:22 2017 +0000
+
+    skipped import scripts and made integration tests
+
+[33mcommit c2cf980648aee7786b40b1e2797e5cbbe6ae8098[m
+Merge: ccfcff8 5853ebf
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Nov 16 11:47:08 2017 +0000
+
+    Merge remote-tracking branch 'origin/master'
+
+[33mcommit 142f6b6ef52a243290b8fdac475b8779e7432af8[m
+Merge: d674c76 5853ebf
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Thu Nov 16 11:41:10 2017 +0000
+
+    Merge branch 'master' into mc_vs_fr_safety
+
+[33mcommit 6d70e9658fd6eafbc850448e48aa398c1560b9d2[m
+Merge: a1044a6 5853ebf
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Nov 16 11:06:40 2017 +0000
+
+    Merge remote-tracking branch 'remotes/origin/master' into speed_up_data_extractor
+    
+    # Conflicts:
+    #       pacman/utilities/file_format_converters/convert_to_file_machine_graph_pure_multicast.py
+
+[33mcommit a1044a6923f341ab7e42d894a1272385e5628b5a[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Nov 16 10:41:02 2017 +0000
+
+    f8
+
+[33mcommit 5853ebf6a69229824175c808905db1b43a4e3e5e[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Thu Nov 16 10:21:14 2017 +0000
+
+    ExecutableStartType is now ExecutableType
+
+[33mcommit 806a8c1c963a76fcc8537fb369f28941fbae7f81[m
+Merge: 3b00ef5 d674c76
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Nov 15 16:36:14 2017 +0000
+
+    Merge remote-tracking branch 'remotes/origin/mc_vs_fr_safety' into speed_up_data_extractor
+
+[33mcommit d674c76c9447c5ab3083422fff2ebd3c84565c6f[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Nov 15 16:23:48 2017 +0000
+
+    mother of flake8
+
+[33mcommit 28ee3df5a24fdbb145d967cce76f9f58045fd583[m
+Merge: 91c0e8c e09565a
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Nov 15 16:06:44 2017 +0000
+
+    merge from master
+
+[33mcommit e09565af8dae9120d3d2a56c04a6e1814e2eefb6[m
+Merge: 93a679c e2ee82c
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Wed Nov 15 15:52:35 2017 +0000
+
+    Merge pull request #68 from SpiNNakerManchester/fixed_route_setter_and_reader
+    
+    supports fixed route router
+
+[33mcommit ccfcff8229fb5b63e4e58b7bbf328e4aafa4ba85[m
+Merge: f5ec62d 93a679c
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Nov 15 15:18:05 2017 +0000
+
+    Merge remote-tracking branch 'origin/master'
+
+[33mcommit 93a679c5646292374645727da9b489fbd12af897[m
+Merge: a25cfab 389c1c2
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Wed Nov 15 13:34:39 2017 +0000
+
+    Merge pull request #70 from SpiNNakerManchester/multiple_executable_types_per_run
+    
+    Multiple executable types per run
+
+[33mcommit 389c1c2522b3bef492d152e448d9f306b5684804[m
+Merge: 40ce784 a25cfab
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Nov 13 16:37:57 2017 +0000
+
+    Merge remote-tracking branch 'remotes/origin/master' into multiple_executable_types_per_run
+    
+    # Conflicts:
+    #       spinnaker_graph_front_end/examples/template/template_vertex.py
+
+[33mcommit e2ee82c3e5fabd185df8f622fdb3063e5bc332a6[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Mon Nov 13 16:08:53 2017 +0000
+
+    updated integration tests
+
+[33mcommit f5ec62dd092b0089bf2446298990a4efbcabd8ef[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Mon Nov 13 15:37:43 2017 +0000
+
+    exclude more scripts
+
+[33mcommit fe123404593830926f929344f21ea4bc05706d4e[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Nov 13 14:53:59 2017 +0000
+
+    atetmpt to stop it from looking in examples
+
+[33mcommit 085eeeb90f9ab85668dbc4522e63ff1cc047d307[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Nov 13 14:24:33 2017 +0000
+
+    missing
+
+[33mcommit f8e7ba86765d66a434dd134a249238ca3ac7c51d[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Nov 13 11:23:23 2017 +0000
+
+    flake8
+
+[33mcommit 3b00ef503697dc070ad6c31ae28c320bd2560fb8[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Nov 10 09:18:21 2017 +0000
+
+    make compiler ease
+
+[33mcommit 6ee75175c3c8bf67b92211b350587e300a860a9c[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Nov 10 09:15:57 2017 +0000
+
+    more tests for verifying speeds of impl
+
+[33mcommit 68d1238b4458c49930653ab83439cb88290a14b3[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Nov 7 11:03:51 2017 +0000
+
+    working intergrated
+
+[33mcommit 55a12f5754636d3d69a3da3301133973d93110bc[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Nov 7 08:47:26 2017 +0000
+
+    clean up
+
+[33mcommit 91c0e8c54f4aae714f636b75e3d8e4668ea612dd[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Nov 3 16:09:39 2017 +0000
+
+    fixes to allow mc and fr edges to be dealt with seperately
+
+[33mcommit 745f833eb8d1cf7450a70f6d58e78709ee3090bf[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Nov 3 12:08:06 2017 +0000
+
+    updated to use correct interface as currnetly stands
+
+[33mcommit 31b945c6857533a7179d158ba43365b64a613580[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Nov 3 12:02:32 2017 +0000
+
+    fixed tie in to reinjector being in fec
+
+[33mcommit c9b42989bd73f509178ec42ea13aee387bc2e6db[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Nov 3 12:02:17 2017 +0000
+
+    fixed lissue withe xecutable types
+
+[33mcommit bc734f6bf96961bf13fa719c4badbae297fd51f8[m[33m ([m[1;31morigin/data_extraction_speed_up[m[33m)[m
+Merge: d85d151 e80476f
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Nov 3 11:26:55 2017 +0000
+
+    Merge remote-tracking branch 'remotes/origin/fixed-route_write_reader' into speed_up_data_extractor
+    
+    # Conflicts:
+    #       spinn_front_end_common/interface/abstract_spinnaker_base.py
+    #       spinn_front_end_common/interface/interface_functions/front_end_common_interface_functions.xml
+    #       spinn_front_end_common/interface/interface_functions/load_fixed_routes.py
+    #       spinn_front_end_common/utilities/report_functions/fixed_route_from_machine_report.py
+
+[33mcommit e80476f08f1d7d8667f286c89a54b27909275634[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Nov 3 10:09:08 2017 +0000
+
+    proof of fixed route packet trnasmission and reception
+
+[33mcommit 6974ffd6b7a2b8a3dc8d051cf1608734e19afd6d[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Nov 2 14:33:48 2017 +0000
+
+    fixed router stuff
+
+[33mcommit d85d151085ad0271db89590a5420f305a87a4186[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Nov 2 09:26:17 2017 +0000
+
+    tests intergrated extra monitor cores.
+
+[33mcommit 40ce78426b5526618c90095ba906a52e36d28031[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Oct 24 17:02:37 2017 +0100
+
+    spport for multiple executables per run
+
+[33mcommit 695fcdac0338cab69bf6d76da84ed15fd36cedf4[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Oct 24 14:39:49 2017 +0100
+
+    cleaning imports and renamed variables
+
+[33mcommit 84178e9473ef8d1af65d9c80ad056e4c27711087[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Oct 12 10:25:46 2017 +0100
+
+    efforts to fix data leak somewhere
+
+[33mcommit 7cbdaf04fb781da1a080e8d20cbbdb1b16046454[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Oct 10 15:32:14 2017 +0100
+
+    more stuff for speed upo
+
+[33mcommit 7281d73233f7bd22e8e7ee3e2d341b3ef06f5495[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Tue Oct 10 13:57:44 2017 +0100
+
+    Refactoring some of the common region handling
+
+[33mcommit 853b9d5009adfda81d5464f31c2556e50a910d0f[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Mon Oct 9 12:11:01 2017 +0100
+
+    flake8
+
+[33mcommit bf350314beea3fed9914aa56cf05746511e8d830[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Mon Oct 9 12:00:48 2017 +0100
+
+    Factor out a common feature of our current GFE vertices.
+    
+    The common feature is that they all use a single binary, and that binary
+    uses the standard simulation interface to interact with the SpiNNaker
+    runtime. This means that we can simply define the binary name in the
+    constructor.
+
+[33mcommit a25cfab8e12c460e292e2211cf32f4d8bb713b38[m
+Merge: 4a68e19 e67fa80
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Sep 26 15:28:38 2017 +0100
+
+    Merge pull request #65 from SpiNNakerManchester/4.0.1
+    
+    4.0.1
+
+[33mcommit 4a68e19d2b0839cfd23250a4beaad1971615a538[m
+Merge: d64cd09 22fbf89
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Tue Sep 26 13:37:30 2017 +0100
+
+    Merge pull request #64 from SpiNNakerManchester/RC4
+    
+    Release done
+
+[33mcommit e67fa80670b3199f6e49b22fd1cd989386eaf149[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Tue Sep 26 11:07:10 2017 +0100
+
+    unified how package_data is found
+
+[33mcommit 79faa20379242b5e797e4d7b916538f0883da337[m
+Author: Christian Y. Brenninkmeijer <christian.brenninkmeijer@manchester.ac.uk>
+Date:   Tue Sep 26 10:34:21 2017 +0100
+
+    version bump
+
+[33mcommit d6ad6525dc3acbb291df294857dad9b76243a912[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Sep 26 10:33:27 2017 +0100
+
+    extra removal of tag, now to dynamic porting
+
+[33mcommit b90181a7a8b290c054361667dba28c6393768062[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Sep 26 10:32:11 2017 +0100
+
+    built up searcher with dynmaic ports. as a partal requirement for moving to a interface within fec
+
+[33mcommit fc233a123ff8e3905990777d2a461f09e59d6d17[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Sep 25 16:51:58 2017 +0100
+
+    flusers
+
+[33mcommit f5c8d95f83b5443d0c7e186db89a0feb11ab46e3[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Sep 25 16:51:25 2017 +0100
+
+    extra bits
+
+[33mcommit 22fbf8932558846ef31dd5161b85650a01ee86eb[m[33m ([m[1;33mtag: 4.0.0[m[33m)[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Sep 22 09:14:24 2017 +0100
+
+    Update path of file to make it work (hopefully)
+
+[33mcommit 5c297479837cf7210f33063ba84b2f97aa41e6d8[m
+Author: Christian Brenninkmeijer <brenninc@cs.man.ac.uk>
+Date:   Thu Sep 21 14:15:26 2017 +0100
+
+    Removed break and unified setup.py to all work the same
+
+[33mcommit aa598395de6783234de81d9dbb9531e37f1552b0[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Sep 20 16:49:23 2017 +0100
+
+    test that forces the retrnasmission mode
+
+[33mcommit 389a3eef71802e313f203df25961d83563a56729[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Sep 20 16:48:56 2017 +0100
+
+    fixes! runs! long test to verify!!!
+
+[33mcommit dc73c4b013930cfa8733de204e0a50408f36ac93[m
+Author: Christian Brenninkmeijer <brenninc@cs.man.ac.uk>
+Date:   Wed Sep 20 16:15:28 2017 +0100
+
+    raised spalloc in install order
+
+[33mcommit efd9fa946d0b54b605054a073b641739cdb61712[m
+Author: Christian Brenninkmeijer <brenninc@cs.man.ac.uk>
+Date:   Wed Sep 20 14:26:29 2017 +0100
+
+    version_bump
+
+[33mcommit 8e8d6f239f696b888996f0a8fd8cf318f6f2d7e6[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Sep 19 16:42:57 2017 +0100
+
+    test trying to fix retrnamission issues over multiple cores
+
+[33mcommit 5598fe13f019a751df4f27ce5b4b7c4a0216002f[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Sep 19 16:41:58 2017 +0100
+
+    shit tons of little fiddles, simplifing the code, trying to diagnose crash issue. fixes found along way etc etc etc.
+
+[33mcommit dca720910331e20af00995f73c88f800db35a304[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Sep 19 16:41:02 2017 +0100
+
+    removal of print
+
+[33mcommit 723f8c810084777969b6d95ac464649b99057486[m
+Merge: a24bc45 d64cd09
+Author: Christian Brenninkmeijer <brenninc@cs.man.ac.uk>
+Date:   Tue Sep 19 09:32:58 2017 +0100
+
+    merged in master
+
+[33mcommit d64cd09c3391532c4371734b4bb9dffcaa0b724d[m
+Merge: d7b914f eb7bae1
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Sep 19 09:17:15 2017 +0100
+
+    Merge pull request #63 from SpiNNakerManchester/update_example_template
+    
+    Update examples/template code, add python template script
+
+[33mcommit eb7bae1c87bd862c43847431291c7e787dc2431c[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Sep 18 15:47:13 2017 +0100
+
+    Changes to make it all work
+
+[33mcommit 99dad4052f9c701e806b9f43b4a64a20f88dfc1f[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Mon Sep 18 14:37:46 2017 +0100
+
+    update import test to skip template script
+
+[33mcommit 35771711377a0c49861e8c6d597935b7b326c5e4[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Mon Sep 18 14:31:43 2017 +0100
+
+    eclipse being too clever
+
+[33mcommit 8cad14b3ae00c33837c17e37d6ad76032e54d017[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Mon Sep 18 14:28:39 2017 +0100
+
+    Flake8
+
+[33mcommit 0190e9522a695bbd2fabc2f48518f7da5ddc298d[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Mon Sep 18 14:23:10 2017 +0100
+
+    Update examples/template code, add python template script
+
+[33mcommit a24bc45ccc90bcdb114c78f60b9437b6c8ef102a[m
+Author: Christian Brenninkmeijer <brenninc@cs.man.ac.uk>
+Date:   Mon Sep 18 14:00:17 2017 +0100
+
+    Added all spin dependecies hard
+
+[33mcommit acfc1bcacd5d1b91655d404d5daa0bfd81ca828f[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Sep 18 13:26:10 2017 +0100
+
+    added correct ones for 48 chip board
+
+[33mcommit a4a9bc2d7e4396806a82598f4ba3001214ef3e88[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Sep 14 15:19:43 2017 +0100
+
+    removal of prints for speed up
+
+[33mcommit 7b917878887fb0cc79de6bf2a240c8ddbf1b3c76[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Sep 14 15:15:26 2017 +0100
+
+    attempt to build a searcher. is showing up some crash issue which is making no sense
+
+[33mcommit 5b0f7e6a03a8b46e88f09ae2b011446af96ee116[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Sep 13 10:48:37 2017 +0100
+
+    resets router timeout for clean ending
+
+[33mcommit 1e8c9d34f6f843a740018fdd7ac793560a7d7dd2[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Sep 13 10:48:02 2017 +0100
+
+    remove check, as not needed and loses speed, and resets router time outs for workability again
+
+[33mcommit 111f1a4b8990e8a74ef22774ef60d2811c90e7a2[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Sep 13 10:34:47 2017 +0100
+
+    oh yea, oh yea. rock the boat now!!!!!!!!!!!!!!!!!!!!!!
+    
+    needs to reset router timeouts to lt afterwards, and need testing for failure mode.
+    oh and now needs intergration into main tools
+
+[33mcommit a74085cccf7d2298685ef990f8ea74cceea33f91[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Sep 11 17:01:55 2017 +0100
+
+    more fiddles, getting closer to working
+
+[33mcommit 1cca8649f4ccddb9cdd8276efc1a6838aba6d6f4[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Sep 5 16:43:04 2017 +0100
+
+    more attempts to get it all working. refined things, but they still seem to eb off when reiceved
+
+[33mcommit 83c26cb4deab257ff956b83ffb971d262a7c986e[m
+Merge: c5cfe6c d7b914f
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Sep 4 14:58:53 2017 +0100
+
+    Merge remote-tracking branch 'remotes/origin/master' into data_extraction_speed_up
+
+[33mcommit d7b914fa8b69937f4775ad4fb79b859493a05c33[m
+Merge: 50b9abb c8ed66d
+Author: Alan Stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Sep 4 14:48:33 2017 +0100
+
+    Merge pull request #61 from SpiNNakerManchester/add_front_end_provenance
+    
+    rubbered
+
+[33mcommit c5cfe6c9e13db211fcd7a86a58e778c404491a60[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Sep 4 13:35:45 2017 +0100
+
+    fix issue with incorrect sdp format
+
+[33mcommit c8ed66d7501b135f89459ac9ea200a9c9e09a143[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Sep 1 16:20:53 2017 +0100
+
+    Updated for fec
+
+[33mcommit b2c623249c1b3eef569f2367c419d4146c724f5b[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Sep 1 15:52:58 2017 +0100
+
+    fix missing watch dog command.
+
+[33mcommit 2b5f0387d0bcf6a7964672095e0f4fab906c108a[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Sep 1 15:38:50 2017 +0100
+
+    mostly rewired, but alas it seems the sequence numbers are going too big again. needs to be debugged. but getting closer
+
+[33mcommit 52c64cf10058f087292623ec8a0548680a30f56c[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Sep 1 14:48:31 2017 +0100
+
+    Add version
+
+[33mcommit a063b5956dc3c582f546065ef460e9a495dd2164[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Aug 31 15:27:43 2017 +0100
+
+    part way to rewiring
+
+[33mcommit e945ac9c436d2bcac7c0ee72a555909d3b49980b[m
+Merge: 967975f 50b9abb
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Aug 30 15:19:37 2017 +0100
+
+    Merge remote-tracking branch 'remotes/origin/master' into data_extraction_speed_up
+
+[33mcommit 50b9abb2eb3809108f23d7bbb9380d71a2a70a1f[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Fri Aug 25 14:15:51 2017 +0100
+
+    added LICENSE.md
+
+[33mcommit 66868be853d1de63b02d924e79c64d0fe51cbc5a[m
+Merge: 9ad187e 00a7ebd
+Author: Christian Y. Brenninkmeijer <Christian-B@users.noreply.github.com>
+Date:   Mon Aug 21 14:39:39 2017 +0100
+
+    Merge pull request #60 from SpiNNakerManchester/gfe_integration_tests
+    
+    Gfe integration tests
+
+[33mcommit 00a7ebd5869341ff7cd286ada78f64ca95c57988[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed Aug 16 10:56:46 2017 +0100
+
+    Made tests work as tests
+
+[33mcommit 967975f4a581a147cb3bf3857c5f5b969a740b9b[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Aug 14 16:18:59 2017 +0100
+
+    fixed mismatch in binary name
+
+[33mcommit bf64ba1f987126c0edfbcf866cd631ff24a19f4d[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Aug 14 16:18:15 2017 +0100
+
+    added missing make file
+
+[33mcommit 6d246eea89ccc1c8ce728df943dee895c8f9b4fd[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Aug 14 16:18:02 2017 +0100
+
+    added missing make file
+
+[33mcommit a25c2f1cdbf3a8f1f5cefb38be24a5c917259712[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Aug 14 16:14:29 2017 +0100
+
+    upgrade common make file to allow automatic make to work
+
+[33mcommit e40c9cbd13a69efbd94671fee0a9011c2131a2b9[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Aug 14 16:14:08 2017 +0100
+
+    update make file as needed
+
+[33mcommit 88f1125cbbda42deea76e6a1a1870060c5f03495[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Aug 14 16:13:53 2017 +0100
+
+    started work in intergrating the code from the pg cheat and the sdram reader and transmitter. more work is needed
+
+[33mcommit 53212f0ff6a6e4c51375241e19c97cc2771c1a86[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Aug 14 16:13:22 2017 +0100
+
+    this is basically the old pg, as it really doesnt do much for the protocol. its the sender that does all the work
+
+[33mcommit ff8502c1cab387030b8701271b70b0113788dc90[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Aug 14 16:12:55 2017 +0100
+
+    added the sdram reader. this is i think the same as before
+
+[33mcommit 1a936ddaf6d3a0d7192d7baaf2ad9bca7c8b5203[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Aug 14 16:12:34 2017 +0100
+
+    add protocol to pg. basically the cheat version wtihout the mb param
+
+[33mcommit 2c7ceb1441fe6be1822116aa74a3a3ca12c6ee59[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Aug 14 16:12:03 2017 +0100
+
+    build main script(looks same as before)
+
+[33mcommit e586e7acf4957540c04bcb5ae655ebb23f92ff4b[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Aug 14 16:11:38 2017 +0100
+
+    start of the process for intergrating protocol into simple case
+
+[33mcommit 9ad187e18ffb8caff526bafceff4707d5fca34e3[m
+Merge: 23e5344 893945a
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Aug 14 15:49:09 2017 +0100
+
+    Merge pull request #59 from SpiNNakerManchester/integration_test_cleanup
+    
+    Integration test cleanup
+
+[33mcommit 052d2c4a7b7394760de1d851969c084a7f74a3a9[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Aug 14 14:24:04 2017 +0100
+
+    works! but epcially slow. need to tie into mc part and therefore make the rest reliable
+
+[33mcommit 1578e5f319315eea13d1f5f5aaf579350a169835[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Aug 10 11:33:56 2017 +0100
+
+    sergiously more fiddles to get protocol working. its nearly there now!
+
+[33mcommit 893945ab25f61cb856828a876dc327bdf0c8e526[m
+Author: Christian Brenninkmeijer <brenninc@cs.man.ac.uk>
+Date:   Wed Aug 9 11:17:05 2017 +0100
+
+    pep8
+
+[33mcommit 025f70c3399c22dfa99b0932796d848fc379a4ea[m
+Author: Christian Brenninkmeijer <brenninc@cs.man.ac.uk>
+Date:   Wed Aug 9 10:20:03 2017 +0100
+
+    cleaner way to get pass flake8
+
+[33mcommit 5be5a3bfccab359fd9902067a6783fe9220e2a4d[m
+Author: Christian Brenninkmeijer <brenninc@cs.man.ac.uk>
+Date:   Wed Aug 9 10:19:38 2017 +0100
+
+    excluded scripts from import all
+
+[33mcommit 9a0bcaa3bdbf9c227684d55d7a81fafbb5a75e63[m
+Merge: 713f38a 23e5344
+Author: Christian Brenninkmeijer <brenninc@cs.man.ac.uk>
+Date:   Wed Aug 9 08:09:11 2017 +0100
+
+    merged in master
+
+[33mcommit 6e794fce24d85549dbd9e403fd301a2db42d9447[m
+Merge: dfbbdb8 2570afd
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Aug 7 16:44:43 2017 +0100
+
+    more fiddles to add protocol for getting back missing sdp packets.
+    
+    oh and merge of master into here
+
+[33mcommit 713f38a4439124fa1941993c4f99feb25deb2b37[m
+Author: Christian Brenninkmeijer <brenninc@cs.man.ac.uk>
+Date:   Mon Aug 7 14:34:36 2017 +0100
+
+    heloow world now a simple script with a unittest
+
+[33mcommit dd3ff41f215fde669f11f0f03f18f683ddb0b5ea[m
+Author: Christian Brenninkmeijer <brenninc@cs.man.ac.uk>
+Date:   Mon Aug 7 12:55:49 2017 +0100
+
+    cleaned conway to be more scripts yet still test ok
+
+[33mcommit 3ec4e2043ae463edadcdc7d326d80b62dd30e9ca[m
+Merge: c685326 23e5344
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Mon Aug 7 11:22:49 2017 +0100
+
+    Merge branch 'master' into gfe_integration_tests
+
+[33mcommit c6853260d92e4e19ef2142f6a2bb3383577d8ad3[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Mon Aug 7 10:08:14 2017 +0100
+
+    Clean up some of the test builds
+
+[33mcommit 23e53444c72f6059ec2d2d8d7247c3ffb6a5f115[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Mon Aug 7 09:52:41 2017 +0100
+
+    Properly require current spalloc client for Travis testing
+
+[33mcommit bdfb2f0afff56c0b9e376edc46ca762f3f948b2d[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Fri Aug 4 14:12:35 2017 +0100
+
+    got tests to the point the run and fail
+
+[33mcommit 0503d74b675a0fb2d97c4dc9302562818e041fad[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Fri Aug 4 13:33:42 2017 +0100
+
+    Added all files as pre removal in 77b2590f0c3a0000ae1847c4f0225fe319962453
+
+[33mcommit dfbbdb818be1de88e4190d9b771b70ae5df94fbb[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Aug 3 14:48:32 2017 +0100
+
+    more fiddles
+
+[33mcommit 2570afd8084fbb73cb0b5eab4341170c44f6de7e[m
+Merge: 9ad9322 e562c71
+Author: Alan Stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Aug 3 11:09:55 2017 +0100
+
+    Merge pull request #57 from SpiNNakerManchester/completely_nuke_heat_demo
+    
+    oops. rubbered
+
+[33mcommit e562c715a4cb7edefbf9222424d3ea9c3ba48e9b[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Thu Aug 3 11:02:32 2017 +0100
+
+    remove examples that no longer exist from C build
+
+[33mcommit 80c793729a81f9f7e1926da31df49473b54a1d16[m
+Merge: f6f21fa 9ad9322
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Aug 3 10:26:39 2017 +0100
+
+    merged master into speed up branch
+
+[33mcommit 9ad9322acfaf089d025d8ddb2aca024c32a6050c[m
+Merge: 735c15a a6b871d
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Aug 3 10:25:40 2017 +0100
+
+    Merge remote-tracking branch 'origin/master'
+
+[33mcommit 735c15a8461455358ccc789bdf41ec0323b44fd9[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Aug 3 10:24:49 2017 +0100
+
+    nuked heat demo
+
+[33mcommit f6f21fad2456852c25a8da265744ab5fefa2f920[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Aug 3 10:24:20 2017 +0100
+
+    more fiddles
+
+[33mcommit a6b871dfacbe27056be07f260622ddc6a6142514[m
+Merge: ee4237c d2c2e90
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Thu Aug 3 10:13:16 2017 +0100
+
+    Merge pull request #56 from SpiNNakerManchester/fix_chip_power_monitor_and_chip_before_run
+    
+    emergency fix for getting GFE working.
+
+[33mcommit 2bb685aea1e5275ae633333dc9a14cee946e22d6[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Aug 3 10:03:41 2017 +0100
+
+    fiddles
+
+[33mcommit 0d54520a46879ae6e76ed39588f44a0969917eae[m
+Merge: 9622a0c ee4237c
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Aug 3 10:02:54 2017 +0100
+
+    more fiddles
+
+[33mcommit d2c2e90ddb780854076446fbf6a792575fb4cc55[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Wed Aug 2 15:45:05 2017 +0100
+
+    Tidy up warning message
+
+[33mcommit c51bccc28b6a168e370ddbfcb5abe701efcfe33c[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Wed Aug 2 15:25:04 2017 +0100
+
+    another flake8
+
+[33mcommit bea8deea3f6d8fe8a686a9f797851087dec3a06d[m
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Wed Aug 2 15:19:55 2017 +0100
+
+    flake8 fixes
+    
+    - why has partitioned_example_c_vis_buffer been deleted?
+
+[33mcommit 43c6d31a71d68cf7ece5eda20754b2b85bd093b0[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Aug 2 14:50:13 2017 +0100
+
+    emergency fix for getting GFE working.
+
+[33mcommit ee4237c93e0c44f1ac67d3f3b95f819012302c9a[m
+Merge: bd9f213 f74551a
+Author: Alan Stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Jul 31 15:56:55 2017 +0100
+
+    Merge pull request #51 from SpiNNakerManchester/chip-power-monitor
+    
+    rubbered
+
+[33mcommit f74551aaf57aa5fdf9ca3dda8ae1e3ff845c50e0[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Jul 31 13:55:45 2017 +0100
+
+    rejiggled cfgs
+
+[33mcommit ff0ced72ca52977186e607ab5a5ac20e378336fb[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jul 28 15:18:23 2017 +0100
+
+    merging master inot chip-power-montior
+
+[33mcommit 9622a0c5f9a77ea06d4b9a4326db58470bc9d581[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jul 27 11:55:37 2017 +0100
+
+    mods to verify speed levels
+
+[33mcommit 956559b4c12f54a764edd5a234827fa829be9bf8[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Jul 25 11:10:05 2017 +0100
+
+    merged but needs checking!
+
+[33mcommit f7d64981c4e0d7d2b8cf6f7a24b92b8a0436abf7[m
+Merge: 7203797 bd9f213
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Jul 25 11:08:36 2017 +0100
+
+    merge
+
+[33mcommit c8cfbfd1dace4fffc6d94abfafe025fb8f3d9710[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Jul 24 16:26:06 2017 +0100
+
+    merge master into speedo
+
+[33mcommit bd9f213bd8c3014a231381be5004ccf89de02f30[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Jul 24 13:23:23 2017 +0100
+
+    fixes issue with ignoring time scale factor adjustment
+
+[33mcommit 49dec5ac074594240dfa8a0f6fc03ee30fa05c3e[m
+Merge: 6b5e594 aa59a1f
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Jul 24 09:10:26 2017 +0100
+
+    Merge pull request #54 from SpiNNakerManchester/config_merge
+    
+    Config merge
+
+[33mcommit aa59a1f0af975b055ebbe8f550d11078b5e255af[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Jul 24 08:55:05 2017 +0100
+
+    Moved out common timing setup
+
+[33mcommit 9558e1a92df87ea761af607f258dda4c0273626d[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jul 20 09:43:56 2017 +0100
+
+    test that shows python too slow
+
+[33mcommit 0d4de70f6d893e6fee0cdca66118b33a1c0cd7ff[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Jul 19 15:03:11 2017 +0100
+
+    benchmark test runs at 31 Mb/s
+
+[33mcommit c76fb4166f8e6755826061151df412bb84684e63[m
+Merge: 5a5ea35 6b5e594
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Jul 18 13:53:34 2017 +0100
+
+    merge
+
+[33mcommit aad787f5683622e738ed32f6628001ba12ff4cc5[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Jul 17 15:53:04 2017 +0100
+
+    print stress test started. needs to get receive to work correctly
+
+[33mcommit 6b5e594525f4012b92b633a38993b53d469d2935[m
+Merge: 52a7f69 bfdb6f2
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Jul 17 13:41:53 2017 +0100
+
+    Merge pull request #52 from SpiNNakerManchester/executor_provenance
+    
+    Optional write provenance of what executor does
+
+[33mcommit 5a5ea35da6b4786cb834563d0e3baed5ab83c020[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu Jul 13 10:58:29 2017 +0100
+
+    Added valitation for config files
+
+[33mcommit bfdb6f2fcbe29fbe0588d6e89092f2dfc7f83d20[m
+Merge: e1374e0 52a7f69
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Jul 11 10:03:27 2017 +0100
+
+    merged in master
+
+[33mcommit dee493ce1132985debaff404e87d8a75f257e6da[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Jul 11 10:03:06 2017 +0100
+
+    merged fix
+
+[33mcommit 903643a463b4b0086634fc464fe1ab309fdbcaa3[m
+Merge: 41d49da 52a7f69
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Jul 11 09:58:06 2017 +0100
+
+    merge
+
+[33mcommit 72037977707119850370e4c1c451ef72889b6784[m
+Merge: 1a47b08 52a7f69
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Jul 10 11:14:20 2017 +0100
+
+    Merge remote-tracking branch 'remotes/origin/master' into chip-power-monitor
+
+[33mcommit 52a7f696a298df2f7e9f34f027a7b43b98e44e16[m
+Merge: 45414de cf1d4cf
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Jul 7 20:19:33 2017 +0100
+
+    Merge pull request #50 from SpiNNakerManchester/shorten-names
+    
+    Shorten names
+
+[33mcommit cf1d4cfdd24dce0c52ce168f409987e0bd98e5b6[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Jul 6 15:15:31 2017 +0100
+
+    Fix algorithm for DSG
+
+[33mcommit 78157c7f9d96e7db5b19b75587461be20ace03c2[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Jul 6 12:31:58 2017 +0100
+
+    Algorithm renaming
+
+[33mcommit e1374e0b233607e1dcc8a2d8340e157e745ec990[m
+Merge: 6176117 fd299e5
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu Jul 6 10:59:54 2017 +0100
+
+    merged in remote/executor_provenance
+
+[33mcommit fd299e58597e6eb47fbb5d55b294ca7b489abf47[m
+Merge: cb80b09 45414de
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jul 6 10:33:08 2017 +0100
+
+    Merge remote-tracking branch 'remotes/origin/master' into executor_provenance
+
+[33mcommit 41d49da8d5c0b2eb7cdccf328ef1fa74cac2352a[m
+Merge: 8e567aa 45414de
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu Jul 6 09:57:44 2017 +0100
+
+    merged in master
+
+[33mcommit 6176117c2f4cd5383c975c55792a2698a8e7dc7f[m
+Merge: cb80b09 45414de
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu Jul 6 09:57:44 2017 +0100
+
+    merged in master
+
+[33mcommit 461ea6d1b1283ec79e9b7a670b0cc0455543f8e0[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Jul 6 08:23:42 2017 +0100
+
+    Renaming of constraints
+
+[33mcommit 45414de91eb2c3f0dade44b73695f1acd9092476[m
+Merge: 3d98700 a875cc3
+Author: Alan Stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Jul 5 16:36:46 2017 +0100
+
+    Merge pull request #53 from SpiNNakerManchester/add_run_until_finished
+    
+    rubbered
+
+[33mcommit 8e567aa3c433099b4349dd1a78053c289113ad75[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed Jul 5 14:20:41 2017 +0100
+
+    all configs in name_second format.
+    
+    Although under the hood all config keys are converted to lower case with under_scores removed.
+
+[33mcommit 51c407fc2a119a359cfcd3f0a96e5badf28822fd[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Jul 4 14:36:25 2017 +0100
+
+    config_file not optional
+
+[33mcommit e53103c5c2ae2b88ec83ea7b787433f0e4137d31[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Jul 4 14:00:27 2017 +0100
+
+    pep8
+
+[33mcommit 3ed945dd1609fdfaa88e6c7ccad41537c36c5274[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Jul 4 13:55:34 2017 +0100
+
+    Keep two seperate config files as algorithms are different.
+    
+    Still share defaults.
+
+[33mcommit 1f006e0827e5b55bec578a9d0a7e0e8e807792fa[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Jul 4 10:20:49 2017 +0100
+
+    remove configs shared with common or used.
+
+[33mcommit 1a47b0813346158faba0172ab1511212846d9c98[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jun 30 13:38:00 2017 +0100
+
+    turns off and on boards between machine, mapping, dsg and loading
+
+[33mcommit a875cc3cc03a06a17514d4b79cb3d1ee8737cc7b[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Jun 30 13:37:53 2017 +0100
+
+    Added run until complete call
+
+[33mcommit cb80b09cd13859160115847ed4c06346a7beca1f[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Fri Jun 30 09:54:30 2017 +0100
+
+    Optional write provenance of what executor does
+
+[33mcommit 6085b8b9867fa6d470f8d70a98b940c090ce41fa[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Tue Jun 27 15:55:02 2017 +0100
+
+    Stop doing twisty reuse of names; it confuses me!
+
+[33mcommit d9b89c6ab20a13ca3cbcfd7b6892111fc23ef4ce[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Mon Jun 26 11:28:11 2017 +0100
+
+    A shortening too far?
+
+[33mcommit 251a7492231717064dde82f49f0001754fd98db3[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Thu Jun 22 14:46:24 2017 +0100
+
+    Shortening of names from upstream
+
+[33mcommit 483ae6832e22a5a73c3afc685d8c7ebe0047d151[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Thu Jun 22 11:37:53 2017 +0100
+
+    Shortening of names from upstream
+
+[33mcommit bd881601b1769718f465acde3fa531a07f2d5c4f[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Thu Jun 22 10:57:32 2017 +0100
+
+    Shortening of names from upstream
+
+[33mcommit 21949c74085a6d4f42dbbf0d3111a6d4fed63363[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Thu Jun 22 10:02:51 2017 +0100
+
+    Shortening of names from upstream
+
+[33mcommit 022ae7e864fe996154af3772e81b48c6b9b55d54[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Wed Jun 21 14:57:33 2017 +0100
+
+    Shortening of names from upstream
+
+[33mcommit ec5d949c4c8e54a460d86e8ab156914746499db1[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Jun 14 08:34:20 2017 +0100
+
+    adding cfg params for chip power monitors. report and the config params for the chip power monitor vertex
+
+[33mcommit 3d987004c1c05bde39cf424cf81303fab86c3479[m
+Merge: 6ceab67 38a928e
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Jun 13 07:35:03 2017 +0100
+
+    Merge pull request #48 from SpiNNakerManchester/recording_interface_dma
+    
+    supports dma recording
+
+[33mcommit 38a928e40890874c7eec9adf87a812565cc52fc8[m
+Merge: 17bb22a 6ceab67
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Jun 12 17:12:31 2017 +0100
+
+    Merge branch 'master' into recording_interface_dma
+
+[33mcommit 6ceab6703bb739be29b15e9cab0072db1bf2c06f[m
+Merge: 6e82225 91d0e56
+Author: Christian Y. Brenninkmeijer <Christian-B@users.noreply.github.com>
+Date:   Tue May 30 13:51:51 2017 +0100
+
+    Merge pull request #49 from SpiNNakerManchester/config_fix
+    
+    Config fix
+
+[33mcommit 91d0e56e1ecfe845957abccc73e31b62a00c5cec[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue May 30 10:54:02 2017 +0100
+
+    spynakker, interface, failedstate cleanup
+
+[33mcommit 17bb22a0718b7854d91980e1920230f5b56d5b89[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu May 25 16:33:06 2017 +0100
+
+    supports dma recording
+
+[33mcommit cce0eebe246cfdb0f06e827b510d1421db529db1[m
+Merge: f1e0e6b 0e67b18
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed May 24 15:36:19 2017 +0100
+
+    Merge remote-tracking branch 'origin/config_fix' into config_fix
+    
+    # Conflicts:
+    #       spinnaker_graph_front_end/spinnaker.py
+
+[33mcommit f1e0e6b7c73b404e7cc29dba5d4f3bf762ae071b[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed May 24 15:34:21 2017 +0100
+
+    changes for christian
+
+[33mcommit 0e67b182ad27c9a4bdcfde36b184ad9b3e60a6ee[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed May 24 14:24:12 2017 +0100
+
+    pep8
+
+[33mcommit 38d2f1b2111bd7b6a4ca2465792c5742d697a209[m
+Merge: 1819b67 a136369
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed May 24 14:18:09 2017 +0100
+
+    merge
+
+[33mcommit 1819b67b8c281bf6ed40f8e01b6f34e6af08e5ba[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed May 24 14:15:51 2017 +0100
+
+    broken reason added
+
+[33mcommit 9f5c0b974623b517df0b4f2ee885691f1a68415a[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed May 24 14:15:33 2017 +0100
+
+    no need to hard code in number of chips if allocated. Plus can access config at that point anyway
+
+[33mcommit 2a900e2ead6f5e27f6d7b1fb2e077ac9c8b88bcb[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed May 24 14:09:40 2017 +0100
+
+    more info on why scripts broken
+
+[33mcommit a13636904e9d2cb4d05bd3c5d2f8912bebabb706[m
+Merge: 7329322 6e82225
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed May 24 11:38:55 2017 +0100
+
+    Merge branch 'master' into config_fix
+    
+    Conflicts:
+            spinnaker_graph_front_end/examples/heat_demo/heat_demo.py
+            spinnaker_graph_front_end/utilities/conf/__init__.py
+
+[33mcommit 6538274c91aad3c96432742404d81822b6fa2ffd[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed May 24 11:10:04 2017 +0100
+
+    use global variables and set number of chips if required for spalloc
+
+[33mcommit 25f7213089ce7c18de200cfcba8478f98087f6f0[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed May 24 11:06:29 2017 +0100
+
+    No longer skipping imported BROKEN scripts
+
+[33mcommit 6e8222518487fb3989311336651ee6dc15f3b58c[m
+Merge: c96c63e 7c1803d
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed May 24 10:47:51 2017 +0100
+
+    Merge pull request #47 from SpiNNakerManchester/add-spinn-utilities
+    
+    Add spinn utilities
+
+[33mcommit 7c1803d81e8891634b57314e844e403ac7effc63[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed May 24 08:38:36 2017 +0100
+
+    Added missing config option needed for master
+
+[33mcommit 90cf0b0fcf02a9c83cb2c4e79345795e4258c4ae[m
+Merge: d9596c8 c96c63e
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed May 24 08:36:02 2017 +0100
+
+    Merge branch 'master' into add-spinn-utilities
+    
+    Conflicts:
+            requirements.txt
+            setup.py
+
+[33mcommit 73293221939076df077d43c4a6a2b3b64ade162e[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Fri May 19 12:50:33 2017 +0100
+
+    config from simmulator from global_variables
+
+[33mcommit 097af0bf888f88eb8c4fba069a603a826620904d[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Fri May 19 10:44:48 2017 +0100
+
+    Recommit "no broken tests need skipping any more (all in if def main)"
+    
+    This reverts commit 3a9da043abd8b299b77d3ecaac27d15374464f56.
+
+[33mcommit 63ca82d93c9cd8e7bbe364ddc6bee07ace14a373[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Fri May 19 10:40:37 2017 +0100
+
+    Recommitted "broken tests no longer run during import!"
+    
+    This reverts commit a67716320fa909bef13d12eb4ed918a0b14154d5.
+
+[33mcommit 5a6bed3a8b9e4b5beb15546b4ac3e21292a68f1e[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Fri May 19 10:35:29 2017 +0100
+
+    Recommitted "moved config reading into spinnaker_common based on spinn_utils""
+    
+    This reverts commit c96c63e5ddf739d3ca811b70f898109bef970bef.
+
+[33mcommit c96c63e5ddf739d3ca811b70f898109bef970bef[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Fri May 19 10:18:59 2017 +0100
+
+    Revert "moved config reading into spinnaker_common based on spinn_utils"
+    
+    This reverts commit 201cd73a201482449e0f219da7e5769333560763.
+
+[33mcommit a67716320fa909bef13d12eb4ed918a0b14154d5[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Fri May 19 10:17:02 2017 +0100
+
+    Revert "broken tests no longer run during import!"
+    
+    This reverts commit 3dbbdc896881461772e077627677cb3fc02a89ac.
+
+[33mcommit 3a9da043abd8b299b77d3ecaac27d15374464f56[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Fri May 19 10:16:47 2017 +0100
+
+    revert no broken tests need skipping any more (all in if def main) {Wrong branch}
+
+[33mcommit d0c73322eb82e3f09be9c9be15bf69d510214682[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu May 18 13:54:37 2017 +0100
+
+    no broken tests need skipping any more (all in if def main)
+
+[33mcommit 3dbbdc896881461772e077627677cb3fc02a89ac[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu May 18 13:53:38 2017 +0100
+
+    broken tests no longer run during import!
+
+[33mcommit 201cd73a201482449e0f219da7e5769333560763[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu May 18 13:53:12 2017 +0100
+
+    moved config reading into spinnaker_common based on spinn_utils
+
+[33mcommit 7a8024369574fa66d4e9d8b9a1eeee8317154406[m
+Author: mbassor2 <mbassor2@cspc457.cs.man.ac.uk>
+Date:   Thu May 11 13:48:10 2017 +0100
+
+    As before
+
+[33mcommit 77b2590f0c3a0000ae1847c4f0225fe319962453[m
+Author: mbassor2 <mbassor2@cspc457.cs.man.ac.uk>
+Date:   Thu May 11 13:47:21 2017 +0100
+
+    removing integration tests
+
+[33mcommit 2b2841ac34f00f22aef216ffeebcee981e6869b8[m
+Merge: 122d914 d302c0c
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed May 10 15:51:12 2017 +0100
+
+    Merge pull request #46 from SpiNNakerManchester/pynn_0.8
+    
+    Pynn 0.8
+
+[33mcommit d302c0c0369af671d4cc27568c9761a733440108[m
+Merge: c2da2e1 5da3fd4
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Fri May 5 13:07:46 2017 +0100
+
+    merge
+
+[33mcommit c2da2e1ecb16faf498455d0f306d64295f8a4ff7[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu May 4 09:26:20 2017 +0100
+
+    fixed import order
+
+[33mcommit da2500c8ac9b5f425f02c0cc656965c5fa495a7c[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed May 3 16:56:19 2017 +0100
+
+    pep8
+
+[33mcommit cee8274bcfab564afd99618ae4dbe728d9690ca6[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed May 3 16:56:12 2017 +0100
+
+    bumped version and unified where it came from
+
+[33mcommit 5da3fd4a8d5a7e8869265426abdce2c1fe9e458e[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed Apr 26 13:56:14 2017 +0100
+
+    Updated versions
+
+[33mcommit d9596c8340d6a9b9c65f6e7e58b233005ebc9f4d[m
+Merge: 303f18e 122d914
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Wed Apr 12 16:10:49 2017 +0100
+
+    Merge branch 'master' into add-spinn-utilities
+
+[33mcommit 122d91466e7059a1c28d88983fdba6ec24b3ec1a[m
+Merge: 83e98dd d8ab55f
+Author: Alan Stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Apr 7 12:03:04 2017 +0100
+
+    Merge pull request #27 from SpiNNakerManchester/working_pushbot
+    
+    done
+
+[33mcommit d8ab55ff9dd0561c8d156d20b2128cf922ad27e9[m
+Merge: 4338934 83e98dd
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Apr 7 11:49:20 2017 +0100
+
+    Merge remote-tracking branch 'remotes/origin/master' into working_pushbot
+
+[33mcommit 83e98ddd190206770301c06f04e468829b83fa1c[m
+Merge: 97393ef 3a167da
+Author: Andrew Gait <andrew.gait@manchester.ac.uk>
+Date:   Fri Apr 7 11:08:49 2017 +0100
+
+    Merge pull request #45 from SpiNNakerManchester/setup_dot_dot_fix
+    
+    *.xml instead of *..xml ect
+
+[33mcommit 3a167dac6d1c720eda359b33d22fb1abe7ae0ea6[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu Apr 6 16:02:30 2017 +0100
+
+    *.xml instead of *..xml ect
+
+[33mcommit 4338934d992316b7bb463c7cd08bf6e193525dda[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Apr 6 11:27:12 2017 +0100
+
+    fix of conways to ask for 2 chips. otherwise graph issue occurs
+
+[33mcommit 97393efa67133592b7b4f2ffc0a995d3665b1bb2[m
+Merge: 3d8747f 5bebfa1
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Apr 6 10:16:40 2017 +0100
+
+    Merge pull request #44 from SpiNNakerManchester/report_folder_fix
+    
+    removed temp as report folder option as broken
+
+[33mcommit 5bebfa1f5e7942fa2b6c2beb3a50b32b80acada3[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed Apr 5 13:48:15 2017 +0100
+
+    removed temp as report folder option as broken
+
+[33mcommit 7a752c22c7f6faba0c71c4f212f5156e06859683[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Sun Apr 2 20:28:20 2017 +0100
+
+    Fix test
+
+[33mcommit db42bf5cae48cf5b5df7abe4de8d30b4725f231f[m
+Merge: 18358a8 3d8747f
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Sun Apr 2 20:27:25 2017 +0100
+
+    Merge branch 'master' into working_pushbot
+
+[33mcommit 3d8747f18c54c44a5f00bbb75da46ecda280ce6c[m
+Merge: 506553b e51f61a
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Mar 31 17:25:23 2017 +0100
+
+    Merge pull request #43 from SpiNNakerManchester/abstract_cleanup
+    
+    Abstract cleanup
+
+[33mcommit 18358a8b2818d6ae4167eae25fc60ff76393eef4[m
+Merge: 3041384 506553b
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Mar 31 12:46:34 2017 +0100
+
+    merged master into working pushbot
+
+[33mcommit 506553b39be3a878f97defd8ec9c2bef8a424e49[m
+Merge: ae13cf3 43d50d9
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Mar 30 12:13:06 2017 +0100
+
+    Merge pull request #42 from SpiNNakerManchester/all_loader_test
+    
+    auto setup travis fixes and all loader test
+
+[33mcommit 43d50d98cbf5c361f483ac0a1cdb5566dcbf153a[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Mar 28 16:28:44 2017 +0100
+
+    added configs to package_data
+
+[33mcommit ae13cf334fe508f2a3b029f49483d5e4b26a4fad[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Mar 28 15:24:32 2017 +0100
+
+    fixing cock up
+
+[33mcommit cad2d2b56510fe6908a0e444e8df771f16423a81[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Mar 28 14:51:41 2017 +0100
+
+    auto packages and other minor cleanups
+
+[33mcommit 381f7fc52ca18e840f7269cb04b0d388d747abb5[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Mar 28 14:50:51 2017 +0100
+
+    added config default name to gfe
+
+[33mcommit 0ab260467e4fda31ba28cb6b24d3338e0c89d95f[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Mar 28 14:46:56 2017 +0100
+
+    pep8
+
+[33mcommit 6c395d0b2f7e8cd3f031aa77f82cd384244ed76f[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Mon Mar 27 15:03:32 2017 +0100
+
+    Added unittest which imports all modules
+
+[33mcommit 30413845eed6ed37267f68027f9a77a61c119602[m
+Merge: d53a9ac 101123c
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Mar 27 14:34:07 2017 +0100
+
+    Merge branch 'master' into working_pushbot
+
+[33mcommit e51f61a28656a2c0e4b75b8ec5738ea5e3957cb8[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu Mar 23 12:41:20 2017 +0000
+
+    removed double import causing flake8 fail on travis
+
+[33mcommit 65dff5dfc08f9876b4081dc39f27f0e15983e9b6[m
+Merge: 0f14bb2 70f4514
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu Mar 23 11:30:22 2017 +0000
+
+    merged in Master
+
+[33mcommit 561f90c4df8f66be645351190a5bfceec38859fa[m
+Merge: 7355a35 70f4514
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Mar 22 17:14:25 2017 +0000
+
+    Merge remote-tracking branch 'origin/master'
+
+[33mcommit 7355a35db6c298d0df9583fc6ac58e138ff7c3f3[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Mar 22 17:12:31 2017 +0000
+
+    merged master into pynn 0.8 versions
+
+[33mcommit 0f14bb2d157f1b79b4defc09ffc46961435ce00b[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Mar 21 16:59:28 2017 +0000
+
+    NeedsNMachineTimeSteps now a stateless abstract
+
+[33mcommit 70f45144a0c43cd48dc15ede2dee0adb0426ed34[m
+Merge: 101123c 1d8587a
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Tue Mar 21 15:27:10 2017 +0000
+
+    Merge pull request #40 from SpiNNakerManchester/super-travis
+    
+    Allow installation of deps from branches other than master.
+
+[33mcommit 1d8587a8dbcf496148713bf493cae673e60768c3[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Tue Mar 21 15:26:23 2017 +0000
+
+    Allow installation of deps from branches other than master.
+
+[33mcommit 101123c4ef58c2dff65ff5ee9bea53203452e2f0[m
+Merge: 6b91a11 4dabdbc
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Mon Mar 20 09:48:34 2017 +0000
+
+    Merge pull request #30 from SpiNNakerManchester/router_compressor_on_chip
+    
+    Router compressor on chip
+
+[33mcommit 4dabdbc2475ba0f210c896b5c9ab169ce8ff6748[m
+Merge: 66dc4cf 6b91a11
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Mar 17 16:04:30 2017 +0000
+
+    Merge branch 'master' into router_compressor_on_chip
+
+[33mcommit d34e93cfa38cfe0f9a25e3b22fb8c527c9f8ea60[m
+Merge: 552d866 6b91a11
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Wed Mar 15 14:27:47 2017 +0000
+
+    Merge branch 'master' into simplify-graph-basics
+
+[33mcommit 6b91a11b39c349c440554d4f542e2ff743311e6d[m
+Merge: 8cb3928 af6dbdc
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Mar 14 15:10:44 2017 +0000
+
+    Merge pull request #34 from SpiNNakerManchester/doc_fixes_for_sphinx
+    
+    Doc fixes for sphinx
+
+[33mcommit af6dbdcd944aca55f2ec997e20000a131786144d[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Mar 14 15:03:22 2017 +0000
+
+    Marked as "READTHEDOCS" to avoid config sphinx issues
+
+[33mcommit d58c652ace7495cbb70f30a406d54dbd70b45fa9[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Mar 14 14:53:19 2017 +0000
+
+    Some minor changes, and added travis build of docs
+
+[33mcommit 71642e1fe7968685a0bcea3a4ee6aa6218db079c[m
+Merge: 042a534 8cb3928
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Fri Mar 10 15:10:36 2017 +0000
+
+    merge with Master
+
+[33mcommit 8cb392804082d5ad54c5aec71d6961db4c937386[m
+Merge: 6118171 f20c9c9
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Fri Mar 10 14:27:38 2017 +0000
+
+    Merge pull request #39 from SpiNNakerManchester/travis-accelerate
+    
+    Accelerate travis processing by upgrading pip
+
+[33mcommit f20c9c986ae397bf4d073da5994f398a3bf7bb83[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Fri Mar 10 14:24:22 2017 +0000
+
+    Accelerate travis processing by upgrading pip
+
+[33mcommit 552d8663c9b65fa468a6699fea7287a43cbae1b4[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Fri Mar 10 13:04:41 2017 +0000
+
+    Rearrange classes to more sensible locations.
+    
+    Some of these are moved physically, and some are just in more sensible
+    virtual locations.
+
+[33mcommit 042a534afc82e25435a64146a2ea38a747234226[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed Mar 8 15:06:03 2017 +0000
+
+    Added in links amd dependcies to utils
+
+[33mcommit 303f18e58ad0b94c7dd08266d169b901bae0405b[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Wed Mar 8 10:00:59 2017 +0000
+
+    Travis configuration
+
+[33mcommit af49b4b21397986608a4503febe341da26b6ed3c[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Wed Mar 8 09:06:42 2017 +0000
+
+    Use the new configuration system
+
+[33mcommit 35484a4ff043d0b875ebb322beaec49fc2a8a9ed[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Tue Mar 7 12:45:36 2017 +0000
+
+    SocketAddress has moved
+
+[33mcommit e6b8b7570ccff3adafc0c04496fb723f518c271b[m
+Merge: d35e5c9 6118171
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Mon Mar 6 15:29:14 2017 +0000
+
+    Merge with Master
+
+[33mcommit 66dc4cf09416f21141ac13b76c7923cd0b64f9d8[m
+Merge: 2db9a2d 6118171
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Mar 6 13:02:00 2017 +0000
+
+    Merge branch 'master' into router_compressor_on_chip
+
+[33mcommit d53a9ac29323307909d938a8bbf1e03c8d33872e[m
+Merge: 5d07870 6118171
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Mar 6 12:11:43 2017 +0000
+
+    Merge branch 'master' into working_pushbot
+
+[33mcommit 61181711d8dfd10625e2537b69ff62bdf108e42f[m
+Merge: 5514833 93e7de8
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Mar 6 09:54:19 2017 +0000
+
+    Merge pull request #38 from SpiNNakerManchester/fix-tests
+    
+    Fixed get_edges_ending_at_vertex
+
+[33mcommit 93e7de8d67698783b0a81dd37f03bac9ea4c4b01[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Mar 6 09:29:30 2017 +0000
+
+    Fix get_outgoing_edge_partitions_starting_at_vertex
+
+[33mcommit 39e8fe88cf35591322d3be81b9322a760a7c6e0d[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Mar 6 09:05:38 2017 +0000
+
+    Fixed get_edges_ending_at_vertex
+
+[33mcommit 2db9a2d6f5b87aac664ced7164d4588c8901dacd[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed Mar 1 22:45:36 2017 +0000
+
+    Fixed for changed interface
+
+[33mcommit d35e5c9ad0b9148b5bff6a771a1ee7b6adba1520[m
+Merge: 68772cf 5514833
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Feb 28 15:03:54 2017 +0000
+
+    Merge remote-tracking branch 'remotes/origin/master' into doc_fixes_for_sphinx
+
+[33mcommit 989b8a38a78d68030cc4d74673a819b564c77c40[m
+Merge: 865d78c 5514833
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Feb 28 14:56:56 2017 +0000
+
+    Merge branch 'master' into router_compressor_on_chip
+
+[33mcommit 551483309c2fe908e5a4db56ca6f66b47cba93df[m
+Merge: a0523cd 6a7940a
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Feb 24 21:12:41 2017 +0000
+
+    Merge pull request #37 from SpiNNakerManchester/add_non_simulation_binary
+    
+    Self merging as simply adds to a test
+
+[33mcommit 6a7940a5662bc26b27a80e06d4dcc410f5b72eef[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Feb 24 20:53:14 2017 +0000
+
+    Updated to include a non-simulation binary for better testing
+
+[33mcommit 68772cf9239d44ff64e16ec657b6c38d46d61342[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Fri Feb 24 11:09:29 2017 +0000
+
+    pep8
+
+[33mcommit 61e88aa72592221696a6fcc97be68c6f0f7d5012[m
+Merge: 8dcbde9 a0523cd
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Fri Feb 24 11:07:13 2017 +0000
+
+    Merge remote-tracking branch 'remotes/origin/master' into doc_fixes_for_sphinx
+
+[33mcommit a0523cd8766686cfa286031f4855648a0314ea5c[m
+Merge: 185b4fe f4b0c1f
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Feb 24 09:43:01 2017 +0000
+
+    Merge pull request #36 from SpiNNakerManchester/iobuf_extraction
+    
+    iobuf options added
+
+[33mcommit f4b0c1f22ad6a05b6878833728b4b4f8c8caeefc[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Feb 23 15:56:17 2017 +0000
+
+    Added some integration tests for testing the failure modes
+
+[33mcommit 8dcbde979aaeeda0872a438a7f4eb40344ff7c49[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed Feb 22 16:53:52 2017 +0000
+
+    docstring fixes
+
+[33mcommit 5ff1d2601980da992c3a659dd7f5e5e0e2673c38[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed Feb 22 12:45:20 2017 +0000
+
+    Added missing newline to doc
+
+[33mcommit 2d400d0b8cdffe2ed69d84d0a06e3a8e1ce8dcf3[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed Feb 22 10:13:56 2017 +0000
+
+    REVERT: Exclude was correct!
+
+[33mcommit de5c7405b8a6a4d7fc2ad9fd738585498bb9e386[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed Feb 22 10:05:52 2017 +0000
+
+    removed incorrect setting in autodoc which was excluding files it should not.
+
+[33mcommit 870728ed92c043b83f0365e30a6ee52a20395454[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed Feb 22 10:05:12 2017 +0000
+
+    manually fixed merge
+
+[33mcommit c2000fb319928d62919e9c1c271bb6aeaba6481b[m
+Merge: 66837a0 185b4fe
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed Feb 22 09:58:00 2017 +0000
+
+    Merge remote-tracking branch 'remotes/origin/master' into doc_fixes_for_sphinx
+    
+    # Conflicts:  fixed (I hope)
+    #       spinnaker_graph_front_end/__init__.py
+    #       spinnaker_graph_front_end/utilities/conf/__init__.py
+
+[33mcommit 185b4fe73458f85b50c2e8c4b0fbd4f871b0815a[m
+Merge: f34a8ef 3a18229
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Wed Feb 22 09:47:23 2017 +0000
+
+    Merge pull request #35 from SpiNNakerManchester/fix-init-shenanigans
+    
+    Proper fix for the fun and games being played in __init__.py
+
+[33mcommit 3a18229318bcf06e987fbe7de7e5f6c4b4799a02[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Wed Feb 22 09:39:35 2017 +0000
+
+    Proper fix for the fun and games being played in __init__.py
+
+[33mcommit 66837a045f278e588b8622b78fa76d37dd8568da[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed Feb 22 09:36:55 2017 +0000
+
+    Added links to combined documentation
+
+[33mcommit 6fd131b5edca63f56b673bc98bd6127dcd4c7f34[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Feb 21 13:58:03 2017 +0000
+
+    fixed or deleted incorrect :param or :type in docstrings
+
+[33mcommit 13077aa98f9f4f70df953efac403a741140ef6d4[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Feb 21 13:08:07 2017 +0000
+
+    replaced empty :returns:
+
+[33mcommit 1ce413d33ce9c345f4f1a5a47898ff8991a1f945[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Feb 21 10:23:10 2017 +0000
+
+    pep8
+
+[33mcommit f026cea2aa218a6115587214d054c00ec19f6749[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Feb 21 09:40:08 2017 +0000
+
+    create a config (unused) even if in readthedocs
+
+[33mcommit cafa6e931918a1f36a7a3c88dc66c191c0c07421[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Feb 21 09:29:30 2017 +0000
+
+    skipped whole config if in readthedocs
+
+[33mcommit 908f59f456a0205499b666478def6bcb011977fc[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Feb 21 09:09:50 2017 +0000
+
+    skipped config file creation and exit if in readthedocs
+
+[33mcommit e6402f0fbaeb9770c02d4401e025f4d21a31f153[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Mon Feb 20 15:57:52 2017 +0000
+
+    import SpiNNaker except readthedocs
+
+[33mcommit a38c8f67aca6ea740b1622fc77edc87af8ca85aa[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Mon Feb 20 15:52:32 2017 +0000
+
+    exclude imports from readthedocs
+
+[33mcommit 5d078700b2d0b935bb5fdaff6c1d4aea75b64c83[m
+Merge: 69c4c61 f34a8ef
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Feb 20 13:46:37 2017 +0000
+
+    Merge branch 'master' into working_pushbot
+
+[33mcommit f34a8ef6deb2bbe8634c4f1ff9933de4dd0e8039[m
+Merge: 8994c26 dbaf6a6
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Thu Feb 16 15:26:06 2017 +0000
+
+    Merge pull request #32 from SpiNNakerManchester/fix-tests
+    
+    Fix PEP8 enforcement
+
+[33mcommit dbaf6a6fbb1bbb58850e43b808e974c6f44e4149[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Thu Feb 16 15:01:13 2017 +0000
+
+    Flake8
+
+[33mcommit 719701ac26dfb90232f987a07080abea01575f21[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu Feb 16 14:54:29 2017 +0000
+
+    pep8
+
+[33mcommit b5919b20f31a19d522861559351815bc7f412618[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu Feb 16 14:52:43 2017 +0000
+
+    changed link to readthedocs.io
+
+[33mcommit 81eb71ba80bd98f86eef66d41171ea3ded94130f[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu Feb 16 14:47:51 2017 +0000
+
+    changed import from file to specific classes
+    
+    readthedocs could not handle other formats
+
+[33mcommit be3d5a8433bcb337ae94a1748c112ba2e117fcbe[m
+Author: Donal Fellows <donal.k.fellows@manchester.ac.uk>
+Date:   Thu Feb 16 14:47:35 2017 +0000
+
+    Improve the Travis configuration
+
+[33mcommit d75ee90c96ea7df7318c3ba2ba674c25230c2887[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu Feb 16 14:45:54 2017 +0000
+
+    Added auto generated file for later additions
+
+[33mcommit ae8a1bb9b8b647bfb2eeeaf7a630bc3958a71d7a[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu Feb 16 14:45:27 2017 +0000
+
+    sphinx code cleanup
+
+[33mcommit 0440e1742167aecad6813d584d6c2c7bef8c7125[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu Feb 16 12:54:01 2017 +0000
+
+    added spinn_front_end_common requirements
+
+[33mcommit d9898c9c6bbd3ed99512a345a5ee58dcacb5cc61[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu Feb 16 12:53:12 2017 +0000
+
+    avoiding spliting url over two lines and excluded examples
+
+[33mcommit 8994c26359803edbccb71ca2e4095d1516014adb[m
+Merge: 7a2c82c be8e135
+Author: Christian Y. Brenninkmeijer <Christian-B@users.noreply.github.com>
+Date:   Thu Feb 16 09:53:26 2017 +0000
+
+    Merge pull request #31 from SpiNNakerManchester/readthedocs_fix
+    
+    Readthedocs fix
+
+[33mcommit be8e13535ab88398407da7ddba2ee32a3b157897[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu Feb 16 09:44:42 2017 +0000
+
+    removed log as it is part of this module
+
+[33mcommit 8f76cf533675fd8d8ce77b7ac177ea00ad6d18f2[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu Feb 16 09:27:57 2017 +0000
+
+    Minimal files for readthedocs
+
+[33mcommit 73867871adae27d54909abc39ee628a62752f122[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Thu Feb 16 09:08:30 2017 +0000
+
+    link to self not required if readthedocs setup right
+    Need to select: Install your project inside a virtualenv using setup.py install
+
+[33mcommit 5748bf8f5e215373b409d1bbaf749cf1cfa0d9d1[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Wed Feb 15 16:56:51 2017 +0000
+
+    Minimal files for readthedocs
+
+[33mcommit e3d10ce0255be83c63a4fe5590914a4651fccec8[m
+Author: Christian <brenninc@cs.man.ac.uk>
+Date:   Tue Feb 14 15:57:47 2017 +0000
+
+    Added make and ignore files for docs
+
+[33mcommit 865d78c03ec9bd7d2dd6839c4724d0f823dc5dc3[m
+Merge: 005cc85 7a2c82c
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jan 6 14:21:29 2017 +0000
+
+    merge from master
+
+[33mcommit 69c4c617ae93ba84fe139655c9fa44b0c19124e5[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Jan 5 16:54:28 2017 +0000
+
+    Changes to simulation.h
+
+[33mcommit 005cc8560b0bf3e2ec4619b42ca59ba49a33ce36[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jan 5 11:24:48 2017 +0000
+
+    added more dials for the compressed router compressor. now need to tie into the router table reporter
+
+[33mcommit a5e8a594544b1e4bff5b85cd425ff4970630d445[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jan 5 10:56:58 2017 +0000
+
+    added ability to force router compressor to compress anyhows.
+    
+    Added ability to control compress nature and reading iobuf by cfg params
+    
+    added log infos and log errors to the router compressor to support better intergration into the tools. and for debug purposes
+
+[33mcommit 5e54826a30d9febb85c8ae841e6546542d74ece6[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed Dec 21 14:30:06 2016 +0000
+
+    Changed the parameter name to be more consistent
+
+[33mcommit 9de9c629991d679fd83c8e39745efc3ead4a0f8d[m
+Merge: bd1fc32 7a2c82c
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed Dec 21 14:28:49 2016 +0000
+
+    Merge branch 'master' into working_pushbot
+
+[33mcommit 7a2c82c8736035f48bc97988bbf627da75c623d5[m
+Merge: 081a4ec 36cc813
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Dec 16 11:06:43 2016 +0000
+
+    Merge pull request #29 from SpiNNakerManchester/dynamic_ports_v2
+    
+    tweaks and renaming and removal of the harded coded values completely.
+
+[33mcommit e1f1460c7d3c79118a43f7532ffc062c64b946f2[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Dec 15 15:53:40 2016 +0000
+
+    rewired for different support of the executable types.
+    
+    added fixes for core subsets from ibouf fixes branch of spinnMachine
+    
+    fixed intro lab heat demo to jsut use cores on chips 00, 01, 10, 11.
+    
+    router compressor still currupts ruting table entries. so soemts gone bang somewhere.
+
+[33mcommit 36cc813aaf762718fcfc3ac42f63b988862744ab[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Dec 15 11:22:15 2016 +0000
+
+    Restore the option of the buffer port number in case of firewalls
+
+[33mcommit 20a67fc1cfcf50ab46e52c73b2592a99bb48d1f1[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed Dec 14 17:09:26 2016 +0000
+
+    Restore the option of the buffer port number in case of firewalls
+
+[33mcommit 6b43b669bfa431999037f00f374acc191fdb97b9[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Dec 13 15:24:11 2016 +0000
+
+    tweaks and renaming and removal of the harded coded values completely.
+
+[33mcommit 081a4ecab5d1f9e2540bca050ba260f4636ab1eb[m
+Merge: f34e956 9737a21
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Nov 11 22:11:58 2016 +0000
+
+    Merge pull request #25 from SpiNNakerManchester/recording_no_state_region
+    
+    Recording no state region
+
+[33mcommit 9737a2197a916aa2b9480dad52ea120a1ecc8151[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Nov 11 22:09:25 2016 +0000
+
+    Corrected order of decorators
+
+[33mcommit 3a60c8bb2b2a04679af7d38922aa3454c8f92934[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Nov 11 17:11:02 2016 +0000
+
+    Updated for updated recording code
+
+[33mcommit 7750c04866e0c308f74ee0fee7d67d492f0a4a26[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Nov 3 20:40:54 2016 +0000
+
+    Tidy up
+
+[33mcommit db1d035d596ab67fbe424828ecf96fc14b179288[m
+Merge: fe6c997 f34e956
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Nov 3 16:04:49 2016 +0000
+
+    Merge branch 'master' into recording_no_state_region
+
+[33mcommit bd1fc32fc8f1df19b1a19876fe3e79158189a174[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Oct 25 15:40:14 2016 +0100
+
+    missing cfg file param
+
+[33mcommit d759bd8a68b00d5dc782fff07d1ea2b2b7f5e661[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Sep 30 14:58:14 2016 +0100
+
+    working push bot
+
+[33mcommit f34e9569ce0160696deb03bff70a3fb1680cd244[m
+Author: Alan Stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Sep 20 11:48:16 2016 +0100
+
+    Create PULL_REQUEST_TEMPLATE
+    
+    document template for future pull reuqests. try to ensurte we do all the stuff we should be doing.
+
+[33mcommit fe6c997b1a7e7e794349cefce18361bb541fb01e[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Sep 20 10:11:11 2016 +0100
+
+    all of buffered out is working, but it seems buffered in has fialed for intermitent blocks of spikes. verifying now
+
+[33mcommit 31ea7947ab5171171b1034cbda2dbfdf09cb5d7b[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Sep 19 12:14:34 2016 +0100
+
+    most of python i think is fixed, just need to build c code to reflect the removal of the state region.
+    
+    also changed the pacman graph machine_vertex so that it doesnt need resources required as a parameter and changed everything accordingly.
+
+[33mcommit d865768ee8a6ec9d6e55520f6dc9c3cd93ddb551[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Sep 14 15:44:11 2016 +0100
+
+    fix issues with vis
+
+[33mcommit 3e7053c594484e45d3d862193a9846db7db253c0[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Sep 14 15:20:37 2016 +0100
+
+    all gfe stuff for new recording, vis feed is odd, but thats dodgy full stop
+
+[33mcommit 377ff453b37e96e2dee31e17674ec7fa93222206[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Sep 14 14:51:35 2016 +0100
+
+    upgraded recording interface more and fixed possion and bits of gfe
+
+[33mcommit fa63a71c22de2494a8ce7ecf7f56637a76216b3d[m
+Merge: b42f4c8 54554d8
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Sep 12 10:32:59 2016 +0100
+
+    Merge remote-tracking branch 'remotes/origin/master' into recording_fixes
+
+[33mcommit 54554d8c1479459b1b0e7b0e14e5bd3cd0501f0b[m[33m ([m[1;33mtag: 3.0.0[m[33m)[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Sep 2 09:23:30 2016 +0100
+
+    Updated version for release
+
+[33mcommit 4c7b3fa7c2587d811ef599681e7636169b23f3dd[m
+Merge: 92386ad 4cde243
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Sep 1 14:58:27 2016 +0100
+
+    Merge pull request #19 from SpiNNakerManchester/fix_interface
+    
+    Fix interface
+
+[33mcommit 4cde243fab7c6de8fc00fbc539d64e61919490f7[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed Aug 31 14:13:01 2016 +0100
+
+    Tidy up
+
+[33mcommit 73cff78c42e7310b946e899f50e2ad2b1bdf8917[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Aug 30 15:05:49 2016 +0100
+
+    Updated to match presentations
+
+[33mcommit 633a1aaf88d894c723d1fdba55f563a930eb97ee[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Aug 23 12:59:01 2016 +0100
+
+    Added extra interfaces and removed xml completely
+
+[33mcommit 7f0c22918631c2d42841b8ff0cec02daf29174b3[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Aug 19 14:14:47 2016 +0100
+
+    Ensure setup.py is up to date
+
+[33mcommit 1cb6a4cd5a5df9845bcbbb81be217811d5a3576b[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Aug 19 14:06:53 2016 +0100
+
+    Tidy up
+
+[33mcommit d49c11141c6cde7d036b36f209240ba5ca6598b2[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Aug 18 14:55:27 2016 +0100
+
+    Fixed
+
+[33mcommit b42f4c89a711e5901ebec6a31d2e6edc316acc88[m
+Merge: 288fa6a 7803ddc
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Aug 16 16:10:21 2016 +0100
+
+    Merge branch 'alan_fix_interface' into recording_fixes
+
+[33mcommit 7803ddced665a2233285029ecfdf023081ed4ea8[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Aug 16 09:33:19 2016 +0100
+
+    changes for memory constant fixes
+
+[33mcommit 288fa6a0450d18b19c48df28bab93bde816961fd[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Aug 16 09:13:57 2016 +0100
+
+    changes for recording interfaces
+
+[33mcommit f8fec257ae65c64e931d8d8fa325af6459c3b135[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Aug 3 14:32:19 2016 -0400
+
+    modifications for resources to not have to have a set. reuqired rather lot of changes to work correctly for partitionable vertices. but looks good now.
+
+[33mcommit 6a45935ced88628914a6cd251bd34906bc1ad32c[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Aug 2 15:55:29 2016 -0400
+
+    changes to reflect being BLOODY sick of n_machine_time_steps and time_scale_factor and machine_time_step bits being copied all over the place.
+    
+    Also added some fixes for SSP and SSA.
+    
+    PyNN stuff still acting weird. but at least we can veirfy that its not pacman or the rest of the tools, as GFE models run perfectly fine.
+
+[33mcommit 5d02f29d42003d49641c4110ed44bb82b37c9aaf[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Aug 2 14:17:58 2016 -0400
+
+    fixes for conways with vis and cleaned up bits and peices.
+
+[33mcommit a2d0ac2e85fc483a272c3c5bc22ccd81d30f3290[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Aug 2 14:06:35 2016 -0400
+
+    got second version of conways working again
+
+[33mcommit 55740040979eea12d89f654048797231aa562d48[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Aug 2 14:05:21 2016 -0400
+
+    Merge remote-tracking branch 'remotes/origin/Conways' into alan_fix_interface
+    
+    :added a check for time scale factor for when everything is None
+
+[33mcommit 8c7056bd2848431e69da08fce15ce3b77f512538[m
+Merge: 9f668a2 52aef2d
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Aug 2 11:18:19 2016 -0400
+
+    Merge remote-tracking branch 'remotes/origin/Conways' into alan_fix_interface
+    
+    :added a check for time scale factor for when everything is None
+
+[33mcommit 9f668a25d51a26c38f2131a97507a56a9dff1a44[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Aug 2 10:25:17 2016 -0400
+
+    got heat demo working now
+
+[33mcommit 613c97c2fa365bd8d729e559c98318e4dd534fdf[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Aug 1 16:34:37 2016 -0400
+
+    fix hello world so that it runs correctly.
+
+[33mcommit f361c346e14f1cf7792bd970e5830fbb8306f942[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Aug 1 16:34:17 2016 -0400
+
+    fix import for amchien edge
+
+[33mcommit f234625c8eeeaa2b2c1c5452b9f77fd84a3da8b8[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Aug 1 16:34:00 2016 -0400
+
+    fixes dsg writer default
+
+[33mcommit 4e6bcc746bce65f65560ea9b257e7569b7fbb018[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jul 29 16:51:36 2016 -0400
+
+    start of conversion for GFE examples.
+
+[33mcommit 8bd885021d5fd47508b76f8e75aadc2fa01f81c9[m
+Merge: 91e0b42 92386ad
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jul 28 17:25:43 2016 -0400
+
+    Merge remote-tracking branch 'remotes/origin/master' into alan_fix_interface
+
+[33mcommit 52aef2d84adb90a62545ec5d5324b24af73e540e[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Jul 26 11:46:36 2016 -0400
+
+    added example conways going through the GFE (currently only includes partitioned versions. Partitionable will come after the fix interface changes is complete)
+    
+    also includes the ability to set the machine time step and time scale factor up at setup (usful in GFE, not in PyNN).
+
+[33mcommit 91e0b423cea21fae19f6c87961a1770c48cbb9a1[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Jul 22 21:44:06 2016 +0100
+
+    Removal of "sub"
+
+[33mcommit 5f5eec2da94038f72e5808772100cc8c29d042a4[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Jul 22 16:20:58 2016 +0100
+
+    Updates for graph changes
+
+[33mcommit dd6ade60b59b2ac0ecf325c9d6cb7af4942174f6[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jul 21 13:41:57 2016 -0400
+
+    all changes to get fpga and spinnaker link working on multiboards. Inlcudes tests which use a multi-board made virutally.
+
+[33mcommit 92386ad16e4901282648f8e18ae8dbdefc498cbb[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Jul 13 10:45:11 2016 -0400
+
+    added interface for pre and post algorithms for run.
+
+[33mcommit 18fc73201faaa72a636d8ccd07007397a38a16ec[m
+Merge: 7ed6465 e07a53f
+Author: Alan Stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jul 8 17:36:40 2016 -0400
+
+    Merge pull request #20 from SpiNNakerManchester/spalloc_machine_spec
+    
+    im going to have to trust this works (given i dont have access to the spalloc server, nor do i know how to configure my machine to be a spalloc for my one machine here). But it looks ok.
+
+[33mcommit e07a53fe2224676974512dfe1288ad03c6ff5810[m
+Merge: 154ec08 7ed6465
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Jul 8 17:33:21 2016 -0400
+
+    Merge remote-tracking branch 'remotes/origin/master' into spalloc_machine_spec
+
+[33mcommit 7ed646542f1efba7b0b300f80857206f34e78c3f[m
+Merge: eac04e9 95c5662
+Author: Alan Stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jul 7 19:13:54 2016 +0100
+
+    Merge pull request #18 from SpiNNakerManchester/spinnaker_tools_changes
+    
+    sorted.
+
+[33mcommit 95c5662c748d1c68b6e452166e375bcaa2fcd9c7[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jul 7 14:07:25 2016 -0400
+
+    rewrote the simulation.c/.h code so that it doesnt need end user to contain the simulation sdp port number. this has cleaned up the simulation.c/.h interface considerablly, as now theres only a initilise function which taks the place of the 3 functions for: 1. reading timing, setting sdp port, and provenance gathering setting up. This avoids the issue of order of those three being calle,d as they ar enow all called from within the initisliaise function.
+
+[33mcommit 154ec08d8d7683d0dfe5bc8120c4755822d67959[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Jul 5 12:16:22 2016 +0100
+
+    Added option for specifying the spalloc_machine
+
+[33mcommit 406c5f17435b9ea4ae93ae0af84b3e16c3d13129[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Jun 30 16:34:34 2016 +0100
+
+    Some changes associated with PACMAN changes
+
+[33mcommit b35cf03fef754f119d967bae836cc556a59932d9[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Jun 2 13:26:12 2016 +0100
+
+    Updated to work with changes to SpiNNFrontEndCommon
+
+[33mcommit b6f3e2c3acf4dd27a2ea3909da77d527954fb0b4[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Sat May 14 22:02:33 2016 +0100
+
+    Ignore more build items
+
+[33mcommit bbb912c4efb405253b029961b6462b4a8c8cb5b2[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Sat May 14 21:13:53 2016 +0100
+
+    Updated makefiles for changes to spinnaker_tools
+
+[33mcommit eac04e910e9a4e65adb55e4d5778d084b7a5d791[m[33m ([m[1;33mtag: 2016.001[m[33m)[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Apr 29 17:36:36 2016 +0100
+
+    Ignore distribution files
+
+[33mcommit 3fab10abe83ce463acc01a0441e72b85a7dc04b5[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Apr 29 17:35:36 2016 +0100
+
+    Updated module name
+
+[33mcommit b97c994e7b05d2046fafb60df6114d1d317b02cb[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Apr 28 16:05:09 2016 +0100
+
+    Changes from Alan: fixed variable names and added socket addresses
+
+[33mcommit 7a87fae9f4678d9ff0757918e2293f7209e7a07c[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Apr 28 14:51:58 2016 +0100
+
+    Moved some packages to avoid issues on install and made everything run
+
+[33mcommit aea4802170a6cc55569e09069170306711277ebb[m
+Merge: 1d91161 af75f9a
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Apr 26 12:42:28 2016 +0100
+
+    Merge pull request #17 from SpiNNakerManchester/makefile_fixes
+    
+    Makefile fixes
+
+[33mcommit af75f9a4c9094141a3c46463def58dd057a6f6de[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Apr 25 17:00:03 2016 +0100
+
+    Fixes to the makefiles to match SpiNNFrontEndCommon
+
+[33mcommit 1d911615080eef29668727d8a88bd4689fe6557a[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Apr 19 16:13:09 2016 +0100
+
+    ignore build items
+
+[33mcommit 31b3312036171c59cf8376b374713db5abb4d355[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Apr 19 16:12:40 2016 +0100
+
+    Fixed setup.py issues
+
+[33mcommit 8e0f4271f7b296144c895998881dd1078a6c7b7e[m
+Author: Alan Stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Apr 18 11:05:17 2016 +0100
+
+    Update setup.py
+    
+    update setup.py
+
+[33mcommit b3444554b03b55428c0dc5ec6fda929d09d79391[m
+Merge: 809f0a1 782b1cb
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Apr 1 14:43:50 2016 +0100
+
+    Merge pull request #15 from SpiNNakerManchester/gfe_prov_after_crash
+    
+    Gfe prov after crash
+
+[33mcommit 782b1cb26325dc70fe1ad5ab8baaa87a6c5d86e3[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Apr 1 12:28:04 2016 +0100
+
+    Fixed to work with allocated machines
+
+[33mcommit 2ac5c221df2bff32bcc97a2f2ac0ed0931bd4f55[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Apr 1 11:48:16 2016 +0100
+
+    Updated to allow allocated machines to work
+
+[33mcommit b0c66ec508f985400c4148db3d2cd9e62231b602[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Apr 1 10:25:01 2016 +0100
+
+    Removed infinite run time
+
+[33mcommit d8e611b804ad117f574c82009544561ba543892c[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Mar 31 19:36:36 2016 +0100
+
+    Tidied up code
+
+[33mcommit fe471c5813c24ae769885d03721d4040942b1b08[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Mar 31 14:43:49 2016 +0100
+
+    Fixed examples to work with new machine obtainer
+
+[33mcommit 863eda11bf73b26ec0a4bf4f17f1eb36ceea8f1c[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Mar 29 13:01:15 2016 +0100
+
+    Tidy up
+
+[33mcommit f128ec73cbecdcf5e0fa4f7010b8c8f024cefac5[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Mar 24 16:31:42 2016 +0000
+
+    Removed broken item
+
+[33mcommit cafdcf36ae86fadc9a472926d04b5ff81f5c43d3[m
+Merge: 613fec2 809f0a1
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Mar 24 16:12:48 2016 +0000
+
+    Merge branch 'master' into gfe_prov_after_crash
+    
+    Conflicts:
+            examples/heat_demo/heat_demo.c
+            spinnaker_graph_front_end/__init__.py
+            spinnaker_graph_front_end/abstract_partitioned_data_specable_vertex.py
+            spinnaker_graph_front_end/extra_pacman_algorithms/spinnaker_graph_front_end_algorithms.xml
+            spinnaker_graph_front_end/extra_pacman_algorithms/spinnaker_graph_front_end_partitioned_graph_host_based_data_specification_executor.py
+            spinnaker_graph_front_end/spinnaker_graph_front_end.py
+
+[33mcommit 613fec2d9d53b72034de1436f4eb59eea61f07f9[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Mar 24 16:01:50 2016 +0000
+
+    Minor change to name
+
+[33mcommit a7e0f6171e33760fad72ea4b54569364b261c2c5[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Mar 24 11:21:35 2016 +0000
+
+    Removed more pycs
+
+[33mcommit afde81475522a163378ed306911b7b86a06be248[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Mar 24 11:18:38 2016 +0000
+
+    Removed pyc that shouldn't be here!
+
+[33mcommit 3cb25de98b0c149851de1d045aa86065b331db1c[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Mar 23 11:54:51 2016 +0000
+
+    removed random examples that'll needd more time than left
+
+[33mcommit 0f1728f6767730a2bd663c9fa905cd5728f56dae[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Mar 23 11:52:10 2016 +0000
+
+    cleaned messages a bit
+
+[33mcommit 4b69580e76582d6fabb93bb84651ef281fc4f83b[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Mar 23 11:51:59 2016 +0000
+
+    added a template for easyier useage
+
+[33mcommit 88a6a8d6f9a3e4a1fc12619488c7ee0a717e0ca4[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Mar 23 11:24:55 2016 +0000
+
+    fixed hello world
+
+[33mcommit 6858aad20d00d5731fd8a079a00a8781c3780e13[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Mar 23 11:22:32 2016 +0000
+
+    added supprot for end users to get objects needed for funcitonality.
+
+[33mcommit 87f22af3a8c48d78a09ba5a8d5f2e5080e96c373[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Mar 23 11:21:55 2016 +0000
+
+    added functionality to get the machine object directly
+
+[33mcommit 23c4c56949faf13e81becb211fcb8179d75e60ef[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Mar 22 15:00:01 2016 +0000
+
+    added functionality to get the file_machine from programmically.
+
+[33mcommit f6c507ce275d44659f88e2ff1b7e2d6a8748277c[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Mar 22 14:31:12 2016 +0000
+
+    fixes for dsg and moving most of live packet gatherer into live packet gatherer partitioned.
+
+[33mcommit 2ebc4f1cc1fd2edc5c199021dbbe15fb7059a347[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Mar 22 10:35:39 2016 +0000
+
+    mods to the heat demo so that itll compile and run: not yet working for live packet gatherer
+
+[33mcommit 4da0b66b0a10a296dc709cc1a7736d02647c9671[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Mar 22 10:34:55 2016 +0000
+
+    supports cfg changes and added the ability to set the dsg algorithm from the top elvel (if end users need their own for some reasdon)
+
+[33mcommit f267cb1c4a01deeb1881865872a0edf452dec69d[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Mar 22 10:34:02 2016 +0000
+
+    mapped the spiNNakerGraphFrontEnd.cfg so that it works as the spynnaker.cfg does.
+
+[33mcommit 3ff070e5c439fd2aa8af67d630d62fe712498009[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Mar 22 09:23:23 2016 +0000
+
+    setting up the dsg algorithm for run
+
+[33mcommit 337ada700cf9e4e42ca54beed6f51d552944c833[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Mar 22 09:22:53 2016 +0000
+
+    getting rid of algorithms that have been pushed down to fec
+
+[33mcommit 3b5f45a444302dc77e0ae1c35c99589f6148a09c[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Mar 22 09:22:34 2016 +0000
+
+    getting rid of algorithms that have been pushed down to fec
+
+[33mcommit fb1c7d207b5fe8ef8c9254168e9f70081abef0d5[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Mar 21 16:26:19 2016 +0000
+
+    added stuff to allow spynnaker and gfe to set differnet dsg targets based off graphs.
+
+[33mcommit cf9871401e4cc3167d60635f62f49a8a824ff640[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Mar 21 16:10:27 2016 +0000
+
+    changes to get SpyNNaker working with merged spinnaker.py into FEC with as much stuff as posssible at that elvel.
+
+[33mcommit 8578ebac01bb3451655d557bb6cd591dd45ca4d4[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Mar 14 09:31:08 2016 +0000
+
+    valid changes
+
+[33mcommit dade4f508fb04227e8eca058de870c41daf8bf12[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Mar 3 13:35:49 2016 +0000
+
+    little changes to get heat demo wortking with recorded data
+
+[33mcommit 6d47c2ff3ddafe17321d7af97170c36ab061ba7f[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Mar 1 16:40:21 2016 +0000
+
+    loads of changes, but finally the heat demo runs through the tools again. It seems the recording aspect has vanished during the merge, so need to require that to work with buffers (which is not a clean interface as it stands)
+    
+    next is conways game of life and ray tracer and arthurs database stuff
+
+[33mcommit 90ab42ea7f9be8a0d71973428862c700f7a6c546[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Feb 29 09:51:06 2016 +0000
+
+    added all python code ( i think) to get heat demo executing
+
+[33mcommit 6d9ccaa43154a22d9a302968ce7dde533196e73e[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Feb 26 17:10:55 2016 +0000
+
+    more changes to get it flowing
+
+[33mcommit 6f4e33ac469b234ed92364c153c8d29935a20080[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Feb 26 16:12:55 2016 +0000
+
+    lots of changes trying to get gfe to run though logic flow with shared functions as much as possible
+
+[33mcommit 87a46d4fb13d9adb4ce73eb2c596135ef39727fa[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Feb 25 17:50:06 2016 +0000
+
+    started trying to get heat demo up and running
+
+[33mcommit 37c1630efa0b7ba276433f47b43a30f2c0e6d5a1[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Feb 25 09:53:41 2016 +0000
+
+    loads of cahnges to get gfe wired into the new version of stuff
+
+[33mcommit 809f0a12b10838e03a9fdac4bb0902f8e4065811[m
+Merge: fc38e5e b791f84
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Feb 23 14:54:39 2016 +0000
+
+    Merge pull request #14 from SpiNNakerManchester/c_dataSpec
+    
+    C data spec
+
+[33mcommit b791f843872a214948731dd99af96b2bdba571c7[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Feb 23 10:51:18 2016 +0000
+
+    Tidy up
+
+[33mcommit a712d4a5c0f95153d8a1bd38cff2b9c18e521716[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Feb 19 17:02:41 2016 +0000
+
+    started getting gfe working again
+
+[33mcommit a2b1f0b82b11a1ca1209fe5eb8e8e08e7d436d7e[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Feb 1 15:04:10 2016 +0000
+
+    changed modules to use partitions instead of edges
+
+[33mcommit 6ddb406082e1435eff14fc9f807aa5363868cf98[m
+Author: sergiodavies <daviess@cs.man.ac.uk>
+Date:   Wed Jan 20 18:56:46 2016 +0000
+
+    Completed development of on-chip data spec executor.
+    File front_end_common_partitionable_graph_application_data_loader is left for reference, but is not required for the project.
+    
+    Merge remote-tracking branch 'remotes/origin/master' into c_DataSpec
+    
+    Merge remote-tracking branch 'remotes/origin/master' into c_dataSpec
+    
+    Conflicts:
+            spinnaker_graph_front_end/spinnaker_graph_front_end.py
+    
+    Merge remote-tracking branch 'remotes/origin/master' into c_dataSpec
+    
+    Conflicts:
+            c_common/front_end_common_lib/src/simulation.c
+            c_common/models/reverse_iptag_multicast_source/reverse_iptag_multicast_source.c
+            spinn_front_end_common/abstract_models/abstract_data_specable_vertex.py
+            spinn_front_end_common/interface/interface_functions/front_end_common_reload_script_creator.py
+            spinn_front_end_common/utilities/constants.py
+            spinn_front_end_common/utilities/reload/reload.py
+            spinn_front_end_common/utilities/reload/reload_script.py
+    
+    Merge remote-tracking branch 'remotes/origin/master' into c_dataSpec
+    
+    Conflicts:
+            spynnaker/pyNN/spinnaker.py
+            spynnaker/spynnaker.cfg
+    
+    Merge remote-tracking branch 'remotes/origin/master' into c_dataspec
+    
+    Conflicts:
+            spinnman/transceiver.py
+
+[33mcommit c95e69286405ac0c43915bb6004f506b5dd79255[m
+Merge: 2b8328f fc38e5e
+Author: sergiodavies <daviess@cs.man.ac.uk>
+Date:   Sun Jan 17 18:57:49 2016 +0000
+
+    Completed development of on-chip data spec executor.
+    File front_end_common_partitionable_graph_application_data_loader is left for reference, but is not required for the project.
+    
+    Merge remote-tracking branch 'remotes/origin/master' into c_DataSpec
+    
+    Merge remote-tracking branch 'remotes/origin/master' into c_dataSpec
+    
+    Conflicts:
+            spinnaker_graph_front_end/spinnaker_graph_front_end.py
+    
+    Merge remote-tracking branch 'remotes/origin/master' into c_dataSpec
+    
+    Conflicts:
+            c_common/front_end_common_lib/src/simulation.c
+            c_common/models/reverse_iptag_multicast_source/reverse_iptag_multicast_source.c
+            spinn_front_end_common/abstract_models/abstract_data_specable_vertex.py
+            spinn_front_end_common/interface/interface_functions/front_end_common_reload_script_creator.py
+            spinn_front_end_common/utilities/constants.py
+            spinn_front_end_common/utilities/reload/reload.py
+            spinn_front_end_common/utilities/reload/reload_script.py
+    
+    Merge remote-tracking branch 'remotes/origin/master' into c_dataSpec
+    
+    Conflicts:
+            spynnaker/pyNN/spinnaker.py
+            spynnaker/spynnaker.cfg
+    
+    Merge remote-tracking branch 'remotes/origin/master' into c_dataspec
+    
+    Conflicts:
+            spinnman/transceiver.py
+
+[33mcommit 2b8328fc948a354720583ec39a3ea7910af56034[m
+Author: daviess <sergio.davies@gmail.com>
+Date:   Fri Jan 8 19:36:32 2016 +0000
+
+    On chip data specification executor working
+    
+    Created memory map report also for on-chip DSE
+    
+    The data specification file is now returned as string rather than a list of strings since all the models can only return one file to be executed and the DSE on chip currently can only accept one file to be executed
+
+[33mcommit fc38e5e09aa64c11a22dd1bf9c63b98a35f594ee[m
+Merge: 01e54c4 fb7b953
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Jan 8 10:56:01 2016 +0000
+
+    Merge pull request #10 from SpiNNakerManchester/work_flow_multi_runs
+    
+    Work flow multi runs
+
+[33mcommit fb7b95346c690ecd2eb18b4710eec690d176d00c[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed Jan 6 11:58:08 2016 +0000
+
+    Renamed parameter for consistency
+
+[33mcommit 40241b818a0ce8d6004fd11bfc74ae41181477af[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Wed Jan 6 09:17:14 2016 +0000
+
+    Tidy up
+
+[33mcommit 2ba2d6ce9bdc58578bb2d5895610338e4f743b68[m
+Merge: 2e881d5 01e54c4
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Tue Jan 5 21:38:49 2016 +0000
+
+    Merge branch 'master' into work_flow_multi_runs
+
+[33mcommit 01e54c45c8f350196f6dc56d70f0dfe5994b88fe[m
+Merge: 5abe120 a07bef7
+Author: Arthur <gmtuca@gmail.com>
+Date:   Thu Dec 24 19:57:41 2015 +0000
+
+    Merge branch 'master' of https://github.com/SpiNNakerManchester/SpiNNakerGraphFrontEnd
+
+[33mcommit 49317690a82d518db0467b853fdf1c209b151559[m
+Author: daviess <sergio.davies@gmail.com>
+Date:   Mon Dec 14 18:30:14 2015 +0000
+
+    cleaning import statements
+
+[33mcommit 2e881d59dd65bad54793c0ec12cd31d49efb91a0[m
+Merge: 56f7fb8 a07bef7
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Dec 11 16:00:33 2015 -0500
+
+    updated to remove superflious requirements from machien chip allocator by using optional inputs
+
+[33mcommit 11590149bf5d26ab88fc77676b38b574d6d7f131[m
+Author: daviess <sergio.davies@gmail.com>
+Date:   Fri Dec 11 15:56:44 2015 +0000
+
+    correcting an import in spec_sender and formatting following PEP8
+
+[33mcommit 57af859000f6531f77a8e3242cc66410bb8cc323[m
+Author: daviess <sergio.davies@gmail.com>
+Date:   Wed Dec 9 18:56:17 2015 +0000
+
+    Debugging python code
+    Adding a new repository for a common interface for data storage
+
+[33mcommit 56f7fb8be55ef5f8494af7673b21d591347b85bd[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Dec 3 13:10:52 2015 -0500
+
+    got gfe tied up to new fixes for app_stop
+
+[33mcommit cb8e7ac4602fc1a73449dffa7aee2384d5deb69f[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Dec 1 16:06:07 2015 -0500
+
+    fixes to get the system to be more in tune with multi-work flow system
+
+[33mcommit 770ee8bb6f09b3e0ad8675fba64b5fe34e595569[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Nov 30 15:15:18 2015 -0500
+
+    fixed little issue with naming and getting the transciever
+
+[33mcommit cac188949d88e79df2f46ac2bb019de7bb7b973f[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Nov 20 13:22:56 2015 -0500
+
+    got graph front end to operate correctly in multi-run mode
+
+[33mcommit 9565ebd1c243f7354ba69166370d7122780ba5fc[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Nov 20 11:37:04 2015 -0500
+
+    fixed a rename issue from long past
+
+[33mcommit a79c5e6b15724f2ec6d00709edb57ca4dcfa5f40[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Nov 19 16:03:09 2015 -0500
+
+    got reset and mutli run to work. but unforntatley the first run determines the size of the buffer. this needs fixing
+
+[33mcommit a07bef7c9bcadaab79ef29e6cc5542b9aaf5eb49[m
+Merge: adb77b9 9c3d825
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Thu Nov 19 13:07:06 2015 +0000
+
+    Merge pull request #8 from SpiNNakerManchester/mapping_work_flow
+    
+    Mapping work flow
+
+[33mcommit 4e3489547ba60f724d4bdb15e6824333544471bc[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Nov 10 13:52:13 2015 +0000
+
+    got graph front end up to date and updated pacman to supoport the different virutal chip requiremetns as done by arthur and myslef earilier on
+
+[33mcommit 9c3d825e9804be68533f4e1592cdb10e82edc3b7[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Oct 20 14:29:37 2015 +0100
+
+    changes to get the graph front end to compile down with the new flow system.
+    
+    Currently the ehat demo fails at runtime, not too fussed. There is a change to the generate dsg to return a lsit of file paths. but thats fiar enough to remove the assumptionm of one dsg file per vertex.
+
+[33mcommit 3d1ce59a0910c4c331ec9fff00303321bd5ba6f1[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Oct 19 16:50:22 2015 +0100
+
+    changes to get most of graph front end to compile down with the new flow system. Required a few twists to the rest of the tool chain, where built in assumptions were exposed.
+    
+    Currently let though empty partitionable graphs to get stuff running (that needs fixing) and currently crashes with key errors during heat dem dsg (likely due to partition ids, which are also new to this branch).
+
+[33mcommit 383874df181cfc045d2129901765d11fd9390b63[m
+Merge: b01a469 adb77b9
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Oct 15 13:23:36 2015 +0100
+
+    Merge remote-tracking branch 'remotes/origin/master' into mapping_work_flow/ mapping interface changes
+
+[33mcommit 5abe120fe1f9e9b9f9dc36ad498ac06265959d93[m
+Author: Arthur <gmtuca@gmail.com>
+Date:   Fri Oct 9 17:03:53 2015 +0100
+
+    Initial commit, adding Hello World example
+
+[33mcommit adb77b9aa135f1835981ae4998806cabd8f713ba[m
+Author: Arthur <gmtuca@gmail.com>
+Date:   Fri Oct 9 16:54:58 2015 +0100
+
+    Fixed problem finding module_binaries file and added methods to retrieve the transciever
+
+[33mcommit b01a469c2da5dad5ceedf5a4a1ec5eea61d7e3da[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Oct 7 16:09:42 2015 +0100
+
+    new pacman system is a bit cleaned up, and now supprots progress bars for the external algorithms, and also gives provanence data which shows how quickly each algorithm runs.
+    
+    Next is to store the json files in a folder itself, and then work on routing
+
+[33mcommit 85e17183839ea07c5ef980b0765b331cf9b20eb9[m
+Merge: d3aba62 024d94d
+Author: Alan Stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Oct 7 14:55:41 2015 +0100
+
+    Merge pull request #6 from SpiNNakerManchester/alan-stokes-patch-1
+    
+    Update spinnaker_graph_front_end.py
+    
+    reviewed and working
+
+[33mcommit 024d94d2a43a7d89a620c48aee6d96b5a9997516[m
+Author: Alan Stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Oct 7 13:49:28 2015 +0100
+
+    Update spinnaker_graph_front_end.py
+    
+    merging changes from arthers pull request amnually due to some issues with whats in the brnach,
+
+[33mcommit d3aba622667f3256962bf08c45fe2f7f41dc0bed[m
+Merge: fac0bcd 0596396
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Sep 14 14:23:06 2015 +0100
+
+    Merge pull request #4 from SpiNNakerManchester/update_g_f_e
+    
+    updated graph front end and moved database stuff into front end commo…
+
+[33mcommit 0596396483129de3e87e7c71c468df92d9b8eec2[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Sep 14 14:18:14 2015 +0100
+
+    Tidy up
+
+[33mcommit 5714bdc31476d33873d4b0fc3d876a8b0d7298e7[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Sep 14 14:05:46 2015 +0100
+
+    Renamed for consistency
+
+[33mcommit a4495afa7fd7b1870c12d2a1249be5def8a359fb[m
+Merge: 53cc88b fac0bcd
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Sep 14 12:58:41 2015 +0100
+
+    Merge branch 'master' into update_g_f_e
+    
+    Conflicts:
+            spynnaker_graph_front_end/spinnaker_graph_front_end.py
+
+[33mcommit fac0bcde48c1f66a405c1e87cec65fe7810b0429[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Fri Aug 28 10:07:00 2015 +0100
+
+    Tidy up progress bars
+
+[33mcommit 53cc88b0656d2d7ca77a8e0fa9a67a694dd1204c[m
+Author: Andrew Rowley <Andrew.Rowley@manchester.ac.uk>
+Date:   Mon Aug 24 16:12:34 2015 +0100
+
+    Ignoring eclipse resources
+
+[33mcommit 90242d4e35f529eec77ab5419bac9c16dc223814[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Aug 20 15:13:28 2015 +0100
+
+    updated graph front end and moved database stuff into front end common. Need to chage it to event and atom instead of spikes but almost there
+
+[33mcommit 8690f5363cb48b14df142359804ad4f9c04dc8c0[m
+Author: daviess <sergio.davies@gmail.com>
+Date:   Tue Aug 18 14:40:18 2015 +0100
+
+    updating the version numbers in the setup files
+
+[33mcommit b2925d5312cf8b16e3fa9a11bc4ed89d7430618c[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Aug 12 14:29:22 2015 +0100
+
+    fixed spike-io in master so that it sues ports correctly, and added names to all threads, for easier debugging
+
+[33mcommit 70994e2a7f26d44b3492400bcbc8583e82bc9247[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Aug 12 10:22:04 2015 +0100
+
+    tidy up and some fixes discussed with rowley
+    
+    spike io now works correctly
+
+[33mcommit 5d8b3536b0b8307b471de86b2c2e76bb8b3e5ba3[m
+Merge: 0988570 42681f5
+Author: Alan Stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Jul 29 14:52:02 2015 +0100
+
+    Merge pull request #3 from SpiNNakerManchester/infinite_run_fixes
+    
+    added support for infinite running and tested with a modified version…
+    
+    verified by jamie.
+
+[33mcommit 42681f557ba05023a997eceb6da8b5405a38126c[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Jul 29 13:49:47 2015 +0100
+
+    added support for infinite running and tested with a modified version of va_benchmark.
+
+[33mcommit 0988570aa404a8de94e17b73b679f6666b4781d3[m
+Merge: d265baa 105c967
+Author: Alan Stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Jul 2 12:17:06 2015 +0100
+
+    Merge pull request #1 from SpiNNakerManchester/capocaccia2015
+    
+    Capocaccia2015
+    
+    needed to tie everything togteher
+
+[33mcommit d265baafd593bd3079edf7b82b814176cf22feb6[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Mon Apr 27 16:22:48 2015 +0100
+
+    graph front end using travis and pytests
+
+[33mcommit 11f5993b8781ae9b4f063ac74c4e08a7e06f58cc[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Apr 24 17:10:30 2015 +0100
+
+    graph_front end travis linking
+
+[33mcommit 47387ca39f18a6cb3d26ab39e63b028824a95bac[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Apr 24 17:02:45 2015 +0100
+
+    graph front end travis linking
+
+[33mcommit 105c9675259eae9dac37d336f76b5ddd933f2b0d[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Apr 2 18:06:26 2015 +0100
+
+    started support for packet translation from spinnaker machines.
+
+[33mcommit 4393d2b477d1a4615deb6961a348b70effb441ad[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Apr 2 16:41:53 2015 +0100
+
+    blah
+
+[33mcommit c81409bf2f1729f97091acc16e0f203e05ce0863[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Apr 2 16:34:03 2015 +0100
+
+    adjusted it slightly
+
+[33mcommit f2f6a6308184c4e41dd5a4a0f5c849492fbcace2[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Apr 2 16:19:51 2015 +0100
+
+    added the two other examples which are of interest to the tool chain demos
+
+[33mcommit 35cc0a4d76683bbf53caa08e6f31822917656668[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Apr 2 16:14:08 2015 +0100
+
+    looks like its working. but losing a lot of packets in the process
+    
+    also removed the deleting of router diagnostic counters and entries at stop
+
+[33mcommit b5defa788a2000c2133ca75ccdd7ce5ebb805cfc[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Apr 2 15:24:09 2015 +0100
+
+    fixed naming
+
+[33mcommit b9fcdbaf5210696885e543fe5cd8856ff6ae4b57[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Apr 2 15:15:28 2015 +0100
+
+    added what i think is right for pip
+
+[33mcommit 9180bbf55fbc661bf4c6f19f52c466d45dfee312[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Apr 2 15:01:42 2015 +0100
+
+    added a tweak to hoepfully make our code safer.
+
+[33mcommit cec38e629d7bf7aaf138222b1a77c604762acb09[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Apr 2 14:38:38 2015 +0100
+
+    more stuff fixed. just still dont know why we lose our logger for common
+
+[33mcommit 8da17cbd923b7b71a63e8e5555026fbc00793ae4[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Thu Apr 2 13:08:16 2015 +0100
+
+    more stuff to graph front end. still cant get front end logger to work
+
+[33mcommit a5457fe9c6790a8ba145f9916b543867b22e8457[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Apr 1 15:52:55 2015 +0100
+
+    lots of fixes to the graph front end. nearly runs though to executing on the machine (loads of little things from partitionable and partitioned dsg vertices)
+
+[33mcommit 1e07c4ee0c4c7fd9ef2372eafa549a2b7cdb1bb7[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Apr 1 11:22:11 2015 +0100
+
+    got heat demo c code to look like itll work for basic testing
+
+[33mcommit 5491cfed2b1f727c2f0a08ab2318029816a35691[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Mar 31 09:42:42 2015 +0100
+
+    added some changes to the brnach. includes lots of docs
+
+[33mcommit 54d5184598f241d0790c16ed969b03ab2734ed77[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Sun Mar 29 14:36:45 2015 +0100
+
+    more changes including the moving of multi-cast soruce and live pakcet gather into front end common.
+    
+    current issues is heat demo dsg and the c code itself.
+
+[33mcommit 03e5181ecd6e8c643aae2774a3d5486a44aed27c[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Sat Mar 28 21:15:46 2015 +0000
+
+    more changes for the graph front end. some issues for pacman with the malloc key allocator. Also some dubious issues with reverse iptag multicast soruce and the movement of provide classes into the front end common.
+    
+    i think theres something out of date in the reverse iptag as the thing cant be setup without a virutal key currently.
+
+[33mcommit 8c529533247703a71e00826a3043b992c814bb0f[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Mar 27 17:49:21 2015 +0000
+
+    more adjustments to reflect the graph front end getting closer to working.
+
+[33mcommit f2352ce4eab65ae88699b6f45efb996d2656b236[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Fri Mar 27 16:37:38 2015 +0000
+
+    mostly fixed merge plus a fix to a iter in pacman and a adjustment to the runtime exception in master.
+
+[33mcommit 552bccc41acc2ff379f3a9d7cd2efe8c51b562b8[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Wed Mar 25 23:34:36 2015 +0000
+
+    fixes to some classes and a bunch of work on graph front end
+
+[33mcommit 8a374bfd13232f4ed4138c6d99cddcf137fa1dc6[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Tue Mar 24 17:18:15 2015 +0000
+
+    more stuff including heatdemo.c to get graph front end up and running
+
+[33mcommit a6773f13413e07cea1ee70bc80f70a1754743cc0[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Sat Mar 21 22:45:50 2015 +0000
+
+    trying to commit the first bunch of stuff
+
+[33mcommit 1b43cc65a8d3845c753ab1062ecaea5a26451e52[m
+Author: alan-stokes <alan.barry.stokes@gmail.com>
+Date:   Sat Mar 21 22:43:08 2015 +0000
+
+    first commit

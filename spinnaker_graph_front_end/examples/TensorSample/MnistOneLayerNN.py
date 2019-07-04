@@ -57,6 +57,10 @@ optimizer = tf.train.GradientDescentOptimizer(0.003)
 
 train_step = optimizer.minimize(cross_entropy)
 
+writer = tf.summary.FileWriter('.')
+writer.add_graph(tf.get_default_graph())
+writer.flush()
+
 #train_step
 
 ## Run Session
