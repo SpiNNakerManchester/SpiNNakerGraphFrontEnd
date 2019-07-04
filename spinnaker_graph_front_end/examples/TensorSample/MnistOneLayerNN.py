@@ -69,7 +69,7 @@ sess = tf.Session()
 
 sess.run(init)
 
-for i in range(10000):
+for i in range(1000):
     #load batch of images and correct answers
 
     batch_X, batch_Y = mnist.train.next_batch(100)

@@ -4,8 +4,6 @@
 import numpy as np
 import tensorflow as tf
 
-from tensorflow.python import debug as tf_debug
-
 
 def load_data(path):
     with np.load(path) as f:
@@ -28,6 +26,9 @@ def next_batch(num, data, labels):
 
 
 (x_train, y_train), (x_test, y_test) = load_data('mnist.npz')
+
+x_train = x_train.astype(float) / 255.
+x_test = x_test.astype(float) / 255.
 
 # One-hot transform of labels
 
