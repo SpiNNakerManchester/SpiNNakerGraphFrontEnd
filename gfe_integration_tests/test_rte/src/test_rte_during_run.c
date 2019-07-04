@@ -17,14 +17,14 @@ void c_main() {
 
     uint32_t timer_period;
 
-    address_t address = data_specification_get_data_address();
+    data_specification_metadata_t *data = data_specification_get_data_address();
 
-    if (!data_specification_read_header(address)) {
+    if (!data_specification_read_header(data)) {
         rt_error(RTE_SWERR);
     }
 
     if (!simulation_initialise(
-            data_specification_get_region(0, address), APPLICATION_NAME_HASH,
+            data_specification_get_region(0, data), APPLICATION_NAME_HASH,
             &timer_period, &simulation_ticks,
             &infinite_run, 1, 1)) {
         rt_error(RTE_SWERR);
