@@ -48,7 +48,7 @@ y_test = convert_to_one_hot(y_test)
 
 #Initialize variables
 
-X = tf.placeholder(tf.float32, [None, 28, 28])
+X = tf.placeholder(tf.float32, [None, 784])
 
 W = tf.Variable(tf.zeros([784, 10]))
 
@@ -56,13 +56,8 @@ b = tf.Variable(tf.zeros([10]))
 
 init = tf.global_variables_initializer()
 
-#Flatten the images
-
-XX = tf.reshape(X, [-1, 784])
-
 #Model
-
-Y = tf.nn.softmax(tf.matmul(XX, W) + b)
+Y = tf.nn.softmax(tf.matmul(X, W) + b)
 
 #Placeholder for the correct answers
 
@@ -100,6 +95,8 @@ sess.run(init)
 for i in range(1000):
 
     batch_X, batch_Y = next_batch(100, x_train, y_train)
+
+    batch_X = np.reshape(batch_X, (-1, 784))  # [-1, 784]
 
     train_data = {X: batch_X, Y_: batch_Y}
 
