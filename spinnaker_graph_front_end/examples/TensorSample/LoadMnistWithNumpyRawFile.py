@@ -28,6 +28,12 @@ def next_batch(num, data, labels):
     return np.asarray(data_shuffle), np.asarray(labels_shuffle)
 
 
+def convert_to_one_hot(y):
+    result = np.zeros((y.size, 10))
+    result[np.arange(y.size), y] = 1
+    return result
+
+
 (x_train, y_train), (x_test, y_test) = load_data('mnist.npz')
 
 x_train = x_train.astype(float) / 255.
@@ -35,17 +41,9 @@ x_test = x_test.astype(float) / 255.
 
 # One-hot transform of labels
 
-temp = np.zeros((60000, 10))
+y_train = convert_to_one_hot(y_train)
 
-temp[np.arange(60000), y_train] = 1
-
-y_train = temp
-
-temp = np.zeros((10000, 10))
-
-temp[np.arange(10000), y_test] = 1
-
-y_test = temp
+y_test = convert_to_one_hot(y_test)
 
 #Initialize variables
 
