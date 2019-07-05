@@ -57,7 +57,7 @@ sess = tf.Session()
 
 # for i in range(2):
 
-batch_X, batch_Y = next_batch(100, x_train, y_train)
+batch_X, batch_Y = next_batch(10, x_train, y_train)
 batch_X_temp = np.reshape(batch_X, (-1, 784))  # [-1, 784]
 batch_X_temp.astype(np.float32)
 pixels = tf.constant(batch_X_temp, tf.float32)

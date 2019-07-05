@@ -1,4 +1,4 @@
-APPS = const_scalar.mk const_tensor.mk const_float_tensor.mk add.mk mul.mk mat_mul.mk
+APPS = const_scalar.mk const_tensor.mk const_float_tensor.mk add.mk mul.mk mat_mul.mk mat_mul_float.mk
 
 all: $(APPS)
 	for f in $(APPS); do $(MAKE) -f $$f || exit $$?; done

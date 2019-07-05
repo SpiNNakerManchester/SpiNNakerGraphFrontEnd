@@ -137,7 +137,7 @@ class MatMulVertex(MachineVertex, AbstractHasAssociatedBinary,
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
-        return "mat_mul.aplx"
+        return "mat_mul_float.aplx"
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):
