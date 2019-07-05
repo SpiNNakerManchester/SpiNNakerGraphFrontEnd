@@ -4,7 +4,6 @@
 import numpy as np
 import tensorflow as tf
 import tensorflow.compat.v1 as tf
-# use functions of TensorFlow version 1 into TensorFlow version 2.
 tf.disable_v2_behavior()
 RANDOM_SEED = 1
 
@@ -101,10 +100,6 @@ for i in range(1000):
     train_data = {X: batch_X, Y_: batch_Y}
 
     sess.run(train_step, feed_dict=train_data)
-
-    #The lines bellow are just for display
-
-    #success on test data ?
 
 a,c = sess.run([accuracy, cross_entropy], feed_dict=train_data)
 

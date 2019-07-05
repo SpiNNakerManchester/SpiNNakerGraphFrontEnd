@@ -7,7 +7,6 @@ import spinnaker_graph_front_end as front_end
 from spinnaker_graph_front_end.examples.TensorSample.mat_mul_vertex import (MatMulVertex)
 from spinnaker_graph_front_end.examples.TensorSample.const_tensor_vertex import (ConstTensorVertex)
 import tensorflow.compat.v1 as tf
-# use functions of TensorFlow version 1 into TensorFlow version 2.
 tf.disable_v2_behavior()
 
 logger = logging.getLogger(__name__)
@@ -38,6 +37,7 @@ def convert_to_one_hot(y):
     result[np.arange(y.size), y] = 1
     return result
 
+
 front_end.setup(n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
 tf.set_random_seed(0)
 
@@ -48,28 +48,19 @@ x_train = x_train.astype(float) / 255.
 x_test = x_test.astype(float) / 255.
 
 # One-hot transform of labels
-
 y_train = convert_to_one_hot(y_train)
-
 y_test = convert_to_one_hot(y_test)
 
-# 2-D tensor `a`
-# [[1, 2, 3],
-#  [4, 5, 6]]
-k = tf.constant([1, 2, 3, 4, 5, 6], shape=[2, 3])
-
-# 2-D tensor `b`
-# [[ 7,  8],
-#  [ 9, 10],
-#  [11, 12]]
-l = tf.constant([7, 8, 9, 10, 11, 12], shape=[3, 2])
-# p = tf.rank(k)
-# `a` * `b`
-# [[ 58,  64],
-#  [139, 154]]
-c = tf.matmul(k, l)
-
+W = np.zeros(784, 10)
 sess = tf.Session()
+
+# for i in range(2):
+
+batch_X, batch_Y = next_batch(100, x_train, y_train)
+batch_X = np.reshape(batch_X, (-1, 784))  # [-1, 784]
+pixels = tf.constant(batch_X)
+weights = tf.constant(W)
+c = tf.matmul(pixels, weights)
 t = sess.run(c)
 
 const = {}
