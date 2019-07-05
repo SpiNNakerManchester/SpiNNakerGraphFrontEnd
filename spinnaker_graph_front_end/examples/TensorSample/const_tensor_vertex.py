@@ -162,7 +162,7 @@ class ConstTensorVertex(MachineVertex,
     def get_binary_file_name(self):
         print("\n const_vertex get_binary_file_name")
 
-        return "const_tensor.aplx"
+        return "const_float_tensor.aplx"
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):

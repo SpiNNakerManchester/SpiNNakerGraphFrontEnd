@@ -84,7 +84,7 @@ void send_value(){
     // send tensor values
     for(int i=0; i<input_size; i++){
         my_key += 1;
-        log_info("send key %d and tensor value %x \n", my_key, input_addr_dtcm[i]);
+        log_info("send key %d and tensor value %x \n", my_key,float_to_int(input_addr_dtcm[i]));
         while (!spin1_send_mc_packet(my_key, float_to_int(input_addr_dtcm[i]), WITH_PAYLOAD)) {
             spin1_delay_us(1);
         }
@@ -121,7 +121,7 @@ void update() {
 
 
 static bool initialize() {
-    log_info("Initialise const: started\n");
+    log_info("Initialise const_float_tensor: started\n");
 
     // Get the address this core's DTCM data starts at from SDRAM
     address = data_specification_get_data_address();
@@ -155,7 +155,16 @@ static bool initialize() {
     log_info("input_size %d\n", input_size);
 
     // Reserve memory for DTCM
-    input_addr_dtcm = (float*) spin1_malloc(input_size * sizeof(float));
+    // input_addr_dtcm = (float*) spin1_malloc(input_size * sizeof(float));
+    // if(input_addr_dtcm == NULL){
+    //     log_error("DTCM is full");
+    //     rt_error(RTE_SWERR);
+    // }
+
+// use instead sdram to put it
+    input_addr_dtcm = (float*) sark_xalloc(sv->sdram_heap, input_size * sizeof(float), 0, ALLOC_LOCK);
+
+
     // Copy values to DTCM
     spin1_memcpy(input_addr_dtcm, &input_region_address[1], input_size * sizeof(float));
 

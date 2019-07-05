@@ -40,6 +40,7 @@ def convert_to_one_hot(y):
 
 front_end.setup(n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
 tf.set_random_seed(0)
+np.random.seed(0)
 
 
 (x_train, y_train), (x_test, y_test) = load_data('mnist.npz')
@@ -51,15 +52,16 @@ x_test = x_test.astype(float) / 255.
 y_train = convert_to_one_hot(y_train)
 y_test = convert_to_one_hot(y_test)
 
-W = np.zeros(784, 10)
+W = np.zeros((784, 10))
 sess = tf.Session()
 
 # for i in range(2):
 
 batch_X, batch_Y = next_batch(100, x_train, y_train)
-batch_X = np.reshape(batch_X, (-1, 784))  # [-1, 784]
-pixels = tf.constant(batch_X)
-weights = tf.constant(W)
+batch_X_temp = np.reshape(batch_X, (-1, 784))  # [-1, 784]
+batch_X_temp.astype(np.float32)
+pixels = tf.constant(batch_X_temp, tf.float32)
+weights = tf.constant(W, tf.float32)
 c = tf.matmul(pixels, weights)
 t = sess.run(c)
 
