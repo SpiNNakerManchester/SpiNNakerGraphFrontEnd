@@ -6,6 +6,7 @@ import tensorflow as tf
 import tensorflow.compat.v1 as tf
 # use functions of TensorFlow version 1 into TensorFlow version 2.
 tf.disable_v2_behavior()
+RANDOM_SEED = 1
 
 def load_data(path):
     with np.load(path) as f:
@@ -113,5 +114,7 @@ for i in range(1000):
 
     #success on test data ?
 
-    a,c = sess.run([accuracy, cross_entropy], feed_dict=train_data)
+a,c = sess.run([accuracy, cross_entropy], feed_dict=train_data)
 
+print(a)
+print(c)
