@@ -8,6 +8,7 @@ import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 RANDOM_SEED = 1
 
+
 def load_data(path):
     with np.load(path) as f:
         x_train, y_train = f['x_train'], f['y_train']
@@ -99,10 +100,6 @@ sess.run(init)
 for i in range(1000):
 
     batch_X, batch_Y = next_batch(100, x_train, y_train)
-
-    batch_X = np.reshape(batch_X, (-1, 28, 28))
-
-    batch_Y = np.reshape(batch_Y, (-1, 10))
 
     train_data = {X: batch_X, Y_: batch_Y}
 
