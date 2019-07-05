@@ -40,6 +40,7 @@ typedef enum transmission_region_elements {
     HAS_KEY, MY_KEY
 } transmission_region_elements;
 
+
 static inline uint float_to_int(float f) {
     union {
         float f;
@@ -83,8 +84,8 @@ void send_value(){
     // send tensor values
     for(int i=0; i<input_size; i++){
         my_key += 1;
-        log_info("send key %d and tensor value %.6f \n", my_key, input_addr_dtcm[i]);
-        while (!spin1_send_mc_packet(my_key, input_addr_dtcm[i], WITH_PAYLOAD)) {
+        log_info("send key %d and tensor value %x \n", my_key, input_addr_dtcm[i]);
+        while (!spin1_send_mc_packet(my_key, float_to_int(input_addr_dtcm[i]), WITH_PAYLOAD)) {
             spin1_delay_us(1);
         }
     }
