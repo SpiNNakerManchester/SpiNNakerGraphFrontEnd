@@ -26,16 +26,21 @@ int rank1 =0;
 int rank2 =0;
 uint32_t* shape1;
 uint32_t* shape2;
-float* tensor1;
-float* tensor2;
+uint32_t* tensor1;
+uint32_t* tensor2;
 
-float* multiply;
+uint32_t *shape1_addr_dtcm;
+uint32_t *input_addr_dtcm;
+
+uint32_t* multiply;
 
 uint key_exist = 0;
 address_t address = NULL;
 
 typedef enum regions_e {
     PREVERTEX_KEYS,
+    TENSOR1_PROPERTIES,
+    TENSOR2_PROPERTIES,
     TRANSMISSIONS,
     RECORDED_DATA
 } regions_e;
@@ -47,15 +52,6 @@ typedef enum callback_priorities{
 typedef enum transmission_region_elements {
     HAS_KEY, MY_KEY
 } transmission_region_elements;
-
-static inline float int_to_float(uint u) {
-    union {
-        uint u;
-        float f;
-    } value;
-    value.u = u;
-    return value.f;
-}
 
 void send_value(uint data){
     log_info("mat_mul send_value\n", my_key);
@@ -82,9 +78,9 @@ void record_data() {
 void mat_mul_2D(){
     log_info("mat_mul_2D\n");
 
-    multiply = (float*) spin1_malloc(shape1[0] * shape2[1] * sizeof(float));
+    multiply = (uint32_t*) spin1_malloc(shape1[0] * shape2[1] * sizeof(uint32_t));
 
-    float sum=0;
+    int sum=0;
     int l = 0;
 
     for(uint32_t i=0; i<shape1[0]; i++){
@@ -95,7 +91,7 @@ void mat_mul_2D(){
                 sum += tensor1[k+ shape1[1]*i] * tensor2[(k * shape2[1]) + j];
             }
             multiply[l] = sum;
-            // log_info(" multiply[%d] %d :\n", l, multiply[l]);
+            log_info(" multiply[%d] %d :\n", l, multiply[l]);
             sum=0;
             l++;
         }
@@ -110,8 +106,7 @@ void receive_data(uint key, uint payload) {
         // log_info("V1:size1 is greater than 1, matrix reception");
         size1 = payload;
         // reserve space for tensor
-        // tensor1 = (float*) spin1_malloc(size1 * sizeof(float));
-        tensor1 = (float*) sark_xalloc(sv->sdram_heap, size1 * sizeof(float), 0, ALLOC_LOCK);
+        tensor1 = (uint32_t*) spin1_malloc(size1 * sizeof(uint32_t));
 
         is_matrix1 = 1;
     }
@@ -129,9 +124,8 @@ void receive_data(uint key, uint payload) {
 
     // Get Tensor values
     else if (key > pre_vertex1_key+1+ rank1 && key <= pre_vertex1_key+1+ rank1 + size1){
-        
-        tensor1[key-2-pre_vertex1_key-rank1] = int_to_float(payload);
-        // log_info("V1:index %d ,V1:tensor1 value %x\n", key-2-pre_vertex1_key-rank1, payload);
+        tensor1[key-2-pre_vertex1_key-rank1] = payload;
+        // log_info("V1:index %d ,V1:tensor1 value %d\n", key-2-pre_vertex1_key-rank1, tensor1[key-2-pre_vertex1_key-rank1]);
     }
 
     // Check size2 of vertex 2
@@ -139,9 +133,7 @@ void receive_data(uint key, uint payload) {
         // log_info("V2:size2 is greater than 1, matrix reception");
         size2 = payload;
         // reserve space for tensor
-        // tensor2 = (float*) spin1_malloc(size2 * sizeof(float));
-        // use instead sdram to put it
-        tensor2 = (float*) sark_xalloc(sv->sdram_heap, size2 * sizeof(float), 0, ALLOC_LOCK);
+        tensor2 = (uint32_t*) spin1_malloc(size2 * sizeof(uint32_t));
 
         is_matrix2 = 1;
     }
@@ -159,7 +151,7 @@ void receive_data(uint key, uint payload) {
 
     // Get Tensor values
     else if (key > pre_vertex2_key+1+ rank2 && key <= pre_vertex2_key+1+ rank2 + size2){
-        tensor2[key-2-pre_vertex2_key-rank2] = int_to_float(payload);
+        tensor2[key-2-pre_vertex2_key-rank2] = payload;
         // log_info("V2:index %d ,V2:tensor2 value %d\n", key-2-pre_vertex2_key-rank2, tensor2[key-2-pre_vertex2_key-rank2]);
     }
 
@@ -168,7 +160,7 @@ void receive_data(uint key, uint payload) {
         if(counter == (2 + size1 + rank1 + 2 + size2 + rank2)) {
             log_info("Both tensors received\n");
             mat_mul_2D();
-            // record_data();
+            record_data();
             spin1_exit(0);
         }
     }
@@ -194,6 +186,19 @@ static bool initialize() {
     log_info("prevertex 1 key is %d\n", pre_vertex1_key);
     log_info("prevertex 2 key is %d\n", pre_vertex2_key);
 
+    // read tensor properties
+    address_t t_prop1_region_address = data_specification_get_region(TENSOR1_PROPERTIES, address);
+    input_size1 = t_prop1_region_address[0];
+    log_info("input_size %d\n", input_size1);
+    rank1 = t_prop1_region_address[1];
+    log_info("rank1 %d\n", rank1);
+    // Reserve memory to DTCM
+    shape1_addr_dtcm = (uint32_t*) spin1_malloc(rank1 * sizeof(uint32_t));
+    // Copy values to DTCM
+    spin1_memcpy(shape1_addr_dtcm, &t_prop1_region_address[2], rank * sizeof(uint32_t));
+
+
+
     // initialise transmission keys
     address_t transmission_region_address = data_specification_get_region(
             TRANSMISSIONS, address);
@@ -204,7 +209,7 @@ static bool initialize() {
         my_key = transmission_region_address[MY_KEY];
         log_info("my key is %d\n", my_key);
     } else {
-        log_info("Mat_mul_float vertex without key, no sending packets");
+        log_info("Mat_mul vertex without key, no sending packets");
     }
 
     return true;
@@ -222,7 +227,7 @@ static bool initialize() {
  * SOURCE
  */
 void c_main() {
-    log_info("starting mat_mul_float operation\n");
+    log_info("starting mat_mul operation\n");
 
     // initialise the model
     if (!initialize()) {

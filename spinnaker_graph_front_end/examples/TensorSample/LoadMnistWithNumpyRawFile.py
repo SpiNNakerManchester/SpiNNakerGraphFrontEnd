@@ -67,9 +67,9 @@ Y_ = tf.placeholder(tf.float32, [None,10])
 cross_entropy = -tf.reduce_sum(Y_ * tf.log(Y))
 
 #is_correct and accuracy are calculated just for display
-is_correct = tf.equal(tf.argmax(Y,1), tf.argmax(Y_,1))
+# is_correct = tf.equal(tf.argmax(Y,1), tf.argmax(Y_,1))
 
-accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
+# accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
 
 #learning rate 0.003
 
@@ -101,7 +101,7 @@ for i in range(1000):
 
     sess.run(train_step, feed_dict=train_data)
 
-a,c = sess.run([accuracy, cross_entropy], feed_dict=train_data)
+# a,c = sess.run([accuracy, cross_entropy], feed_dict=train_data)
 
-print(a)
-print(c)
+# print(a)
+# print(c)
