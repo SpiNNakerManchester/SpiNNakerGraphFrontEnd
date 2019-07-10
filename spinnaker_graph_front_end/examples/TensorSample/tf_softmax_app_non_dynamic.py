@@ -20,7 +20,7 @@ tf.set_random_seed(0)
 # 2-D tensor `a`
 # [[1, 2, 3],
 #  [4, 5, 6]]
-k = tf.constant([1, 2, 3, 4, 5, 6], shape=[2, 3])
+k = tf.constant([1, 2, 3, 4, 5, 6], shape=[2, 3], dtype=tf.float32)
 
 c = tf.nn.softmax(k)
 

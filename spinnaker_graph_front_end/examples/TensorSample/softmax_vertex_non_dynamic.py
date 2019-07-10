@@ -45,7 +45,7 @@ class SoftmaxND(MachineVertex,
         MachineVertex.__init__(self)
         AbstractHasAssociatedBinary.__init__(self)
         MachineDataSpecableVertex.__init__(self)
-        print("\n mat_mul_vertex_non_dynamic init")
+        print("\n softmax_vertex_non_dynamic init")
         self._constant_data_size = 4
         self.placement = None
         self._label = label
@@ -73,7 +73,7 @@ class SoftmaxND(MachineVertex,
         return self.size1
 
     def _reserve_memory_regions(self, spec):
-        print("\n mat_mul_vertex _reserve_memory_regions")
+        print("\n softmax_vertex _reserve_memory_regions")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.PREVERTEX_KEYS.value,
             size=self.PREVERTEX_KEYS_DATA_SIZE, label="prevertex_keys")
@@ -100,10 +100,10 @@ class SoftmaxND(MachineVertex,
         # check for duplicates
         edges = list(machine_graph.get_edges_ending_at_vertex(self))
         print("edges : ", edges)
-        if len(edges) != 2:
+        if len(edges) != 1:
             raise ConfigurationException(
                 "I've not got the right number of connections. I have {} "
-                "instead of 2".format(
+                "instead of 1".format(
                     len(machine_graph.get_edges_ending_at_vertex(self))))
 
         for edge in edges:
