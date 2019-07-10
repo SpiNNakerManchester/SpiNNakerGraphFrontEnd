@@ -67,6 +67,8 @@ for n_id in graph._nodes_by_id:
         shape2 = graph._nodes_by_id[n_id]._inputs._inputs[1].get_shape().as_list()
         vertices[n_id] = MatMulVertexND("{} vertex ".format(graph._nodes_by_id[n_id].name), shape1, shape2)
 
+    # if 'add' in graph._nodes_by_id[n_id].name:
+
     # constant operation
     elif 'Const' in graph._nodes_by_id[n_id].name:
         vertices[n_id] = ConstTensorVertexND("{} vertex ".format(graph._nodes_by_id[n_id].name),

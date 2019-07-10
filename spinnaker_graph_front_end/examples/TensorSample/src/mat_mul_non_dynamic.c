@@ -55,7 +55,7 @@ void send_value(uint data){
     int multiply_size = shape1[0] * shape2[1];
     // send tensor values
     for(int i=0; i<multiply_size; i++){
-        log_info("send key %d and tensor value %d\n", my_key, input_addr_dtcm[i]);
+        log_info("send key %d and tensor value %d\n", my_key, multiply[i]);
         while (!spin1_send_mc_packet(my_key, multiply[i], WITH_PAYLOAD)) {
             spin1_delay_us(1);
         }

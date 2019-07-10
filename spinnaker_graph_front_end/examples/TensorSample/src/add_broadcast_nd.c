@@ -52,11 +52,10 @@ typedef enum transmission_region_elements {
 
 void send_value(uint data){
     log_info("mat_mul send_value\n", my_key);
-    int multiply_size = shape1[0] * shape2[1];
     // send tensor values
-    for(int i=0; i<multiply_size; i++){
-        log_info("send key %d and tensor value %d\n", my_key, input_addr_dtcm[i]);
-        while (!spin1_send_mc_packet(my_key, multiply[i], WITH_PAYLOAD)) {
+    for(int i=0; i<size1; i++){
+        log_info("send key %d and tensor value %d\n", my_key, tensor1[i]);
+        while (!spin1_send_mc_packet(my_key, tensor1[i], WITH_PAYLOAD)) {
             spin1_delay_us(1);
         }
         my_key += 1;
@@ -74,27 +73,17 @@ void record_data() {
 
 }
 
-void mat_mul_2D(){
-    log_info("mat_mul_2D\n");
-
-    multiply = (uint32_t*) spin1_malloc(shape1[0] * shape2[1] * sizeof(uint32_t));
-
-    int sum=0;
-    int l = 0;
+void add_broadcast(){
+    log_info("add_broadcast\n");
 
     for(uint32_t i=0; i<shape1[0]; i++){
-        for(uint32_t j=0; j<shape2[1]; j++){
-            for(uint32_t k=0; k<shape1[1]; k++){
-                // log_info(" i, j, k %d %d %d :\n", i, j, k);
+        for(uint32_t j=0; j<shape1[1]; j++){
+                log_info(" i, j %d %d %d :\n", i, j);
                 // log_info(" k+ shape1[1]*i  : (k * shape2[1]) + j  %d %d :\n", k+ shape1[1]*i , (k * shape2[1]) + j);
                 // log_info(" k+ shape1[1]*i  : (k * shape2[1]) + j  %d %d :\n", tensor1[k+ shape1[1]*i] , tensor2[(k * shape2[1]) + j]);
-                sum += tensor1[k+ shape1[1]*i] * tensor2[(k * shape2[1]) + j];
+                tensor1[shape1[1]*i+j] += tensor2[j];
+                log_info(" tensor1[%d] %d :\n", shape1[1]*i+j, tensor1[shape1[1]*i+j]);
             }
-            multiply[l] = sum;
-            log_info(" multiply[%d] %d :\n", l, multiply[l]);
-            sum=0;
-            l++;
-        }
     }
 }
 
@@ -114,7 +103,7 @@ void receive_data(uint key, uint payload) {
 
     if(counter == ( size1 + size2 )) {
         log_info("Both tensors received\n");
-        mat_mul_2D();
+        add_broadcast();
         record_data();
         spin1_exit(0);
     }
