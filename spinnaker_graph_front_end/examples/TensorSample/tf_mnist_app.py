@@ -53,6 +53,9 @@ y_train = convert_to_one_hot(y_train)
 y_test = convert_to_one_hot(y_test)
 
 W = np.zeros((784, 10))
+
+b = np.zeros(10)
+
 sess = tf.Session()
 
 # for i in range(2):
@@ -62,8 +65,10 @@ batch_X_temp = np.reshape(batch_X, (-1, 784))  # [-1, 784]
 batch_X_temp.astype(np.float32)
 pixels = tf.constant(batch_X_temp, tf.float32)
 weights = tf.constant(W, tf.float32)
-c = tf.matmul(pixels, weights)
-t = sess.run(c)
+
+mul_res = tf.matmul(pixels, weights)
+Y = tf.nn.softmax(mul_res + b)
+t = sess.run(Y)
 
 const = {}
 for n in tf.get_default_graph().as_graph_def().node:

@@ -17,7 +17,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-class ConstTensorVertex(MachineVertex,
+class ConstTensorVertexND(MachineVertex,
                         AbstractHasAssociatedBinary, AbstractProvidesNKeysForPartition,
                         MachineDataSpecableVertex):
 
@@ -48,8 +48,8 @@ class ConstTensorVertex(MachineVertex,
         if type(self._const_value) is np.ndarray:
             self.rank = self._const_value.ndim
             self.size = self._const_value.size
-            self._shape = self._const_value.shape
-            print("init const shape:", self._shape)
+            self.shape = self._const_value.shape
+            print("init const shape:", self.shape)
 
         self.placement = None
         self._label = label
@@ -101,18 +101,18 @@ class ConstTensorVertex(MachineVertex,
         # write tensor properties
         if self.size > 1:
             spec.switch_write_focus(self.DATA_REGIONS.TENSOR_PROPERTIES.value)
-            print("\n write size :", self.size1)
+            print("\n write size :", self.size)
             spec.write_value(self.size, data_type=DataType.INT32)
             print("\n rank :", self.rank)
             spec.write_value(self.rank, data_type=DataType.INT32)
-            print("\n write shape :", self._shape)
-            spec.write_array(self._shape, data_type=DataType.INT32)
+            print("\n write shape :", self.shape)
+            spec.write_array(self.shape, data_type=DataType.INT32)
 
         # write constant value
         spec.switch_write_focus(self.DATA_REGIONS.INPUT.value)
         if self.size > 1:
             print("\n write array ", self._const_value)
-            spec.write_array(self._const_value, data_type=DataType.FLOAT_32)
+            spec.write_array(self._const_value, data_type=DataType.INT32)
         else:
             print("\n write const val ", self._const_value)
             spec.write_value(self._const_value, data_type=DataType.INT32)
@@ -161,7 +161,7 @@ class ConstTensorVertex(MachineVertex,
     def get_binary_file_name(self):
         print("\n const_vertex get_binary_file_name")
 
-        return "const_float_tensor.aplx"
+        return "const_tensor_non_dynamic.aplx"
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):

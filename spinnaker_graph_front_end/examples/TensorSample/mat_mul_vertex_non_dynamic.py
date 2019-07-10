@@ -1,5 +1,7 @@
 import logging
 import struct
+import numpy as np
+import tensorflow as tf
 from enum import Enum
 from data_specification.utility_calls import get_region_base_address_offset
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary, AbstractProvidesNKeysForPartition
@@ -13,10 +15,11 @@ from spinn_front_end_common.utilities.exceptions import ConfigurationException
 from data_specification.enums import DataType
 
 
+
 logger = logging.getLogger(__name__)
 
 
-class MatMulVertex(MachineVertex,
+class MatMulVertexND(MachineVertex,
                    AbstractHasAssociatedBinary, AbstractProvidesNKeysForPartition,
                    MachineDataSpecableVertex):
 
@@ -25,6 +28,7 @@ class MatMulVertex(MachineVertex,
     PREVERTEX_KEYS_DATA_SIZE = 2 * 4
     TRANSMISSION_DATA_SIZE = 2 * 4  # has key and key
     RECORDING_DATA_SIZE = 4  # int result
+    DIMENSION = 4
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
@@ -36,7 +40,7 @@ class MatMulVertex(MachineVertex,
 
     PARTITION_ID = "OPERATION_PARTITION"
 
-    def __init__(self, label, tensor1, tensor2):
+    def __init__(self, label, shape1, shape2):
         MachineVertex.__init__(self)
         AbstractHasAssociatedBinary.__init__(self)
         MachineDataSpecableVertex.__init__(self)
@@ -44,14 +48,13 @@ class MatMulVertex(MachineVertex,
         self._constant_data_size = 4
         self.placement = None
         self._label = label
+        self.shape1 = shape1
+        self.shape2 = shape2
+        self.rank1 = len(shape1)
+        self.rank2 = len(shape2)
+        self.size1 = np.prod(shape1)
+        self.size2 = np.prod(shape2)
 
-        self.rank1 = tensor1.ndim
-        self.size1 = tensor1.size
-        self.shape1 = tensor1.shape
-
-        self.rank2 = tensor2.ndim
-        self.size2 = tensor2.size
-        self.shape2 = tensor2.shape
 
         print("\n {}_vertex __init__".format(self._label))
 
@@ -128,7 +131,7 @@ class MatMulVertex(MachineVertex,
         spec.switch_write_focus(self.DATA_REGIONS.TENSOR1_PROPERTIES.value)
         print("\n write size1 :", self.size1)
         spec.write_value(self.size1, data_type=DataType.INT32)
-        print("\n rank :", self.rank1)
+        print("\n rank1 :", self.rank1)
         spec.write_value(self.rank1, data_type=DataType.INT32)
         print("\n write shape1 :", self.shape1)
         spec.write_array(self.shape1, data_type=DataType.INT32)
@@ -137,7 +140,7 @@ class MatMulVertex(MachineVertex,
         spec.switch_write_focus(self.DATA_REGIONS.TENSOR2_PROPERTIES.value)
         print("\n write size2 :", self.size2)
         spec.write_value(self.size2, data_type=DataType.INT32)
-        print("\n rank :", self.rank2)
+        print("\n rank2 :", self.rank2)
         spec.write_value(self.rank2, data_type=DataType.INT32)
         print("\n write shape2 :", self.shape2)
         spec.write_array(self.shape2, data_type=DataType.INT32)
@@ -180,7 +183,7 @@ class MatMulVertex(MachineVertex,
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
-        return "mat_mul_float.aplx"
+        return "mat_mul_non_dynamic.aplx"
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):

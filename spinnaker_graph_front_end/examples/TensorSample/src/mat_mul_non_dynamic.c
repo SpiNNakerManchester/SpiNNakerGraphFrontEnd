@@ -29,9 +29,6 @@ uint32_t* shape2;
 uint32_t* tensor1;
 uint32_t* tensor2;
 
-uint32_t *shape1_addr_dtcm;
-uint32_t *input_addr_dtcm;
-
 uint32_t* multiply;
 
 uint key_exist = 0;
@@ -102,68 +99,23 @@ void receive_data(uint key, uint payload) {
     // log_info("key %d , data %d\n", key, payload);
     ++counter;
     // Check size1 of vertex 1
-    if (key == pre_vertex1_key && payload > 1){
-        // log_info("V1:size1 is greater than 1, matrix reception");
-        size1 = payload;
-        // reserve space for tensor
-        tensor1 = (uint32_t*) spin1_malloc(size1 * sizeof(uint32_t));
-
-        is_matrix1 = 1;
-    }
-    // If matrix get rank1
-    else if (is_matrix1 ==1 && key == pre_vertex1_key+1){
-        // log_info("V1:rank1 received %d\n", payload);
-        rank1 = payload;
-        shape1 = (uint32_t*) spin1_malloc(rank1 * sizeof(uint32_t));
-    }
-    // Get Shape of Tensor
-    else if (is_matrix1 ==1 && key > pre_vertex1_key+1 && key <= pre_vertex1_key+1+ rank1){
-        shape1[key-2] = payload;
-        // log_info("V1:index %d ,V1:shape1 value %d \n", key-2, shape1[key-2]);
+    if (key >= pre_vertex1_key && key < pre_vertex1_key + size1 ){
+        tensor1[key] = payload;
+        log_info("V1:key %d ,V1:tensor1 value %d\n", key, tensor1[key]);
     }
 
-    // Get Tensor values
-    else if (key > pre_vertex1_key+1+ rank1 && key <= pre_vertex1_key+1+ rank1 + size1){
-        tensor1[key-2-pre_vertex1_key-rank1] = payload;
-        // log_info("V1:index %d ,V1:tensor1 value %d\n", key-2-pre_vertex1_key-rank1, tensor1[key-2-pre_vertex1_key-rank1]);
+    if (key >= pre_vertex2_key && key < pre_vertex2_key + size2 ){
+        tensor2[key] = payload;
+        log_info("V2:key %d ,V2:tensor2 value %d\n", key, tensor2[key]);
     }
 
-    // Check size2 of vertex 2
-    if (key == pre_vertex2_key && payload > 1){
-        // log_info("V2:size2 is greater than 1, matrix reception");
-        size2 = payload;
-        // reserve space for tensor
-        tensor2 = (uint32_t*) spin1_malloc(size2 * sizeof(uint32_t));
-
-        is_matrix2 = 1;
+    if(counter == ( size1 + size2 )) {
+        log_info("Both tensors received\n");
+        mat_mul_2D();
+        record_data();
+        spin1_exit(0);
     }
-    // If matrix get rank2
-    else if (is_matrix2 ==1 && key == pre_vertex2_key+1){
-        // log_info("V2:rank2 received %d\n", payload);
-        rank2 = payload;
-        shape2 = (uint32_t*) spin1_malloc(rank2 * sizeof(uint32_t));
-    }
-    // Get Shape of Tensor
-    else if (is_matrix2 ==1 && key > pre_vertex2_key+1 && key <= pre_vertex2_key+1+ rank2){
-        shape2[key-2-pre_vertex2_key] = payload;
-        // log_info("V2:key-2-pre_vertex2_key %d , V2:shape2 value %d \n", key-2-pre_vertex2_key, shape2[key-2-pre_vertex2_key]);
-    }
-
-    // Get Tensor values
-    else if (key > pre_vertex2_key+1+ rank2 && key <= pre_vertex2_key+1+ rank2 + size2){
-        tensor2[key-2-pre_vertex2_key-rank2] = payload;
-        // log_info("V2:index %d ,V2:tensor2 value %d\n", key-2-pre_vertex2_key-rank2, tensor2[key-2-pre_vertex2_key-rank2]);
-    }
-
-    if (is_matrix1 ==1 && is_matrix2 ==1){
-
-        if(counter == (2 + size1 + rank1 + 2 + size2 + rank2)) {
-            log_info("Both tensors received\n");
-            mat_mul_2D();
-            record_data();
-            spin1_exit(0);
-        }
-    }
+    
 }
 
 static bool initialize() {
@@ -186,18 +138,27 @@ static bool initialize() {
     log_info("prevertex 1 key is %d\n", pre_vertex1_key);
     log_info("prevertex 2 key is %d\n", pre_vertex2_key);
 
-    // read tensor properties
+    // read tensor1 properties
     address_t t_prop1_region_address = data_specification_get_region(TENSOR1_PROPERTIES, address);
-    input_size1 = t_prop1_region_address[0];
-    log_info("input_size %d\n", input_size1);
+    size1 = t_prop1_region_address[0];
+    log_info("size1 %d\n", size1);
     rank1 = t_prop1_region_address[1];
     log_info("rank1 %d\n", rank1);
     // Reserve memory to DTCM
-    shape1_addr_dtcm = (uint32_t*) spin1_malloc(rank1 * sizeof(uint32_t));
+    shape1 = (uint32_t*) spin1_malloc(rank1 * sizeof(uint32_t));
     // Copy values to DTCM
-    spin1_memcpy(shape1_addr_dtcm, &t_prop1_region_address[2], rank * sizeof(uint32_t));
+    spin1_memcpy(shape1, &t_prop1_region_address[2], rank2 * sizeof(uint32_t));
 
-
+    // read tensor2 properties
+    address_t t_prop2_region_address = data_specification_get_region(TENSOR2_PROPERTIES, address);
+    size2 = t_prop2_region_address[0];
+    log_info("size2 %d\n", size2);
+    rank2 = t_prop2_region_address[1];
+    log_info("rank2 %d\n", rank2);
+    // Reserve memory to DTCM
+    shape2 = (uint32_t*) spin1_malloc(rank2 * sizeof(uint32_t));
+    // Copy values to DTCM
+    spin1_memcpy(shape2, &t_prop2_region_address[2], rank2 * sizeof(uint32_t));
 
     // initialise transmission keys
     address_t transmission_region_address = data_specification_get_region(
