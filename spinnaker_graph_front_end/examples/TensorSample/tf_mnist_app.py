@@ -95,18 +95,22 @@ def store_input_node_ids (n_id):
     inputs[n_id] = current_inputs
 
 
+def get_input_shapes(n_id):
+    sp1 = graph._nodes_by_id[n_id]._inputs._inputs[0].get_shape().as_list()
+    sp2 = graph._nodes_by_id[n_id]._inputs._inputs[1].get_shape().as_list()
+    return sp1, sp2
+
+
 # Add Vertices
 for n_id in graph._nodes_by_id:
     print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
     # math operations
     if 'MatMul' in graph._nodes_by_id[n_id].name:
-        shape1 = graph._nodes_by_id[n_id]._inputs._inputs[0].get_shape().as_list()
-        shape2 = graph._nodes_by_id[n_id]._inputs._inputs[1].get_shape().as_list()
+        shape1, shape2 = get_input_shapes(n_id)
         vertices[n_id] = MatMulVertexND("{} vertex ".format(graph._nodes_by_id[n_id].name), shape1, shape2)
 
     elif 'add'in graph._nodes_by_id[n_id].name:
-        shape1 = graph._nodes_by_id[n_id]._inputs._inputs[0].get_shape().as_list()
-        shape2 = graph._nodes_by_id[n_id]._inputs._inputs[1].get_shape().as_list()
+        shape1, shape2 = get_input_shapes(n_id)
         vertices[n_id] = AddBroadcastND("{} vertex ".format(graph._nodes_by_id[n_id].name), shape1, shape2)
 
     # constant operation
