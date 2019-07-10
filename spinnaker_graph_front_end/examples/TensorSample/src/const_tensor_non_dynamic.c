@@ -146,7 +146,7 @@ static bool initialize() {
  * SOURCE
  */
 void c_main() {
-    log_info("starting Tensor const \n");
+    log_info("starting const_tensor_non_dynamic \n");
 
     // initialise the model
     if (!initialize()) {

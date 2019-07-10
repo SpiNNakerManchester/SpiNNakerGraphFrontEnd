@@ -50,7 +50,7 @@ typedef enum transmission_region_elements {
     HAS_KEY, MY_KEY
 } transmission_region_elements;
 
-void send_value(uint data){
+void send_value(){
     log_info("mat_mul send_value\n", my_key);
     int multiply_size = shape1[0] * shape2[1];
     // send tensor values
@@ -115,6 +115,7 @@ void receive_data(uint key, uint payload) {
     if(counter == ( size1 + size2 )) {
         log_info("Both tensors received\n");
         mat_mul_2D();
+        send_value();
         record_data();
         spin1_exit(0);
     }
@@ -199,7 +200,7 @@ static bool initialize() {
  * SOURCE
  */
 void c_main() {
-    log_info("starting mat_mul operation\n");
+    log_info("starting mat_mul_non_dynamic \n");
 
     // initialise the model
     if (!initialize()) {

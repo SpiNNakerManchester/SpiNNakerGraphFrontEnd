@@ -4,8 +4,9 @@ import logging
 import os
 import numpy as np
 import spinnaker_graph_front_end as front_end
-from spinnaker_graph_front_end.examples.TensorSample.mat_mul_vertex import (MatMulVertex)
-from spinnaker_graph_front_end.examples.TensorSample.const_tensor_vertex import (ConstTensorVertex)
+from spinnaker_graph_front_end.examples.TensorSample.mat_mul_vertex_non_dynamic import (MatMulVertexND)
+from spinnaker_graph_front_end.examples.TensorSample.add_broadcast_vertex_non_dynamic import (AddBroadcastND)
+from spinnaker_graph_front_end.examples.TensorSample.const_tensor_vertex_non_dynamic import (ConstTensorVertexND)
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
@@ -60,7 +61,7 @@ sess = tf.Session()
 
 # for i in range(2):
 
-batch_X, batch_Y = next_batch(10, x_train, y_train)
+batch_X, batch_Y = next_batch(5, x_train, y_train)
 batch_X_temp = np.reshape(batch_X, (-1, 784))  # [-1, 784]
 batch_X_temp.astype(np.float32)
 pixels = tf.constant(batch_X_temp, tf.float32)
@@ -99,11 +100,18 @@ for n_id in graph._nodes_by_id:
     print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
     # math operations
     if 'MatMul' in graph._nodes_by_id[n_id].name:
-        vertices[n_id] = MatMulVertex("{} vertex ".format(graph._nodes_by_id[n_id].name))
+        shape1 = graph._nodes_by_id[n_id]._inputs._inputs[0].get_shape().as_list()
+        shape2 = graph._nodes_by_id[n_id]._inputs._inputs[1].get_shape().as_list()
+        vertices[n_id] = MatMulVertexND("{} vertex ".format(graph._nodes_by_id[n_id].name), shape1, shape2)
+
+    elif 'add'in graph._nodes_by_id[n_id].name:
+        shape1 = graph._nodes_by_id[n_id]._inputs._inputs[0].get_shape().as_list()
+        shape2 = graph._nodes_by_id[n_id]._inputs._inputs[1].get_shape().as_list()
+        vertices[n_id] = AddBroadcastND("{} vertex ".format(graph._nodes_by_id[n_id].name), shape1, shape2)
 
     # constant operation
     elif 'Const' in graph._nodes_by_id[n_id].name:
-        vertices[n_id] = ConstTensorVertex("{} vertex ".format(graph._nodes_by_id[n_id].name),
+        vertices[n_id] = ConstTensorVertexND("{} vertex ".format(graph._nodes_by_id[n_id].name),
                                            const[graph._nodes_by_id[n_id].name])
     else:
         break
@@ -136,12 +144,12 @@ print("read SDRAM after run")
 for placement in sorted(placements.placements,
                         key=lambda p: (p.x, p.y, p.p)):
 
-    if isinstance(placement.vertex, ConstTensorVertex):
+    if isinstance(placement.vertex, ConstTensorVertexND):
         const_value = placement.vertex.read(placement, txrx)
         logger.info("CONST {}, {}, {} > {}".format(
             placement.x, placement.y, placement.p, const_value))
 
-    if isinstance(placement.vertex, MatMulVertex):
+    if isinstance(placement.vertex, MatMulVertexND):
         oper_results = placement.vertex.read(placement, txrx)
         logger.info("Mat Mul {}, {}, {} > {}".format(
             placement.x, placement.y, placement.p, oper_results))

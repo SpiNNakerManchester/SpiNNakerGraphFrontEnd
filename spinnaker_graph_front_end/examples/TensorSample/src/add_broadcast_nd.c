@@ -188,7 +188,7 @@ static bool initialize() {
  * SOURCE
  */
 void c_main() {
-    log_info("starting mat_mul operation\n");
+    log_info("starting add_broadcast_nd \n");
 
     // initialise the model
     if (!initialize()) {
