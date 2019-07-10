@@ -55,7 +55,6 @@ class MatMulVertexND(MachineVertex,
         self.size1 = np.prod(shape1)
         self.size2 = np.prod(shape2)
 
-
         print("\n {}_vertex __init__".format(self._label))
 
 

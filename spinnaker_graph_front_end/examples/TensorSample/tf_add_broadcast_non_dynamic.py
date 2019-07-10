@@ -4,73 +4,36 @@ import logging
 import os
 import numpy as np
 import spinnaker_graph_front_end as front_end
-from spinnaker_graph_front_end.examples.TensorSample.mat_mul_vertex import (MatMulVertex)
-from spinnaker_graph_front_end.examples.TensorSample.const_tensor_vertex import (ConstTensorVertex)
+from spinnaker_graph_front_end.examples.TensorSample.mat_mul_vertex_non_dynamic import (MatMulVertexND)
+from spinnaker_graph_front_end.examples.TensorSample.const_tensor_vertex_non_dynamic import (ConstTensorVertexND)
 import tensorflow.compat.v1 as tf
+# use functions of TensorFlow version 1 into TensorFlow version 2.
 tf.disable_v2_behavior()
 
 logger = logging.getLogger(__name__)
 
 
-def load_data(path):
-    with np.load(path) as f:
-        x_train, y_train = f['x_train'], f['y_train']
-        x_test, y_test = f['x_test'], f['y_test']
-        return (x_train, y_train), (x_test, y_test)
-
-
-def next_batch(num, data, labels):
-    '''
-    Return a total of `num` random samples and labels.
-    '''
-    idx = np.arange(0 , len(data))
-    np.random.shuffle(idx)
-    idx = idx[:num]
-    data_shuffle = [data[ i] for i in idx]
-    labels_shuffle = [labels[ i] for i in idx]
-
-    return np.asarray(data_shuffle), np.asarray(labels_shuffle)
-
-
-def convert_to_one_hot(y):
-    result = np.zeros((y.size, 10))
-    result[np.arange(y.size), y] = 1
-    return result
-
-
 front_end.setup(n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
 tf.set_random_seed(0)
-np.random.seed(0)
 
+# 2-D tensor `a`
+# [[1, 2, 3],
+#  [4, 5, 6]]
+k = tf.constant([1, 2, 3, 4, 5, 6], shape=[2, 3])
 
-(x_train, y_train), (x_test, y_test) = load_data('mnist.npz')
-
-x_train = x_train.astype(float) / 255.
-x_test = x_test.astype(float) / 255.
-
-# One-hot transform of labels
-y_train = convert_to_one_hot(y_train)
-y_test = convert_to_one_hot(y_test)
-
-W = np.zeros((784, 10))
-
-b = np.zeros(10)
+# 2-D tensor `b`
+# [[ 7,  8],
+#  [ 9, 10],
+#  [11, 12]]
+l = tf.constant([7, 8, 9], shape=[1, 3])
+# p = tf.rank(k)
+# `a` * `b`
+# [[ 58,  64],
+#  [139, 154]]
+c = k + l
 
 sess = tf.Session()
-
-# for i in range(2):
-
-batch_X, batch_Y = next_batch(10, x_train, y_train)
-batch_X_temp = np.reshape(batch_X, (-1, 784))  # [-1, 784]
-batch_X_temp.astype(np.float32)
-pixels = tf.constant(batch_X_temp, tf.float32)
-weights = tf.constant(W, tf.float32)
-bias = tf.constant(b, tf.float32)
-
-mul_res = tf.matmul(pixels, weights)
-Y = mul_res + bias
-t = sess.run(Y)
-graph = tf.get_default_graph()
+t = sess.run(c)
 
 const = {}
 for n in tf.get_default_graph().as_graph_def().node:
@@ -80,6 +43,7 @@ for n in tf.get_default_graph().as_graph_def().node:
         else:
             const[n.name] = tensor_util.MakeNdarray(n.attr['value'].tensor)
 
+graph = tf.get_default_graph()
 
 # List of spinnaker vertices
 vertices = {}
@@ -99,11 +63,13 @@ for n_id in graph._nodes_by_id:
     print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
     # math operations
     if 'MatMul' in graph._nodes_by_id[n_id].name:
-        vertices[n_id] = MatMulVertex("{} vertex ".format(graph._nodes_by_id[n_id].name))
+        shape1 = graph._nodes_by_id[n_id]._inputs._inputs[0].get_shape().as_list()
+        shape2 = graph._nodes_by_id[n_id]._inputs._inputs[1].get_shape().as_list()
+        vertices[n_id] = MatMulVertexND("{} vertex ".format(graph._nodes_by_id[n_id].name), shape1, shape2)
 
     # constant operation
     elif 'Const' in graph._nodes_by_id[n_id].name:
-        vertices[n_id] = ConstTensorVertex("{} vertex ".format(graph._nodes_by_id[n_id].name),
+        vertices[n_id] = ConstTensorVertexND("{} vertex ".format(graph._nodes_by_id[n_id].name),
                                            const[graph._nodes_by_id[n_id].name])
     else:
         break
@@ -136,12 +102,12 @@ print("read SDRAM after run")
 for placement in sorted(placements.placements,
                         key=lambda p: (p.x, p.y, p.p)):
 
-    if isinstance(placement.vertex, ConstTensorVertex):
+    if isinstance(placement.vertex, ConstTensorVertexND):
         const_value = placement.vertex.read(placement, txrx)
         logger.info("CONST {}, {}, {} > {}".format(
             placement.x, placement.y, placement.p, const_value))
 
-    if isinstance(placement.vertex, MatMulVertex):
+    if isinstance(placement.vertex, MatMulVertexND):
         oper_results = placement.vertex.read(placement, txrx)
         logger.info("Mat Mul {}, {}, {} > {}".format(
             placement.x, placement.y, placement.p, oper_results))
