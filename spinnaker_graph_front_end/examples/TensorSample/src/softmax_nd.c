@@ -82,7 +82,7 @@ void add_broadcast(){
                 // log_info(" k+ shape1[1]*i  : (k * shape2[1]) + j  %d %d :\n", k+ shape1[1]*i , (k * shape2[1]) + j);
                 // log_info(" k+ shape1[1]*i  : (k * shape2[1]) + j  %d %d :\n", tensor1[k+ shape1[1]*i] , tensor2[(k * shape2[1]) + j]);
                 tensor1[shape1[1]*i+j] += tensor2[j];
-                log_info(" tensor1[%d] : %d \n", shape1[1]*i+j, tensor1[shape1[1]*i+j]);
+                log_info(" tensor1[%d] %d :\n", shape1[1]*i+j, tensor1[shape1[1]*i+j]);
             }
     }
 }
@@ -111,7 +111,7 @@ void receive_data(uint key, uint payload) {
 }
 
 static bool initialize() {
-    log_info("Initialise mat_mul: started\n");
+    log_info("Initialise softmax_nd: started\n");
 
     // Get the address this core's DTCM data starts at from SDRAM
     address = data_specification_get_data_address();
@@ -188,7 +188,7 @@ static bool initialize() {
  * SOURCE
  */
 void c_main() {
-    log_info("starting add_broadcast_nd \n");
+    log_info("starting softmax_nd \n");
 
     // initialise the model
     if (!initialize()) {
