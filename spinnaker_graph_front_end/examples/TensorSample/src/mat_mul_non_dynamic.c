@@ -52,13 +52,15 @@ typedef enum transmission_region_elements {
 
 void send_value(uint data){
     log_info("mat_mul send_value\n", my_key);
-
-    log_info("sending value via multicast with key %d",
-              my_key);
-    while (!spin1_send_mc_packet(my_key, data, WITH_PAYLOAD)) {
-        spin1_delay_us(1);
+    int multiply_size = shape1[0] * shape2[1];
+    // send tensor values
+    for(int i=0; i<multiply_size; i++){
+        log_info("send key %d and tensor value %d\n", my_key, input_addr_dtcm[i]);
+        while (!spin1_send_mc_packet(my_key, multiply[i], WITH_PAYLOAD)) {
+            spin1_delay_us(1);
+        }
+        my_key += 1;
     }
-
 }
 
 void record_data() {
