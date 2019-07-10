@@ -25,7 +25,7 @@ class SoftmaxND(MachineVertex,
 
     _ONE_WORD = struct.Struct("<i")
 
-    PREVERTEX_KEYS_DATA_SIZE = 2 * 4
+    PREVERTEX_KEYS_DATA_SIZE = 4
     TRANSMISSION_DATA_SIZE = 2 * 4  # has key and key
     RECORDING_DATA_SIZE = 4  # int result
     DIMENSION = 4

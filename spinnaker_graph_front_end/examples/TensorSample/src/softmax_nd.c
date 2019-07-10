@@ -73,17 +73,11 @@ void record_data() {
 
 }
 
-void add_broadcast(){
-    log_info("add_broadcast\n");
+void softmax(){
+    log_info("softmax\n");
 
-    for(uint32_t i=0; i<shape1[0]; i++){
-        for(uint32_t j=0; j<shape1[1]; j++){
-                log_info(" i, j %d %d %d :\n", i, j);
-                // log_info(" k+ shape1[1]*i  : (k * shape2[1]) + j  %d %d :\n", k+ shape1[1]*i , (k * shape2[1]) + j);
-                // log_info(" k+ shape1[1]*i  : (k * shape2[1]) + j  %d %d :\n", tensor1[k+ shape1[1]*i] , tensor2[(k * shape2[1]) + j]);
-                tensor1[shape1[1]*i+j] += tensor2[j];
-                log_info(" tensor1[%d] %d :\n", shape1[1]*i+j, tensor1[shape1[1]*i+j]);
-            }
+    for(uint32_t i=0; i<size1; i++){
+        log_info(" tensor1[%d] :\n", tensor1[i]);
     }
 }
 
@@ -96,14 +90,9 @@ void receive_data(uint key, uint payload) {
         log_info("V1:key %d ,V1:tensor1 value %d\n", key, tensor1[key]);
     }
 
-    if (key >= pre_vertex2_key && key < pre_vertex2_key + size2 ){
-        tensor2[key-pre_vertex2_key] = payload;
-        log_info("V2:key %d ,V2:tensor2 value %d\n", key, tensor2[key-pre_vertex2_key]);
-    }
-
-    if(counter == ( size1 + size2 )) {
-        log_info("Both tensors received\n");
-        add_broadcast();
+    if(counter == size1 ) {
+        log_info("tensor received\n");
+        softmax();
         record_data();
         spin1_exit(0);
     }
@@ -126,9 +115,7 @@ static bool initialize() {
     // read prevertex keys
     address_t prevertex_keys_region_address = data_specification_get_region(PREVERTEX_KEYS, address);
     pre_vertex1_key = prevertex_keys_region_address[0];
-    pre_vertex2_key = prevertex_keys_region_address[1];
     log_info("prevertex 1 key is %d\n", pre_vertex1_key);
-    log_info("prevertex 2 key is %d\n", pre_vertex2_key);
 
     // read tensor1 properties
     address_t t_prop1_region_address = data_specification_get_region(TENSOR1_PROPERTIES, address);
@@ -143,22 +130,7 @@ static bool initialize() {
     log_info(" shape1 %d :\n", shape1[0]);
     log_info(" shape1 %d :\n", shape1[1]);
 
-
-    // read tensor2 properties
-    address_t t_prop2_region_address = data_specification_get_region(TENSOR2_PROPERTIES, address);
-    size2 = t_prop2_region_address[0];
-    log_info("size2 %d\n", size2);
-    rank2 = t_prop2_region_address[1];
-    log_info("rank2 %d\n", rank2);
-    // Reserve memory to DTCM
-    shape2 = (uint32_t*) spin1_malloc(rank2 * sizeof(uint32_t));
-    // Copy values to DTCM
-    spin1_memcpy(shape2, &t_prop2_region_address[2], rank2 * sizeof(uint32_t));
-    log_info(" shape2 %d :\n", shape2[0]);
-    log_info(" shape2 %d :\n", shape2[1]);
-
     tensor1 = (uint32_t*) spin1_malloc(size1 * sizeof(uint32_t));
-    tensor2 = (uint32_t*) spin1_malloc(size2 * sizeof(uint32_t));
 
     // initialise transmission keys
     address_t transmission_region_address = data_specification_get_region(
@@ -170,7 +142,7 @@ static bool initialize() {
         my_key = transmission_region_address[MY_KEY];
         log_info("my key is %d\n", my_key);
     } else {
-        log_info("Mat_mul vertex without key, no sending packets");
+        log_info("softmax_nd vertex without key, no sending packets");
     }
 
     return true;
