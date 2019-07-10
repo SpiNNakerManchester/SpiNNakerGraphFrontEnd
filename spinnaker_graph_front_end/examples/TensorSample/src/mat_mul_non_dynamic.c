@@ -84,7 +84,8 @@ void mat_mul_2D(){
         for(uint32_t j=0; j<shape2[1]; j++){
             for(uint32_t k=0; k<shape1[1]; k++){
                 // log_info(" i, j, k %d %d %d :\n", i, j, k);
-                // log_info(" k+ a_dim2*i*j  : (k * b_dim2) + i  %d %d :\n", tensor1[k+ shape1[1]*i], tensor2[(k * shape2[1]) + j] );
+                // log_info(" k+ shape1[1]*i  : (k * shape2[1]) + j  %d %d :\n", k+ shape1[1]*i , (k * shape2[1]) + j);
+                // log_info(" k+ shape1[1]*i  : (k * shape2[1]) + j  %d %d :\n", tensor1[k+ shape1[1]*i] , tensor2[(k * shape2[1]) + j]);
                 sum += tensor1[k+ shape1[1]*i] * tensor2[(k * shape2[1]) + j];
             }
             multiply[l] = sum;
@@ -105,8 +106,8 @@ void receive_data(uint key, uint payload) {
     }
 
     if (key >= pre_vertex2_key && key < pre_vertex2_key + size2 ){
-        tensor2[key] = payload;
-        log_info("V2:key %d ,V2:tensor2 value %d\n", key, tensor2[key]);
+        tensor2[key-pre_vertex2_key] = payload;
+        log_info("V2:key %d ,V2:tensor2 value %d\n", key, tensor2[key-pre_vertex2_key]);
     }
 
     if(counter == ( size1 + size2 )) {
@@ -147,7 +148,10 @@ static bool initialize() {
     // Reserve memory to DTCM
     shape1 = (uint32_t*) spin1_malloc(rank1 * sizeof(uint32_t));
     // Copy values to DTCM
-    spin1_memcpy(shape1, &t_prop1_region_address[2], rank2 * sizeof(uint32_t));
+    spin1_memcpy(shape1, &t_prop1_region_address[2], rank1 * sizeof(uint32_t));
+    log_info(" shape1 %d :\n", shape1[0]);
+    log_info(" shape1 %d :\n", shape1[1]);
+
 
     // read tensor2 properties
     address_t t_prop2_region_address = data_specification_get_region(TENSOR2_PROPERTIES, address);
@@ -159,6 +163,11 @@ static bool initialize() {
     shape2 = (uint32_t*) spin1_malloc(rank2 * sizeof(uint32_t));
     // Copy values to DTCM
     spin1_memcpy(shape2, &t_prop2_region_address[2], rank2 * sizeof(uint32_t));
+    log_info(" shape2 %d :\n", shape2[0]);
+    log_info(" shape2 %d :\n", shape2[1]);
+
+    tensor1 = (uint32_t*) spin1_malloc(size1 * sizeof(uint32_t));
+    tensor2 = (uint32_t*) spin1_malloc(size2 * sizeof(uint32_t));
 
     // initialise transmission keys
     address_t transmission_region_address = data_specification_get_region(
