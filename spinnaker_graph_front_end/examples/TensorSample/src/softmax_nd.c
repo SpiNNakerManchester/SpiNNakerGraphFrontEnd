@@ -76,9 +76,28 @@ void record_data() {
 void softmax(){
     log_info("softmax\n");
 
-    for(uint32_t i=0; i<size1; i++){
-        log_info(" tensor1[%d] :\n", tensor1[i]);
+    // float normal_exp[6];
+    // float tensor2[7] = {1, 2, 3, 4, 1, 2, 3};     // shape = [1 ,7]
+    // int shape2[2] = {1, 7};
+    // float sum_exp_row[shape2[0]];
+
+    for (int i=0; i<shape1[0]; i++){
+    for (int k=0; k<shape1[1]; k++){
+        printf("%f \n",tensor1[k+i*shape1[1]]);
+        printf("%f \n",exp(tensor1[k+i*shape1[1]]));
+
+        sum_exp_row[i]+= exp(tensor1[k+i*shape1[1]]);
     }
+    log_info("sum of row is %f \n",sum_exp_row[i]);
+}
+
+    for (int i=0; i<shape1[0]; i++){
+        for (int j=0; j<shape1[1]; j++){
+            normal_exp[i] = exp(tensor1[j+i*shape1[1]])/ sum_exp_row[i];
+            log_info("normal_exp %d : %f \n",i, normal_exp[i]);
+        }
+    }
+
 }
 
 void receive_data(uint key, uint payload) {
