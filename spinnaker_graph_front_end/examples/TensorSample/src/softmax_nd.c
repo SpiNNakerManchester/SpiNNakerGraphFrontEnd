@@ -5,7 +5,7 @@
 #include <recording.h>
 #include <simulation.h>
 #include <debug.h>
-
+#include <math.h>
 
 int value_a;
 int value_b;
@@ -50,8 +50,8 @@ typedef enum transmission_region_elements {
     HAS_KEY, MY_KEY
 } transmission_region_elements;
 
-void send_value(uint data){
-    log_info("mat_mul send_value\n", my_key);
+void send_value(){
+    log_info("softmax send_value\n", my_key);
     // send tensor values
     for(int i=0; i<size1; i++){
         log_info("send key %d and tensor value %d\n", my_key, tensor1[i]);
@@ -76,24 +76,24 @@ void record_data() {
 void softmax(){
     log_info("softmax\n");
 
-    // float normal_exp[6];
-    // float tensor2[7] = {1, 2, 3, 4, 1, 2, 3};     // shape = [1 ,7]
-    // int shape2[2] = {1, 7};
-    // float sum_exp_row[shape2[0]];
+     float normal_exp[size1];
+     float sum_exp_row[shape1[0]];
 
-    for (int i=0; i<shape1[0]; i++){
-    for (int k=0; k<shape1[1]; k++){
-        printf("%f \n",tensor1[k+i*shape1[1]]);
-        printf("%f \n",exp(tensor1[k+i*shape1[1]]));
+    // will use expf for floats
 
-        sum_exp_row[i]+= exp(tensor1[k+i*shape1[1]]);
+    for (uint32_t i=0; i<shape1[0]; i++){
+    for (uint32_t k=0; k<shape1[1]; k++){
+        log_info("%f \n",tensor1[k+i*shape1[1]]);
+        log_info("%f \n",expf(tensor1[k+i*shape1[1]]));
+
+        sum_exp_row[i]+= expf(tensor1[k+i*shape1[1]]);
     }
     log_info("sum of row is %f \n",sum_exp_row[i]);
 }
 
-    for (int i=0; i<shape1[0]; i++){
-        for (int j=0; j<shape1[1]; j++){
-            normal_exp[i] = exp(tensor1[j+i*shape1[1]])/ sum_exp_row[i];
+    for (uint32_t i=0; i<shape1[0]; i++){
+        for (uint32_t j=0; j<shape1[1]; j++){
+            normal_exp[i] = expf(tensor1[j+i*shape1[1]])/ sum_exp_row[i];
             log_info("normal_exp %d : %f \n",i, normal_exp[i]);
         }
     }
