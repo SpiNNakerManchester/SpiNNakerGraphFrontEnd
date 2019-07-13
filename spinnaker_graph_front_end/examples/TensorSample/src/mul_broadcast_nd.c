@@ -76,14 +76,9 @@ void record_data() {
 void mul_broadcast(){
     log_info("mul_broadcast\n");
 
-    for(uint32_t i=0; i<shape1[0]; i++){
-        for(uint32_t j=0; j<shape1[1]; j++){
-                log_info(" i, j %d %d %d :\n", i, j);
-                // log_info(" k+ shape1[1]*i  : (k * shape2[1]) + j  %d %d :\n", k+ shape1[1]*i , (k * shape2[1]) + j);
-                // log_info(" k+ shape1[1]*i  : (k * shape2[1]) + j  %d %d :\n", tensor1[k+ shape1[1]*i] , tensor2[(k * shape2[1]) + j]);
-                tensor1[shape1[1]*i+j] += tensor2[j];
-                log_info(" tensor1[%d] : %d \n", shape1[1]*i+j, tensor1[shape1[1]*i+j]);
-            }
+    for (int i=0; i<size1; i++){
+        tensor1[i] *= tensor2[i];
+        log("%f\t", tensor1[i]);
     }
 }
 
