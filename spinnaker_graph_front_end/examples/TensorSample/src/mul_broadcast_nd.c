@@ -50,7 +50,7 @@ typedef enum transmission_region_elements {
     HAS_KEY, MY_KEY
 } transmission_region_elements;
 
-void send_value(uint data){
+void send_value(){
     log_info("mul broadcast send_value\n", my_key);
     // send tensor values
     for(int i=0; i<size1; i++){

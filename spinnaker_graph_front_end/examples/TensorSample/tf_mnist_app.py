@@ -83,11 +83,13 @@ log = tf.log(Y)
 labels = tf.constant(batch_Y, tf.float32)
 s = labels * log
 
+reduced = tf.reduce_sum(s)
+
 writer = tf.summary.FileWriter('.')
 writer.add_graph(tf.get_default_graph())
 writer.flush()
 
-t = sess.run(s)
+t = sess.run(reduced)
 graph = tf.get_default_graph()
 
 const = {}
