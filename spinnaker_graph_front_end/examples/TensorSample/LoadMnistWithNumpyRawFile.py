@@ -45,7 +45,7 @@ y_train = convert_to_one_hot(y_train)
 
 y_test = convert_to_one_hot(y_test)
 
-#Initialize variables
+# Initialize variables
 
 X = tf.placeholder(tf.float32, [None, 784])
 
@@ -55,10 +55,10 @@ b = tf.Variable(tf.zeros([10]))
 
 init = tf.global_variables_initializer()
 
-#Model
+# Model
 Y = tf.nn.softmax(tf.matmul(X, W) + b)
 
-#Placeholder for the correct answers
+# Placeholder for the correct answers
 
 Y_ = tf.placeholder(tf.float32, [None,10])
 

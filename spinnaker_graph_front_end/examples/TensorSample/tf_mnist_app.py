@@ -73,6 +73,12 @@ bias = tf.constant(b, tf.float32)
 mul_res = tf.matmul(pixels, weights)
 Y = tf.nn.softmax(mul_res + bias)
 
+log = tf.log(Y)
+
+writer = tf.summary.FileWriter('.')
+writer.add_graph(tf.get_default_graph())
+writer.flush()
+
 t = sess.run(Y)
 graph = tf.get_default_graph()
 

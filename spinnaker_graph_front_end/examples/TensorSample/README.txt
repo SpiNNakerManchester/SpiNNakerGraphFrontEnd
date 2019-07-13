@@ -2,7 +2,7 @@
 
 tensorboard --logdir .
 
-
+C:\Users\konst\Documents\spinnaker\SpiNNakerGraphFrontEnd\spinnaker_graph_front_end\examples\TensorSample
 
 
 // enable debugger
