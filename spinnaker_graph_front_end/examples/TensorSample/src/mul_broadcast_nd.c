@@ -51,7 +51,7 @@ typedef enum transmission_region_elements {
 } transmission_region_elements;
 
 void send_value(uint data){
-    log_info("mat_mul send_value\n", my_key);
+    log_info("mul broadcast send_value\n", my_key);
     // send tensor values
     for(int i=0; i<size1; i++){
         log_info("send key %d and tensor value %d\n", my_key, tensor1[i]);
@@ -78,7 +78,7 @@ void mul_broadcast(){
 
     for (int i=0; i<size1; i++){
         tensor1[i] *= tensor2[i];
-        log("%f\t", tensor1[i]);
+        log_info("%f\t", tensor1[i]);
     }
 }
 
@@ -98,7 +98,7 @@ void receive_data(uint key, uint payload) {
 
     if(counter == ( size1 + size2 )) {
         log_info("Both tensors received\n");
-        add_broadcast();
+        mul_broadcast();
         record_data();
         spin1_exit(0);
     }

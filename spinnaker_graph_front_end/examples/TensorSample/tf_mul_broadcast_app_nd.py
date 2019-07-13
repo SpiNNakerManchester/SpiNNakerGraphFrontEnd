@@ -5,90 +5,26 @@ import os
 import numpy as np
 import spinnaker_graph_front_end as front_end
 from spinnaker_graph_front_end.examples.TensorSample.mat_mul_vertex_non_dynamic import (MatMulVertexND)
-from spinnaker_graph_front_end.examples.TensorSample.add_broadcast_vertex_non_dynamic import (AddBroadcastND)
-from spinnaker_graph_front_end.examples.TensorSample.const_tensor_vertex_non_dynamic import (ConstTensorVertexND)
-from spinnaker_graph_front_end.examples.TensorSample.softmax_vertex_non_dynamic import (SoftmaxND)
-from spinnaker_graph_front_end.examples.TensorSample.log_vertex_non_dynamic import (LogND)
 from spinnaker_graph_front_end.examples.TensorSample.mul_broadcast_vertex_non_dynamic import (MulBroadcastND)
-
-
-
+from spinnaker_graph_front_end.examples.TensorSample.log_vertex_non_dynamic import (LogND)
+from spinnaker_graph_front_end.examples.TensorSample.const_tensor_vertex_non_dynamic import (ConstTensorVertexND)
 import tensorflow.compat.v1 as tf
+# use functions of TensorFlow version 1 into TensorFlow version 2.
 tf.disable_v2_behavior()
 
 logger = logging.getLogger(__name__)
 
 
-def load_data(path):
-    with np.load(path) as f:
-        x_train, y_train = f['x_train'], f['y_train']
-        x_test, y_test = f['x_test'], f['y_test']
-        return (x_train, y_train), (x_test, y_test)
-
-
-def next_batch(num, data, labels):
-    '''
-    Return a total of `num` random samples and labels.
-    '''
-    idx = np.arange(0 , len(data))
-    np.random.shuffle(idx)
-    idx = idx[:num]
-    data_shuffle = [data[ i] for i in idx]
-    labels_shuffle = [labels[ i] for i in idx]
-
-    return np.asarray(data_shuffle), np.asarray(labels_shuffle)
-
-
-def convert_to_one_hot(y):
-    result = np.zeros((y.size, 10))
-    result[np.arange(y.size), y] = 1
-    return result
-
-
 front_end.setup(n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
 tf.set_random_seed(0)
-np.random.seed(0)
 
+k = tf.constant([1, 2, 3, 4, 5, 6], shape=[2, 3], dtype=tf.float32)
+m = tf.constant([7, 8, 9, 10, 11, 12], shape=[2, 3], dtype=tf.float32)
 
-(x_train, y_train), (x_test, y_test) = load_data('mnist.npz')
-
-x_train = x_train.astype(float) / 255.
-x_test = x_test.astype(float) / 255.
-
-# One-hot transform of labels
-y_train = convert_to_one_hot(y_train)
-y_test = convert_to_one_hot(y_test)
-
-W = np.zeros((784, 10))
-
-b = np.zeros(10)
+c = k * m
 
 sess = tf.Session()
-
-# for i in range(2):
-
-batch_X, batch_Y = next_batch(5, x_train, y_train)
-batch_X_temp = np.reshape(batch_X, (-1, 784))
-batch_X_temp.astype(np.float32)
-pixels = tf.constant(batch_X_temp, tf.float32)
-weights = tf.constant(W, tf.float32)
-bias = tf.constant(b, tf.float32)
-
-mul_res = tf.matmul(pixels, weights)
-Y = tf.nn.softmax(mul_res + bias)
-
-log = tf.log(Y)
-
-# Y_ = tf.placeholder(tf.float32, [None,10]) #  Y_ has the values of batch_Y
-labels = tf.constant(batch_Y, tf.float32)
-s = labels * log
-
-writer = tf.summary.FileWriter('.')
-writer.add_graph(tf.get_default_graph())
-writer.flush()
-
-t = sess.run(s)
-graph = tf.get_default_graph()
+t = sess.run(c)
 
 const = {}
 for n in tf.get_default_graph().as_graph_def().node:
@@ -98,6 +34,7 @@ for n in tf.get_default_graph().as_graph_def().node:
         else:
             const[n.name] = tensor_util.MakeNdarray(n.attr['value'].tensor)
 
+graph = tf.get_default_graph()
 
 # List of spinnaker vertices
 vertices = {}
@@ -122,21 +59,9 @@ def get_input_shapes(n_id):
 for n_id in graph._nodes_by_id:
     print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
     # math operations
-    if 'MatMul' in graph._nodes_by_id[n_id].name:
+    if 'mul'in graph._nodes_by_id[n_id].name:
         shape1, shape2 = get_input_shapes(n_id)
-        vertices[n_id] = MatMulVertexND("{} vertex ".format(graph._nodes_by_id[n_id].name), shape1, shape2)
-
-    elif 'add'in graph._nodes_by_id[n_id].name:
-        shape1, shape2 = get_input_shapes(n_id)
-        vertices[n_id] = AddBroadcastND("{} vertex ".format(graph._nodes_by_id[n_id].name), shape1, shape2)
-
-    elif 'Softmax'in graph._nodes_by_id[n_id].name:
-        shape1 = graph._nodes_by_id[n_id]._inputs._inputs[0].get_shape().as_list()
-        vertices[n_id] = SoftmaxND("{} vertex ".format(graph._nodes_by_id[n_id].name), shape1)
-
-    elif 'Log'in graph._nodes_by_id[n_id].name:
-        shape1 = graph._nodes_by_id[n_id]._inputs._inputs[0].get_shape().as_list()
-        vertices[n_id] = LogND("{} vertex ".format(graph._nodes_by_id[n_id].name), shape1)
+        vertices[n_id] = MulBroadcastND("{} vertex ".format(graph._nodes_by_id[n_id].name), shape1, shape2)
 
     # constant operation
     elif 'Const' in graph._nodes_by_id[n_id].name:
@@ -180,7 +105,7 @@ for placement in sorted(placements.placements,
 
     if isinstance(placement.vertex, MatMulVertexND):
         oper_results = placement.vertex.read(placement, txrx)
-        logger.info("Mat Mul {}, {}, {} > {}".format(
+        logger.info("Mul Broadcast {}, {}, {} > {}".format(
             placement.x, placement.y, placement.p, oper_results))
 
 front_end.stop()
