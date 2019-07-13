@@ -8,6 +8,8 @@ from spinnaker_graph_front_end.examples.TensorSample.mat_mul_vertex_non_dynamic 
 from spinnaker_graph_front_end.examples.TensorSample.add_broadcast_vertex_non_dynamic import (AddBroadcastND)
 from spinnaker_graph_front_end.examples.TensorSample.const_tensor_vertex_non_dynamic import (ConstTensorVertexND)
 from spinnaker_graph_front_end.examples.TensorSample.softmax_vertex_non_dynamic import (SoftmaxND)
+from spinnaker_graph_front_end.examples.TensorSample.log_vertex_non_dynamic import (LogND)
+
 
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
@@ -125,6 +127,10 @@ for n_id in graph._nodes_by_id:
     elif 'Softmax'in graph._nodes_by_id[n_id].name:
         shape1 = graph._nodes_by_id[n_id]._inputs._inputs[0].get_shape().as_list()
         vertices[n_id] = SoftmaxND("{} vertex ".format(graph._nodes_by_id[n_id].name), shape1)
+
+    elif 'Log'in graph._nodes_by_id[n_id].name:
+        shape1 = graph._nodes_by_id[n_id]._inputs._inputs[0].get_shape().as_list()
+        vertices[n_id] = LogND("{} vertex ".format(graph._nodes_by_id[n_id].name), shape1)
 
     # constant operation
     elif 'Const' in graph._nodes_by_id[n_id].name:
