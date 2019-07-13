@@ -73,6 +73,7 @@ void record_data() {
 
 }
 
+// This add broadcast is used only for the addition of bias which is a vector.
 void add_broadcast(){
     log_info("add_broadcast\n");
 
