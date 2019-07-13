@@ -77,11 +77,15 @@ Y = tf.nn.softmax(mul_res + bias)
 
 log = tf.log(Y)
 
+# Y_ = tf.placeholder(tf.float32, [None,10]) #  Y_ has the values of batch_Y
+labels = tf.constant(batch_Y, tf.float32)
+s = labels * log
+
 writer = tf.summary.FileWriter('.')
 writer.add_graph(tf.get_default_graph())
 writer.flush()
 
-t = sess.run(Y)
+t = sess.run(s)
 graph = tf.get_default_graph()
 
 const = {}
