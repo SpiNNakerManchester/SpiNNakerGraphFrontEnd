@@ -138,6 +138,10 @@ for n_id in graph._nodes_by_id:
         shape1 = graph._nodes_by_id[n_id]._inputs._inputs[0].get_shape().as_list()
         vertices[n_id] = LogND("{} vertex ".format(graph._nodes_by_id[n_id].name), shape1)
 
+    elif 'mul'in graph._nodes_by_id[n_id].name:
+        shape1, shape2 = get_input_shapes(n_id)
+        vertices[n_id] = MulBroadcastND("{} vertex ".format(graph._nodes_by_id[n_id].name), shape1, shape2)
+
     # constant operation
     elif 'Const' in graph._nodes_by_id[n_id].name:
         vertices[n_id] = ConstTensorVertexND("{} vertex ".format(graph._nodes_by_id[n_id].name),
