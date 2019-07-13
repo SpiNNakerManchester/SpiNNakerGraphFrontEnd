@@ -83,12 +83,7 @@ void receive_data(uint key, uint payload) {
         log_info("V1:key %d ,V1:tensor1 value %d\n", key, tensor1[key]);
     }
 
-    if (key >= pre_vertex2_key && key < pre_vertex2_key + size2 ){
-        tensor2[key-pre_vertex2_key] = payload;
-        log_info("V2:key %d ,V2:tensor2 value %d\n", key, tensor2[key-pre_vertex2_key]);
-    }
-
-    if(counter == ( size1 + size2 )) {
+    if(counter == size1) {
         log_info("Both tensors received\n");
         log();
         send_value();
