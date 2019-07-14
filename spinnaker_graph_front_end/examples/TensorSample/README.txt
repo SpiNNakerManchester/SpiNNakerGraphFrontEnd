@@ -7,3 +7,6 @@ C:\Users\konst\Documents\spinnaker\SpiNNakerGraphFrontEnd\spinnaker_graph_front_
 
 // enable debugger
 tensorboard --logdir /tmp/logdir --debugger_port 7000
+
+For Mingw32
+C:/Users/konst/Documents/spinnaker/SpiNNakerGraphFrontEnd/spinnaker_graph_front_end/examples/TensorSample
