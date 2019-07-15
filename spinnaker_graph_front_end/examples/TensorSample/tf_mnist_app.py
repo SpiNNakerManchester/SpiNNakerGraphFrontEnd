@@ -10,6 +10,7 @@ from spinnaker_graph_front_end.examples.TensorSample.const_tensor_vertex_non_dyn
 from spinnaker_graph_front_end.examples.TensorSample.softmax_vertex_non_dynamic import (SoftmaxND)
 from spinnaker_graph_front_end.examples.TensorSample.log_vertex_non_dynamic import (LogND)
 from spinnaker_graph_front_end.examples.TensorSample.mul_broadcast_vertex_non_dynamic import (MulBroadcastND)
+from spinnaker_graph_front_end.examples.TensorSample.reduce_sum_non_dynamic import (ReduceSum)
 
 
 
@@ -143,6 +144,10 @@ for n_id in graph._nodes_by_id:
     elif 'mul'in graph._nodes_by_id[n_id].name:
         shape1, shape2 = get_input_shapes(n_id)
         vertices[n_id] = MulBroadcastND("{} vertex ".format(graph._nodes_by_id[n_id].name), shape1, shape2)
+
+    elif 'Sum'in graph._nodes_by_id[n_id].name:
+        shape1, shape2 = get_input_shapes(n_id)
+        vertices[n_id] = ReduceSum("{} vertex ".format(graph._nodes_by_id[n_id].name), shape1, shape2)
 
     # constant operation
     elif 'Const' in graph._nodes_by_id[n_id].name:
