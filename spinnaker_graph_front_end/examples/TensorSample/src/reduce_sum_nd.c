@@ -29,7 +29,7 @@ uint32_t* shape2;
 uint32_t* tensor1;
 uint32_t* tensor2;
 
-uint32_t* multiply;
+int cross_entropy=0; // todo change to float
 
 uint key_exist = 0;
 address_t address = NULL;
@@ -51,16 +51,11 @@ typedef enum transmission_region_elements {
 } transmission_region_elements;
 
 void send_value(){
-    log_info("mat_mul send_value\n", my_key);
-    int multiply_size = shape1[0] * shape2[1];
-    // send tensor values
-    for(int i=0; i<multiply_size; i++){
-        log_info("send key %d and tensor value %d\n", my_key, multiply[i]);
-        while (!spin1_send_mc_packet(my_key, multiply[i], WITH_PAYLOAD)) {
+    log_info("reduce sum send_value\n", my_key);
+
+        while (!spin1_send_mc_packet(my_key, cross_entropy, WITH_PAYLOAD)) {
             spin1_delay_us(1);
         }
-        my_key += 1;
-    }
 }
 
 void record_data() {
@@ -74,27 +69,11 @@ void record_data() {
 
 }
 
-void mat_mul_2D(){
-    log_info("mat_mul_2D\n");
+void reduce_sum_to_single_element(){
+    log_info("reduce_sum_to_single_element\n");
 
-    multiply = (uint32_t*) spin1_malloc(shape1[0] * shape2[1] * sizeof(uint32_t));
-
-    int sum=0;
-    int l = 0;
-
-    for(uint32_t i=0; i<shape1[0]; i++){
-        for(uint32_t j=0; j<shape2[1]; j++){
-            for(uint32_t k=0; k<shape1[1]; k++){
-                // log_info(" i, j, k %d %d %d :\n", i, j, k);
-                // log_info(" k+ shape1[1]*i  : (k * shape2[1]) + j  %d %d :\n", k+ shape1[1]*i , (k * shape2[1]) + j);
-                // log_info(" k+ shape1[1]*i  : (k * shape2[1]) + j  %d %d :\n", tensor1[k+ shape1[1]*i] , tensor2[(k * shape2[1]) + j]);
-                sum += tensor1[k+ shape1[1]*i] * tensor2[(k * shape2[1]) + j];
-            }
-            multiply[l] = sum;
-            log_info(" multiply[%d] %d :\n", l, multiply[l]);
-            sum=0;
-            l++;
-        }
+    for(uint32_t i=0; i<size1; i++){
+        cross_entropy += tensor1[i];
     }
 }
 
@@ -114,7 +93,7 @@ void receive_data(uint key, uint payload) {
 
     if(counter == ( size1 + size2 )) {
         log_info("Both tensors received\n");
-        mat_mul_2D();
+        reduce_sum_to_single_element();
         send_value();
         record_data();
         spin1_exit(0);
@@ -123,7 +102,7 @@ void receive_data(uint key, uint payload) {
 }
 
 static bool initialize() {
-    log_info("Initialise mat_mul: started\n");
+    log_info("Initialise reduce sum: started\n");
 
     // Get the address this core's DTCM data starts at from SDRAM
     address = data_specification_get_data_address();
@@ -182,7 +161,7 @@ static bool initialize() {
         my_key = transmission_region_address[MY_KEY];
         log_info("my key is %d\n", my_key);
     } else {
-        log_info("Mat_mul vertex without key, no sending packets");
+        log_info("reduce sum vertex without key, no sending packets");
     }
 
     return true;
@@ -200,7 +179,7 @@ static bool initialize() {
  * SOURCE
  */
 void c_main() {
-    log_info("starting mat_mul_non_dynamic \n");
+    log_info("starting reduce sum non dynamic \n");
 
     // initialise the model
     if (!initialize()) {
