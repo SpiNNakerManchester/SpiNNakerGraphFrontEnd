@@ -5,3 +5,5 @@
 **/reports/**
 **/application_generated_data_files/**
 **/*.ybug
+**/build/*.txt
+**/build/**/*.txt
