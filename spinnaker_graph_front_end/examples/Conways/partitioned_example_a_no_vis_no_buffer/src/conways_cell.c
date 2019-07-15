@@ -25,7 +25,7 @@ uint32_t size_written = 0;
 //! control value, which says how many timer ticks to run for before exiting
 static uint32_t simulation_ticks = 0;
 static uint32_t time = 0;
-address_t address = NULL;
+data_specification_metadata_t *data = NULL;
 
 //! int as a bool to represent if this simulation should run forever
 static uint32_t infinite_run;
@@ -136,7 +136,7 @@ void read_input_buffer(){
 void record_state(){
     //* record my state via sdram
     address_t record_region =
-        data_specification_get_region(RECORDED_DATA, address);
+        data_specification_get_region(RECORDED_DATA, data);
     uint8_t* record_space_address = (uint8_t*) record_region;
     record_space_address = record_space_address + 4 + size_written;
     spin1_memcpy(record_space_address, &my_state, 4);
@@ -205,7 +205,7 @@ void update(uint ticks, uint b) {
 
         // update recording data
         address_t record_region =
-            data_specification_get_region(RECORDED_DATA, address);
+            data_specification_get_region(RECORDED_DATA, data);
         uint8_t* record_space_address = (uint8_t*) record_region;
         log_info("wrote final store of %d bytes", size_written);
         spin1_memcpy(record_space_address, &size_written, 4);
@@ -254,17 +254,17 @@ static bool initialize(uint32_t *timer_period) {
     log_info("Initialise: started\n");
 
     // Get the address this core's DTCM data starts at from SRAM
-    address = data_specification_get_data_address();
+    data = data_specification_get_data_address();
 
     // Read the header
-    if (!data_specification_read_header(address)) {
+    if (!data_specification_read_header(data)) {
         log_error("failed to read the data spec header");
         return false;
     }
 
     // Get the timing details and set up the simulation interface
     if (!simulation_initialise(
-            data_specification_get_region(SYSTEM_REGION, address),
+            data_specification_get_region(SYSTEM_REGION, data),
             APPLICATION_NAME_HASH, timer_period, &simulation_ticks,
             &infinite_run, &time, SDP, DMA)) {
         return false;
@@ -272,7 +272,7 @@ static bool initialize(uint32_t *timer_period) {
 
     // initialise transmission keys
     address_t transmission_region_address = data_specification_get_region(
-            TRANSMISSIONS, address);
+            TRANSMISSIONS, data);
     if (transmission_region_address[HAS_KEY] == 1) {
         my_key = transmission_region_address[MY_KEY];
         log_info("my key is %d\n", my_key);
@@ -285,13 +285,13 @@ static bool initialize(uint32_t *timer_period) {
 
     // read my state
     address_t my_state_region_address = data_specification_get_region(
-        STATE, address);
+        STATE, data);
     my_state = my_state_region_address[INITIAL_STATE];
     log_info("my initial state is %d\n", my_state);
 
     // read neighbour states for initial tick
     address_t my_neigbhour_state_region_address = data_specification_get_region(
-        NEIGHBOUR_INITIAL_STATES, address);
+        NEIGHBOUR_INITIAL_STATES, data);
     alive_states_recieved_this_tick = my_neigbhour_state_region_address[0];
     dead_states_recieved_this_tick = my_neigbhour_state_region_address[1];
 

@@ -47,8 +47,8 @@ void resume_callback() {
 //! method to make test data in sdram
 void write_data(){
     // write data into sdram for reading later
-    address_t address = data_specification_get_data_address();
-    store_address = data_specification_get_region(DATA_REGION, address);
+    data_specification_metadata_t *data = data_specification_get_data_address();
+    store_address = data_specification_get_region(DATA_REGION, data);
     log_info("address is %d", store_address);
 
     uint iterations = (uint)(bytes_to_write / WORD_TO_BYTE_MULTIPLIER);
@@ -64,24 +64,24 @@ static bool initialize(uint32_t *timer_period) {
     log_info("Initialise: started\n");
 
     // Get the address this core's DTCM data starts at from SRAM
-    address_t address = data_specification_get_data_address();
+    data_specification_metadata_t *data = data_specification_get_data_address();
 
     // Read the header
-    if (!data_specification_read_header(address)) {
+    if (!data_specification_read_header(data)) {
         log_error("failed to read the data spec header");
         return false;
     }
 
     // Get the timing details and set up the simulation interface
     if (!simulation_initialise(
-            data_specification_get_region(SYSTEM_REGION, address),
+            data_specification_get_region(SYSTEM_REGION, data),
             APPLICATION_NAME_HASH, timer_period, &simulation_ticks,
             &infinite_run, &time, SDP, DMA)) {
         return false;
     }
 
     // read config params.
-    address_t config_address = data_specification_get_region(CONFIG, address);
+    address_t config_address = data_specification_get_region(CONFIG, data);
     bytes_to_write = config_address[MB];
 
     log_info("bytes to write is %d", bytes_to_write);
