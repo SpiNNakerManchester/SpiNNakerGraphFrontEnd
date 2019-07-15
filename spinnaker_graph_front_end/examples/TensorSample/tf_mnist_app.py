@@ -60,9 +60,9 @@ x_test = x_test.astype(float) / 255.
 y_train = convert_to_one_hot(y_train)
 y_test = convert_to_one_hot(y_test)
 
-W = np.zeros((784, 10))
+W = tf.zeros((784, 10))
 
-b = np.zeros(10)
+b = tf.zeros(10)
 
 sess = tf.Session()
 
@@ -72,8 +72,8 @@ batch_X, batch_Y = next_batch(5, x_train, y_train)
 batch_X_temp = np.reshape(batch_X, (-1, 784))
 batch_X_temp.astype(np.float32)
 pixels = tf.constant(batch_X_temp, tf.float32)
-weights = tf.constant(W, tf.float32)
-bias = tf.constant(b, tf.float32)
+weights = tf.Variable(W, tf.float32)
+bias = tf.Variable(b, tf.float32)
 
 mul_res = tf.matmul(pixels, weights)
 Y = tf.nn.softmax(mul_res + bias)
@@ -84,13 +84,17 @@ log = tf.log(Y)
 labels = tf.constant(batch_Y, tf.float32)
 s = labels * log
 
-reduced = tf.reduce_sum(s) # reduce_sum automatically created two nodes, sum and (const or reduction_indices)
+cross_entropy = -tf.reduce_sum(s) # reduce_sum automatically created two nodes, sum and (const or reduction_indices)
+
 
 writer = tf.summary.FileWriter('.')
 writer.add_graph(tf.get_default_graph())
 writer.flush()
 
-t = sess.run(reduced)
+sess.run(tf.global_variables_initializer())
+
+t = sess.run(cross_entropy)
+
 graph = tf.get_default_graph()
 
 const = {}
