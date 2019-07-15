@@ -144,6 +144,12 @@ def stop():
     _executable_finder = None
 
 
+def stop_run():
+    """ Stop a request to run forever
+    """
+    _sim().stop_run()
+
+
 def read_xml_file(file_path):
     """ Reads a xml file and translates it into an application graph and \
         machine graph (if required).
