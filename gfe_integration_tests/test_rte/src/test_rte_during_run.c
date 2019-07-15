@@ -5,9 +5,11 @@
 
 uint32_t simulation_ticks;
 uint32_t infinite_run;
+uint32_t time;
 
 void timer_callback(uint time, uint unused1) {
-    if (((time * 2) == simulation_ticks) || (infinite_run && (time == 500))) {
+    if ((!infinite_run && ((time * 2) == simulation_ticks))
+            || (infinite_run && (time == 2000))) {
         log_error("Generating Error at time %u", time);
         rt_error(RTE_SWERR);
     }
@@ -26,7 +28,7 @@ void c_main() {
     if (!simulation_initialise(
             data_specification_get_region(0, data), APPLICATION_NAME_HASH,
             &timer_period, &simulation_ticks,
-            &infinite_run, 1, 1)) {
+            &infinite_run, &time, 1, 1)) {
         rt_error(RTE_SWERR);
     }
 

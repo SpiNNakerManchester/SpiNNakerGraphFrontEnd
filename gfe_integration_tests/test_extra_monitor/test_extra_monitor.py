@@ -2,6 +2,7 @@ import struct
 import time
 import os
 import spinnaker_graph_front_end as sim
+from spinn_front_end_common.utilities import globals_variables
 from data_specification.utility_calls import get_region_base_address_offset
 from gfe_integration_tests.test_extra_monitor.sdram_writer import SDRAMWriter
 
@@ -37,6 +38,7 @@ def test_extra_monitor():
     mbs = 20
 
     # setup system
+    globals_variables.unset_simulator()
     sim.setup(model_binary_folder=os.path.dirname(__file__),
               n_chips_required=2)
 
@@ -74,14 +76,13 @@ def test_extra_monitor():
 
     start = float(time.time())
 
-    gatherer.set_cores_for_data_extraction(
-        sim.transceiver(), extra_monitor_vertices, placements)
-    data = gatherer.get_data(
-        sim.transceiver(), placements.get_placement_of_vertex(receiver),
-        get_data_region_address(sim.transceiver(), writer_placement),
-        writer.mbs_in_bytes, fixed_routes=None)
-    gatherer.unset_cores_for_data_extraction(
-        sim.transceiver(), extra_monitor_vertices, placements)
+    with gatherer.streaming(
+            extra_monitor_gatherers.values(), sim.transceiver(),
+            extra_monitor_vertices, placements):
+        data = gatherer.get_data(
+            placements.get_placement_of_vertex(receiver),
+            get_data_region_address(sim.transceiver(), writer_placement),
+            writer.mbs_in_bytes, fixed_routes=None)
 
     end = float(time.time())
 
