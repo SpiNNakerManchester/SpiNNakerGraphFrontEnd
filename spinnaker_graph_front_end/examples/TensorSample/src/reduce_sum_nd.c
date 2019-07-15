@@ -58,23 +58,25 @@ void send_value(){
         }
 }
 
-void record_data() {
-    log_info("Recording data\n");
+// void record_data() {
+//     log_info("Recording data\n");
 
-    address_t record_region =
-        data_specification_get_region(RECORDED_DATA, address);
-    uint8_t* record_space_address = (uint8_t*) record_region;
-    spin1_memcpy(record_space_address, multiply, 4);
-    log_info("recorded result %d address: %u\n", multiply[0] ,record_space_address);
+//     address_t record_region =
+//         data_specification_get_region(RECORDED_DATA, address);
+//     uint8_t* record_space_address = (uint8_t*) record_region;
+//     int* cross_en_ref = (int*)cross_entropy;
+//     spin1_memcpy(record_space_address, cross_en_ref, 4);
+//     log_info("recorded result %d address: %u\n", cross_en_ref[0] ,record_space_address);
 
-}
+// }
 
 void reduce_sum_to_single_element(){
     log_info("reduce_sum_to_single_element\n");
 
-    for(uint32_t i=0; i<size1; i++){
+    for(int i=0; i<size1; i++){
         cross_entropy += tensor1[i];
     }
+    log_info("%d\n", cross_entropy);
 }
 
 void receive_data(uint key, uint payload) {
@@ -95,7 +97,7 @@ void receive_data(uint key, uint payload) {
         log_info("Both tensors received\n");
         reduce_sum_to_single_element();
         send_value();
-        record_data();
+        // record_data();
         spin1_exit(0);
     }
     
@@ -131,8 +133,8 @@ static bool initialize() {
     shape1 = (uint32_t*) spin1_malloc(rank1 * sizeof(uint32_t));
     // Copy values to DTCM
     spin1_memcpy(shape1, &t_prop1_region_address[2], rank1 * sizeof(uint32_t));
-    log_info(" shape1 %d :\n", shape1[0]);
-    log_info(" shape1 %d :\n", shape1[1]);
+    // log_info(" shape1 %d :\n", shape1[0]);
+    // log_info(" shape1 %d :\n", shape1[1]);
 
 
     // read tensor2 properties
@@ -145,8 +147,8 @@ static bool initialize() {
     shape2 = (uint32_t*) spin1_malloc(rank2 * sizeof(uint32_t));
     // Copy values to DTCM
     spin1_memcpy(shape2, &t_prop2_region_address[2], rank2 * sizeof(uint32_t));
-    log_info(" shape2 %d :\n", shape2[0]);
-    log_info(" shape2 %d :\n", shape2[1]);
+    // log_info(" shape2 %d :\n", shape2[0]);
+    // log_info(" shape2 %d :\n", shape2[1]);
 
     tensor1 = (uint32_t*) spin1_malloc(size1 * sizeof(uint32_t));
     tensor2 = (uint32_t*) spin1_malloc(size2 * sizeof(uint32_t));
