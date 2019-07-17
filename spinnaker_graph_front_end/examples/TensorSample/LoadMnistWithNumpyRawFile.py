@@ -6,6 +6,7 @@ import tensorflow as tf
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 RANDOM_SEED = 1
+np.random.seed(0)
 
 
 def load_data(path):
@@ -101,7 +102,7 @@ for i in range(1000):
 
     sess.run(train_step, feed_dict=train_data)
 
-a, c = sess.run([accuracy, cross_entropy], feed_dict=train_data)
+    a, c = sess.run([accuracy, cross_entropy], feed_dict=train_data)
 
-print(a)
-print(c)
+    print(a)
+    print(c)

@@ -88,6 +88,9 @@ s = labels * log
 
 cross_entropy = -tf.reduce_sum(s) # reduce_sum automatically created two nodes, sum and (const or reduction_indices)
 
+optimizer = tf.train.GradientDescentOptimizer(0.003)
+
+train_step = optimizer.minimize(cross_entropy)
 
 writer = tf.summary.FileWriter('.')
 writer.add_graph(tf.get_default_graph())
@@ -160,6 +163,7 @@ for n_id in graph._nodes_by_id:
     elif 'Const' in graph._nodes_by_id[n_id].name:
         vertices[n_id] = ConstTensorVertexND("{} vertex ".format(graph._nodes_by_id[n_id].name),
                                            const[graph._nodes_by_id[n_id].name])
+
     # Variable operation
     elif graph._nodes_by_id[n_id].name.endswith('initial_value'):
         vertices[n_id] = ConstTensorVertexND("{} vertex ".format(graph._nodes_by_id[n_id].name),
