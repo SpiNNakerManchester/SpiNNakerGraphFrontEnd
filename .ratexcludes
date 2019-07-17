@@ -7,3 +7,5 @@
 **/*.ybug
 **/build/*.txt
 **/build/**/*.txt
+**/*.elf
+**/*.aplx
