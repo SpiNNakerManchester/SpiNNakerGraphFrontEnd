@@ -5,7 +5,6 @@ import numpy as np
 import tensorflow as tf
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
-RANDOM_SEED = 1
 np.random.seed(0)
 
 
@@ -94,7 +93,7 @@ sess.run(init)
 
 for i in range(1000):
 
-    batch_X, batch_Y = next_batch(100, x_train, y_train)
+    batch_X, batch_Y = next_batch(2, x_train, y_train)
 
     batch_X = np.reshape(batch_X, (-1, 784))  # [-1, 784]
 
