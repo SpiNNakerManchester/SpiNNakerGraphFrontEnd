@@ -13,7 +13,6 @@ from spinnaker_graph_front_end.examples.TensorSample.mul_broadcast_vertex_non_dy
 from spinnaker_graph_front_end.examples.TensorSample.reduce_sum_non_dynamic import (ReduceSum)
 
 
-
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 
@@ -60,11 +59,16 @@ x_test = x_test.astype(float) / 255.
 y_train = convert_to_one_hot(y_train)
 y_test = convert_to_one_hot(y_test)
 
-W = tf.zeros((784, 10))
 
-b = tf.zeros(10)
+weights = np.zeros([784, 10])
+bias = np.zeros([10])
 
 sess = tf.Session()
+
+var_const_names = {}
+
+W = tf.Variable(weights, dtype=np.float32)
+b = tf.Variable(bias, dtype=np.float32)
 
 # for i in range(2):
 
@@ -72,11 +76,9 @@ batch_X, batch_Y = next_batch(5, x_train, y_train)
 batch_X_temp = np.reshape(batch_X, (-1, 784))
 batch_X_temp.astype(np.float32)
 pixels = tf.constant(batch_X_temp, tf.float32)
-weights = tf.Variable(W, tf.float32)
-bias = tf.Variable(b, tf.float32)
 
-mul_res = tf.matmul(pixels, weights)
-Y = tf.nn.softmax(mul_res + bias)
+mul_res = tf.matmul(pixels, W)
+Y = tf.nn.softmax(mul_res + b)
 
 log = tf.log(Y)
 
@@ -98,8 +100,9 @@ t = sess.run(cross_entropy)
 graph = tf.get_default_graph()
 
 const = {}
+variable = {}
 for n in tf.get_default_graph().as_graph_def().node:
-    if 'Const' in n.name:
+    if 'Const' in n.name or n.name.endswith('initial_value'):
         if not n.attr["value"].tensor.tensor_shape.dim:
             const[n.name] = n.attr.get('value').tensor.int_val[0]
         else:
@@ -157,6 +160,11 @@ for n_id in graph._nodes_by_id:
     elif 'Const' in graph._nodes_by_id[n_id].name:
         vertices[n_id] = ConstTensorVertexND("{} vertex ".format(graph._nodes_by_id[n_id].name),
                                            const[graph._nodes_by_id[n_id].name])
+    # Variable operation
+    elif graph._nodes_by_id[n_id].name.endswith('initial_value'):
+        vertices[n_id] = ConstTensorVertexND("{} vertex ".format(graph._nodes_by_id[n_id].name),
+                                           const[graph._nodes_by_id[n_id].name])
+
     else:
         break
 
