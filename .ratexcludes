@@ -9,4 +9,6 @@
 **/build/**/*.txt
 **/*.elf
 **/*.aplx
-**/Jenkinsfile
+**/*.png
+**/*.npy
+**/*.jpg
