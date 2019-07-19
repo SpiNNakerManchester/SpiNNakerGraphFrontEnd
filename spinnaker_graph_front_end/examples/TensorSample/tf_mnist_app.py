@@ -15,9 +15,9 @@ from spinnaker_graph_front_end.examples.TensorSample.reduce_sum_non_dynamic impo
 
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
+np.random.seed(0)
 
 logger = logging.getLogger(__name__)
-np.random.seed(0)
 
 
 def load_data(path):
@@ -46,9 +46,13 @@ def convert_to_one_hot(y):
     return result
 
 
-front_end.setup(n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
-np.random.seed(0)
+# front_end.setup(n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
 
+# Parameters
+learning_rate = 0.003
+training_epochs = 1000
+batch_size = 1
+display_step = 1
 
 (x_train, y_train), (x_test, y_test) = load_data('mnist.npz')
 
@@ -59,44 +63,38 @@ x_test = x_test.astype(float) / 255.
 y_train = convert_to_one_hot(y_train)
 y_test = convert_to_one_hot(y_test)
 
+# Graph inputs
+X = tf.placeholder(tf.float32, [1, 784])
+Y_ = tf.placeholder(tf.float32, [1, 10])
 
 weights = np.zeros([784, 10])
 bias = np.zeros([10])
-
-sess = tf.Session()
-
-X = tf.placeholder(tf.float32, [5, 784])
-Y_ = tf.placeholder(tf.float32, [5,10])
-
 W = tf.Variable(weights, dtype=np.float32)
 b = tf.Variable(bias, dtype=np.float32)
-init = tf.global_variables_initializer()
-sess.run(init)
+
+sess = tf.Session()
+sess.run(tf.global_variables_initializer())
+
 # for i in range(2):
 
-batch_X, batch_Y = next_batch(2, x_train, y_train)
-batch_X_temp = np.reshape(batch_X, (-1, 784))
-batch_X_temp = batch_X_temp.astype(np.float32)
-batch_Y = batch_Y.astype(np.float32)
-X = tf.placeholder(tf.float32, [2,784])
-# pixels = tf.constant(batch_X_temp, tf.float32)
-
+# Model
 mul_res = tf.matmul(X, W)
 Y = tf.nn.softmax(mul_res + b)
 
+# Loss Function
 log = tf.log(Y)
+product = Y_ * log
+cross_entropy = -tf.reduce_sum(product) # reduce_sum automatically created two nodes, sum and (const or reduction_indices)
 
-# Y_ = tf.placeholder(tf.float32, [None,10]) #  Y_ has the values of batch_Y
-Y_ = tf.placeholder(tf.float32, [2,10])
-# labels = tf.constant(batch_Y, tf.float32)
-s = Y_ * log
-
-cross_entropy = -tf.reduce_sum(s) # reduce_sum automatically created two nodes, sum and (const or reduction_indices)
-
-optimizer = tf.train.GradientDescentOptimizer(0.003)
+optimizer = tf.train.GradientDescentOptimizer(learning_rate)
 train_step = optimizer.minimize(cross_entropy)
 
-train_data = {X:batch_X_temp, Y_: batch_Y}
+batch_X, batch_Y = next_batch(batch_size, x_train, y_train)
+batch_X_flat = np.reshape(batch_X, (-1, 784))
+batch_X_flat = batch_X_flat.astype(np.float32)
+batch_Y = batch_Y.astype(np.float32)
+
+train_data = {X: batch_X_flat, Y_: batch_Y}
 
 sess.run(train_step, feed_dict=train_data)
 
@@ -105,10 +103,6 @@ c = sess.run(cross_entropy, feed_dict=train_data)
 writer = tf.summary.FileWriter('.')
 writer.add_graph(tf.get_default_graph())
 writer.flush()
-
-sess.run(tf.global_variables_initializer())
-
-t = sess.run(cross_entropy)
 
 graph = tf.get_default_graph()
 

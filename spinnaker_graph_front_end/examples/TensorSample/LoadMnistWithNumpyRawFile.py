@@ -37,7 +37,7 @@ def convert_to_one_hot(y):
 # Parameters
 learning_rate = 0.003
 training_epochs = 1000
-batch_size = 100
+batch_size = 1
 display_step = 1
 
 (x_train, y_train), (x_test, y_test) = load_data('mnist.npz')
@@ -46,17 +46,15 @@ x_train = x_train.astype(float) / 255.
 x_test = x_test.astype(float) / 255.
 
 # One-hot transform of labels
-
 y_train = convert_to_one_hot(y_train)
-
 y_test = convert_to_one_hot(y_test)
 
 # Graph inputs
 X = tf.placeholder(tf.float32, [None, 784])
 Y_ = tf.placeholder(tf.float32, [None, 10])  # Placeholder for the correct answers
 
-W = tf.Variable(tf.zeros([784, 10]))
-b = tf.Variable(tf.zeros([10]))
+W = tf.Variable(tf.zeros([784, 10]), dtype=np.float32)
+b = tf.Variable(tf.zeros([10]), dtype=np.float32)
 
 init = tf.global_variables_initializer()
 
@@ -67,7 +65,7 @@ Y = tf.nn.softmax(tf.matmul(X, W) + b)
 cross_entropy = -tf.reduce_sum(Y_ * tf.log(Y))
 
 # is_correct and accuracy are calculated just for display
-is_correct = tf.equal(tf.argmax(Y,1), tf.argmax(Y_,1))
+is_correct = tf.equal(tf.argmax(Y,1), tf.argmax(Y_, 1))
 accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
 
 optimizer = tf.train.GradientDescentOptimizer(learning_rate)
@@ -89,7 +87,10 @@ for i in range(training_epochs):
 
     batch_X, batch_Y = next_batch(batch_size, x_train, y_train)
 
-    batch_X = np.reshape(batch_X, (-1, 784))  # [-1, 784]
+    batch_X = np.reshape(batch_X, (-1, 784))
+
+    batch_X = batch_X.astype(np.float32)
+    batch_Y = batch_Y.astype(np.float32)
 
     train_data = {X: batch_X, Y_: batch_Y}
 
