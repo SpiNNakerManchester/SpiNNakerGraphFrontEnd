@@ -34,6 +34,12 @@ def convert_to_one_hot(y):
     return result
 
 
+# Parameters
+learning_rate = 0.003
+training_epochs = 1000
+batch_size = 100
+display_step = 1
+
 (x_train, y_train), (x_test, y_test) = load_data('mnist.npz')
 
 x_train = x_train.astype(float) / 255.
@@ -45,12 +51,11 @@ y_train = convert_to_one_hot(y_train)
 
 y_test = convert_to_one_hot(y_test)
 
-# Initialize variables
-
+# Graph inputs
 X = tf.placeholder(tf.float32, [None, 784])
+Y_ = tf.placeholder(tf.float32, [None, 10])  # Placeholder for the correct answers
 
 W = tf.Variable(tf.zeros([784, 10]))
-
 b = tf.Variable(tf.zeros([10]))
 
 init = tf.global_variables_initializer()
@@ -58,25 +63,14 @@ init = tf.global_variables_initializer()
 # Model
 Y = tf.nn.softmax(tf.matmul(X, W) + b)
 
-# Placeholder for the correct answers
-
-Y_ = tf.placeholder(tf.float32, [None,10])
-
-#Loss Function
-
+# Loss Function
 cross_entropy = -tf.reduce_sum(Y_ * tf.log(Y))
 
-#is_correct and accuracy are calculated just for display
+# is_correct and accuracy are calculated just for display
 is_correct = tf.equal(tf.argmax(Y,1), tf.argmax(Y_,1))
-
 accuracy = tf.reduce_mean(tf.cast(is_correct, tf.float32))
 
-#learning rate 0.003
-
-optimizer = tf.train.GradientDescentOptimizer(0.003)
-
-#optimizer
-
+optimizer = tf.train.GradientDescentOptimizer(learning_rate)
 train_step = optimizer.minimize(cross_entropy)
 
 #train_step
@@ -91,9 +85,9 @@ sess = tf.Session()
 sess.run(init)
 
 
-for i in range(1000):
+for i in range(training_epochs):
 
-    batch_X, batch_Y = next_batch(2, x_train, y_train)
+    batch_X, batch_Y = next_batch(batch_size, x_train, y_train)
 
     batch_X = np.reshape(batch_X, (-1, 784))  # [-1, 784]
 
