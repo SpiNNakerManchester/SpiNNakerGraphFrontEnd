@@ -46,8 +46,6 @@ def convert_to_one_hot(y):
     return result
 
 
-# front_end.setup(n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
-
 # Parameters
 learning_rate = 0.003
 training_epochs = 1000
@@ -65,36 +63,32 @@ y_test = convert_to_one_hot(y_test)
 
 # Graph inputs
 X = tf.placeholder(tf.float32, [1, 784])
-Y_ = tf.placeholder(tf.float32, [1, 10])
+Y_ = tf.placeholder(tf.float32, [1, 10])  # Placeholder for the correct answers
 
-weights = np.zeros([784, 10])
-bias = np.zeros([10])
-W = tf.Variable(weights, dtype=np.float32)
-b = tf.Variable(bias, dtype=np.float32)
+W = tf.Variable(tf.zeros([784, 10]), dtype=np.float32)
+b = tf.Variable(tf.zeros([10]), dtype=np.float32)
 
-sess = tf.Session()
-sess.run(tf.global_variables_initializer())
-
-# for i in range(2):
+init = tf.global_variables_initializer()
 
 # Model
-mul_res = tf.matmul(X, W)
-Y = tf.nn.softmax(mul_res + b)
+Y = tf.nn.softmax(tf.matmul(X, W) + b)
 
 # Loss Function
-log = tf.log(Y)
-product = Y_ * log
-cross_entropy = -tf.reduce_sum(product) # reduce_sum automatically created two nodes, sum and (const or reduction_indices)
+cross_entropy = -tf.reduce_sum(Y_ * tf.log(Y))
 
 optimizer = tf.train.GradientDescentOptimizer(learning_rate)
 train_step = optimizer.minimize(cross_entropy)
 
+sess = tf.Session()
+sess.run(init)
 batch_X, batch_Y = next_batch(batch_size, x_train, y_train)
-batch_X_flat = np.reshape(batch_X, (-1, 784))
-batch_X_flat = batch_X_flat.astype(np.float32)
+
+batch_X = np.reshape(batch_X, (-1, 784))
+
+batch_X = batch_X.astype(np.float32)
 batch_Y = batch_Y.astype(np.float32)
 
-train_data = {X: batch_X_flat, Y_: batch_Y}
+train_data = {X: batch_X, Y_: batch_Y}
 
 sess.run(train_step, feed_dict=train_data)
 
@@ -103,6 +97,8 @@ c = sess.run(cross_entropy, feed_dict=train_data)
 writer = tf.summary.FileWriter('.')
 writer.add_graph(tf.get_default_graph())
 writer.flush()
+
+
 
 graph = tf.get_default_graph()
 

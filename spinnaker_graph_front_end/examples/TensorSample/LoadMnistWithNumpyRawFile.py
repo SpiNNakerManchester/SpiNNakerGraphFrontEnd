@@ -95,6 +95,9 @@ for i in range(training_epochs):
     train_data = {X: batch_X, Y_: batch_Y}
 
     sess.run(train_step, feed_dict=train_data)
+    c = sess.run(cross_entropy, feed_dict=train_data)
+    print(c)
+    a = sess.run([accuracy], feed_dict=train_data)
 
     a, c = sess.run([accuracy, cross_entropy], feed_dict=train_data)
 
