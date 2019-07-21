@@ -49,7 +49,7 @@ def convert_to_one_hot(y):
 # Parameters
 learning_rate = 0.003
 training_epochs = 1000
-batch_size = 1
+batch_size = 2
 display_step = 1
 
 (x_train, y_train), (x_test, y_test) = load_data('mnist.npz')
@@ -62,11 +62,11 @@ y_train = convert_to_one_hot(y_train)
 y_test = convert_to_one_hot(y_test)
 
 # Graph inputs
-X = tf.placeholder(tf.float32, [1, 784])
-Y_ = tf.placeholder(tf.float32, [1, 10])  # Placeholder for the correct answers
+X = tf.placeholder(tf.float32, [batch_size, 784])
+Y_ = tf.placeholder(tf.float32, [batch_size, 10])  # Placeholder for the correct answers
 
-W = tf.Variable(tf.zeros([784, 10]), dtype=np.float32)
-b = tf.Variable(tf.zeros([10]), dtype=np.float32)
+W = tf.Variable(np.zeros([784, 10], dtype=np.float32))
+b = tf.Variable(np.zeros([10], dtype=np.float32))
 
 init = tf.global_variables_initializer()
 
@@ -78,6 +78,10 @@ cross_entropy = -tf.reduce_sum(Y_ * tf.log(Y))
 
 optimizer = tf.train.GradientDescentOptimizer(learning_rate)
 train_step = optimizer.minimize(cross_entropy)
+
+writer = tf.summary.FileWriter('.')
+writer.add_graph(tf.get_default_graph())
+writer.flush()
 
 sess = tf.Session()
 sess.run(init)
@@ -94,12 +98,6 @@ sess.run(train_step, feed_dict=train_data)
 
 c = sess.run(cross_entropy, feed_dict=train_data)
 
-writer = tf.summary.FileWriter('.')
-writer.add_graph(tf.get_default_graph())
-writer.flush()
-
-
-
 graph = tf.get_default_graph()
 
 const = {}
@@ -107,7 +105,7 @@ variable = {}
 for n in tf.get_default_graph().as_graph_def().node:
     if 'Const' in n.name or n.name.endswith('initial_value'):
         if not n.attr["value"].tensor.tensor_shape.dim:
-            const[n.name] = n.attr.get('value').tensor.int_val[0]
+            const[n.name] = n.attr.get('value').tensor.int_val[0]  #n.attr.get('value').tensor.float_val[0]
         else:
             const[n.name] = tensor_util.MakeNdarray(n.attr['value'].tensor)
 

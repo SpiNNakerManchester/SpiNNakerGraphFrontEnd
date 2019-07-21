@@ -10,6 +10,8 @@ from spinn_front_end_common.abstract_models.impl import (MachineDataSpecableVert
 from spinn_front_end_common.utilities.constants import DATA_SPECABLE_BASIC_SETUP_INFO_N_BYTES
 from pacman.executor.injection_decorator import inject_items
 from pacman.model.resources import (ResourceContainer, ConstantSDRAM)
+from data_specification.enums import DataType
+
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +85,7 @@ class ConstScalarVertex(MachineVertex,
         # write constant value
         spec.switch_write_focus(self.DATA_REGIONS.INPUT.value)
         print("\n write constant value ", self._constValue)
-        spec.write_value(self._constValue)
+        spec.write_value(self._constValue, data_type=DataType.INT32)
 
         # End-of-Spec:
         spec.end_specification()
