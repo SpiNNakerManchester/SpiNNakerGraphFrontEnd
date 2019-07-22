@@ -8,6 +8,9 @@ from spinnaker_graph_front_end.examples.TensorSample.mat_mul_vertex_non_dynamic 
 from spinnaker_graph_front_end.examples.TensorSample.softmax_vertex_non_dynamic import (SoftmaxND)
 from spinnaker_graph_front_end.examples.TensorSample.const_tensor_vertex_non_dynamic import (ConstTensorVertexND)
 from spinnaker_graph_front_end.examples.TensorSample.const_scalar_vertex import (ConstScalarVertex)
+from spinnaker_graph_front_end.examples.TensorSample.tf_fill_vertex import (FillVertex)
+from spinnaker_graph_front_end.examples.TensorSample.const_empty_vertex import (ConstEmptyVertex)
+
 import tensorflow.compat.v1 as tf
 # use functions of TensorFlow version 1 into TensorFlow version 2.
 tf.disable_v2_behavior()
@@ -45,6 +48,8 @@ for n in tf.get_default_graph().as_graph_def().node:
     if n.op == 'Const':
         if n.name == 'gradients/grad_ys_0':
             const[n.name] = n.attr.get('value').tensor.float_val[0]
+        elif n.name == 'gradients/Shape':
+            const[n.name] = []
         else:
             if not n.attr["value"].tensor.tensor_shape.dim:
                 const[n.name] = n.attr.get('value').tensor.float_val[0]
@@ -55,7 +60,7 @@ for n in tf.get_default_graph().as_graph_def().node:
 # List of spinnaker vertices
 vertices = {}
 inputs = {}
-
+empty_shape = []
 
 def store_input_node_ids (n_id):
     current_inputs = []
@@ -67,16 +72,26 @@ def store_input_node_ids (n_id):
 
 # Add Vertices
 for n_id in graph._nodes_by_id:
-    print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
-    # constant operation
-    if 'gradients/grad_ys_0' in graph._nodes_by_id[n_id].name:
+    # print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
+
+    if 'gradients/Shape' in graph._nodes_by_id[n_id].name:
+        vertices[n_id] = ConstEmptyVertex("{} vertex ".format(graph._nodes_by_id[n_id].name),
+                                             const[graph._nodes_by_id[n_id].name])
+
+    elif 'gradients/grad_ys_0' in graph._nodes_by_id[n_id].name:
         vertices[n_id] = ConstScalarVertex("{} vertex ".format(graph._nodes_by_id[n_id].name),
                                            int(const[graph._nodes_by_id[n_id].name]))  # when the floats
                                                                                        # are handled in C the cast to int will be removed
-        store_input_node_ids(n_id)
+    elif 'gradients/Fill' in graph._nodes_by_id[n_id].name:
+        vertices[n_id] = FillVertex("{} vertex ".format(graph._nodes_by_id[n_id].name))
 
-        vertices[n_id].name = graph._nodes_by_id[n_id].name
-        front_end.add_machine_vertex_instance(vertices[n_id])
+    else:
+        continue
+
+    store_input_node_ids(n_id)
+
+    vertices[n_id].name = graph._nodes_by_id[n_id].name
+    front_end.add_machine_vertex_instance(vertices[n_id])
 
 # Add Edges
 for n_id in vertices:

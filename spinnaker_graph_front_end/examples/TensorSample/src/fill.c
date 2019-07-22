@@ -9,25 +9,23 @@
 
 uint my_key;
 
-uint32_t const_value=0;
+int scalar = 0;
+
+uint32_t pre_vertex1_key;
+uint32_t pre_vertex2_key;
 
 address_t address = NULL;
 
 typedef enum regions_e {
+    PREVERTEX_KEYS,
     TRANSMISSIONS,
-    INPUT,
     RECORDED_DATA
 } regions_e;
 
 
 typedef enum callback_priorities{
-    USER = 3
+    MC_PACKET = -1, USER = 3
 } callback_priorities;
-
-
-typedef enum initial_input_region_elements {
-    INITIAL_INPUT
-} initial_state_region_elements;
 
 
 typedef enum transmission_region_elements {
@@ -35,12 +33,12 @@ typedef enum transmission_region_elements {
 } transmission_region_elements;
 
 
-void send_value(uint data){
+void send_value(){
     log_info("send_value\n", my_key);
 
     log_info("sending value via multicast with key %d",
               my_key);
-    while (!spin1_send_mc_packet(my_key, data, WITH_PAYLOAD)) {
+    while (!spin1_send_mc_packet(my_key, scalar, WITH_PAYLOAD)) {
         spin1_delay_us(1);
     }
 
@@ -52,27 +50,23 @@ void record_data(){
     address_t record_region =
         data_specification_get_region(RECORDED_DATA, address);
     uint8_t* record_space_address = (uint8_t*) record_region;
-    spin1_memcpy(record_space_address, &const_value, 4);
+    spin1_memcpy(record_space_address, &scalar, 4);
     log_debug("recorded my const_valuet \n");
 }
 
-/****f*
- *
- * SUMMARY
- *
- * SYNOPSIS
- *  void update ()
- *
- * SOURCE
- */
-void update() {
-    log_info("update\n");
 
-        send_value(const_value);
-        record_data(const_value);
+void receive_data(uint key, uint payload) {
+    log_info("key %d , data %d\n", key, payload);
+
+    if (key == pre_vertex1_key){
+        scalar = payload;
+        log_info("V1:key %d ,V1:scalar value %d\n", key, scalar);
+        send_value();
+        record_data();
         spin1_exit(0);
-
+    }   
 }
+
 
 
 static bool initialize() {
@@ -88,6 +82,11 @@ static bool initialize() {
         return false;
     }
 
+    // read prevertex keys
+    address_t prevertex_keys_region_address = data_specification_get_region(PREVERTEX_KEYS, address);
+    pre_vertex1_key = prevertex_keys_region_address[0];
+    pre_vertex2_key = prevertex_keys_region_address[1];
+
     // initialise transmission keys
     address_t transmission_region_address = data_specification_get_region(
             TRANSMISSIONS, address);
@@ -102,12 +101,6 @@ static bool initialize() {
             "cannot find the keys in the regions\n");
         return false;
     }
-
-    // read my const value
-    address_t my_input_region_address = data_specification_get_region(
-        INPUT, address);
-    const_value = my_input_region_address[INITIAL_INPUT];
-    log_info("my const value is %d\n", const_value);
 
     return true;
 }
@@ -131,8 +124,7 @@ void c_main() {
         rt_error(RTE_SWERR);
     }
 
-    // kick-start the process
-    spin1_schedule_callback(update, 0, 0, USER);
+    spin1_callback_on(MCPL_PACKET_RECEIVED, receive_data, MC_PACKET);
 
     // start execution
     log_info("Starting\n");

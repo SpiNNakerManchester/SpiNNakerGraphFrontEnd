@@ -16,36 +16,34 @@ from data_specification.enums import DataType
 logger = logging.getLogger(__name__)
 
 
-class ConstScalarVertex(MachineVertex,
+class ConstEmptyVertex(MachineVertex,
                         AbstractHasAssociatedBinary,
                         MachineDataSpecableVertex):
     _ONE_WORD = struct.Struct("<I")
 
     TRANSMISSION_DATA_SIZE = 2 * 4 # has key and key
-    INPUT_DATA_SIZE = 4 # constant int number
+    IS_EMPTY_DATA_SIZE = 4 # constant int number
     RECORDING_DATA_SIZE = 4
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('TRANSMISSIONS', 0),
-               ('INPUT', 1),
+               ('IS_EMPTY', 1),
                ('RECORDING_CONST_VALUES', 2)])
 
-    PARTITION_ID = "OPERATION"
+    PARTITION_ID = "OPERATION_PARTITION"
 
     def __init__(self, label, constValue):
         MachineVertex.__init__(self, )
         AbstractHasAssociatedBinary.__init__(self)
         MachineDataSpecableVertex.__init__(self)
 
-        print("\n const_vertex init")
-
-        self._constant_data_size = 4
+        print("\n const_empty_vertex init")
         self.placement = None
-        # app specific elements
-        self._constValue = constValue
+        self.is_empty = 0
+        if not constValue:
+            self.is_empty = 1
         self._label = label
-        print("const_value in the instance :",self._constValue)
 
     def _reserve_memory_regions(self, spec):
         print("\n const_vertex _reserve_memory_regions")
@@ -54,8 +52,8 @@ class ConstScalarVertex(MachineVertex,
             region=self.DATA_REGIONS.TRANSMISSIONS.value,
             size=self.TRANSMISSION_DATA_SIZE, label="keys")
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.INPUT.value,
-            size=self.INPUT_DATA_SIZE, label="input_const_values")
+            region=self.DATA_REGIONS.IS_EMPTY.value,
+            size=self.IS_EMPTY_DATA_SIZE, label="is_empty_const_values")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.RECORDING_CONST_VALUES.value,
             size=self.RECORDING_DATA_SIZE, label="recorded_const")
@@ -67,7 +65,7 @@ class ConstScalarVertex(MachineVertex,
     def generate_machine_data_specification(self, spec, placement, machine_graph,
                                             routing_info, iptags, reverse_iptags,
                                             machine_time_step, time_scale_factor, data_n_time_steps):
-        print("\n const_vertex generate_machine_data_specification")
+        print("\n const_empty_vertex generate_machine_data_specification")
 
         self.placement = placement
         # reserve memory region
@@ -83,9 +81,9 @@ class ConstScalarVertex(MachineVertex,
         spec.write_value(0 if key is None else key)
 
         # write constant value
-        spec.switch_write_focus(self.DATA_REGIONS.INPUT.value)
-        print("\n write constant value ", self._constValue)
-        spec.write_value(self._constValue, data_type=DataType.INT32)
+        spec.switch_write_focus(self.DATA_REGIONS.IS_EMPTY.value)
+        print("\n write constant value ", self.is_empty)
+        spec.write_value(self.is_empty, data_type=DataType.INT32)
 
         # End-of-Spec:
         spec.end_specification()
@@ -95,7 +93,7 @@ class ConstScalarVertex(MachineVertex,
     def resources_required(self):
         print("\n {} resources_required".format(self._label))
 
-        fixed_sdram = (self.TRANSMISSION_DATA_SIZE + self.INPUT_DATA_SIZE + self.RECORDING_DATA_SIZE +
+        fixed_sdram = (self.TRANSMISSION_DATA_SIZE + self.IS_EMPTY_DATA_SIZE + self.RECORDING_DATA_SIZE +
                        DATA_SPECABLE_BASIC_SETUP_INFO_N_BYTES)
 
         print("fixed_sdram : ",fixed_sdram)
@@ -129,7 +127,7 @@ class ConstScalarVertex(MachineVertex,
     def get_binary_file_name(self):
         print("\n const_vertex get_binary_file_name")
 
-        return "const_scalar.aplx"
+        return "const_empty.aplx"
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):

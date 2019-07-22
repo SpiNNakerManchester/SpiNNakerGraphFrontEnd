@@ -1,6 +1,6 @@
-APP = const_tensor
+APP = const_empty
 
-SOURCES = const_tensor.c
+SOURCES = const_empty.c
 
 APP_OUTPUT_DIR := $(abspath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))/
 

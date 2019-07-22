@@ -15,47 +15,48 @@ from data_specification.enums import DataType
 
 logger = logging.getLogger(__name__)
 
+# Fill operation officially receives two inputs dims and value
+# In current implementation the Fill will receive  only the value from grad_ys
 
-class ConstScalarVertex(MachineVertex,
+class FillVertex(MachineVertex,
                         AbstractHasAssociatedBinary,
                         MachineDataSpecableVertex):
     _ONE_WORD = struct.Struct("<I")
 
+    PREVERTEX_KEYS_DATA_SIZE = 4 * 2
     TRANSMISSION_DATA_SIZE = 2 * 4 # has key and key
     INPUT_DATA_SIZE = 4 # constant int number
     RECORDING_DATA_SIZE = 4
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
-        names=[('TRANSMISSIONS', 0),
-               ('INPUT', 1),
+        names=[('PREVERTEX_KEYS', 0),
+               ('TRANSMISSIONS', 1),
                ('RECORDING_CONST_VALUES', 2)])
 
-    PARTITION_ID = "OPERATION"
+    PARTITION_ID = "OPERATION_PARTITION"
 
-    def __init__(self, label, constValue):
+    def __init__(self, label):
         MachineVertex.__init__(self, )
         AbstractHasAssociatedBinary.__init__(self)
         MachineDataSpecableVertex.__init__(self)
 
-        print("\n const_vertex init")
+        print("\n fill_scalar_vertex init")
 
         self._constant_data_size = 4
         self.placement = None
         # app specific elements
-        self._constValue = constValue
         self._label = label
-        print("const_value in the instance :",self._constValue)
 
     def _reserve_memory_regions(self, spec):
-        print("\n const_vertex _reserve_memory_regions")
+        print("\n fill_vertex _reserve_memory_regions")
 
+        spec.reserve_memory_region(
+            region=self.DATA_REGIONS.PREVERTEX_KEYS.value,
+            size=self.PREVERTEX_KEYS_DATA_SIZE, label="prevertex_keys")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.TRANSMISSIONS.value,
             size=self.TRANSMISSION_DATA_SIZE, label="keys")
-        spec.reserve_memory_region(
-            region=self.DATA_REGIONS.INPUT.value,
-            size=self.INPUT_DATA_SIZE, label="input_const_values")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.RECORDING_CONST_VALUES.value,
             size=self.RECORDING_DATA_SIZE, label="recorded_const")
@@ -67,11 +68,21 @@ class ConstScalarVertex(MachineVertex,
     def generate_machine_data_specification(self, spec, placement, machine_graph,
                                             routing_info, iptags, reverse_iptags,
                                             machine_time_step, time_scale_factor, data_n_time_steps):
-        print("\n const_vertex generate_machine_data_specification")
+        print("\n fill_vertex generate_machine_data_specification")
 
         self.placement = placement
         # reserve memory region
         self._reserve_memory_regions(spec)
+
+        edges = list(machine_graph.get_edges_ending_at_vertex(self))
+
+        # write pre-vertex information
+        pre_vertices_first_keys=[]
+        for edge in edges:
+            pre_vertices_first_keys.append(routing_info.get_routing_info_for_edge(edge).first_key)
+        spec.switch_write_focus(self.DATA_REGIONS.PREVERTEX_KEYS.value)
+        print("pre_vertices_first_keys",pre_vertices_first_keys)
+        spec.write_array(pre_vertices_first_keys, data_type=DataType.INT32)
 
         # write key needed to transmit with
         key = routing_info.get_first_key_from_pre_vertex(
@@ -82,11 +93,6 @@ class ConstScalarVertex(MachineVertex,
         spec.write_value(0 if key is None else 1)
         spec.write_value(0 if key is None else key)
 
-        # write constant value
-        spec.switch_write_focus(self.DATA_REGIONS.INPUT.value)
-        print("\n write constant value ", self._constValue)
-        spec.write_value(self._constValue, data_type=DataType.INT32)
-
         # End-of-Spec:
         spec.end_specification()
 
@@ -95,7 +101,8 @@ class ConstScalarVertex(MachineVertex,
     def resources_required(self):
         print("\n {} resources_required".format(self._label))
 
-        fixed_sdram = (self.TRANSMISSION_DATA_SIZE + self.INPUT_DATA_SIZE + self.RECORDING_DATA_SIZE +
+        fixed_sdram = (self.PREVERTEX_KEYS_DATA_SIZE + self.TRANSMISSION_DATA_SIZE +
+                       self.RECORDING_DATA_SIZE +
                        DATA_SPECABLE_BASIC_SETUP_INFO_N_BYTES)
 
         print("fixed_sdram : ",fixed_sdram)
@@ -127,9 +134,9 @@ class ConstScalarVertex(MachineVertex,
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
-        print("\n const_vertex get_binary_file_name")
+        print("\n fill_vertex get_binary_file_name")
 
-        return "const_scalar.aplx"
+        return "fill.aplx"
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):

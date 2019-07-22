@@ -1,6 +1,6 @@
-APP = add
+APP = fill
 
-SOURCES = add.c
+SOURCES = fill.c
 
 APP_OUTPUT_DIR := $(abspath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))/
 

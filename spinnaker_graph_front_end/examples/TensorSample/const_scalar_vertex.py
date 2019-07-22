@@ -31,7 +31,7 @@ class ConstScalarVertex(MachineVertex,
                ('INPUT', 1),
                ('RECORDING_CONST_VALUES', 2)])
 
-    PARTITION_ID = "OPERATION"
+    PARTITION_ID = "OPERATION_PARTITION"
 
     def __init__(self, label, constValue):
         MachineVertex.__init__(self, )

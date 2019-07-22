@@ -9,13 +9,13 @@
 
 uint my_key;
 
-uint32_t const_value=0;
+int is_empty=0; // not empty
 
 address_t address = NULL;
 
 typedef enum regions_e {
     TRANSMISSIONS,
-    INPUT,
+    IS_EMPTY,
     RECORDED_DATA
 } regions_e;
 
@@ -25,22 +25,17 @@ typedef enum callback_priorities{
 } callback_priorities;
 
 
-typedef enum initial_input_region_elements {
-    INITIAL_INPUT
-} initial_state_region_elements;
-
-
 typedef enum transmission_region_elements {
     HAS_KEY, MY_KEY
 } transmission_region_elements;
 
 
-void send_value(uint data){
-    log_info("send_value\n", my_key);
+void send_value(){
+    log_info("send_value\n", is_empty);
 
     log_info("sending value via multicast with key %d",
               my_key);
-    while (!spin1_send_mc_packet(my_key, data, WITH_PAYLOAD)) {
+    while (!spin1_send_mc_packet(my_key, is_empty, WITH_PAYLOAD)) {
         spin1_delay_us(1);
     }
 
@@ -52,7 +47,7 @@ void record_data(){
     address_t record_region =
         data_specification_get_region(RECORDED_DATA, address);
     uint8_t* record_space_address = (uint8_t*) record_region;
-    spin1_memcpy(record_space_address, &const_value, 4);
+    spin1_memcpy(record_space_address, &is_empty, 4);
     log_debug("recorded my const_valuet \n");
 }
 
@@ -68,15 +63,15 @@ void record_data(){
 void update() {
     log_info("update\n");
 
-        send_value(const_value);
-        record_data(const_value);
+        send_value();
+        record_data();
         spin1_exit(0);
 
 }
 
 
 static bool initialize() {
-    log_info("Initialise const: started\n");
+    log_info("Initialise const empty: started\n");
 
     // Get the address this core's DTCM data starts at from SDRAM
     address = data_specification_get_data_address();
@@ -102,11 +97,11 @@ static bool initialize() {
         return false;
     }
 
-    // read my const value
-    address_t my_input_region_address = data_specification_get_region(
-        INPUT, address);
-    const_value = my_input_region_address[INITIAL_INPUT];
-    log_info("my const value is %d\n", const_value);
+    // read is empty value
+    address_t is_empty_region_address = data_specification_get_region(
+        IS_EMPTY, address);
+    is_empty = is_empty_region_address[0];
+    log_info("my const is empty is %d\n", is_empty);
 
     return true;
 }
