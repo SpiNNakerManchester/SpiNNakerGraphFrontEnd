@@ -14,6 +14,8 @@ from spinnaker_graph_front_end.examples.TensorSample.reduce_sum_non_dynamic impo
 from spinnaker_graph_front_end.examples.TensorSample.const_scalar_vertex import (ConstScalarVertex)
 from spinnaker_graph_front_end.examples.TensorSample.tf_fill_vertex import (FillVertex)
 from spinnaker_graph_front_end.examples.TensorSample.const_empty_vertex import (ConstEmptyVertex)
+from spinnaker_graph_front_end.examples.TensorSample.tf_neg_vertex import (NegVertex)
+
 
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
@@ -21,6 +23,8 @@ np.random.seed(0)
 
 logger = logging.getLogger(__name__)
 
+front_end.setup(n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
+tf.set_random_seed(0)
 
 def load_data(path):
     with np.load(path) as f:
@@ -128,7 +132,7 @@ inputs = {}
 def store_input_node_ids (n_id):
     current_inputs = []
     if graph._nodes_by_id[n_id]._inputs:
-        for index in graph._nodes_by_id[n_id]._inputs:
+        for index in graph._nodes_by_id[n_id]._inputs:  # The node
             current_inputs.append(index._id)
     inputs[n_id] = current_inputs
 
@@ -141,7 +145,7 @@ def get_input_shapes(n_id):
 
 # Add Vertices
 for n_id in graph._nodes_by_id:
-    print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
+    # print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
     # math operations
 
     if 'gradients/Shape' in graph._nodes_by_id[n_id].name:
@@ -154,6 +158,9 @@ for n_id in graph._nodes_by_id:
                                                                                        # are handled in C the cast to int will be removed
     elif 'gradients/Fill' in graph._nodes_by_id[n_id].name:
         vertices[n_id] = FillVertex("{} vertex ".format(graph._nodes_by_id[n_id].name))
+
+    elif 'gradients/Neg_grad/Neg' == graph._nodes_by_id[n_id].name:
+        vertices[n_id] = NegVertex("{} vertex ".format(graph._nodes_by_id[n_id].name))
 
     else:
         continue

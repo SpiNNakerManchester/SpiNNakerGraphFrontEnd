@@ -11,13 +11,9 @@ uint my_key;
 
 int scalar = 0;
 
-uint32_t pre_vertex1_key;
-uint32_t pre_vertex2_key;
-
 address_t address = NULL;
 
 typedef enum regions_e {
-    PREVERTEX_KEYS,
     TRANSMISSIONS,
     RECORDED_DATA
 } regions_e;
@@ -34,7 +30,7 @@ typedef enum transmission_region_elements {
 
 
 void send_value(){
-    log_info("send_value\n", my_key);
+    log_info("send_value\n", scalar);
 
     log_info("sending value via multicast with key %d",
               my_key);
@@ -51,26 +47,33 @@ void record_data(){
         data_specification_get_region(RECORDED_DATA, address);
     uint8_t* record_space_address = (uint8_t*) record_region;
     spin1_memcpy(record_space_address, &scalar, 4);
-    log_debug("recorded my const_valuet \n");
+    log_debug("recorded my scalar  \n");
+}
+
+
+void apply_neg_sign(){
+    log_info("apply_neg_sign\n");
+
+    scalar = scalar * (-1);
+
+    log_info("%d\n", scalar);
 }
 
 
 void receive_data(uint key, uint payload) {
     log_info("key %d , data %d\n", key, payload);
 
-    if (key == pre_vertex1_key){
         scalar = payload;
         log_info("V1:key %d ,V1:scalar value %d\n", key, scalar);
+        apply_neg_sign();
         send_value();
         record_data();
         spin1_exit(0);
-    }   
 }
 
 
-
 static bool initialize() {
-    log_info("Initialise const: started\n");
+    log_info("Initialise neg: started\n");
 
     // Get the address this core's DTCM data starts at from SDRAM
     address = data_specification_get_data_address();
@@ -81,11 +84,6 @@ static bool initialize() {
         log_error("failed to read the data spec header");
         return false;
     }
-
-    // read prevertex keys
-    address_t prevertex_keys_region_address = data_specification_get_region(PREVERTEX_KEYS, address);
-    pre_vertex1_key = prevertex_keys_region_address[0];
-    pre_vertex2_key = prevertex_keys_region_address[1];
 
     // initialise transmission keys
     address_t transmission_region_address = data_specification_get_region(
