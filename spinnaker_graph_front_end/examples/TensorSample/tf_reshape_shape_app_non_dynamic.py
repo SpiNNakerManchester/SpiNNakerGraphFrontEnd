@@ -52,7 +52,7 @@ def convert_to_one_hot(y):
     return result
 
 
-def from_tensor_get_operation_name(tensor_name):
+def get_operation_name_from_tensor_(tensor_name):
     return tensor_name.split(sep=':')[0]
 
 # Parameters
@@ -136,7 +136,7 @@ def store_input_node_names (name):
     current_inputs = []
     if graph._nodes_by_name[name]._inputs:
         for n in graph._nodes_by_name[name]._inputs:  # The node
-            op_name = from_tensor_get_operation_name(n.name)
+            op_name = get_operation_name_from_tensor_(n.name)
             current_inputs.append(op_name)
     inputs[name] = current_inputs
 
