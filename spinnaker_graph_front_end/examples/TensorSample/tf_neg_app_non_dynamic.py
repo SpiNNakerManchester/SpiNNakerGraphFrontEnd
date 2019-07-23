@@ -52,6 +52,9 @@ def convert_to_one_hot(y):
     return result
 
 
+def from_tensor_get_operation_name(tensor_name):
+    return tensor_name.split(sep=':')[0]
+
 # Parameters
 learning_rate = 0.003
 training_epochs = 1000
@@ -129,56 +132,49 @@ vertices = {}
 inputs = {}
 
 
-def store_input_node_ids (n_id):
+def store_input_node_names (name):
     current_inputs = []
-    if graph._nodes_by_id[n_id]._inputs:
-        for index in graph._nodes_by_id[n_id]._inputs:  # The node
-            current_inputs.append(index._id)
-    inputs[n_id] = current_inputs
-
-
-def get_input_shapes(n_id):
-    sp1 = graph._nodes_by_id[n_id]._inputs._inputs[0].get_shape().as_list()
-    sp2 = graph._nodes_by_id[n_id]._inputs._inputs[1].get_shape().as_list()
-    return sp1, sp2
+    if graph._nodes_by_name[name]._inputs:
+        for n in graph._nodes_by_name[name]._inputs:  # The node
+            op_name = from_tensor_get_operation_name(n.name)
+            current_inputs.append(op_name)
+    inputs[name] = current_inputs
 
 
 # Add Vertices
-for n_id in graph._nodes_by_id:
+for n in tf.get_default_graph().as_graph_def().node:
     # print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
     # math operations
 
-    if 'gradients/Shape' in graph._nodes_by_id[n_id].name:
-        vertices[n_id] = ConstEmptyVertex("{} vertex ".format(graph._nodes_by_id[n_id].name),
-                                             const[graph._nodes_by_id[n_id].name])
+    if  n.name == 'gradients/Shape' :
+        vertices[n.name] = ConstEmptyVertex("{} vertex ".format(n.name),
+                                             const[n.name])
 
-    elif 'gradients/grad_ys_0' in graph._nodes_by_id[n_id].name:
-        vertices[n_id] = ConstScalarVertex("{} vertex ".format(graph._nodes_by_id[n_id].name),
-                                           int(const[graph._nodes_by_id[n_id].name]))  # when the floats
+    elif n.name == 'gradients/grad_ys_0':
+        vertices[n.name] = ConstScalarVertex("{} vertex ".format(n.name),
+                                           int(const[n.name]))  # when the floats
                                                                                        # are handled in C the cast to int will be removed
-    elif 'gradients/Fill' in graph._nodes_by_id[n_id].name:
-        vertices[n_id] = FillVertex("{} vertex ".format(graph._nodes_by_id[n_id].name))
+    elif n.name == 'gradients/Fill':
+        vertices[n.name] = FillVertex("{} vertex ".format(n.name))
 
-    elif 'gradients/Neg_grad/Neg' == graph._nodes_by_id[n_id].name:
-        vertices[n_id] = NegVertex("{} vertex ".format(graph._nodes_by_id[n_id].name))
+    elif n.name == 'gradients/Neg_grad/Neg':
+        vertices[n.name] = NegVertex("{} vertex ".format(n.name))
 
     else:
         continue
 
-    store_input_node_ids(n_id)
-
-    vertices[n_id].name = graph._nodes_by_id[n_id].name
-    front_end.add_machine_vertex_instance(vertices[n_id])
+    store_input_node_names(n.name)
+    front_end.add_machine_vertex_instance(vertices[n.name])
 
 # Add Edges
-for n_id in vertices:
+for name in vertices:
     # Check if this vertex has inputs nodes
-    if n_id in inputs :
+    if name in inputs :
         # Iterate over input ids of the nodes
-        for input_key in inputs[n_id]:
+        for n in inputs[name]:
             # add the edge
-            front_end.add_machine_edge_instance(MachineEdge(vertices[input_key], vertices[n_id],
-                                                label=vertices[input_key].name + ': to ' + vertices[n_id].name),
+            front_end.add_machine_edge_instance(MachineEdge(vertices[n], vertices[name],
+                                                label= n + ': to ' + name),
                                                 "OPERATION_PARTITION")
 
 sess.close()
