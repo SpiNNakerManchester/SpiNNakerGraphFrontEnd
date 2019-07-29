@@ -37,7 +37,7 @@ def convert_to_one_hot(y):
 # Parameters
 learning_rate = 0.003
 training_epochs = 1000
-batch_size = 1
+batch_size = 100
 display_step = 1
 
 (x_train, y_train), (x_test, y_test) = load_data('mnist.npz')
@@ -101,5 +101,22 @@ for i in range(training_epochs):
 
     a, c = sess.run([accuracy, cross_entropy], feed_dict=train_data)
 
-    print(a)
-    print(c)
+    # print(a)
+    # print(c)
+    if i == training_epochs-1:
+        final_weight = sess.run(W)
+        final_bias = sess.run(b)
+
+        one_digit = np.reshape(x_test[0], (-1, 784))
+
+        one_digit = one_digit.astype(np.float32)
+
+        one_digit_label = y_test[0]
+        one_digit_label = one_digit_label.astype(np.float32)
+
+        # sess.run(tf.argmax((tf.matmul(one_digit, final_weight) + final_bias), 1))
+        prediction = sess.run(tf.matmul(one_digit, final_weight) + final_bias)
+        pred_max = sess.run(tf.argmax(input = prediction,axis =1))
+        test_max = sess.run(tf.argmax(input = one_digit_label, axis =0))
+
+        result = sess.run(tf.equal(pred_max, test_max))

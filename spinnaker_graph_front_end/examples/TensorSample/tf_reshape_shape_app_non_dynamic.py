@@ -15,6 +15,7 @@ from spinnaker_graph_front_end.examples.TensorSample.const_scalar_vertex import 
 from spinnaker_graph_front_end.examples.TensorSample.tf_fill_vertex import (FillVertex)
 from spinnaker_graph_front_end.examples.TensorSample.const_empty_vertex import (ConstEmptyVertex)
 from spinnaker_graph_front_end.examples.TensorSample.tf_neg_vertex import (NegVertex)
+from spinnaker_graph_front_end.examples.TensorSample.reshape_vertex_non_dynamic import (ReshapeVertexND)
 
 
 import tensorflow.compat.v1 as tf
@@ -160,8 +161,9 @@ for n in tf.get_default_graph().as_graph_def().node:
     elif n.name == 'gradients/Neg_grad/Neg':
         vertices[n.name] = NegVertex("{} vertex ".format(n.name))
 
-    # elif n.name == 'gradients/Sum_grad/Reshape':
-    #     vertices[n.name] = NegVertex("{} vertex ".format(n.name))
+    elif n.name == 'gradients/Sum_grad/Reshape':
+        shape1 = graph._nodes_by_name[n.name]._inputs._inputs[0].get_shape().as_list()
+        vertices[n.name] = ReshapeVertexND("{} vertex ".format(n.name), shape1)
 
     elif n.name == 'gradients/Sum_grad/Reshape/shape':
         vertices[n.name] = ConstTensorVertexND("{} vertex ".format(n.name),const[n.name])
