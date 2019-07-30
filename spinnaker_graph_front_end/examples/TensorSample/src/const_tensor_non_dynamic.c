@@ -14,9 +14,18 @@ int const_value;
 int rank=0;
 int input_size;
 uint32_t *shape_addr_dtcm;
-uint32_t *input_addr_dtcm;
+float *input_addr_dtcm;
 
 address_t address = NULL;
+
+static inline uint float_to_int(float f) {
+    union {
+        float f;
+        uint u;
+    } value;
+    value.f = f;
+    return value.u;
+}
 
 typedef enum regions_e {
     TRANSMISSIONS,
@@ -47,8 +56,8 @@ void send_value(){
 
     // send tensor values
     for(int i=0; i<input_size; i++){
-        log_info("send key %d and tensor value %d\n", my_key, input_addr_dtcm[i]);
-        while (!spin1_send_mc_packet(my_key, input_addr_dtcm[i], WITH_PAYLOAD)) {
+        log_info("send key %d and tensor value %x\n", my_key, float_to_int(input_addr_dtcm[i]));
+        while (!spin1_send_mc_packet(my_key, float_to_int(input_addr_dtcm[i]), WITH_PAYLOAD)) {
             spin1_delay_us(1);
         }
         my_key += 1;
@@ -127,14 +136,14 @@ static bool initialize() {
     address_t input_region_address = data_specification_get_region(INPUT, address);
 
     // Reserve memory for DTCM
-    input_addr_dtcm = (uint32_t*) spin1_malloc(input_size * sizeof(uint32_t));
+    input_addr_dtcm = (float*) spin1_malloc(input_size * sizeof(float));
     // Copy values to DTCM
-    spin1_memcpy(input_addr_dtcm, &input_region_address[0], input_size * sizeof(uint32_t));
+    spin1_memcpy(input_addr_dtcm, &input_region_address[0], input_size * sizeof(float));
 
     return true;
 }
 
-/****f*
+/*****
  *
  * SUMMARY
  *  This function is called at application start-up.

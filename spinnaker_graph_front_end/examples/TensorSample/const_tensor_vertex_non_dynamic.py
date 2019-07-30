@@ -112,10 +112,10 @@ class ConstTensorVertexND(MachineVertex,
         spec.switch_write_focus(self.DATA_REGIONS.INPUT.value)
         if self.size > 1:
             print("\n write array ", self._const_value)
-            spec.write_array(self._const_value, data_type=DataType.INT32)
+            spec.write_array(self._const_value, data_type=DataType.FLOAT_32)
         else:
             print("\n write const val ", self._const_value)
-            spec.write_value(self._const_value, data_type=DataType.INT32)
+            spec.write_value(self._const_value, data_type=DataType.FLOAT_32)
 
         # End-of-Spec:
         spec.end_specification()

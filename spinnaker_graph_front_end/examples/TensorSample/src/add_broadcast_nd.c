@@ -26,13 +26,31 @@ int rank1 =0;
 int rank2 =0;
 uint32_t* shape1;
 uint32_t* shape2;
-uint32_t* tensor1;
-uint32_t* tensor2;
+float* tensor1;
+float* tensor2;
 
 uint32_t* multiply;
 
 uint key_exist = 0;
 address_t address = NULL;
+
+static inline float int_to_float(uint u) {
+    union {
+        uint u;
+        float f;
+    } value;
+    value.u = u;
+    return value.f;
+}
+
+static inline uint float_to_int(float f) {
+    union {
+        float f;
+        uint u;
+    } value;
+    value.f = f;
+    return value.u;
+}
 
 typedef enum regions_e {
     PREVERTEX_KEYS,
@@ -50,12 +68,12 @@ typedef enum transmission_region_elements {
     HAS_KEY, MY_KEY
 } transmission_region_elements;
 
-void send_value(uint data){
+void send_value(){
     log_info("mat_mul send_value\n", my_key);
     // send tensor values
     for(int i=0; i<size1; i++){
-        log_info("send key %d and tensor value %d\n", my_key, tensor1[i]);
-        while (!spin1_send_mc_packet(my_key, tensor1[i], WITH_PAYLOAD)) {
+        log_info("send key %d and tensor value %d\n", my_key, float_to_int(tensor1[i]));
+        while (!spin1_send_mc_packet(my_key, float_to_int(tensor1[i]), WITH_PAYLOAD)) {
             spin1_delay_us(1);
         }
         my_key += 1;
@@ -83,7 +101,7 @@ void add_broadcast(){
                 // log_info(" k+ shape1[1]*i  : (k * shape2[1]) + j  %d %d :\n", k+ shape1[1]*i , (k * shape2[1]) + j);
                 // log_info(" k+ shape1[1]*i  : (k * shape2[1]) + j  %d %d :\n", tensor1[k+ shape1[1]*i] , tensor2[(k * shape2[1]) + j]);
                 tensor1[shape1[1]*i+j] += tensor2[j];
-                log_info(" tensor1[%d] : %d \n", shape1[1]*i+j, tensor1[shape1[1]*i+j]);
+                log_info(" tensor1[%d] : %x \n", shape1[1]*i+j, tensor1[shape1[1]*i+j]);
             }
     }
 }
@@ -93,13 +111,13 @@ void receive_data(uint key, uint payload) {
     ++counter;
     // Check size1 of vertex 1
     if (key >= pre_vertex1_key && key < pre_vertex1_key + size1 ){
-        tensor1[key] = payload;
-        log_info("V1:key %d ,V1:tensor1 value %d\n", key, tensor1[key]);
+        tensor1[key] = int_to_float(payload);
+        log_info("V1:key %d ,V1:tensor1 value %d\n", key, int_to_float(tensor1[key]));
     }
 
     if (key >= pre_vertex2_key && key < pre_vertex2_key + size2 ){
-        tensor2[key-pre_vertex2_key] = payload;
-        log_info("V2:key %d ,V2:tensor2 value %d\n", key, tensor2[key-pre_vertex2_key]);
+        tensor2[key-pre_vertex2_key] = int_to_float(payload);
+        log_info("V2:key %d ,V2:tensor2 value %d\n", key, int_to_float(tensor2[key-pre_vertex2_key]));
     }
 
     if(counter == ( size1 + size2 )) {
@@ -158,8 +176,8 @@ static bool initialize() {
     log_info(" shape2 %d :\n", shape2[0]);
     log_info(" shape2 %d :\n", shape2[1]);
 
-    tensor1 = (uint32_t*) spin1_malloc(size1 * sizeof(uint32_t));
-    tensor2 = (uint32_t*) spin1_malloc(size2 * sizeof(uint32_t));
+    tensor1 = (float*) spin1_malloc(size1 * sizeof(float));
+    tensor2 = (float*) spin1_malloc(size2 * sizeof(float));
 
     // initialise transmission keys
     address_t transmission_region_address = data_specification_get_region(
