@@ -121,13 +121,6 @@ training_nodes = []
 for n in tf.get_default_graph().as_graph_def().node:
     training_nodes.append(n.name)
 
-def store_input_node_names (name):
-    current_inputs = []
-    if graph._nodes_by_name[name]._inputs:
-        for n in graph._nodes_by_name[name]._inputs:  # The node
-            op_name = from_tensor_get_operation_name(n.name)
-            current_inputs.append(op_name)
-    inputs[name] = current_inputs
 
 def store_input_node_names (name):
     current_inputs = []
@@ -203,15 +196,18 @@ for n in tf.get_default_graph().as_graph_def().node:
             shape1, shape2 = get_input_shapes(n.name)
             vertices[n.name] = MatMulVertexND("{} vertex ".format(n.name), shape1, shape2)
 
-        if 'add' in n.name:
+        elif 'add' in n.name:
             shape1, shape2 = get_input_shapes(n.name)
             vertices[n.name] = AddBroadcastND("{} vertex ".format(n.name), shape1, shape2)
 
         elif 'Const' in n.name:
             vertices[n.name] = ConstTensorVertexND("{} vertex ".format(n.name), const[n.name])
 
-            store_input_node_names(n.name)
-            front_end.add_machine_vertex_instance(vertices[n.name])
+        else:
+            continue
+
+        store_input_node_names(n.name)
+        front_end.add_machine_vertex_instance(vertices[n.name])
 
     else:
         continue
