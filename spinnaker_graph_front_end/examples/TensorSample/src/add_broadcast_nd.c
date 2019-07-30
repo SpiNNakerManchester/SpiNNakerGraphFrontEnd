@@ -97,9 +97,9 @@ void add_broadcast(){
 
     for(uint32_t i=0; i<shape1[0]; i++){
         for(uint32_t j=0; j<shape1[1]; j++){
-                //log_info(" i, j %d %d :\n", i, j);
-                // log_info(" k+ shape1[1]*i  : (k * shape2[1]) + j  %d %d :\n", k+ shape1[1]*i , (k * shape2[1]) + j);
-                // log_info(" k+ shape1[1]*i  : (k * shape2[1]) + j  %d %d :\n", tensor1[k+ shape1[1]*i] , tensor2[(k * shape2[1]) + j]);
+                log_info(" i, j %d %d :\n", i, j);
+                log_info(" shape1[1]*i+j] %d :\n", shape1[1]*i+j);
+                log_info(" %x ; %x :\n", float_to_int(tensor1[shape1[1]*i+j]), float_to_int(tensor2[j]));
                 tensor1[shape1[1]*i+j] += tensor2[j];
                 log_info(" tensor1[%d] : %x \n", shape1[1]*i+j, float_to_int(tensor1[shape1[1]*i+j]));
             }
@@ -111,8 +111,8 @@ void receive_data(uint key, uint payload) {
     ++counter;
     // Check size1 of vertex 1
     if (key >= pre_vertex1_key && key < pre_vertex1_key + size1 ){
-        tensor1[key] = int_to_float(payload);
-        log_info("V1:key %d ,V1:tensor1 value %x\n", key, float_to_int(tensor1[key]));
+        tensor1[key-pre_vertex1_key] = int_to_float(payload);
+        log_info("V1:key %d ,V1:tensor1 value %x\n", key, float_to_int(tensor1[key-pre_vertex1_key]));
     }
 
     if (key >= pre_vertex2_key && key < pre_vertex2_key + size2 ){

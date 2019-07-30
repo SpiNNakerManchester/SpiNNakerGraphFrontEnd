@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 front_end.setup(n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
 tf.set_random_seed(0)
 
+
 def load_data(path):
     with np.load(path) as f:
         x_train, y_train = f['x_train'], f['y_train']
