@@ -77,11 +77,15 @@ writer = tf.summary.FileWriter('.')
 writer.add_graph(tf.get_default_graph())
 writer.flush()
 
-## Run Session
+# Run Session
 
 sess = tf.Session()
 sess.run(init)
 
+# Write the training nodes
+training_nodes = []
+for n in tf.get_default_graph().as_graph_def().node:
+    training_nodes.append(n.name)
 
 for i in range(training_epochs):
 
@@ -101,8 +105,9 @@ for i in range(training_epochs):
 
     a, c = sess.run([accuracy, cross_entropy], feed_dict=train_data)
 
-    # print(a)
-    # print(c)
+    print(a)
+    print(c)
+
     if i == training_epochs-1:
         final_weight = sess.run(W)
         final_bias = sess.run(b)
@@ -114,9 +119,28 @@ for i in range(training_epochs):
         one_digit_label = y_test[0]
         one_digit_label = one_digit_label.astype(np.float32)
 
-        # sess.run(tf.argmax((tf.matmul(one_digit, final_weight) + final_bias), 1))
         prediction = sess.run(tf.matmul(one_digit, final_weight) + final_bias)
-        pred_max = sess.run(tf.argmax(input = prediction,axis =1))
-        test_max = sess.run(tf.argmax(input = one_digit_label, axis =0))
+        pred_max = sess.run(tf.argmax(input=prediction, axis=1))
+        test_max = sess.run(tf.argmax(input=one_digit_label, axis=0))
 
         result = sess.run(tf.equal(pred_max, test_max))
+
+        # Add Vertices
+        for n in tf.get_default_graph().as_graph_def().node:
+            # print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
+            # math operations
+
+            if n.name == 'gradients/Shape':
+                vertices[n.name] = ConstEmptyVertex("{} vertex ".format(n.name),
+                                                    const[n.name])
+
+        # # MatMul
+        # shape1 = [1, 784]
+        # shape2 = [784, 10]
+        # matMul = MatMulVertexND("{} vertex ".format("MatMul"), shape1, shape2)
+        #
+        # # Add Broadcast
+        # matMul_shape = [1, 10]
+        # bias_shape = [1, 10]
+        # add_broadcast_res = AddBroadcastND("{} vertex ".format("AddBroadcastND"), matMul_shape, bias_shape)
+
