@@ -72,7 +72,7 @@ void send_value(){
     log_info("mat_mul send_value\n", my_key);
     // send tensor values
     for(int i=0; i<size1; i++){
-        log_info("send key %d and tensor value %d\n", my_key, float_to_int(tensor1[i]));
+        log_info("send key %d and tensor value %x\n", my_key, float_to_int(tensor1[i]));
         while (!spin1_send_mc_packet(my_key, float_to_int(tensor1[i]), WITH_PAYLOAD)) {
             spin1_delay_us(1);
         }
@@ -97,11 +97,11 @@ void add_broadcast(){
 
     for(uint32_t i=0; i<shape1[0]; i++){
         for(uint32_t j=0; j<shape1[1]; j++){
-                log_info(" i, j %d %d %d :\n", i, j);
+                //log_info(" i, j %d %d :\n", i, j);
                 // log_info(" k+ shape1[1]*i  : (k * shape2[1]) + j  %d %d :\n", k+ shape1[1]*i , (k * shape2[1]) + j);
                 // log_info(" k+ shape1[1]*i  : (k * shape2[1]) + j  %d %d :\n", tensor1[k+ shape1[1]*i] , tensor2[(k * shape2[1]) + j]);
                 tensor1[shape1[1]*i+j] += tensor2[j];
-                log_info(" tensor1[%d] : %x \n", shape1[1]*i+j, tensor1[shape1[1]*i+j]);
+                log_info(" tensor1[%d] : %x \n", shape1[1]*i+j, float_to_int(tensor1[shape1[1]*i+j]));
             }
     }
 }
@@ -112,12 +112,12 @@ void receive_data(uint key, uint payload) {
     // Check size1 of vertex 1
     if (key >= pre_vertex1_key && key < pre_vertex1_key + size1 ){
         tensor1[key] = int_to_float(payload);
-        log_info("V1:key %d ,V1:tensor1 value %d\n", key, int_to_float(tensor1[key]));
+        log_info("V1:key %d ,V1:tensor1 value %x\n", key, float_to_int(tensor1[key]));
     }
 
     if (key >= pre_vertex2_key && key < pre_vertex2_key + size2 ){
         tensor2[key-pre_vertex2_key] = int_to_float(payload);
-        log_info("V2:key %d ,V2:tensor2 value %d\n", key, int_to_float(tensor2[key-pre_vertex2_key]));
+        log_info("V2:key %d ,V2:tensor2 value %x\n", key, float_to_int(tensor2[key-pre_vertex2_key]));
     }
 
     if(counter == ( size1 + size2 )) {
@@ -189,7 +189,7 @@ static bool initialize() {
         my_key = transmission_region_address[MY_KEY];
         log_info("my key is %d\n", my_key);
     } else {
-        log_info("Mat_mul vertex without key, no sending packets");
+        log_info("Add broadcast vertex without key, no sending packets");
     }
 
     return true;

@@ -109,7 +109,7 @@ void mat_mul_2D(){
                 sum += tensor1[k+ shape1[1]*i] * tensor2[(k * shape2[1]) + j];
             }
             multiply[l] = sum;
-            log_info(" multiply[%d] %x :\n", l, multiply[l]);
+            log_info(" multiply[%d] %x :\n", l, float_to_int(multiply[l]));
             sum=0;
             l++;
         }
@@ -122,12 +122,12 @@ void receive_data(uint key, uint payload) {
     // Check size1 of vertex 1
     if (key >= pre_vertex1_key && key < pre_vertex1_key + size1 ){
         tensor1[key] = int_to_float(payload);
-        log_info("V1:key %d ,V1:tensor1 value %x\n", key, int_to_float(tensor1[key]));
+        log_info("V1:key %d ,V1:tensor1 value %x\n", key, float_to_int(tensor1[key]));
     }
 
     if (key >= pre_vertex2_key && key < pre_vertex2_key + size2 ){
         tensor2[key-pre_vertex2_key] = int_to_float(payload);
-        log_info("V2:key %d ,V2:tensor2 value %x\n", key, int_to_float(tensor2[key-pre_vertex2_key]));
+        log_info("V2:key %d ,V2:tensor2 value %x\n", key, float_to_int(tensor2[key-pre_vertex2_key]));
     }
 
     if(counter == ( size1 + size2 )) {
