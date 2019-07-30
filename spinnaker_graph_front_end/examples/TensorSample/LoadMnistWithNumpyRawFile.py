@@ -4,8 +4,12 @@
 import numpy as np
 import tensorflow as tf
 import tensorflow.compat.v1 as tf
+from spinnaker_graph_front_end.examples.TensorSample.mat_mul_vertex_non_dynamic import (MatMulVertexND)
+
 tf.disable_v2_behavior()
 np.random.seed(0)
+
+
 
 
 def load_data(path):
@@ -32,6 +36,10 @@ def convert_to_one_hot(y):
     result = np.zeros((y.size, 10))
     result[np.arange(y.size), y] = 1
     return result
+
+def from_tensor_get_operation_name(tensor_name):
+    return tensor_name.split(sep=':')[0]
+
 
 
 # Parameters
@@ -82,10 +90,33 @@ writer.flush()
 sess = tf.Session()
 sess.run(init)
 
+graph = tf.get_default_graph()
+
+# List of spinnaker vertices
+vertices = {}
+inputs = {}
+
 # Write the training nodes
 training_nodes = []
 for n in tf.get_default_graph().as_graph_def().node:
     training_nodes.append(n.name)
+
+def store_input_node_names (name):
+    current_inputs = []
+    if graph._nodes_by_name[name]._inputs:
+        for n in graph._nodes_by_name[name]._inputs:  # The node
+            op_name = from_tensor_get_operation_name(n.name)
+            current_inputs.append(op_name)
+    inputs[name] = current_inputs
+
+def store_input_node_names (name):
+    current_inputs = []
+    if graph._nodes_by_name[name]._inputs:
+        for n in graph._nodes_by_name[name]._inputs:  # The node
+            op_name = from_tensor_get_operation_name(n.name)
+            current_inputs.append(op_name)
+    inputs[name] = current_inputs
+
 
 for i in range(training_epochs):
 
@@ -119,20 +150,21 @@ for i in range(training_epochs):
         one_digit_label = y_test[0]
         one_digit_label = one_digit_label.astype(np.float32)
 
-        prediction = sess.run(tf.matmul(one_digit, final_weight) + final_bias)
-        pred_max = sess.run(tf.argmax(input=prediction, axis=1))
-        test_max = sess.run(tf.argmax(input=one_digit_label, axis=0))
+        prediction = tf.matmul(one_digit, final_weight) + final_bias
+        pred_max = tf.argmax(input=prediction, axis=1)
+        test_max = tf.argmax(input=one_digit_label, axis=0)
 
-        result = sess.run(tf.equal(pred_max, test_max))
+        result = tf.equal(pred_max, test_max)
 
         # Add Vertices
         for n in tf.get_default_graph().as_graph_def().node:
             # print('node id :', n_id, 'and name:', graph._nodes_by_id[n_id].name)
-            # math operations
+            if n.name not in training_nodes:
 
-            if n.name == 'gradients/Shape':
-                vertices[n.name] = ConstEmptyVertex("{} vertex ".format(n.name),
-                                                    const[n.name])
+                if n.name == 'MatMul':
+                    shape1 = graph._nodes_by_name[n.name]._inputs._inputs[0].get_shape().as_list()
+                    shape2 = graph._nodes_by_name[n.name]._inputs._inputs[1].get_shape().as_list()
+                    vertices[n_id] = MatMulVertexND("{} vertex ".format(n.name), shape1, shape2)
 
         # # MatMul
         # shape1 = [1, 784]
