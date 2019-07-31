@@ -37,7 +37,7 @@ class ConstTensorVertexND(MachineVertex,
 
     PARTITION_ID = "OPERATION_PARTITION"
 
-    def __init__(self, label, const_value, type):
+    def __init__(self, label, const_value, node_type):
         MachineVertex.__init__(self, )
         AbstractHasAssociatedBinary.__init__(self)
         MachineDataSpecableVertex.__init__(self)
@@ -50,7 +50,7 @@ class ConstTensorVertexND(MachineVertex,
             self.size = self._const_value.size
             self.shape = self._const_value.shape
             print("init const shape:", self.shape)
-        self.type = type
+        self.node_type = node_type
 
         self.placement = None
         self._label = label
@@ -114,10 +114,10 @@ class ConstTensorVertexND(MachineVertex,
         spec.switch_write_focus(self.DATA_REGIONS.INPUT.value)
         if self.size > 1:
             print("\n write array ", self._const_value)
-            spec.write_array(self._const_value, data_type=self.type)
+            spec.write_array(self._const_value, data_type=self.node_type)
         else:
             print("\n write const val ", self._const_value)
-            spec.write_value(self._const_value, data_type=self.type)
+            spec.write_value(self._const_value, data_type=self.node_type)
 
         # End-of-Spec:
         spec.end_specification()

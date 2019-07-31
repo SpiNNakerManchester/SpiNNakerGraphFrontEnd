@@ -13,13 +13,14 @@ int expected_packets=0;
 // Transmission info
 uint my_key;
 uint32_t pre_vertex1_key;
+uint32_t pre_vertex2_key;
 
 // Tensor properties
 int size1 = 0;
 int rank1 =0;
 uint32_t* shape1;
 float* tensor1;
-float* tensor2;
+int* tensor2;
 
 int index = 0;
 int cross_entropy=0; // todo change to float
@@ -43,7 +44,7 @@ typedef enum transmission_region_elements {
 } transmission_region_elements;
 
 void send_value(){
-    log_info("reduce sum send_value\n", my_key);
+    log_info("arg_max send_value\n", my_key);
 
         while (!spin1_send_mc_packet(my_key, cross_entropy, WITH_PAYLOAD)) {
             spin1_delay_us(1);
@@ -77,7 +78,7 @@ void arg_max(){
 }
 
 void receive_data(uint key, uint payload) {
-    // log_info("key %d , data %d\n", key, payload);
+    log_info("key %d , data %d\n", key, payload);
     ++counter;
     // Check size1 of vertex 1
     if (key >= pre_vertex1_key && key < pre_vertex1_key + size1 ){
@@ -85,7 +86,7 @@ void receive_data(uint key, uint payload) {
         log_info("V1:key %d ,V1:tensor1 value %d\n", key, tensor1[key-pre_vertex1_key]);
     }
 
-    if ( key == pre_vertex2_key){
+    if ( key == pre_vertex2_key ){
         tensor2[0] = payload;
     }
 
@@ -134,7 +135,7 @@ static bool initialize() {
 
 
     tensor1 = (float*) spin1_malloc(size1 * sizeof(float));
-    tensor2 = (float*) spin1_malloc(1 * sizeof(float));
+    tensor2 = (int*) spin1_malloc(1 * sizeof(int));
 
     // initialise transmission keys
     address_t transmission_region_address = data_specification_get_region(
@@ -145,9 +146,10 @@ static bool initialize() {
         key_exist = 1;
         my_key = transmission_region_address[MY_KEY];
         log_info("my key is %d\n", my_key);
-    } else {
-        log_info("arg max vertex without key, no sending packets");
-    }
+     }
+    // else {
+    //     log_info("arg max vertex without key, no sending packets");
+    // }
 
     return true;
 }
@@ -164,7 +166,7 @@ static bool initialize() {
  * SOURCE
  */
 void c_main() {
-    log_info("starting reduce sum non dynamic \n");
+    log_info("starting arg_max non dynamic \n");
 
     // initialise the model
     if (!initialize()) {

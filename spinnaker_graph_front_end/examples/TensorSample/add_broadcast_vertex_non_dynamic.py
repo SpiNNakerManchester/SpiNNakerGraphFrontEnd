@@ -75,7 +75,7 @@ class AddBroadcastND(MachineVertex,
     @overrides(AbstractProvidesNKeysForPartition.get_n_keys_for_partition)
     def get_n_keys_for_partition(self, partition, graph_mapper):
         # reserve keys
-        return self.shape1[0] * self.shape2[1]
+        return self.shape1[1]
 
     def _reserve_memory_regions(self, spec):
         print("\n mat_mul_vertex _reserve_memory_regions")

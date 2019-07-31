@@ -150,13 +150,13 @@ for i in range(training_epochs):
 
     sess.run(train_step, feed_dict=train_data)
     c = sess.run(cross_entropy, feed_dict=train_data)
-    print(c)
+    # print(c)
     a = sess.run([accuracy], feed_dict=train_data)
 
     a, c = sess.run([accuracy, cross_entropy], feed_dict=train_data)
 
-    print(a)
-    print(c)
+    # print(a)
+    # print(c)
 
     if i == training_epochs-1:
         final_weight = sess.run(W)
@@ -179,19 +179,19 @@ pred_max = tf.argmax(input=prediction, axis=1)
 # result = tf.equal(pred_max, test_max)
 
 const = {}
-type = {}
+node_type = {}
 for n in tf.get_default_graph().as_graph_def().node:
     if n.op == 'Const':
         if not n.attr["value"].tensor.tensor_shape.dim:
             if len(n.attr.get('value').tensor.float_val):
                 const[n.name] = n.attr.get('value').tensor.float_val[0]
-                type[n.name] = DataType.FLOAT_32
+                node_type[n.name] = DataType.FLOAT_32
             if len(n.attr.get('value').tensor.int_val):
                 const[n.name] = n.attr.get('value').tensor.int_val[0]
-                type[n.name] = DataType.INT32
+                node_type[n.name] = DataType.INT32
         else:
             const[n.name] = tensor_util.MakeNdarray(n.attr['value'].tensor)
-            type[n.name] = DataType.FLOAT_32
+            node_type[n.name] = DataType.FLOAT_32
 
 for n in tf.get_default_graph().as_graph_def().node:
     print('name:', n.name)
@@ -208,11 +208,11 @@ for n in tf.get_default_graph().as_graph_def().node:
             vertices[n.name] = AddBroadcastND("{} vertex ".format(n.name), shape1, shape2)
 
         elif n.op == 'Const':
-
-            vertices[n.name] = ConstTensorVertexND("{} vertex ".format(n.name), const[n.name], type[n.name])
+            vertices[n.name] = ConstTensorVertexND("{} vertex ".format(n.name), const[n.name], node_type[n.name])
 
         elif n.op == 'ArgMax':
-            vertices[n.name] = ArgMaxND("{} vertex ".format(n.name), const[n.name])
+            sp1 = graph._nodes_by_name[n.name]._inputs._inputs[0].get_shape().as_list()
+            vertices[n.name] = ArgMaxND("{} vertex ".format(n.name), sp1)
 
         else:
             continue

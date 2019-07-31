@@ -39,7 +39,7 @@ class ArgMaxND(MachineVertex, AbstractHasAssociatedBinary,
 
     PARTITION_ID = "OPERATION_PARTITION"
 
-    def __init__(self, label, shape1, shape2):
+    def __init__(self, label, shape1):
         MachineVertex.__init__(self)
         AbstractHasAssociatedBinary.__init__(self)
         MachineDataSpecableVertex.__init__(self)
