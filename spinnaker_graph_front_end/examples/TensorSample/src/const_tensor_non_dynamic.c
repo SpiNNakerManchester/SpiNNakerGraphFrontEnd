@@ -114,11 +114,11 @@ static bool initialize() {
         my_key = transmission_region_address[MY_KEY];
         log_info("my key is %d\n", my_key);
     } 
-    else {
-        log_error(
-            "cannot find the keys in the regions\n");
-        return false;
-    }
+    // else {
+    //     log_error(
+    //         "cannot find the keys in the regions\n");
+    //     return false;
+    // }
 
     // read tensor properties
     address_t t_prop_region_address = data_specification_get_region(TENSOR_PROPERTIES, address);
@@ -126,11 +126,13 @@ static bool initialize() {
     log_info("input_size %d\n", input_size);
     rank = t_prop_region_address[1];
     log_info("rank %d\n", rank);
-    // Reserve memory to DTCM
-    shape_addr_dtcm = (uint32_t*) spin1_malloc(rank * sizeof(uint32_t));
-    // Copy values to DTCM
-    spin1_memcpy(shape_addr_dtcm, &t_prop_region_address[2], rank * sizeof(uint32_t));
 
+    if( input_size > 1){
+        // Reserve memory to DTCM
+        shape_addr_dtcm = (uint32_t*) spin1_malloc(rank * sizeof(uint32_t));
+        // Copy values to DTCM
+        spin1_memcpy(shape_addr_dtcm, &t_prop_region_address[2], rank * sizeof(uint32_t));
+    }
 
     // read my const value
     address_t input_region_address = data_specification_get_region(INPUT, address);

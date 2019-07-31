@@ -16,26 +16,26 @@ from data_specification.enums import DataType
 
 
 logger = logging.getLogger(__name__)
+# suppose argmax receives a constant scalar tensor and a vector tensor
 
 
-class ReduceSum(MachineVertex,
-                   AbstractHasAssociatedBinary,
-                   MachineDataSpecableVertex):
+class ArgMaxND(MachineVertex, AbstractHasAssociatedBinary,
+               MachineDataSpecableVertex):
 
     _ONE_WORD = struct.Struct("<i")
 
-    PREVERTEX_KEYS_DATA_SIZE = 2 * 4
+    PREVERTEX_KEYS_DATA_SIZE = 4 * 2
     TRANSMISSION_DATA_SIZE = 2 * 4  # has key and key
     RECORDING_DATA_SIZE = 4  # int result
     DIMENSION = 4
+    INPUT_DATA_SIZE = 4 # constant int number
 
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('PREVERTEX_KEYS', 0),
                ('TENSOR1_PROPERTIES', 1),
-               ('TENSOR2_PROPERTIES', 2),
-               ('TRANSMISSIONS', 3),
-               ('RECORDED_OPER_RESULT', 4)])
+               ('TRANSMISSIONS', 2),
+               ('RECORDED_OPER_RESULT', 3)])
 
     PARTITION_ID = "OPERATION_PARTITION"
 
@@ -48,11 +48,8 @@ class ReduceSum(MachineVertex,
         self.placement = None
         self._label = label
         self.shape1 = shape1
-        self.shape2 = shape2
         self.rank1 = len(shape1)
-        self.rank2 = len(shape2)
         self.size1 = np.prod(shape1)
-        self.size2 = np.prod(shape2)
 
         print("\n {}_vertex __init__".format(self._label))
 
@@ -63,8 +60,7 @@ class ReduceSum(MachineVertex,
         resources = ResourceContainer(sdram=ConstantSDRAM(
              self.PREVERTEX_KEYS_DATA_SIZE +
              4 + 4 + self.DIMENSION * self.rank1 +
-             4 + 4 + self.DIMENSION * self.rank2 +
-             self.TRANSMISSION_DATA_SIZE + self.RECORDING_DATA_SIZE +
+             self.TRANSMISSION_DATA_SIZE +
              DATA_SPECABLE_BASIC_SETUP_INFO_N_BYTES ))
 
         return resources
@@ -77,9 +73,6 @@ class ReduceSum(MachineVertex,
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.TENSOR1_PROPERTIES.value,
             size=4 + 4 + self.DIMENSION * self.rank1, label="shape1")
-        spec.reserve_memory_region(
-            region=self.DATA_REGIONS.TENSOR2_PROPERTIES.value,
-            size=4 + 4 + self.DIMENSION * self.rank2, label="shape2")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.TRANSMISSIONS.value,
             size=self.TRANSMISSION_DATA_SIZE, label="keys")
@@ -129,15 +122,6 @@ class ReduceSum(MachineVertex,
         print("\n write shape1 :", self.shape1)
         spec.write_array(self.shape1, data_type=DataType.INT32)
 
-        # write tensor properties
-        spec.switch_write_focus(self.DATA_REGIONS.TENSOR2_PROPERTIES.value)
-        print("\n write size2 :", self.size2)
-        spec.write_value(self.size2, data_type=DataType.INT32)
-        print("\n rank2 :", self.rank2)
-        spec.write_value(self.rank2, data_type=DataType.INT32)
-        print("\n write shape2 :", self.shape2)
-        spec.write_array(self.shape2, data_type=DataType.INT32)
-
         # write key needed to transmit with
         key = routing_info.get_first_key_from_pre_vertex(
             self, self.PARTITION_ID)
@@ -176,7 +160,7 @@ class ReduceSum(MachineVertex,
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
-        return "reduce_sum_nd.aplx"
+        return "arg_max_nd.aplx"
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):

@@ -15,6 +15,8 @@ from spinnaker_graph_front_end.examples.TensorSample.const_scalar_vertex import 
 from spinnaker_graph_front_end.examples.TensorSample.tf_fill_vertex import (FillVertex)
 from spinnaker_graph_front_end.examples.TensorSample.const_empty_vertex import (ConstEmptyVertex)
 from spinnaker_graph_front_end.examples.TensorSample.tf_neg_vertex import (NegVertex)
+from spinnaker_graph_front_end.examples.TensorSample.argmax_non_dynamic import (ArgMaxND)
+from data_specification.enums import DataType
 
 
 import tensorflow.compat.v1 as tf
@@ -177,15 +179,19 @@ pred_max = tf.argmax(input=prediction, axis=1)
 # result = tf.equal(pred_max, test_max)
 
 const = {}
+type = {}
 for n in tf.get_default_graph().as_graph_def().node:
     if n.op == 'Const':
         if not n.attr["value"].tensor.tensor_shape.dim:
             if len(n.attr.get('value').tensor.float_val):
                 const[n.name] = n.attr.get('value').tensor.float_val[0]
+                type[n.name] = DataType.FLOAT_32
             if len(n.attr.get('value').tensor.int_val):
                 const[n.name] = n.attr.get('value').tensor.int_val[0]
+                type[n.name] = DataType.INT32
         else:
             const[n.name] = tensor_util.MakeNdarray(n.attr['value'].tensor)
+            type[n.name] = DataType.FLOAT_32
 
 for n in tf.get_default_graph().as_graph_def().node:
     print('name:', n.name)
@@ -193,16 +199,20 @@ for n in tf.get_default_graph().as_graph_def().node:
     # Convert only the testing nodes
     if n.name not in training_nodes:
 
-        if 'MatMul' in n.name:
+        if n.op == 'MatMul':
             shape1, shape2 = get_input_shapes(n.name)
             vertices[n.name] = MatMulVertexND("{} vertex ".format(n.name), shape1, shape2)
 
-        elif 'add' in n.name:
+        elif n.op == 'Add':
             shape1, shape2 = get_input_shapes(n.name)
             vertices[n.name] = AddBroadcastND("{} vertex ".format(n.name), shape1, shape2)
 
-        elif 'Const' in n.name:
-            vertices[n.name] = ConstTensorVertexND("{} vertex ".format(n.name), const[n.name])
+        elif n.op == 'Const':
+
+            vertices[n.name] = ConstTensorVertexND("{} vertex ".format(n.name), const[n.name], type[n.name])
+
+        elif n.op == 'ArgMax':
+            vertices[n.name] = ArgMaxND("{} vertex ".format(n.name), const[n.name])
 
         else:
             continue

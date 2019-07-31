@@ -7,28 +7,21 @@
 #include <debug.h>
 
 
-int value_a;
-int value_b;
 int counter = 0;
 int expected_packets=0;
 
 // Transmission info
 uint my_key;
 uint32_t pre_vertex1_key;
-uint32_t pre_vertex2_key;
-int is_matrix1=0;
-int is_matrix2=0;
 
 // Tensor properties
 int size1 = 0;
-int size2 = 0;
 int rank1 =0;
-int rank2 =0;
 uint32_t* shape1;
-uint32_t* shape2;
-uint32_t* tensor1;
-uint32_t* tensor2;
+float* tensor1;
+float* tensor2;
 
+int index = 0;
 int cross_entropy=0; // todo change to float
 
 uint key_exist = 0;
@@ -37,7 +30,6 @@ address_t address = NULL;
 typedef enum regions_e {
     PREVERTEX_KEYS,
     TENSOR1_PROPERTIES,
-    TENSOR2_PROPERTIES,
     TRANSMISSIONS,
     RECORDED_DATA
 } regions_e;
@@ -70,13 +62,18 @@ void send_value(){
 
 // }
 
-void reduce_sum_to_single_element(){
-    log_info("reduce_sum_to_single_element\n");
+void arg_max(){
+    log_info("arg_max\n");
 
-    for(int i=0; i<size1; i++){
-        cross_entropy += tensor1[i];
+    float max_val = tensor1[0];
+
+    for(int i=1; i<size1; i++){
+        if (tensor1[i] > max_val){
+            max_val = tensor1[i];
+            index = i;
+        }
     }
-    log_info("%d\n", cross_entropy);
+    log_info("index of max element is %d\n" , index);
 }
 
 void receive_data(uint key, uint payload) {
@@ -84,18 +81,17 @@ void receive_data(uint key, uint payload) {
     ++counter;
     // Check size1 of vertex 1
     if (key >= pre_vertex1_key && key < pre_vertex1_key + size1 ){
-        tensor1[key] = payload;
-        log_info("V1:key %d ,V1:tensor1 value %d\n", key, tensor1[key]);
+        tensor1[key-pre_vertex1_key] = payload;
+        log_info("V1:key %d ,V1:tensor1 value %d\n", key, tensor1[key-pre_vertex1_key]);
     }
 
-    if (key >= pre_vertex2_key && key < pre_vertex2_key + size2 ){
-        tensor2[key-pre_vertex2_key] = payload;
-        log_info("V2:key %d ,V2:tensor2 value %d\n", key, tensor2[key-pre_vertex2_key]);
+    if ( key == pre_vertex2_key){
+        tensor2[0] = payload;
     }
 
-    if(counter == ( size1 + size2 )) {
+    if(counter == size1 + 1) {
         log_info("Both tensors received\n");
-        reduce_sum_to_single_element();
+        arg_max();
         send_value();
         // record_data();
         spin1_exit(0);
@@ -137,21 +133,8 @@ static bool initialize() {
     // log_info(" shape1 %d :\n", shape1[1]);
 
 
-    // read tensor2 properties
-    address_t t_prop2_region_address = data_specification_get_region(TENSOR2_PROPERTIES, address);
-    size2 = t_prop2_region_address[0];
-    log_info("size2 %d\n", size2);
-    rank2 = t_prop2_region_address[1];
-    log_info("rank2 %d\n", rank2);
-    // Reserve memory to DTCM
-    shape2 = (uint32_t*) spin1_malloc(rank2 * sizeof(uint32_t));
-    // Copy values to DTCM
-    spin1_memcpy(shape2, &t_prop2_region_address[2], rank2 * sizeof(uint32_t));
-    // log_info(" shape2 %d :\n", shape2[0]);
-    // log_info(" shape2 %d :\n", shape2[1]);
-
-    tensor1 = (uint32_t*) spin1_malloc(size1 * sizeof(uint32_t));
-    tensor2 = (uint32_t*) spin1_malloc(size2 * sizeof(uint32_t));
+    tensor1 = (float*) spin1_malloc(size1 * sizeof(float));
+    tensor2 = (float*) spin1_malloc(1 * sizeof(float));
 
     // initialise transmission keys
     address_t transmission_region_address = data_specification_get_region(
@@ -163,7 +146,7 @@ static bool initialize() {
         my_key = transmission_region_address[MY_KEY];
         log_info("my key is %d\n", my_key);
     } else {
-        log_info("reduce sum vertex without key, no sending packets");
+        log_info("arg max vertex without key, no sending packets");
     }
 
     return true;
