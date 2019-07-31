@@ -28,6 +28,24 @@ int cross_entropy=0; // todo change to float
 uint key_exist = 0;
 address_t address = NULL;
 
+static inline float int_to_float(uint u) {
+    union {
+        uint u;
+        float f;
+    } value;
+    value.u = u;
+    return value.f;
+}
+
+static inline uint float_to_int(float f) {
+    union {
+        float f;
+        uint u;
+    } value;
+    value.f = f;
+    return value.u;
+}
+
 typedef enum regions_e {
     PREVERTEX_KEYS,
     TENSOR1_PROPERTIES,
@@ -46,7 +64,7 @@ typedef enum transmission_region_elements {
 void send_value(){
     log_info("arg_max send_value\n", my_key);
 
-        while (!spin1_send_mc_packet(my_key, cross_entropy, WITH_PAYLOAD)) {
+        while (!spin1_send_mc_packet(my_key, index, WITH_PAYLOAD)) {
             spin1_delay_us(1);
         }
 }
@@ -74,16 +92,16 @@ void arg_max(){
             index = i;
         }
     }
+    log_info("max value %x\n" , float_to_int(max_val));
     log_info("index of max element is %d\n" , index);
 }
 
 void receive_data(uint key, uint payload) {
-    log_info("key %d , data %d\n", key, payload);
     ++counter;
     // Check size1 of vertex 1
     if (key >= pre_vertex1_key && key < pre_vertex1_key + size1 ){
-        tensor1[key-pre_vertex1_key] = payload;
-        log_info("V1:key %d ,V1:tensor1 value %d\n", key, tensor1[key-pre_vertex1_key]);
+        tensor1[key-pre_vertex1_key] = int_to_float(payload);
+        log_info("V1:key %d ,V1:tensor1 value %x\n", key, float_to_int(tensor1[key-pre_vertex1_key]));
     }
 
     if ( key == pre_vertex2_key ){
@@ -147,9 +165,9 @@ static bool initialize() {
         my_key = transmission_region_address[MY_KEY];
         log_info("my key is %d\n", my_key);
      }
-    // else {
-    //     log_info("arg max vertex without key, no sending packets");
-    // }
+    else {
+        log_info("arg max vertex without key, no sending packets");
+    }
 
     return true;
 }
