@@ -263,13 +263,4 @@ for placement in sorted(placements.placements,
 
 front_end.stop()
 
-        # # MatMul
-        # shape1 = [1, 784]
-        # shape2 = [784, 10]
-        # matMul = MatMulVertexND("{} vertex ".format("MatMul"), shape1, shape2)
-        #
-        # # Add Broadcast
-        # matMul_shape = [1, 10]
-        # bias_shape = [1, 10]
-        # add_broadcast_res = AddBroadcastND("{} vertex ".format("AddBroadcastND"), matMul_shape, bias_shape)
 
