@@ -16,6 +16,7 @@ from spinnaker_graph_front_end.examples.TensorSample.tf_fill_vertex import (Fill
 from spinnaker_graph_front_end.examples.TensorSample.const_empty_vertex import (ConstEmptyVertex)
 from spinnaker_graph_front_end.examples.TensorSample.tf_neg_vertex import (NegVertex)
 from spinnaker_graph_front_end.examples.TensorSample.argmax_non_dynamic import (ArgMaxND)
+from spinnaker_graph_front_end.examples.TensorSample.equal_vertex import (EqualVertex)
 from data_specification.enums import DataType
 
 
@@ -165,8 +166,8 @@ for i in range(training_epochs):
 one_digit = np.reshape(x_test[0], (-1, 784))
 one_digit = tf.constant(one_digit, dtype = tf.float32)
 
-# one_digit_label = y_test[0]
-# one_digit_label = tf.constant(one_digit_label, dtype = tf.float32)
+one_digit_label = y_test[0]
+one_digit_label = tf.constant(one_digit_label, dtype = tf.float32)
 
 final_weight = tf.constant(final_weight, dtype = tf.float32)
 final_bias = tf.constant(final_bias, dtype = tf.float32)
@@ -174,9 +175,9 @@ final_bias = tf.constant(final_bias, dtype = tf.float32)
 
 prediction = tf.matmul(one_digit, final_weight) + final_bias
 pred_max = tf.argmax(input=prediction, axis=1)
-# test_max = tf.argmax(input=one_digit_label, axis=0)
+test_max = tf.argmax(input=one_digit_label, axis=0)
 
-# result = tf.equal(pred_max, test_max)
+result = tf.equal(pred_max, test_max)
 
 const = {}
 node_type = {}
@@ -214,6 +215,9 @@ for n in tf.get_default_graph().as_graph_def().node:
             sp1 = graph._nodes_by_name[n.name]._inputs._inputs[0].get_shape().as_list()
             vertices[n.name] = ArgMaxND("{} vertex ".format(n.name), sp1)
 
+        elif n.op == 'Equal':
+            vertices[n.name] = EqualVertex("{} vertex ".format(n.name))
+
         else:
             continue
 
@@ -222,7 +226,6 @@ for n in tf.get_default_graph().as_graph_def().node:
 
     else:
         continue
-
 
 
 # Add Edges
