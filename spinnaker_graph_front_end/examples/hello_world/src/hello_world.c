@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2017-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 //! imports
 #include "spin1_api.h"
@@ -42,9 +58,9 @@ void receive_data(uint key, uint payload) {
 }
 
 void iobuf_data(){
-    address_t address = data_specification_get_data_address();
+    data_specification_metadata_t *data = data_specification_get_data_address();
     address_t hello_world_address =
-        data_specification_get_region(RECORDED_DATA, address);
+        data_specification_get_region(RECORDED_DATA, data);
 
     log_info("Hello world address is %08x", hello_world_address);
 
@@ -75,9 +91,9 @@ void record_data() {
 //! \brief Initialises the recording parts of the model
 //! \return True if recording initialisation is successful, false otherwise
 static bool initialise_recording(){
-    address_t address = data_specification_get_data_address();
+    data_specification_metadata_t *data = data_specification_get_data_address();
     address_t recording_region = data_specification_get_region(
-        RECORDED_DATA, address);
+        RECORDED_DATA, data);
 
     bool success = recording_initialize(recording_region, &recording_flags);
     log_info("Recording flags = 0x%08x", recording_flags);
@@ -144,19 +160,19 @@ static bool initialize(uint32_t *timer_period) {
     log_info("Initialise: started\n");
 
     // Get the address this core's DTCM data starts at from SRAM
-    address_t address = data_specification_get_data_address();
+    data_specification_metadata_t *data = data_specification_get_data_address();
 
     // Read the header
-    if (!data_specification_read_header(address)) {
+    if (!data_specification_read_header(data)) {
         log_error("failed to read the data spec header");
         return false;
     }
 
     // Get the timing details and set up the simulation interface
     if (!simulation_initialise(
-            data_specification_get_region(SYSTEM_REGION, address),
+            data_specification_get_region(SYSTEM_REGION, data),
             APPLICATION_NAME_HASH, timer_period, &simulation_ticks,
-            &infinite_run, SDP, DMA)) {
+            &infinite_run, &time, SDP, DMA)) {
         return false;
     }
 

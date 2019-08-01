@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2017-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 //! imports
 #include "spin1_api.h"
@@ -26,7 +42,7 @@ uint32_t size_written = 0;
 //! control value, which says how many timer ticks to run for before exiting
 static uint32_t simulation_ticks = 0;
 static uint32_t time = 0;
-address_t address = NULL;
+data_specification_metadata_t *data = NULL;
 
 //! The recording flags
 static uint32_t recording_flags = 0;
@@ -84,7 +100,7 @@ typedef enum initial_state_region_elements {
  * SOURCE
  */
 void receive_data(uint key, uint payload) {
-	use(key);
+    use(key);
     //log_info("the key i've received is %d\n", key);
     //log_info("the payload i've received is %d\n", payload);
     // If there was space to add spike to incoming spike queue
@@ -246,9 +262,9 @@ void receive_data_void(uint key, uint unknown) {
 }
 
 static bool initialise_recording(){
-    address_t address = data_specification_get_data_address();
+    data_specification_metadata_t *data = data_specification_get_data_address();
     address_t recording_region = data_specification_get_region(
-        RECORDED_DATA, address);
+        RECORDED_DATA, data);
 
     bool success = recording_initialize(
         recording_region, &recording_flags);
@@ -260,25 +276,25 @@ static bool initialize(uint32_t *timer_period) {
     log_info("Initialise: started\n");
 
     // Get the address this core's DTCM data starts at from SRAM
-    address = data_specification_get_data_address();
+    data = data_specification_get_data_address();
 
     // Read the header
-    if (!data_specification_read_header(address)) {
+    if (!data_specification_read_header(data)) {
         log_error("failed to read the data spec header");
         return false;
     }
 
     // Get the timing details and set up the simulation interface
     if (!simulation_initialise(
-            data_specification_get_region(SYSTEM_REGION, address),
+            data_specification_get_region(SYSTEM_REGION, data),
             APPLICATION_NAME_HASH, timer_period, &simulation_ticks,
-            &infinite_run, SDP, DMA)) {
+            &infinite_run, &time, SDP, DMA)) {
         return false;
     }
 
     // initialise transmission keys
     address_t transmission_region_address = data_specification_get_region(
-            TRANSMISSIONS, address);
+            TRANSMISSIONS, data);
     if (transmission_region_address[HAS_KEY] == 1) {
         my_key = transmission_region_address[MY_KEY];
         log_info("my key is %d\n", my_key);
@@ -291,13 +307,13 @@ static bool initialize(uint32_t *timer_period) {
 
     // read my state
     address_t my_state_region_address = data_specification_get_region(
-        STATE, address);
+        STATE, data);
     my_state = my_state_region_address[INITIAL_STATE];
     log_info("my initial state is %d\n", my_state);
 
     // read neighbour states for initial tick
     address_t my_neigbhour_state_region_address = data_specification_get_region(
-        NEIGHBOUR_INITIAL_STATES, address);
+        NEIGHBOUR_INITIAL_STATES, data);
     alive_states_recieved_this_tick = my_neigbhour_state_region_address[0];
     dead_states_recieved_this_tick = my_neigbhour_state_region_address[1];
 

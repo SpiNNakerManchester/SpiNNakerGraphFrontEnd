@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2017-2019 The University of Manchester
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <debug.h>
 #include <spin1_api.h>
 #include <data_specification.h>
@@ -5,6 +22,7 @@
 
 static uint32_t simulation_ticks;
 uint32_t infinite_run;
+uint32_t time;
 
 void timer_callback(uint time, uint unused1) {
     if (time == 1) {
@@ -19,16 +37,16 @@ void c_main() {
 
     uint32_t timer_period;
 
-    address_t address = data_specification_get_data_address();
+    data_specification_metadata_t *data = data_specification_get_data_address();
 
-    if (!data_specification_read_header(address)) {
+    if (!data_specification_read_header(data)) {
         rt_error(RTE_SWERR);
     }
 
     if (!simulation_initialise(
-            data_specification_get_region(0, address), APPLICATION_NAME_HASH,
+            data_specification_get_region(0, data), APPLICATION_NAME_HASH,
             &timer_period, &simulation_ticks,
-            &infinite_run, 1, 1)) {
+            &infinite_run, &time, 1, 1)) {
         rt_error(RTE_SWERR);
     }
 
