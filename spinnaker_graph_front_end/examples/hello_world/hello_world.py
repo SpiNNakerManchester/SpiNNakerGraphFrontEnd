@@ -37,7 +37,7 @@ front_end.setup(
 # (i.e. does not include those busy with SARK or reinjection)
 total_number_of_cores = \
     front_end.get_number_of_available_cores_on_machine()
-total_number_of_cores = min(16, total_number_of_cores)
+total_number_of_cores = max(16, total_number_of_cores)
 
 # fill all cores with a HelloWorldVertex each
 for x in range(0, total_number_of_cores):
