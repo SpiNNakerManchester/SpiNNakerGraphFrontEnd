@@ -41,43 +41,47 @@ address_t dsg_main_address;
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
-    SYSTEM_REGION, CONFIG, DATA_REGION
+    SYSTEM_REGION,
+    CONFIG,
+    DATA_REGION
 } regions_e;
 
 //! values for the priority for each callback
-typedef enum callback_priorities{
-   SDP = 0, DMA = 0, TIMER = 2
+typedef enum callback_priorities {
+   SDP = 0,
+   DMA = 0,
+   TIMER = 2
 } callback_priorities;
 
 //! human readable definitions of each element in the transmission region
-typedef enum config_region_elements {
-    MB
-} config_region_elements;
+typedef struct config {
+    uint32_t bytes_to_write;
+} config_t;
 
 
 //! boiler plate: not really needed
-void resume_callback() {
+void resume_callback(void) {
     time = UINT32_MAX;
 }
 
 //! method to make test data in sdram
-void write_data(){
+void write_data(void) {
     // write data into sdram for reading later
     data_specification_metadata_t *data = data_specification_get_data_address();
     store_address = data_specification_get_region(DATA_REGION, data);
     log_info("address is %d", store_address);
 
-    uint iterations = (uint)(bytes_to_write / WORD_TO_BYTE_MULTIPLIER);
+    uint iterations = bytes_to_write / WORD_TO_BYTE_MULTIPLIER;
     //log_info("iterations = %d", iterations - 1);
 
-    for(uint count = 0; count < iterations; count++){
+    for (uint count = 0; count < iterations; count++) {
         store_address[count] = count;
     }
 }
 
 //! setup
 static bool initialize(uint32_t *timer_period) {
-    log_info("Initialise: started\n");
+    log_info("Initialise: started");
 
     // Get the address this core's DTCM data starts at from SRAM
     data_specification_metadata_t *data = data_specification_get_data_address();
@@ -97,11 +101,10 @@ static bool initialize(uint32_t *timer_period) {
     }
 
     // read config params.
-    address_t config_address = data_specification_get_region(CONFIG, data);
-    bytes_to_write = config_address[MB];
+    config_t *config = data_specification_get_region(CONFIG, data);
+    bytes_to_write = config->bytes_to_write;
 
     log_info("bytes to write is %d", bytes_to_write);
-
     return true;
 }
 
@@ -116,7 +119,6 @@ void update(uint ticks, uint b) {
     // check that the run time hasn't already elapsed and thus needs to be
     // killed
     if ((infinite_run != TRUE) && (time >= simulation_ticks)) {
-
         // falls into the pause resume mode of operating
         simulation_handle_pause_resume(NULL);
 
@@ -127,10 +129,9 @@ void update(uint ticks, uint b) {
     }
 }
 
-void c_main() {
-
+void c_main(void) {
     uint32_t timer_period;
-    log_info("starting sdram reader and writer\n");
+    log_info("starting sdram reader and writer");
 
     // initialise the model
     if (!initialize(&timer_period)) {

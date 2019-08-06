@@ -25,15 +25,21 @@ uint32_t infinite_run;
 uint32_t time;
 
 void timer_callback(uint time, uint unused1) {
-    if ((!infinite_run && ((time * 2) == simulation_ticks))
-            || (infinite_run && (time == 2000))) {
-        log_error("Generating Error at time %u", time);
-        rt_error(RTE_SWERR);
+    if (infinite_run) {
+	if ((time * 2) != simulation_ticks) {
+	    return;
+	}
+    } else {
+	if (time != 2000) {
+	    return;
+	}
     }
+
+    log_error("Generating Error at time %u", time);
+    rt_error(RTE_SWERR);
 }
 
-void c_main() {
-
+void c_main(void) {
     uint32_t timer_period;
 
     data_specification_metadata_t *data = data_specification_get_data_address();
