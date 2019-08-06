@@ -20,6 +20,10 @@
 #include <data_specification.h>
 #include <simulation.h>
 
+enum regions {
+    SYSTEM
+};
+
 static uint32_t simulation_ticks;
 static uint32_t infinite_run;
 static uint32_t timer;
@@ -49,7 +53,7 @@ void c_main(void) {
     }
 
     if (!simulation_initialise(
-            data_specification_get_region(0, data), APPLICATION_NAME_HASH,
+            data_specification_get_region(SYSTEM, data), APPLICATION_NAME_HASH,
             &timer_period, &simulation_ticks,
             &infinite_run, &timer, 1, 1)) {
         rt_error(RTE_SWERR);
