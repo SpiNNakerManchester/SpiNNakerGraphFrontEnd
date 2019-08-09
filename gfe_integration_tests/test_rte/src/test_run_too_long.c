@@ -33,8 +33,7 @@ void timer_callback(uint time, uint unused1) {
     }
 }
 
-void c_main() {
-
+void c_main(void) {
     uint32_t timer_period;
 
     data_specification_metadata_t *data = data_specification_get_data_address();

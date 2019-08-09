@@ -20,20 +20,30 @@
 #include <data_specification.h>
 #include <simulation.h>
 
-uint32_t simulation_ticks;
-uint32_t infinite_run;
-uint32_t time;
+enum regions {
+    SYSTEM
+};
 
-void timer_callback(uint time, uint unused1) {
-    if ((!infinite_run && ((time * 2) == simulation_ticks))
-            || (infinite_run && (time == 2000))) {
-        log_error("Generating Error at time %u", time);
-        rt_error(RTE_SWERR);
+static uint32_t simulation_ticks;
+static uint32_t infinite_run;
+static uint32_t timer;
+
+void timer_callback(uint timestamp, uint unused1) {
+    if (infinite_run) {
+	if (timestamp < 2000) {
+	    return;
+	}
+    } else {
+	if (timestamp * 2 != simulation_ticks) {
+	    return;
+	}
     }
+
+    log_error("Generating Error at time %u", timestamp);
+    rt_error(RTE_SWERR);
 }
 
-void c_main() {
-
+void c_main(void) {
     uint32_t timer_period;
 
     data_specification_metadata_t *data = data_specification_get_data_address();
@@ -43,9 +53,9 @@ void c_main() {
     }
 
     if (!simulation_initialise(
-            data_specification_get_region(0, data), APPLICATION_NAME_HASH,
+            data_specification_get_region(SYSTEM, data), APPLICATION_NAME_HASH,
             &timer_period, &simulation_ticks,
-            &infinite_run, &time, 1, 1)) {
+            &infinite_run, &timer, 1, 1)) {
         rt_error(RTE_SWERR);
     }
 

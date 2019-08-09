@@ -21,36 +21,34 @@ from spinn_front_end_common.abstract_models import (
 from spinn_front_end_common.abstract_models.impl import (
     MachineDataSpecableVertex)
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
-from spinn_front_end_common.utilities import constants
 from spinn_front_end_common.interface.simulation import simulation_utilities
-from spinn_front_end_common.utilities.constants import SIMULATION_N_BYTES
+from spinn_front_end_common.utilities.constants import (
+    SIMULATION_N_BYTES, SYSTEM_BYTES_REQUIREMENT)
+
+_SDRAM_READING_SIZE_IN_BYTES_CONVERTER = 1024 * 1024
+_CONFIG_REGION_SIZE = 4
 
 
 class SDRAMWriter(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
-
-    SDRAM_READING_SIZE_IN_BYTES_CONVERTER = 1024*1024
-    CONFIG_REGION_SIZE = 4
-
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
                ('CONFIG', 1),
                ('DATA', 2)])
 
-    def __init__(self, mbs):
-        self._mbs = mbs * self.SDRAM_READING_SIZE_IN_BYTES_CONVERTER
+    def __init__(self, mebibytes):
+        self._size = mebibytes * _SDRAM_READING_SIZE_IN_BYTES_CONVERTER
         super(SDRAMWriter, self).__init__(label="speed", constraints=None)
 
     @property
     def mbs_in_bytes(self):
-        return self._mbs
+        return self._size
 
     @property
     def resources_required(self):
         return ResourceContainer(sdram=ConstantSDRAM(
-            self._mbs + constants.SYSTEM_BYTES_REQUIREMENT +
-            self.CONFIG_REGION_SIZE))
+            self._size + SYSTEM_BYTES_REQUIREMENT + _CONFIG_REGION_SIZE))
 
     def get_binary_start_type(self):
         return ExecutableType.USES_SIMULATION_INTERFACE
@@ -58,7 +56,6 @@ class SDRAMWriter(
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
             reverse_iptags, machine_time_step, time_scale_factor):
-
         # Reserve SDRAM space for memory areas:
         self._reserve_memory_regions(spec)
 
@@ -69,22 +66,23 @@ class SDRAMWriter(
             time_scale_factor))
 
         spec.switch_write_focus(self.DATA_REGIONS.CONFIG.value)
-        spec.write_value(self._mbs)
+        spec.write_value(self._size)
 
         # End-of-Spec:
         spec.end_specification()
 
     def _reserve_memory_regions(self, spec):
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.SYSTEM.value, size=SIMULATION_N_BYTES,
+            region=self.DATA_REGIONS.SYSTEM.value,
+            size=SIMULATION_N_BYTES,
             label='systemInfo')
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.CONFIG.value,
-            size=self.CONFIG_REGION_SIZE,
+            size=_CONFIG_REGION_SIZE,
             label="config")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.DATA.value,
-            size=self._mbs,
+            size=self._size,
             label="data region")
 
     def get_binary_file_name(self):

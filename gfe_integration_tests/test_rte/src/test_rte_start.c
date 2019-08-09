@@ -18,7 +18,7 @@
 #include <sark.h>
 #include <debug.h>
 
-void c_main() {
+void c_main(void) {
     log_error("Generating Error");
     rt_error(RTE_SWERR);
 }

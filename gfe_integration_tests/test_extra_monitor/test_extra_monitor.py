@@ -22,16 +22,19 @@ from data_specification.utility_calls import get_region_base_address_offset
 from gfe_integration_tests.test_extra_monitor.sdram_writer import SDRAMWriter
 
 _ONE_WORD = struct.Struct("<I")
+_MONITOR_VERTICES = 'MemoryExtraMonitorVertices'
+_GATHERER_MAP = 'MemoryMCGatherVertexToEthernetConnectedChipMapping'
+_TRANSFER_SIZE_MEGABYTES = 20
 
 
-def get_data_region_address(transceiver, placement):
+def get_data_region_address(transceiver, placement, region):
     # Get the App Data for the core
     app_data_base_address = transceiver.get_cpu_information_from_core(
         placement.x, placement.y, placement.p).user[0]
 
     # Get the provenance region base address
     base_address_offset = get_region_base_address_offset(
-        app_data_base_address, SDRAMWriter.DATA_REGIONS.DATA.value)
+        app_data_base_address, region.value)
     return _ONE_WORD.unpack(transceiver.read_memory(
         placement.x, placement.y, base_address_offset, _ONE_WORD.size))[0]
 
@@ -49,8 +52,18 @@ def check_data(data):
             start_value += 1
 
 
+def _get_monitor_placement(monitor_vertices, placement):
+    """ Get the receiver placement on the same chip as a given placement
+    """
+    for vertex in monitor_vertices:
+        vtx_plt = sim.placements().get_placement_of_vertex(vertex)
+        if vtx_plt.x == placement.x and vtx_plt.y == placement.y:
+            return vtx_plt
+    raise Exception("no extra monitor on same chip as {}".format(placement))
+
+
 def test_extra_monitor():
-    mbs = 20
+    mbs = _TRANSFER_SIZE_MEGABYTES
 
     # setup system
     globals_variables.unset_simulator()
@@ -58,50 +71,39 @@ def test_extra_monitor():
               n_chips_required=2)
 
     # build verts
-    writer = SDRAMWriter(mbs)
+    writer_vertex = SDRAMWriter(mbs)
 
     # add verts to graph
-    sim.add_machine_vertex_instance(writer)
-
+    sim.add_machine_vertex_instance(writer_vertex)
     sim.run(12)
 
-    # get placements for extraction
-    placements = sim.placements()
-    machine = sim.machine()
+    writer_placement = sim.placements().get_placement_of_vertex(writer_vertex)
+    writer_chip = sim.machine().get_chip_at(
+        writer_placement.x, writer_placement.y)
 
-    writer_placement = placements.get_placement_of_vertex(writer)
-    writer_chip = machine.get_chip_at(writer_placement.x, writer_placement.y)
-    writer_nearest_ethernet = machine.get_chip_at(
-        writer_chip.nearest_ethernet_x, writer_chip.nearest_ethernet_y)
+    # pylint: disable=protected-access
+    outputs = sim.globals_variables.get_simulator()._last_run_outputs
+    monitor_vertices = outputs[_MONITOR_VERTICES]
+    gatherers = outputs[_GATHERER_MAP]
 
-    extra_monitor_vertices = sim.globals_variables.\
-        get_simulator()._last_run_outputs['MemoryExtraMonitorVertices']
-    extra_monitor_gatherers = sim.globals_variables.\
-        get_simulator()._last_run_outputs[
-            'MemoryMCGatherVertexToEthernetConnectedChipMapping']
-
-    receiver = None
-    gatherer = extra_monitor_gatherers[(writer_nearest_ethernet.x,
-                                        writer_nearest_ethernet.y)]
-
-    for vertex in extra_monitor_vertices:
-        plt = placements.get_placement_of_vertex(vertex)
-        if (plt.x == writer_placement.x and plt.y == writer_placement.y):
-            receiver = vertex
+    receiver_plt = _get_monitor_placement(monitor_vertices, writer_placement)
+    gatherer = gatherers[
+        writer_chip.nearest_ethernet_x, writer_chip.nearest_ethernet_y]
 
     start = float(time.time())
 
     with gatherer.streaming(
-            extra_monitor_gatherers.values(), sim.transceiver(),
-            extra_monitor_vertices, placements):
+            gatherers.values(), sim.transceiver(), monitor_vertices,
+            sim.placements()):
         data = gatherer.get_data(
-            placements.get_placement_of_vertex(receiver),
-            get_data_region_address(sim.transceiver(), writer_placement),
-            writer.mbs_in_bytes, fixed_routes=None)
+            receiver_plt, get_data_region_address(
+                sim.transceiver(), writer_placement,
+                SDRAMWriter.DATA_REGIONS.DATA),
+            writer_vertex.mbs_in_bytes, fixed_routes=None)
 
     end = float(time.time())
 
-    print("time taken to extract {} MB is {}. MBS of {}".format(
+    print("time taken to extract {} MB is {}. Transfer rate: {} Mb/s".format(
         mbs, end - start, (mbs * 8) / (end - start)))
 
     check_data(data)
