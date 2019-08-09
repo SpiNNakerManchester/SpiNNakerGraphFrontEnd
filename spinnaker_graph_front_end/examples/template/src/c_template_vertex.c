@@ -33,7 +33,7 @@ static uint32_t infinite_run;
 
 //! The recording flags
 static uint32_t recording_flags = 0;
-static bool initialise_recording();
+static bool initialise_recording(void);
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
@@ -43,14 +43,19 @@ typedef enum regions_e {
 } regions_e;
 
 //! values for the priority for each callback
-typedef enum callback_priorities{
-    MC_PACKET = -1, SDP = 0, USER = 3, TIMER = 2, DMA = 1
+typedef enum callback_priorities {
+    MC_PACKET = -1,
+    SDP = 0,
+    DMA = 1,
+    TIMER = 2,
+    USER = 3
 } callback_priorities;
 
-//! human readable definitions of each element in the transmission region
-typedef enum transmission_region_elements {
-    HAS_KEY, MY_KEY
-} transmission_region_elements;
+//! definitions of each element in the transmission region in SDRAM
+typedef struct transmission_region {
+    uint32_t has_key;
+    uint32_t my_key;
+} transmission_region_t;
 
 // TODO: Update with the number of recorded regions
 #define N_REGIONS_TO_RECORD 1
@@ -110,7 +115,7 @@ static void do_update(uint ticks, uint32_t time) {
 //resume interfaces
 
 //! \brief add functionality to do when you are about to resume.
-void resume_callback() {
+void resume_callback(void) {
 
     // TODO: Perform any changes that need to be done before resume occurs
     initialise_recording();
@@ -124,14 +129,11 @@ void resume_callback() {
 
 //! \brief Initialises the recording parts of the model
 //! \return True if recording initialisation is successful, false otherwise
-static bool initialise_recording() {
+static bool initialise_recording(void) {
     data_specification_metadata_t *data = data_specification_get_data_address();
 
-    // TODO: Update with the recording region IDs
-    address_t regions_addresses_to_record = data_specification_get_region(
-            RECORDED_DATA, data);
-
-    bool success = recording_initialize(regions_addresses_to_record,
+    bool success = recording_initialize(
+	    data_specification_get_region(RECORDED_DATA, data),
             &recording_flags);
     log_info("Recording flags = 0x%08x", recording_flags);
     return success;
@@ -150,7 +152,7 @@ void update(uint ticks, uint unused) {
     // check that the run time hasn't already elapsed and thus needs to be
     // killed
     if ((infinite_run != TRUE) && (time >= simulation_ticks)) {
-        log_info("Simulation complete.\n");
+        log_info("Simulation complete.");
 
         // fall into the pause resume mode of operating
         simulation_handle_pause_resume(resume_callback);
@@ -194,10 +196,10 @@ static bool initialize(uint32_t *timer_period) {
     }
 
     // initialise transmission keys
-    address_t transmission_region_address = data_specification_get_region(
-            TRANSMISSIONS, data);
-    if (transmission_region_address[HAS_KEY] == 1) {
-        my_key = transmission_region_address[MY_KEY];
+    transmission_region_t *transmission_region =
+	    data_specification_get_region(TRANSMISSIONS, data);
+    if (transmission_region->has_key == 1) {
+        my_key = transmission_region->my_key;
         log_info("my key is %d\n", my_key);
     }
 
@@ -207,8 +209,8 @@ static bool initialize(uint32_t *timer_period) {
 //! \brief main entrance method for the model
 //!        Used to register event callbacks and begin the simulation
 //! \return None
-void c_main() {
-    log_info("starting %s\n", app_name);
+void c_main(void) {
+    log_info("starting %s", app_name);
 
     // Load DTCM data
     uint32_t timer_period;
@@ -220,7 +222,7 @@ void c_main() {
 
     // initialise the recording section
     // set up recording data structures
-    if(!initialise_recording()){
+    if(!initialise_recording()) {
          rt_error(RTE_SWERR);
     }
 

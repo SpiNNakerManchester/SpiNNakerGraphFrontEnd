@@ -41,26 +41,25 @@ typedef enum regions_e {
 } regions_e;
 
 //! values for the priority for each callback
-typedef enum callback_priorities{
-    MC_PACKET = -1, SDP = 0, USER = 3, TIMER = 2, DMA = 1
+typedef enum callback_priorities {
+    MC_PACKET = -1,
+    SDP = 0,
+    DMA = 1,
+    TIMER = 2,
+    USER = 3
 } callback_priorities;
 
-//! human readable definitions of each element in the transmission region
-typedef enum transmission_region_elements {
-    HAS_KEY, MY_KEY
-} transmission_region_elements;
+// -------------------------------------------------------------------
 
-
-
-void receive_data(uint key, uint payload) {
+static void receive_data(uint key, uint payload) {
     use(key);
     use(payload);
 }
 
-void iobuf_data(){
+static void iobuf_data(void) {
     data_specification_metadata_t *data = data_specification_get_data_address();
     address_t hello_world_address =
-        data_specification_get_region(RECORDED_DATA, data);
+	    data_specification_get_region(RECORDED_DATA, data);
 
     log_info("Hello world address is %08x", hello_world_address);
 
@@ -68,17 +67,16 @@ void iobuf_data(){
     log_info("Data read is: %s", my_string);
 }
 
-void record_data() {
+static void record_data(void) {
     log_debug("Recording data...");
 
     uint chip = spin1_get_chip_id();
-
     uint core = spin1_get_core_id();
 
     log_debug("Issuing 'Hello World' from chip %d, core %d", chip, core);
 
     bool recorded = recording_record(
-        0, "Hello world", 11 * sizeof(char));
+	    0, "Hello world", 11 * sizeof(char));
 
     if (recorded) {
         log_debug("Hello World recorded successfully!");
@@ -90,17 +88,17 @@ void record_data() {
 
 //! \brief Initialises the recording parts of the model
 //! \return True if recording initialisation is successful, false otherwise
-static bool initialise_recording(){
+static bool initialise_recording(void) {
     data_specification_metadata_t *data = data_specification_get_data_address();
-    address_t recording_region = data_specification_get_region(
-        RECORDED_DATA, data);
+    address_t recording_region =
+	    data_specification_get_region(RECORDED_DATA, data);
 
     bool success = recording_initialize(recording_region, &recording_flags);
     log_info("Recording flags = 0x%08x", recording_flags);
     return success;
 }
 
-void resume_callback() {
+static void resume_callback(void) {
     time = UINT32_MAX;
 }
 
@@ -113,7 +111,7 @@ void resume_callback() {
  *
  * SOURCE
  */
-void update(uint ticks, uint b) {
+static void update(uint ticks, uint b) {
     use(b);
     use(ticks);
 
@@ -124,7 +122,7 @@ void update(uint ticks, uint b) {
     // check that the run time hasn't already elapsed and thus needs to be
     // killed
     if ((infinite_run != TRUE) && (time >= simulation_ticks)) {
-        log_info("Simulation complete.\n");
+        log_info("Simulation complete.");
 
         // fall into the pause resume mode of operating
         simulation_handle_pause_resume(resume_callback);
@@ -138,7 +136,6 @@ void update(uint ticks, uint b) {
         simulation_ready_to_read();
 
         return;
-
     }
 
     if (time == 1) {
@@ -150,9 +147,9 @@ void update(uint ticks, uint b) {
     // trigger buffering_out_mechanism
     log_info("recording flags is %d", recording_flags);
     if (recording_flags > 0) {
-        log_info("doing timer tick update\n");
+        log_info("doing timer tick update");
         recording_do_timestep_update(time);
-        log_info("done timer tick update\n");
+        log_info("done timer tick update");
     }
 }
 
@@ -190,7 +187,7 @@ static bool initialize(uint32_t *timer_period) {
  *
  * SOURCE
  */
-void c_main() {
+void c_main(void) {
     log_info("starting heat_demo\n");
 
     // Load DTCM data
@@ -203,7 +200,7 @@ void c_main() {
 
     // initialise the recording section
     // set up recording data structures
-    if(!initialise_recording()){
+    if (!initialise_recording()) {
          rt_error(RTE_SWERR);
     }
 
