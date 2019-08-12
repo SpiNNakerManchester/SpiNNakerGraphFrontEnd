@@ -176,13 +176,6 @@ def read_xml_file(file_path):
     _sim().read_xml_file(file_path)
 
 
-def _new_vertex_label():
-    spinnaker = _sim()
-    label = "Vertex {}".format(spinnaker.none_labelled_vertex_count)
-    spinnaker.increment_none_labelled_vertex_count()
-    return label
-
-
 def add_vertex(cell_class, cell_params, label=None, constraints=None):
     """ Create an application vertex and add it to the unpartitioned graph.
 
@@ -196,14 +189,6 @@ def add_vertex(cell_class, cell_params, label=None, constraints=None):
     :type label: str or None
     :return: the application vertex instance object
     """
-    # correct label if needed
-    if label is None and 'label' not in cell_params:
-        cell_params['label'] = _new_vertex_label()
-    elif 'label' in cell_params and cell_params['label'] is None:
-        cell_params['label'] = _new_vertex_label()
-    elif label is not None:
-        cell_params['label'] = label
-
     # add vertex
     cell_params['constraints'] = constraints
     vertex = cell_class(**cell_params)
@@ -218,7 +203,7 @@ def add_vertex_instance(vertex_to_add):
     :type vertex_to_add: :py:class:`AbstractPartitionableVertex`
     :rtype: None
     """
-    _sim().add_application_vertex(vertex_to_add)
+    _sim().add_application_vertex(vertex_to_add, "")
 
 
 def add_machine_vertex(
@@ -235,14 +220,6 @@ def add_machine_vertex(
     :type label: str or None
     :return: the machine vertex instance object
     """
-    # correct label if needed
-    if label is None and 'label' not in cell_params:
-        cell_params['label'] = _new_vertex_label()
-    elif 'label' in cell_params and cell_params['label'] is None:
-        cell_params['label'] = _new_vertex_label()
-    elif label is not None:
-        cell_params['label'] = label
-
     # add vertex
     cell_params['constraints'] = constraints
     vertex = cell_class(**cell_params)
