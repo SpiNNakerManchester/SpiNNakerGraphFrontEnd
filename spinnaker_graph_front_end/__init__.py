@@ -203,7 +203,7 @@ def add_vertex_instance(vertex_to_add):
     :type vertex_to_add: :py:class:`AbstractPartitionableVertex`
     :rtype: None
     """
-    _sim().add_application_vertex(vertex_to_add, "")
+    _sim().add_application_vertex(vertex_to_add)
 
 
 def add_machine_vertex(
