@@ -47,7 +47,7 @@ for dirname, dirnames, filenames in os.walk(main_package_dir):
 setup(
     name="SpiNNakerGraphFrontEnd",
     version=__version__,
-    description="Front end to the SpiNNaker tool chain which uses a "
+    description="Front end to the SpiNNaker tool chain that uses a "
                 "basic graph",
     url="https://github.com/SpiNNakerManchester/SpiNNakerGraphFrontEnd",
     classifiers=[
