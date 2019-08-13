@@ -50,15 +50,34 @@ setup(
     description="Front end to the SpiNNaker tool chain which uses a "
                 "basic graph",
     url="https://github.com/SpiNNakerManchester/SpiNNakerGraphFrontEnd",
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
+
+        "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+
+        "Natural Language :: English",
+
+        "Operating System :: POSIX :: Linux",
+        "Operating System :: Microsoft :: Windows",
+        "Operating System :: MacOS",
+
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+    ],
     packages=packages,
     package_data=package_data,
-    install_requires=['SpiNNUtilities >= 1!4.0.1, < 1!5.0.0',
-                      'SpiNNStorageHandlers >= 1!4.0.1, < 1!5.0.0',
-                      'SpiNNMachine >= 1!4.0.1, < 1!5.0.0',
-                      'SpiNNMan >= 1!4.0.1, < 1!5.0.0',
-                      'SpiNNaker_PACMAN >= 1!4.0.1, < 1!5.0.0',
-                      'SpiNNaker_DataSpecification >= 1!4.0.1, < 1!5.0.0',
-                      'SpiNNFrontEndCommon >= 1!4.0.1, < 1!5.0.0',
+    install_requires=['SpiNNUtilities >= 1!5.0.1, < 1!6.0.0',
+                      'SpiNNStorageHandlers >= 1!5.0.1, < 1!6.0.0',
+                      'SpiNNMachine >= 1!5.0.1, < 1!6.0.0',
+                      'SpiNNMan >= 1!5.0.1, < 1!6.0.0',
+                      'SpiNNaker_PACMAN >= 1!5.0.1, < 1!6.0.0',
+                      'SpiNNaker_DataSpecification >= 1!5.0.1, < 1!6.0.0',
+                      'SpiNNFrontEndCommon >= 1!5.0.1, < 1!6.0.0',
                       'lxml'],
     maintainer="SpiNNakerTeam",
     maintainer_email="spinnakerusers@googlegroups.com"
