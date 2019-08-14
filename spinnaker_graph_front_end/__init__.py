@@ -189,8 +189,11 @@ def add_vertex(cell_class, cell_params, label=None, constraints=None):
     :type label: str or None
     :return: the application vertex instance object
     """
-    # add vertex
+    if label is not None:
+        cell_params['label'] = label
+    # graph handles label is None
     cell_params['constraints'] = constraints
+    # add vertex
     vertex = cell_class(**cell_params)
     add_vertex_instance(vertex)
     return vertex
@@ -220,8 +223,11 @@ def add_machine_vertex(
     :type label: str or None
     :return: the machine vertex instance object
     """
-    # add vertex
+    if label is not None:
+        cell_params['label'] = label
+    # graph handles label is None
     cell_params['constraints'] = constraints
+    # add vertex
     vertex = cell_class(**cell_params)
     add_machine_vertex_instance(vertex)
     return vertex
