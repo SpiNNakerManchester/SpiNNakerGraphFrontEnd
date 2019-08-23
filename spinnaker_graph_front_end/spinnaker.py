@@ -108,7 +108,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         logger.info("Setting time scale factor to {}."
                     .format(self.time_scale_factor))
         logger.info("Setting machine time step to {} micro-seconds."
-                    .format(self._machine_time_step))
+                    .format(self.machine_time_step))
 
     @property
     def is_allocated_machine(self):
