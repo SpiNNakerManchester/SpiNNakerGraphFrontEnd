@@ -103,11 +103,10 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         self.set_up_timings(machine_time_step, time_scale_factor)
 
         # if not set at all, set to 1 for real time execution.
-        if self._time_scale_factor is None:
-            self._time_scale_factor = 1
-
+        if self.time_scale_factor is None:
+            self._config.set("Machine", "time_scale_factor", 1)
         logger.info("Setting time scale factor to {}."
-                    .format(self._time_scale_factor))
+                    .format(self.time_scale_factor))
         logger.info("Setting machine time step to {} micro-seconds."
                     .format(self._machine_time_step))
 
