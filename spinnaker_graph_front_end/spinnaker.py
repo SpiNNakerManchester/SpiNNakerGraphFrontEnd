@@ -25,8 +25,6 @@ from spinn_front_end_common.utilities.failed_state import FailedState
 from ._version import __version__ as version
 
 logger = logging.getLogger(__name__)
-#: The default number of cores to ask spalloc for
-SPALLOC_CORES = 48
 
 
 def _is_allocated_machine(config):
@@ -57,12 +55,13 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
     def __init__(
             self, executable_finder, host_name=None, graph_label=None,
             database_socket_addresses=None, dsg_algorithm=None,
-            n_chips_required=None, extra_pre_run_algorithms=None,
+            n_chips_required=None, n_boards_required=None,
+            extra_pre_run_algorithms=None,
             extra_post_run_algorithms=None, time_scale_factor=None,
             machine_time_step=None, default_config_paths=None,
             extra_xml_paths=None):
 
-        global CONFIG_FILE_NAME, SPALLOC_CORES
+        global CONFIG_FILE_NAME
 
         # DSG algorithm store for user defined algorithms
         self._user_dsg_algorithm = dsg_algorithm
@@ -76,6 +75,10 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         if default_config_paths is not None:
             this_default_config_paths.extend(default_config_paths)
 
+        if _is_allocated_machine(self.config) and \
+                n_chips_required is None and n_boards_required is None:
+            n_boards_required = 1
+
         super(SpiNNaker, self).__init__(
             configfile=self.CONFIG_FILE_NAME,
             executable_finder=executable_finder,
@@ -83,6 +86,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             database_socket_addresses=database_socket_addresses,
             extra_algorithm_xml_paths=extra_xml_paths,
             n_chips_required=n_chips_required,
+            n_boards_required=n_boards_required,
             default_config_paths=this_default_config_paths,
             validation_cfg=os.path.join(os.path.dirname(__file__),
                                         self.VALIDATION_CONFIG_NAME),
@@ -95,9 +99,6 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         self.update_extra_mapping_inputs(extra_mapping_inputs)
         self.prepend_extra_pre_run_algorithms(extra_pre_run_algorithms)
         self.extend_extra_post_run_algorithms(extra_post_run_algorithms)
-
-        if n_chips_required is None and _is_allocated_machine(self.config):
-            self.set_n_chips_required(SPALLOC_CORES)
 
         self.set_up_machine_specifics(host_name)
         self.set_up_timings(machine_time_step, time_scale_factor)
