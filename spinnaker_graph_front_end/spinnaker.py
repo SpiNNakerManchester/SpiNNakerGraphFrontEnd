@@ -75,10 +75,6 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         if default_config_paths is not None:
             this_default_config_paths.extend(default_config_paths)
 
-        if _is_allocated_machine(self.config) and \
-                n_chips_required is None and n_boards_required is None:
-            n_boards_required = 1
-
         super(SpiNNaker, self).__init__(
             configfile=self.CONFIG_FILE_NAME,
             executable_finder=executable_finder,
@@ -91,6 +87,10 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             validation_cfg=os.path.join(os.path.dirname(__file__),
                                         self.VALIDATION_CONFIG_NAME),
             front_end_versions=front_end_versions)
+
+        if _is_allocated_machine(self.config) and \
+                n_chips_required is None and n_boards_required is None:
+            self.set_n_boards_required(1)
 
         extra_mapping_inputs = dict()
         extra_mapping_inputs["CreateAtomToEventIdMapping"] = self.config.\
