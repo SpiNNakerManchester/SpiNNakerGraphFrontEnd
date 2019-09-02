@@ -47,7 +47,8 @@ __all__ = ['LivePacketGather', 'ReverseIpTagMultiCastSource', 'MachineEdge',
 def setup(hostname=None, graph_label=None, model_binary_module=None,
           model_binary_folder=None, database_socket_addresses=None,
           user_dsg_algorithm=None, n_chips_required=None,
-          extra_pre_run_algorithms=None, extra_post_run_algorithms=None,
+          n_boards_required=None, extra_pre_run_algorithms=None,
+          extra_post_run_algorithms=None,
           time_scale_factor=None, machine_time_step=None):
     """
     :param hostname:\
@@ -78,11 +79,15 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         algorithm required for the type of graph being used.
     :type user_dsg_algorithm: str
     :param n_chips_required:\
-        if you need to be allocated a machine (for spalloc) before building\
-        your graph, then fill this in with a general idea of the number of\
-        chips you need so that the spalloc system can allocate you a machine\
-        big enough for your needs.
+        Deprecated! Use n_boards_required instead.
+        Must be None if n_boards_required specified.
     :type n_chips_required: int or None
+    :param n_boards_required:\
+        if you need to be allocated a machine (for spalloc) before building\
+        your graph, then fill this in with a general idea of the number of
+        boards you need so that the spalloc system can allocate you a machine\
+        big enough for your needs.
+    :type n_boards_required: int or None
     :param extra_pre_run_algorithms:\
         algorithms which need to be ran after mapping and loading has occurred\
         but before the system has ran. These are plugged directly into the\
@@ -92,6 +97,8 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         algorithms which need to be ran after the simulation has ran. These\
         could be post processing of generated data on the machine for example.
     :type extra_pre_run_algorithms: list of str
+    :raises ConfigurationException if both n_chips_required and
+        n_boards_required are used.
     """
     global _none_labelled_vertex_count
     global _none_labelled_edge_count
@@ -123,6 +130,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         database_socket_addresses=database_socket_addresses,
         dsg_algorithm=user_dsg_algorithm,
         n_chips_required=n_chips_required,
+        n_boards_required=n_boards_required,
         extra_pre_run_algorithms=extra_pre_run_algorithms,
         extra_post_run_algorithms=extra_post_run_algorithms,
         machine_time_step=machine_time_step,
