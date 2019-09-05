@@ -40,7 +40,7 @@ __all__ = ['LivePacketGather', 'ReverseIpTagMultiCastSource', 'MachineEdge',
            'has_ran', 'machine_time_step',
            'get_number_of_available_cores_on_machine', 'no_machine_time_steps',
            'timescale_factor', 'machine_graph', 'application_graph',
-           'routing_infos', 'placements', 'transceiver', 'graph_mapper',
+           'routing_infos', 'placements', 'transceiver',
            'buffer_manager', 'machine', 'is_allocated_machine']
 
 
@@ -379,10 +379,6 @@ def transceiver():
 
 def tags():
     return _sim().tags
-
-
-def graph_mapper():
-    return _sim().graph_mapper
 
 
 def buffer_manager():
