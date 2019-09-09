@@ -178,8 +178,8 @@ static void update(uint ticks, uint b) {
         log_info("ISO unsigned accum 0 = %K", UREAL_CONST(0.0));
         log_info("ISO signed fract 0.9873 = %r", FRACT_CONST(0.9873));
         log_info("ISO signed fract 0 = %r", FRACT_CONST(0.0));
-        log_info("ISO unsigned fract 0.9873 = %r", FRACT_CONST(0.9873));
-        log_info("ISO unsigned fract 0 = %r", FRACT_CONST(0.0));
+        log_info("ISO unsigned fract 0.9873 = %R", FRACT_CONST(0.9873));
+        log_info("ISO unsigned fract 0 = %R", FRACT_CONST(0.0));
         log_info("Unsigned Decimal 12345 = %u", 12345);
         log_info("Unsigned Decimal 1 = %u", 1);
         log_info("unsigned Decimal 0 = %u", 0);
@@ -276,3 +276,4 @@ void c_main(void) {
 
     simulation_run();
 }
+fddfssdf
