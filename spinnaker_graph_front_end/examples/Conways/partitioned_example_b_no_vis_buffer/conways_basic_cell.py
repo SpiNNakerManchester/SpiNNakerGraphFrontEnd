@@ -20,7 +20,8 @@ from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, VariableSDRAM
 from pacman.utilities.utility_calls import is_single
-from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT
+from spinn_front_end_common.utilities.constants import (
+    SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
 from spinn_front_end_common.utilities.helpful_functions import (
     locate_memory_region_for_placement)
@@ -43,9 +44,10 @@ class ConwayBasicCell(
 
     PARTITION_ID = "STATE"
 
-    TRANSMISSION_DATA_SIZE = 2 * 4  # has key and key
-    STATE_DATA_SIZE = 1 * 4  # 1 or 2 based off dead or alive
-    NEIGHBOUR_INITIAL_STATES_SIZE = 2 * 4  # alive states, dead states
+    TRANSMISSION_DATA_SIZE = 2 * BYTES_PER_WORD  # has key and key
+    STATE_DATA_SIZE = BYTES_PER_WORD  # 1 or 2 based off dead or alive
+    # alive states, dead states
+    NEIGHBOUR_INITIAL_STATES_SIZE = 2 * BYTES_PER_WORD
     RECORDING_ELEMENT_SIZE = STATE_DATA_SIZE  # A recording of the state
 
     # Regions for populations
@@ -161,7 +163,7 @@ class ConwayBasicCell(
         return [
             bool(element)
             for element in struct.unpack(
-                "<{}I".format(len(raw_data) // 4), raw_data)]
+                "<{}I".format(len(raw_data) // BYTES_PER_WORD), raw_data)]
 
     @property
     @overrides(MachineVertex.resources_required)
