@@ -143,6 +143,8 @@ static void update(uint ticks, uint b) {
         log_info("Starting log examples");
         log_info("Float 1.0f as Hex: 3f800000 == %a", 1.0f);
         log_info("Double 1.0f as Hex: 3ff0000000000000 == %A", 1.0d);
+        log_info("Double inf as Hex == %A", 1/0.0d);
+        log_info("Double inf as Hex == %A", 1.0d/0.0d);
         log_info("Char: q == %c", 'q');
         log_info("Signed Decimal: 12345 = %d", 12345);
         log_info("Signed Decimal: 1 = %d", 1);
@@ -157,9 +159,9 @@ static void update(uint ticks, uint b) {
         log_info("Float: -0.000000000000043343 ~ %f", -0.000000000000043343f);
         log_info("Float: -2.0 = %f", -2.0f);
         log_info("Float: -434345454545522.453534 ~ %f", -434345454545522.453534f);
-        log_info("Float: 1/0 = %f", 1/0.0f);
-        log_info("Float: 0/0 = %f", 0/0.0f);
-        log_info("Float: -1/0 = %f", -1/0.0f);
+        log_info("Float: inf = %f", 1/0.0f);
+        log_info("Float: isnan %f", 0/0.0f);
+        log_info("Float: -inf = %f", -1/0.0f);
         log_info("Double: 21213433434.342134342 ~ %F", 21213433434.342134342d);
         log_info("Double: 1.0 = %F", 1.0d);
         log_info("Double: 0.000000000000043343 ~ %F", 0.000000000000043343d);
@@ -167,9 +169,9 @@ static void update(uint ticks, uint b) {
         log_info("Double: -0.000000000000043343 ~ %F", -0.000000000000043343d);
         log_info("Double: -2.0 = %F", -2.0d);
         log_info("Double: -434345454545522.453534 ~ %F", -434345454545522.453534f);
-        log_info("Double: 1/0 = %d", 1/0.0d);
-        log_info("Double: 0/0 = %d", 0/0.0d);
-        log_info("Double: -1/0 = %d", -1/0.0d);
+        log_info("Double: inf = %F", 1/0.0d);
+        log_info("Double: isnan %F", 0/0.0d);
+        log_info("Double: -inf = %F", -1/0.0d);
         log_info("ISO signed accum: 12.34 = %k", REAL_CONST(12.34));
         log_info("ISO signed accum: -44312.3344 = %k", REAL_CONST(-44312.3344));
         log_info("ISO signed accum: 0 = %k", REAL_CONST(0.0));

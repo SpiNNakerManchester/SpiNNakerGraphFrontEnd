@@ -47,6 +47,7 @@ class TestLoggerExample(unittest.TestCase):
             print("pass")
         elif "=" in check:
             tokens = check.split("=")
+            print(tokens[1].strip())
             self.assertEquals(
                 float(tokens[0].strip()), float(tokens[1].strip()))
             print("pass")
@@ -55,6 +56,8 @@ class TestLoggerExample(unittest.TestCase):
             assert self.near_equals(
                 float(tokens[0].strip()), float(tokens[1].strip()))
             print("pass")
+        #elif "isnan" in check:
+        #    target =
         else:
             print("todo")
 
