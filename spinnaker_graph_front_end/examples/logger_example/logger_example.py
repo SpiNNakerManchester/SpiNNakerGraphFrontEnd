@@ -25,7 +25,8 @@ We then fetch the written data and print it on the python console.
 import logging
 import os
 import spinnaker_graph_front_end as front_end
-from spinnaker_graph_front_end.examples.logger_example.logger_example_vertex import LoggerExampleVertex
+from spinnaker_graph_front_end.examples.logger_example.logger_example_vertex \
+    import LoggerExampleVertex
 
 logger = logging.getLogger(__name__)
 
