@@ -140,6 +140,13 @@ static void update(uint ticks, uint b) {
             recording_finalise();
         }
 
+        // These log statements serve both as examples as an integration test
+        // See gfe_integration_tests\test_logger_example.py
+        // Lines with : x == y are checked for String Equality
+        // Lines with : x = y are checked for numerical equality
+        // Lines with : x ~ y are check with a near equals function
+        // Lines with : isnan y are you quessed it check for NAN
+        // Lines without a : are run but with no checking of the results
         log_info("Starting log examples");
         log_info("Float 1.0f as Hex: 3f800000 == %a", 1.0f);
         log_info("Double 1.0f as Hex: 3ff0000000000000 == %A", 1.0d);
@@ -172,15 +179,16 @@ static void update(uint ticks, uint b) {
         log_info("Double: inf = %F", 1/0.0d);
         log_info("Double: isnan %F", 0/0.0d);
         log_info("Double: -inf = %F", -1/0.0d);
-        log_info("ISO signed accum: 12.34 = %k", REAL_CONST(12.34));
-        log_info("ISO signed accum: -44312.3344 = %k", REAL_CONST(-44312.3344));
+        log_info("ISO signed accum: 12.34 ~ %k", REAL_CONST(12.34));
+        log_info("ISO signed accum: -44312.3344 ~ %k", REAL_CONST(-44312.3344));
         log_info("ISO signed accum: 0 = %k", REAL_CONST(0.0));
-        log_info("ISO unsigned accum: 3245.33 = %K", UREAL_CONST(3245.33));
-        log_info("ISO unsigned accum: 55545.4334 = %K", UREAL_CONST(55545.4334));
+        log_info("ISO unsigned accum: 3245.33 ~ %K", UREAL_CONST(3245.33));
+        log_info("ISO unsigned accum: 55545.4334 ~ %K", UREAL_CONST(55545.4334));
         log_info("ISO unsigned accum: 0 = %K", UREAL_CONST(0.0));
-        log_info("ISO signed fract: 0.9873 = %r", FRACT_CONST(0.9873));
+        log_info("ISO signed fract: 0.9873 ~ %r", FRACT_CONST(0.9873));
+        log_info("ISO signed fract: -0.0073 ~ %r", FRACT_CONST(-0.0073));
         log_info("ISO signed fract: 0 = %r", FRACT_CONST(0.0));
-        log_info("ISO unsigned fract: 0.9873 = %R", FRACT_CONST(0.9873));
+        log_info("ISO unsigned fract: 0.9873 ~ %R", FRACT_CONST(0.9873));
         log_info("ISO unsigned fract: 0 = %R", FRACT_CONST(0.0));
         log_info("Unsigned Decimal: 12345 = %u", 12345);
         log_info("Unsigned Decimal: 1 = %u", 1);

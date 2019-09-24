@@ -28,7 +28,7 @@ class TestLoggerExample(unittest.TestCase):
         if diff == 0:
             return True
         ratio = diff / a
-        return abs(ratio) < 0.0000001
+        return abs(ratio) < 0.0001
 
     def check_line(self, line):
         print(line)
