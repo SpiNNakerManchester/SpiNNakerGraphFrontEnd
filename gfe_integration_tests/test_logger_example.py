@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import math
 import os
 import unittest
 from spinn_front_end_common.utilities import globals_variables
@@ -31,41 +32,32 @@ class TestLoggerExample(unittest.TestCase):
         return abs(ratio) < 0.0001
 
     def check_line(self, line):
-        print(line)
         if "logger_example.c" not in line:
             print("OTHER")
             return
         parts = line.split(":")
         if len(parts) != 4:
-            print("size {}".format(len(parts)))
             return
         check = parts[3]
-        print(check)
         if "==" in check:
             tokens = check.split("==")
             self.assertEquals(tokens[0].strip(), tokens[1].strip())
-            print("pass")
         elif "=" in check:
             tokens = check.split("=")
-            print(tokens[1].strip())
             self.assertEquals(
                 float(tokens[0].strip()), float(tokens[1].strip()))
-            print("pass")
         elif "~" in check:
             tokens = check.split("~")
             assert self.near_equals(
                 float(tokens[0].strip()), float(tokens[1].strip()))
-            print("pass")
-        #elif "isnan" in check:
-        #    target =
-        else:
-            print("todo")
+        elif "isnan" in check:
+            tokens = check.split("~")
+            assert math.isnan(tokens[-1])
 
     def test_logger_example(self):
         import spinnaker_graph_front_end.examples.logger_example as le_dir
         class_file = le_dir.__file__
         path = os.path.dirname(os.path.abspath(class_file))
-        print(path)
         os.chdir(path)
         import spinnaker_graph_front_end.examples.logger_example.logger_example  # NOQA
         report_directory = globals_variables.get_simulator().\
