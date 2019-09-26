@@ -33,7 +33,8 @@ EXCLUSIONS = ["spinnaker_graph_front_end.examples.Conways."
 
               "spinnaker_graph_front_end.examples.hello_world.hello_world",
 
-              "spinnaker_graph_front_end.examples.logger_example.logger_example",
+              "spinnaker_graph_front_end.examples.logger_example."
+              "logger_example",
 
               "spinnaker_graph_front_end.examples.template.python_template",
 
