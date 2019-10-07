@@ -134,8 +134,8 @@ static bool initialise_recording(void) {
 
     uint32_t words_read = 0;
     bool success = recording_initialize(
-	    data_specification_get_region(RECORDED_DATA, data, &words_read),
-            &recording_flags);
+	    data_specification_get_region(RECORDED_DATA, data),
+            &recording_flags, &words_read);
     log_info("Recording flags = 0x%08x", recording_flags);
     return success;
 }
