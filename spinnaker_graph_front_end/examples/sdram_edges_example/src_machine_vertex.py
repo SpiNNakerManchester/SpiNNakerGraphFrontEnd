@@ -16,10 +16,12 @@ from enum import Enum
 
 from pacman.model.graphs.abstract_sdram_partition import AbstractSDRAMPartition
 from pacman.model.resources import ResourceContainer, ConstantSDRAM
-from spinn_front_end_common.abstract_models.impl import MachineDataSpecableVertex
+from spinn_front_end_common.abstract_models.impl import (
+    MachineDataSpecableVertex)
 from spinnaker_graph_front_end.utilities import SimulatorVertex
 from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT
-from spinnaker_graph_front_end.utilities.data_utils import generate_system_data_region
+from spinnaker_graph_front_end.utilities.data_utils import (
+    generate_system_data_region)
 
 
 class SrcMachineVertex(SimulatorVertex, MachineDataSpecableVertex):
@@ -35,16 +37,21 @@ class SrcMachineVertex(SimulatorVertex, MachineDataSpecableVertex):
 
     @property
     def resources_required(self):
-        resources = ResourceContainer(sdram=ConstantSDRAM(SYSTEM_BYTES_REQUIREMENT + 8))
+        resources = ResourceContainer(
+            sdram=ConstantSDRAM(SYSTEM_BYTES_REQUIREMENT + 8))
         return resources
 
-    def generate_machine_data_specification(self, spec, placement, machine_graph, routing_info, iptags, reverse_iptags,
-                                            machine_time_step, time_scale_factor):
+    def generate_machine_data_specification(
+            self, spec, placement, machine_graph, routing_info, iptags,
+            reverse_iptags, machine_time_step, time_scale_factor):
 
         # Generate the system data region for simulation .c requirements
-        generate_system_data_region(spec, self.DATA_REGIONS.SYSTEM.value, self, machine_time_step, time_scale_factor)
+        generate_system_data_region(
+            spec, self.DATA_REGIONS.SYSTEM.value, self, machine_time_step,
+            time_scale_factor)
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.THE_BACON_PATH.value, size=8, label="the bacon path")
+            region=self.DATA_REGIONS.THE_BACON_PATH.value, size=8,
+            label="the bacon path")
         spec.switch_write_focus(self.DATA_REGIONS.THE_BACON_PATH.value)
 
         for edge in machine_graph.get_edges_starting_at_vertex(self):
