@@ -60,7 +60,8 @@ class DestMachineVertex(SimulatorVertex, MachineDataSpecableVertex):
                 if edge.traffic_type == EdgeTrafficType.SDRAM:
                     sdram_partition = (
                         machine_graph.get_outgoing_partition_for_edge(edge))
-                    spec.switch_write_focus(self.REGIONS.SDRAM_EDGE.value)
+                    spec.switch_write_focus(
+                        self.DATA_REGIONS.THE_BACON_PATH.value)
                     spec.write_value(sdram_partition.sdram_base_address)
                     spec.write_value(
                         sdram_partition.total_sdram_requirements())

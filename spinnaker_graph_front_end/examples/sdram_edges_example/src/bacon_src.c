@@ -36,6 +36,7 @@ static uint32_t recording_flags = 0;
 
 //! the SDRAM base address in the
 static address_t sdram_address;
+static uint32_t total_size;
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
@@ -91,7 +92,14 @@ static void update(uint ticks, uint b) {
         return;
     }
 
+    if (time == 5){
+        sdram_address[0] = 4;
+        sdram_address[1] = 4;
+    }
 
+    log_info(
+        "data in sdram 0 is %d, and sdram 1 is %d",
+        sdram_address[0], sdram_address[1]);
 }
 
 static bool initialize(uint32_t *timer_period) {
@@ -114,8 +122,9 @@ static bool initialize(uint32_t *timer_period) {
         return false;
     }
 
-
-
+    address_t sdram_data = data_specification_get_region(BACON, data);
+    sdram_address = (address_t) sdram_data[0];
+    total_size = sdram_data[1];
     return true;
 }
 

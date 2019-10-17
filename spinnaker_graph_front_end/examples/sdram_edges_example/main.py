@@ -19,6 +19,7 @@ import spinnaker_graph_front_end as front_end
 from pacman.model.graphs.common import EdgeTrafficType
 from pacman.model.graphs.impl import ConstantSDRAMMachinePartition
 from pacman.model.graphs.machine import MachineEdge
+from pacman.model.graphs.machine.machine_sdram_edge import SDRAMMachineEdge
 from spinn_front_end_common.utilities.globals_variables import get_simulator
 from spinnaker_graph_front_end.examples.sdram_edges_example.src_machine_vertex import SrcMachineVertex
 from spinnaker_graph_front_end.examples.sdram_edges_example.dest_machine_vertex import DestMachineVertex
@@ -33,9 +34,12 @@ dest = DestMachineVertex(label="ise")
 front_end.add_machine_vertex_instance(src)
 front_end.add_machine_vertex_instance(dest)
 
-get_simulator().original_machine_graph().add_outgoing_edge_partition(ConstantSDRAMMachinePartition(
-    identifier="the bacon path", pre_vertex=src, label="the sdram partition for the bacon path"))
-front_end.add_machine_edge_instance(MachineEdge(src, dest, traffic_type=EdgeTrafficType.SDRAM), "the bacon path")
+get_simulator().original_machine_graph.add_outgoing_edge_partition(
+    ConstantSDRAMMachinePartition(
+        identifier="the bacon path", pre_vertex=src,
+        label="the sdram partition for the bacon path"))
+front_end.add_machine_edge_instance(SDRAMMachineEdge(
+    src, dest, sdram_size=8, label="the brown bacon road"), "the bacon path")
 
 front_end.run(200)
 front_end.stop()

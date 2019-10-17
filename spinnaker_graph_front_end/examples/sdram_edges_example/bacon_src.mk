@@ -18,6 +18,7 @@ APP = bacon_src
 SOURCES = bacon_src.c
 
 CFLAGS += -DSPINNAKER -Wshadow
-FEC_OPT = $(OSPACE)
 
-include ../fec_models.mk
+APP_OUTPUT_DIR := $(abspath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))/
+
+include $(SPINN_DIRS)/make/local.mk
