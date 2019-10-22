@@ -23,6 +23,23 @@
 #include <simulation.h>
 #include <debug.h>
 
+//! Provenance data store
+typedef struct sdram_block {
+    address_t sdram_address;
+    uint32_t total_size;
+} sdram_block;
+
+//! Provenance data store
+typedef struct consant_sdram_blocks {
+    uint32_t n_consant_sdram_partitions;
+    sdram_block blocks [];
+} consant_sdram_blocks;
+
+typedef struct seg_sdram_blocks {
+    uint32_t n_seg_sdram_partitions;
+    sdram_block blocks [];
+} seg_sdram_blocks;
+
 //! control value, which says how many timer ticks to run for before exiting
 static uint32_t simulation_ticks = 0;
 static uint32_t infinite_run = 0;
@@ -35,13 +52,14 @@ static uint32_t infinite_run;
 static uint32_t recording_flags = 0;
 
 //! the SDRAM base address in the
-static address_t sdram_address;
-static uint32_t total_size;
+static address_t *constant_sdram_addresses;
+static uint32_t *constatotal_sizes;
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
     SYSTEM_REGION,
-    BACON = 4
+    BACON = 4,
+    SEG_BACON = 5
 } regions_e;
 
 //! values for the priority for each callback

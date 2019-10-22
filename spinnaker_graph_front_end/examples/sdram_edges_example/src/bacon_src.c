@@ -23,6 +23,23 @@
 #include <simulation.h>
 #include <debug.h>
 
+//! Provenance data store
+typedef struct sdram_block {
+    address_t sdram_address;
+    uint32_t total_size;
+} sdram_block;
+
+//! Provenance data store
+typedef struct consant_sdram_blocks {
+    uint32_t n_consant_sdram_partitions;
+    sdram_block blocks [];
+} consant_sdram_blocks;
+
+typedef struct seg_sdram_blocks {
+    uint32_t n_seg_sdram_partitions;
+    sdram_block blocks [];
+} seg_sdram_blocks;
+
 //! control value, which says how many timer ticks to run for before exiting
 static uint32_t simulation_ticks = 0;
 static uint32_t infinite_run = 0;
@@ -35,13 +52,14 @@ static uint32_t infinite_run;
 static uint32_t recording_flags = 0;
 
 //! the SDRAM base address in the
-static address_t sdram_address;
-static uint32_t total_size;
+consant_sdram_blocks *constant;
+seg_sdram_blocks *segmented;
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
     SYSTEM_REGION,
-    BACON = 4
+    BACON = 4,
+    SEG_BACON = 5,
 } regions_e;
 
 //! values for the priority for each callback
@@ -92,14 +110,51 @@ static void update(uint ticks, uint b) {
         return;
     }
 
-    if (time == 5){
-        sdram_address[0] = 4;
-        sdram_address[1] = 4;
+    if (time == 5) {
+        for (uint32_t constant_sdram_id = 0;
+                constant_sdram_id < constant->n_consant_sdram_partitions;
+                constant_sdram_id ++){
+            uint32_t words = (
+                constant->blocks[constant_sdram_id].total_size / 4);
+            for (uint32_t word_id = 0; word_id < words; word_id ++) {
+                constant->blocks[constant_sdram_id].sdram_address[word_id] = 4;
+            }
+        }
+
+        for (uint32_t segmented_sdram_id = 0;
+                segmented_sdram_id < segmented->n_seg_sdram_partitions;
+                segmented_sdram_id ++) {
+            uint32_t words = (
+                segmented->blocks[segmented_sdram_id].total_size / 4);
+            for (uint32_t word_id = 0; word_id < words; word_id ++){
+                segmented->blocks[segmented_sdram_id].sdram_address[
+                    word_id] = 4;
+            }
+        }
     }
 
-    log_info(
-        "data in sdram 0 is %d, and sdram 1 is %d",
-        sdram_address[0], sdram_address[1]);
+    for (uint32_t constant_sdram_id = 0;
+            constant_sdram_id < constant->n_consant_sdram_partitions;
+            constant_sdram_id ++) {
+        uint32_t words = constant->blocks[constant_sdram_id].total_size / 4;
+        for (uint32_t word_id = 0; word_id < words; word_id ++) {
+            log_info(
+                "data in constant sdram region %d for word %d, is %d",
+                constant_sdram_id, word_id,
+                constant->blocks[constant_sdram_id].sdram_address[word_id]);
+        }
+    }
+
+    for (uint32_t seg_sdram_id = 0;
+            seg_sdram_id < segmented->n_seg_sdram_partitions; seg_sdram_id ++) {
+        uint32_t words = segmented->blocks[seg_sdram_id].total_size / 4;
+        for (uint32_t word_id = 0; word_id < words; word_id ++) {
+            log_info(
+                "data in segmented sdram region %d for word %d, is %d",
+                seg_sdram_id, word_id,
+                segmented->blocks[seg_sdram_id].sdram_address[word_id]);
+        }
+    }
 }
 
 static bool initialize(uint32_t *timer_period) {
@@ -122,9 +177,8 @@ static bool initialize(uint32_t *timer_period) {
         return false;
     }
 
-    address_t sdram_data = data_specification_get_region(BACON, data);
-    sdram_address = (address_t) sdram_data[0];
-    total_size = sdram_data[1];
+    constant = data_specification_get_region(BACON, data);
+    segmented = data_specification_get_region(SEG_BACON, data);
     return true;
 }
 

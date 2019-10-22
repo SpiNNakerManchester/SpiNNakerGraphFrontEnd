@@ -257,6 +257,70 @@ def _new_edge_label():
     return label
 
 
+def add_application_outgoing_partition(
+        outgoing_partition_type, partition_parameters, label=None):
+    """ adds a application outgoing partition to the app graph
+
+    :param outgoing_partition_type: partition type
+    :param partition_parameters: inputs to the partition
+    :param label: human readable label for the partition
+    :return: the outgoing partition
+    """
+    # correct label if needed
+    if label is None and 'label' not in partition_parameters:
+        partition_parameters['label'] = _new_edge_label()
+    elif ('label' in partition_parameters and
+          partition_parameters['label'] is None):
+        partition_parameters['label'] = _new_edge_label()
+    elif label is not None:
+        partition_parameters['label'] = label
+
+    outgoing_partition = outgoing_partition_type(**partition_parameters)
+    add_application_outgoing_partition_instance(outgoing_partition)
+    return outgoing_partition
+
+
+def add_application_outgoing_partition_instance(outgoing_partition):
+    """ adds a application partition into the application graph
+
+    :param outgoing_partition: the outgoing partition
+    :rtype: None
+    """
+    _sim().add_application_outgoing_partition(outgoing_partition)
+
+
+def add_machine_outgoing_partition(
+        outgoing_partition_type, partition_parameters, label=None):
+    """ adds a machine outgoing partition to the machine graph
+
+    :param outgoing_partition_type: partition type
+    :param partition_parameters: inputs to the partition
+    :param label: human readable label for the partition
+    :return: the outgoing partition
+    """
+    # correct label if needed
+    if label is None and 'label' not in partition_parameters:
+        partition_parameters['label'] = _new_edge_label()
+    elif ('label' in partition_parameters and
+          partition_parameters['label'] is None):
+        partition_parameters['label'] = _new_edge_label()
+    elif label is not None:
+        partition_parameters['label'] = label
+
+    outgoing_partition = outgoing_partition_type(**partition_parameters)
+    add_machine_outgoing_partition_instance(outgoing_partition)
+    return outgoing_partition
+
+
+def add_machine_outgoing_partition_instance(outgoing_partition):
+    """ adds a machine partition into the machine graph
+
+    :param outgoing_partition: the outgoing partition
+    :rtype: None
+    """
+    _sim().add_machine_outgoing_partition(outgoing_partition)
+
+
 def add_edge(edge_type, edge_parameters, semantic_label, label=None):
     """ Create an application edge and add it to the unpartitioned graph.
 

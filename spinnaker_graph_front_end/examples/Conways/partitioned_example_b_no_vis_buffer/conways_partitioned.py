@@ -14,7 +14,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from pacman.model.graphs.machine import MachineEdge
+from pacman.model.graphs.machine import MachineEdge, \
+    MachineOutgoingEdgePartition
 import spinnaker_graph_front_end as front_end
 from spinnaker_graph_front_end.examples.Conways.\
     partitioned_example_b_no_vis_buffer.conways_basic_cell import (
@@ -63,6 +64,12 @@ print("\n\n")
 # build edges
 for x in range(0, MAX_X_SIZE_OF_FABRIC):
     for y in range(0, MAX_Y_SIZE_OF_FABRIC):
+
+        # add outgoing partition
+        front_end.add_machine_outgoing_partition_instance(
+            MachineOutgoingEdgePartition(
+                identifier=ConwayBasicCell.PARTITION_ID,
+                pre_vertex=vertices[x][y]))
 
         positions = [
             (x, (y + 1) % MAX_Y_SIZE_OF_FABRIC, "N"),
