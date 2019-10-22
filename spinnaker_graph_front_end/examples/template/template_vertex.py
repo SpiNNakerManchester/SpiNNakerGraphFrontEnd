@@ -19,7 +19,8 @@ from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
 from pacman.model.resources import ResourceContainer, VariableSDRAM
-from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT
+from spinn_front_end_common.utilities.constants import (
+    SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
 from spinn_front_end_common.utilities.helpful_functions import (
     locate_memory_region_for_placement)
 from spinn_front_end_common.abstract_models.impl import (
@@ -42,7 +43,7 @@ class TemplateVertex(
         AbstractReceiveBuffersToHost):
 
     # The number of bytes for the has_key flag and the key
-    TRANSMISSION_REGION_N_BYTES = 2 * 4
+    TRANSMISSION_REGION_N_BYTES = 2 * BYTES_PER_WORD
 
     # The number of bytes recorded per timestep - currently 0 in C code
     N_RECORDED_PER_TIMESTEP = 0
