@@ -15,8 +15,9 @@
 from enum import Enum
 
 from pacman.executor.injection_decorator import inject_items
-from pacman.model.graphs.impl import DestinationSegmentedSDRAMMachinePartition, \
-    ConstantSDRAMMachinePartition
+from pacman.model.graphs.machine import (
+    DestinationSegmentedSDRAMMachinePartition,
+    ConstantSDRAMMachinePartition, SourceSegmentedSDRAMMachinePartition)
 from pacman.model.resources import ResourceContainer, ConstantSDRAM
 from spinn_front_end_common.abstract_models.impl import (
     MachineDataSpecableVertex)
@@ -33,10 +34,12 @@ class SrcMachineVertex(SimulatorVertex, MachineDataSpecableVertex):
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
                ('THE_BACON_PATH', 4),
-               ('THE_SEGMENTED_BACON_PATH', 5)])
+               ('THE_SEGMENTED_BACON_PATH', 5),
+               ("THE_SOURCE_SEGMENTED_BACON", 6)])
 
     BYTES_PER_SDRAM_PARTITION = 8
     BYTES_PER_COUNT = 4
+    N_SDRAM_REGIONS = 3
 
     def __init__(self, label=None, constraints=None):
         SimulatorVertex.__init__(self, label, "bacon_src.aplx", constraints)
@@ -52,7 +55,8 @@ class SrcMachineVertex(SimulatorVertex, MachineDataSpecableVertex):
             machine_graph.get_costed_edge_partitions_starting_at_vertex(self))
         resources = ResourceContainer(
             sdram=ConstantSDRAM(
-                SYSTEM_BYTES_REQUIREMENT + (self.BYTES_PER_COUNT * 2) +
+                SYSTEM_BYTES_REQUIREMENT +
+                (self.BYTES_PER_COUNT * self.N_SDRAM_REGIONS) +
                 (n_sdram_partitions * self.BYTES_PER_SDRAM_PARTITION)))
         return resources
 
@@ -63,8 +67,8 @@ class SrcMachineVertex(SimulatorVertex, MachineDataSpecableVertex):
         for partition in (
                 graph.get_costed_edge_partitions_starting_at_vertex(self)):
             if isinstance(partition, partition_type):
-                spec.write_value(partition.sdram_base_address)
-                spec.write_value(partition.total_sdram_requirements())
+                spec.write_value(partition.get_sdram_base_address_for(self))
+                spec.write_value(partition.get_sdram_size_of_region_for(self))
 
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
@@ -77,6 +81,7 @@ class SrcMachineVertex(SimulatorVertex, MachineDataSpecableVertex):
 
         constant_partitions = 0
         segmented_partitions = 0
+        source_segmented_partitions = 0
         for partition in (
                 machine_graph.get_costed_edge_partitions_starting_at_vertex(
                     self)):
@@ -84,6 +89,8 @@ class SrcMachineVertex(SimulatorVertex, MachineDataSpecableVertex):
                 segmented_partitions += 1
             elif isinstance(partition, ConstantSDRAMMachinePartition):
                 constant_partitions += 1
+            elif isinstance(partition, SourceSegmentedSDRAMMachinePartition):
+                source_segmented_partitions += 1
             else:
                 raise Exception("WHAT DID YOU DO CHIMP!")
 
@@ -97,6 +104,12 @@ class SrcMachineVertex(SimulatorVertex, MachineDataSpecableVertex):
             size=((segmented_partitions * self.BYTES_PER_SDRAM_PARTITION) +
                   self.BYTES_PER_COUNT),
             label="the seged bacon path")
+        spec.reserve_memory_region(
+            region=self.DATA_REGIONS.THE_SOURCE_SEGMENTED_BACON.value,
+            size=(
+                (source_segmented_partitions *
+                 self.BYTES_PER_SDRAM_PARTITION) + self.BYTES_PER_COUNT),
+            label="the source seged bacon path")
 
         self._set_sdram_region_data(
             spec, self.DATA_REGIONS.THE_BACON_PATH.value, constant_partitions,
@@ -104,6 +117,10 @@ class SrcMachineVertex(SimulatorVertex, MachineDataSpecableVertex):
         self._set_sdram_region_data(
             spec, self.DATA_REGIONS.THE_SEGMENTED_BACON_PATH.value,
             segmented_partitions, DestinationSegmentedSDRAMMachinePartition,
+            machine_graph)
+        self._set_sdram_region_data(
+            spec, self.DATA_REGIONS.THE_SOURCE_SEGMENTED_BACON.value,
+            source_segmented_partitions, SourceSegmentedSDRAMMachinePartition,
             machine_graph)
 
         spec.end_specification()
