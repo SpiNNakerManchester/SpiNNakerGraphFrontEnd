@@ -45,24 +45,32 @@ dest3 = DestMachineVertex(label="ise3")
 front_end.add_machine_vertex_instance(src3)
 front_end.add_machine_vertex_instance(dest3)
 
-# const
+# const 1 to 1
 front_end.add_machine_outgoing_partition_instance(
     ConstantSDRAMMachinePartition(
         identifier="the bacon path", pre_vertex=src,
         label="the sdram partition for the bacon path"))
+
+# const many to 1
+front_end.add_machine_outgoing_partition_instance(
+    ConstantSDRAMMachinePartition(
+        identifier="the bacon path2", pre_vertex=src,
+        label="the sdram partition for the bacon path2"))
 front_end.add_machine_outgoing_partition_instance(
     ConstantSDRAMMachinePartition(
         identifier="the bacon path2", pre_vertex=src2,
         label="the sdram partition for the bacon path2"))
+
+# const 1 to many
 front_end.add_machine_outgoing_partition_instance(
     ConstantSDRAMMachinePartition(
-        identifier="the bacon path3", pre_vertex=src3,
+        identifier="the bacon path3", pre_vertex=src,
         label="the sdram partition for the bacon path3"))
 
 # dest seg
 front_end.add_machine_outgoing_partition_instance(
     DestinationSegmentedSDRAMMachinePartition(
-        identifier="the bacon path4", pre_vertex=src3,
+        identifier="the bacon path4", pre_vertex=src,
         label="the sdram partition for the bacon path4"))
 
 # src seg
@@ -85,13 +93,14 @@ front_end.add_machine_edge_instance(SDRAMMachineEdge(
 front_end.add_machine_edge_instance(SDRAMMachineEdge(
     src, dest, sdram_size=8, label="the brown bacon road"), "the bacon path3")
 front_end.add_machine_edge_instance(SDRAMMachineEdge(
-    src2, dest, sdram_size=8, label="the brown bacon road"), "the bacon path3")
+    src, dest2, sdram_size=8, label="the brown bacon road"), "the bacon path3")
+
 
 # segmented 1 to many
 front_end.add_machine_edge_instance(SDRAMMachineEdge(
     src, dest, sdram_size=24, label="the brown bacon road"), "the bacon path4")
 front_end.add_machine_edge_instance(SDRAMMachineEdge(
-    src2, dest, sdram_size=8, label="the brown bacon road"), "the bacon path4")
+    src, dest2, sdram_size=8, label="the brown bacon road"), "the bacon path4")
 
 # segmented many to 1
 front_end.add_machine_edge_instance(SDRAMMachineEdge(

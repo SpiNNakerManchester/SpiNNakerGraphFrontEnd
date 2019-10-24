@@ -30,15 +30,11 @@ typedef struct sdram_block {
 } sdram_block;
 
 //! Provenance data store
-typedef struct consant_sdram_blocks {
-    uint32_t n_consant_sdram_partitions;
+typedef struct sdram_blocks {
+    uint32_t n_sdram_partitions;
     sdram_block blocks [];
-} consant_sdram_blocks;
+} sdram_blocks;
 
-typedef struct seg_sdram_blocks {
-    uint32_t n_seg_sdram_partitions;
-    sdram_block blocks [];
-} seg_sdram_blocks;
 
 //! control value, which says how many timer ticks to run for before exiting
 static uint32_t simulation_ticks = 0;
@@ -52,14 +48,16 @@ static uint32_t infinite_run;
 static uint32_t recording_flags = 0;
 
 //! the SDRAM base address in the
-static address_t *constant_sdram_addresses;
-static uint32_t *constatotal_sizes;
+sdram_blocks *constant;
+sdram_blocks *segmented;
+sdram_blocks *source_segmented;
 
 //! human readable definitions of each region in SDRAM
 typedef enum regions_e {
     SYSTEM_REGION,
     BACON = 4,
-    SEG_BACON = 5
+    SEG_BACON = 5,
+    SOURCE_SEG_BACON = 6
 } regions_e;
 
 //! values for the priority for each callback
@@ -73,6 +71,10 @@ typedef enum callback_priorities {
 static void resume_callback(void) {
     time = UINT32_MAX;
 }
+
+#define MAGIC_CONSTANT 4
+#define BYTES_TO_WORD_MULTIPLIER 4
+
 
 /****f*
  *
@@ -110,14 +112,90 @@ static void update(uint ticks, uint b) {
         return;
     }
 
-    if (time == 15){
-        sdram_address[0] = sdram_address[0] * 4;
-        sdram_address[1] = sdram_address[0] * 4;
+    if (time == 15) {
+        for (uint32_t constant_sdram_id = 0;
+                constant_sdram_id < constant->n_sdram_partitions;
+                constant_sdram_id ++){
+            uint32_t words = (
+                constant->blocks[constant_sdram_id].total_size /
+                BYTES_TO_WORD_MULTIPLIER);
+            for (uint32_t word_id = 0; word_id < words; word_id ++) {
+                constant->blocks[constant_sdram_id].sdram_address[word_id] = (
+                    constant->blocks[constant_sdram_id].sdram_address[
+                        word_id] * MAGIC_CONSTANT);
+            }
+        }
+
+        for (uint32_t segmented_sdram_id = 0;
+                segmented_sdram_id < segmented->n_sdram_partitions;
+                segmented_sdram_id ++) {
+            uint32_t words = (
+                segmented->blocks[segmented_sdram_id].total_size /
+                BYTES_TO_WORD_MULTIPLIER);
+            for (uint32_t word_id = 0; word_id < words; word_id ++){
+                segmented->blocks[segmented_sdram_id].sdram_address[word_id] = (
+                    segmented->blocks[segmented_sdram_id].sdram_address[
+                        word_id] * MAGIC_CONSTANT);
+            }
+        }
     }
 
-    log_info(
-        "data in sdram 0 is %d, and sdram 1 is %d",
-        sdram_address[0], sdram_address[1]);
+    if(time == 25) {
+        for (uint32_t src_segmented_sdram_id = 0;
+                src_segmented_sdram_id < source_segmented->n_sdram_partitions;
+                src_segmented_sdram_id ++) {
+            uint32_t words = (
+                segmented->blocks[src_segmented_sdram_id].total_size /
+                BYTES_TO_WORD_MULTIPLIER);
+            for (uint32_t word_id = 0; word_id < words; word_id ++){
+                source_segmented->blocks[src_segmented_sdram_id].sdram_address[
+                    word_id] = (source_segmented->blocks[
+                        src_segmented_sdram_id].sdram_address[word_id] *
+                            MAGIC_CONSTANT);
+            }
+        }
+    }
+
+    for (uint32_t constant_sdram_id = 0;
+            constant_sdram_id < constant->n_sdram_partitions;
+            constant_sdram_id ++) {
+        uint32_t words = (
+            constant->blocks[constant_sdram_id].total_size /
+            BYTES_TO_WORD_MULTIPLIER);
+        for (uint32_t word_id = 0; word_id < words; word_id ++) {
+            log_info(
+                "data in constant sdram region %d for word %d, is %d",
+                constant_sdram_id, word_id,
+                constant->blocks[constant_sdram_id].sdram_address[word_id]);
+        }
+    }
+
+    for (uint32_t seg_sdram_id = 0;
+            seg_sdram_id < source_segmented->n_sdram_partitions;
+            seg_sdram_id ++) {
+        uint32_t words = (
+            source_segmented->blocks[seg_sdram_id].total_size /
+            BYTES_TO_WORD_MULTIPLIER);
+        for (uint32_t word_id = 0; word_id < words; word_id ++) {
+            log_info(
+                "data in source_segmented sdram region %d for word %d, is %d",
+                seg_sdram_id, word_id,
+                source_segmented->blocks[seg_sdram_id].sdram_address[word_id]);
+        }
+    }
+
+    for (uint32_t seg_sdram_id = 0;
+            seg_sdram_id < segmented->n_sdram_partitions; seg_sdram_id ++) {
+        uint32_t words = (
+            segmented->blocks[seg_sdram_id].total_size /
+            BYTES_TO_WORD_MULTIPLIER);
+        for (uint32_t word_id = 0; word_id < words; word_id ++) {
+            log_info(
+                "data in segmented sdram region %d for word %d, is %d",
+                seg_sdram_id, word_id,
+                segmented->blocks[seg_sdram_id].sdram_address[word_id]);
+        }
+    }
 }
 
 static bool initialize(uint32_t *timer_period) {
@@ -140,9 +218,10 @@ static bool initialize(uint32_t *timer_period) {
         return false;
     }
 
-    address_t sdram_data = data_specification_get_region(BACON, data);
-    sdram_address = (address_t) sdram_data[0];
-    total_size = sdram_data[1];
+    constant = data_specification_get_region(BACON, data);
+    segmented = data_specification_get_region(SEG_BACON, data);
+    source_segmented = data_specification_get_region(SOURCE_SEG_BACON, data);
+
     return true;
 }
 
