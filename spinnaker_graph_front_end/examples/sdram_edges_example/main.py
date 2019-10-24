@@ -16,10 +16,9 @@
 import logging
 import os
 import spinnaker_graph_front_end as front_end
-from pacman.model.graphs.impl import ConstantSDRAMMachinePartition, \
-    DestinationSegmentedSDRAMMachinePartition
-from pacman.model.graphs.impl.source_segmented_sdram_machine_partition import \
-    SourceSegmentedSDRAMMachinePartition
+from pacman.model.graphs.machine import (
+    ConstantSDRAMMachinePartition, DestinationSegmentedSDRAMMachinePartition,
+    SourceSegmentedSDRAMMachinePartition)
 from pacman.model.graphs.machine.machine_sdram_edge import SDRAMMachineEdge
 from spinnaker_graph_front_end.examples.sdram_edges_example.\
     src_machine_vertex import SrcMachineVertex
