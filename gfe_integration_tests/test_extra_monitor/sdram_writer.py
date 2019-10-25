@@ -23,9 +23,9 @@ from spinn_front_end_common.abstract_models.impl import (
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utilities.constants import (
-    SIMULATION_N_BYTES, SYSTEM_BYTES_REQUIREMENT)
+    SIMULATION_N_BYTES, SYSTEM_BYTES_REQUIREMENT, BYTES_PER_KB)
 
-_SDRAM_READING_SIZE_IN_BYTES_CONVERTER = 1024 * 1024
+_SDRAM_READING_SIZE_IN_BYTES_CONVERTER = 1024 * BYTES_PER_KB
 _CONFIG_REGION_SIZE = 4
 
 
