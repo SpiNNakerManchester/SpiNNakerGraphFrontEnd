@@ -91,7 +91,7 @@ static void update(uint ticks, uint b) {
 
     time++;
 
-    log_debug("on tick %d of %d", time, simulation_ticks);
+    log_info("on tick %d of %d", time, simulation_ticks);
 
     // check that the run time hasn't already elapsed and thus needs to be
     // killed

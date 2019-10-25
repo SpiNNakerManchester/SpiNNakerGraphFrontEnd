@@ -65,11 +65,14 @@ class DestMachineVertex(SimulatorVertex, MachineDataSpecableVertex):
             self, spec, region_id, n_partitions, partition_type, graph):
         spec.switch_write_focus(region_id)
         spec.write_value(n_partitions)
-        for partition in (
-                graph.get_costed_edge_partitions_starting_at_vertex(self)):
-            if isinstance(partition, partition_type):
+        partitions_seen = set()
+        for edge in graph.get_edges_ending_at_vertex(self):
+            partition = graph.get_outgoing_partition_for_edge(edge)
+            if (partition not in partitions_seen and
+                    isinstance(partition, partition_type)):
                 spec.write_value(partition.sdram_base_address)
                 spec.write_value(partition.total_sdram_requirements())
+                partitions_seen.add(partition)
 
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
@@ -83,33 +86,39 @@ class DestMachineVertex(SimulatorVertex, MachineDataSpecableVertex):
         constant_partitions = 0
         segmented_partitions = 0
         source_segmented_partitions = 0
-        for partition in (
-                machine_graph.get_costed_edge_partitions_starting_at_vertex(
-                    self)):
-            if isinstance(partition, DestinationSegmentedSDRAMMachinePartition):
-                segmented_partitions += 1
-            elif isinstance(partition, ConstantSDRAMMachinePartition):
-                constant_partitions += 1
-            elif isinstance(partition, SourceSegmentedSDRAMMachinePartition):
-                source_segmented_partitions += 1
-            else:
-                raise Exception("WHAT DID YOU DO CHIMP!")
+        partitions_seen = set()
+        for edge in machine_graph.get_edges_ending_at_vertex(self):
+            partition = machine_graph.get_outgoing_partition_for_edge(edge)
+            if partition not in partitions_seen:
+                if isinstance(
+                        partition, DestinationSegmentedSDRAMMachinePartition):
+                    segmented_partitions += 1
+                elif isinstance(partition, ConstantSDRAMMachinePartition):
+                    constant_partitions += 1
+                elif isinstance(
+                        partition, SourceSegmentedSDRAMMachinePartition):
+                    source_segmented_partitions += 1
+                else:
+                    raise Exception("WHAT DID YOU DO CHIMP!")
+            partitions_seen.add(partition)
 
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.THE_BACON_PATH.value,
-            size=((constant_partitions * self.BYTES_PER_SDRAM_PARTITION) +
-                  self.BYTES_PER_COUNT),
+            size=(
+                (constant_partitions * self.BYTES_PER_SDRAM_PARTITION) +
+                self.BYTES_PER_COUNT),
             label="the bacon path")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.THE_SEGMENTED_BACON_PATH.value,
-            size=((segmented_partitions * self.BYTES_PER_SDRAM_PARTITION) +
-                  self.BYTES_PER_COUNT),
+            size=(
+                (segmented_partitions * self.BYTES_PER_SDRAM_PARTITION) +
+                self.BYTES_PER_COUNT),
             label="the seged bacon path")
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.THE_SOURCE_SEGMENTED_BACON.value,
             size=(
-                    (source_segmented_partitions *
-                     self.BYTES_PER_SDRAM_PARTITION) + self.BYTES_PER_COUNT),
+                (source_segmented_partitions * self.BYTES_PER_SDRAM_PARTITION)
+                + self.BYTES_PER_COUNT),
             label="the source seged bacon path")
 
         self._set_sdram_region_data(
