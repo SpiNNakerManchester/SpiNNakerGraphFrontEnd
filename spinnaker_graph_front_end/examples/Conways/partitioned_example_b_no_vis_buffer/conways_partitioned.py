@@ -64,13 +64,6 @@ print("\n\n")
 # build edges
 for x in range(0, MAX_X_SIZE_OF_FABRIC):
     for y in range(0, MAX_Y_SIZE_OF_FABRIC):
-
-        # add outgoing partition
-        front_end.add_machine_outgoing_partition_instance(
-            MachineOutgoingEdgePartition(
-                identifier=ConwayBasicCell.PARTITION_ID,
-                pre_vertex=vertices[x][y]))
-
         positions = [
             (x, (y + 1) % MAX_Y_SIZE_OF_FABRIC, "N"),
             ((x + 1) % MAX_X_SIZE_OF_FABRIC,
