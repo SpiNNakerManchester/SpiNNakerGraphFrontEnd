@@ -85,7 +85,8 @@ class SrcMachineVertex(SimulatorVertex, MachineDataSpecableVertex):
         for partition in (
                 machine_graph.get_costed_edge_partitions_starting_at_vertex(
                     self)):
-            if isinstance(partition, DestinationSegmentedSDRAMMachinePartition):
+            if isinstance(
+                    partition, DestinationSegmentedSDRAMMachinePartition):
                 segmented_partitions += 1
             elif isinstance(partition, ConstantSDRAMMachinePartition):
                 constant_partitions += 1
