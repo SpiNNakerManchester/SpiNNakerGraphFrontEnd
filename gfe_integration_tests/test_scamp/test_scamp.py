@@ -96,8 +96,8 @@ def test_scp():
     core_subsets = CoreSubsets()
     for x, y in machine.chip_coordinates:
         chip = machine.get_chip_at(x, y)
-        cs = CoreSubset(x, y, range(1, chip.n_processors))
-        core_subsets.add_core_subset(cs)
+        subset = CoreSubset(x, y, range(1, chip.n_processors))
+        core_subsets.add_core_subset(subset)
 
     print("Executing application")
     txrx.execute_flood(core_subsets, "scp_test.aplx", app_id, is_filename=True)
