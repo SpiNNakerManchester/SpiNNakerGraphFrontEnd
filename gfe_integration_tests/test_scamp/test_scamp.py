@@ -16,6 +16,7 @@ from threading import Thread
 import logging
 import numpy
 import traceback
+import os
 
 
 class TestMessage(AbstractSCPRequest):
@@ -100,7 +101,9 @@ def test_scp():
         core_subsets.add_core_subset(subset)
 
     print("Executing application")
-    txrx.execute_flood(core_subsets, "scp_test.aplx", app_id, is_filename=True)
+    txrx.execute_flood(
+        core_subsets, os.path.join(os.path.dirname(__file__), "scp_test.aplx"),
+        app_id, is_filename=True)
 
     process = TestProcess(txrx)
     targets = [(cs.x, cs.y, p, 3)
