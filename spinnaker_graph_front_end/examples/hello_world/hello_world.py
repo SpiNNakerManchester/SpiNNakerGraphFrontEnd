@@ -42,9 +42,9 @@ for x in range(total_number_of_cores):
 front_end.run(10)
 
 placements = front_end.placements()
-buffer_manager = front_end.buffer_manager()
 
-if buffer_manager is not None:
+if not front_end.use_virtual_machine:
+    buffer_manager = front_end.buffer_manager()
     for placement in sorted(placements.placements,
                             key=lambda p: (p.x, p.y, p.p)):
 

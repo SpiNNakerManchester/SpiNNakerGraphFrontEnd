@@ -90,9 +90,9 @@ front_end.run(runtime)
 # get recorded data
 recorded_data = dict()
 
-buffer_manager = front_end.buffer_manager()
+if not front_end.use_virtual_machine:
+    buffer_manager = front_end.buffer_manager()
 
-if buffer_manager is not None:
     # get the data per vertex
     for x in range(0, MAX_X_SIZE_OF_FABRIC):
         for y in range(0, MAX_Y_SIZE_OF_FABRIC):
