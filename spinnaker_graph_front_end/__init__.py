@@ -404,3 +404,7 @@ def machine():
 
 def is_allocated_machine():
     return _sim().is_allocated_machine
+
+
+def use_virtual_machine():
+    return _sim().use_virtual_machine
