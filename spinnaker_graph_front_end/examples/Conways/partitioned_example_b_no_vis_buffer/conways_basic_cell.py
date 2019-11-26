@@ -18,10 +18,11 @@ import struct
 from spinn_utilities.overrides import overrides
 from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, VariableSDRAM
+from pacman.model.resources import ResourceContainer, TimeBasedSDRAM
 from pacman.utilities.utility_calls import is_single
 from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
+from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
 from spinn_front_end_common.utilities.helpful_functions import (
     locate_memory_region_for_placement)
@@ -173,10 +174,10 @@ class ConwayBasicCell(
                        self.NEIGHBOUR_INITIAL_STATES_SIZE +
                        recording_utilities.get_recording_header_size(1) +
                        recording_utilities.get_recording_data_constant_size(1))
-        per_timestep_sdram = self.RECORDING_ELEMENT_SIZE
+        per_simtime_ms = (self.RECORDING_ELEMENT_SIZE /
+                         globals_variables.get_simulator().machine_time_step)
         return ResourceContainer(
-            sdram=VariableSDRAM(fixed_sdram, per_timestep_sdram))
-
+            sdram=TimeBasedSDRAM(fixed_sdram, per_simtime_ms))
     @property
     def state(self):
         return self._state
