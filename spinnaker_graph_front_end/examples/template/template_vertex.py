@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from enum import Enum
+from __future__ import division
 import logging
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
