@@ -175,10 +175,10 @@ class ConwayBasicCell(
                        self.NEIGHBOUR_INITIAL_STATES_SIZE +
                        recording_utilities.get_recording_header_size(1) +
                        recording_utilities.get_recording_data_constant_size(1))
-        per_simtime_ms = (self.RECORDING_ELEMENT_SIZE /
+        per_simtime_us = (self.RECORDING_ELEMENT_SIZE /
                          globals_variables.get_simulator().machine_time_step)
         return ResourceContainer(
-            sdram=TimeBasedSDRAM(fixed_sdram, per_simtime_ms))
+            sdram=TimeBasedSDRAM(fixed_sdram, per_simtime_us))
     @property
     def state(self):
         return self._state

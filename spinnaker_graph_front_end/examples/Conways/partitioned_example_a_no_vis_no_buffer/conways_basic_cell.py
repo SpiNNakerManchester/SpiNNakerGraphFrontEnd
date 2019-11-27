@@ -175,10 +175,10 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
                        self.STATE_DATA_SIZE +
                        self.NEIGHBOUR_INITIAL_STATES_SIZE +
                        self.RECORDING_HEADER_SIZE)
-        per_simtime_ms = (self.RECORDING_ELEMENT_SIZE /
-                         globals_variables.get_simulator().machine_time_step)
+        per_simtime_us = (self.RECORDING_ELEMENT_SIZE /
+                          globals_variables.get_simulator().machine_time_step)
         return ResourceContainer(
-            sdram=TimeBasedSDRAM(fixed_sdram, per_simtime_ms))
+            sdram=TimeBasedSDRAM(fixed_sdram, per_simtime_us))
 
     @property
     def state(self):

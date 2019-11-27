@@ -71,12 +71,12 @@ class TemplateVertex(
             SYSTEM_BYTES_REQUIREMENT + self.TRANSMISSION_REGION_N_BYTES +
             recording_utilities.get_recording_header_size(1) +
             recording_utilities.get_recording_data_constant_size(1))
-        per_simtime_ms = (self.N_RECORDED_PER_TIMESTEP /
+        per_simtime_us = (self.N_RECORDED_PER_TIMESTEP /
                           globals_variables.get_simulator().machine_time_step)
         return ResourceContainer(
             cpu_cycles=CPUCyclesPerTickResource(45),
             dtcm=DTCMResource(100),
-            sdram=TimeBasedSDRAM(constant_sdram, per_simtime_ms))
+            sdram=TimeBasedSDRAM(constant_sdram, per_simtime_us))
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
