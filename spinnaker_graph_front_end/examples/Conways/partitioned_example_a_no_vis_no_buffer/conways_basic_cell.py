@@ -63,14 +63,14 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         # app specific data items
         self._state = bool(state)
 
-    @inject_items({"data_n_time_steps": "DataNTimeSteps"})
+    @inject_items({"data_simtime_in_us": "DataSimtimeInUs"})
     @overrides(
         MachineDataSpecableVertex.generate_machine_data_specification,
-        additional_arguments={"data_n_time_steps"})
+        additional_arguments={"data_simtime_in_us"})
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
             reverse_iptags, machine_time_step, time_scale_factor,
-            data_n_time_steps):
+            data_simtime_in_us):
         # Generate the system data region for simulation .c requirements
         generate_system_data_region(spec, self.DATA_REGIONS.SYSTEM.value,
                                     self, machine_time_step, time_scale_factor)
@@ -85,10 +85,11 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.NEIGHBOUR_INITIAL_STATES.value,
             size=self.NEIGHBOUR_INITIAL_STATES_SIZE, label="neighour_states")
+        timestep = globals_variables.get_simulator().machine_time_step
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.RESULTS.value,
             size=(self.RECORDING_HEADER_SIZE +
-                  (data_n_time_steps * self.RECORDING_ELEMENT_SIZE)),
+                  (data_simtime_in_us/timestep * self.RECORDING_ELEMENT_SIZE)),
             label="results")
 
         # check got right number of keys and edges going into me
