@@ -13,8 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from enum import Enum
 from __future__ import division
+from enum import Enum
 import struct
 from spinn_utilities.overrides import overrides
 from pacman.executor.injection_decorator import inject_items
@@ -177,9 +177,10 @@ class ConwayBasicCell(
                        recording_utilities.get_recording_header_size(1) +
                        recording_utilities.get_recording_data_constant_size(1))
         per_simtime_us = (self.RECORDING_ELEMENT_SIZE /
-                         globals_variables.get_simulator().machine_time_step)
+                          globals_variables.get_simulator().machine_time_step)
         return ResourceContainer(
             sdram=TimeBasedSDRAM(fixed_sdram, per_simtime_us))
+
     @property
     def state(self):
         return self._state
