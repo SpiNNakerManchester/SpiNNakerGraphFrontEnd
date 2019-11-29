@@ -15,6 +15,7 @@
 
 from __future__ import division
 from enum import Enum
+import math
 import struct
 from spinn_utilities.overrides import overrides
 from pacman.executor.injection_decorator import inject_items
@@ -95,9 +96,9 @@ class ConwayBasicCell(
 
         # get recorded buffered regions sorted
         spec.switch_write_focus(self.DATA_REGIONS.RESULTS.value)
-        timestep = globals_variables.get_simulator().machine_time_step
+        timesteps = globals_variables.us_to_timesteps(data_simtime_in_us)
         spec.write_array(recording_utilities.get_recording_header_array(
-            [self.RECORDING_ELEMENT_SIZE * data_simtime_in_us / timestep]))
+            [self.RECORDING_ELEMENT_SIZE * timesteps]))
 
         # check got right number of keys and edges going into me
         partitions = \
@@ -176,7 +177,7 @@ class ConwayBasicCell(
                        self.NEIGHBOUR_INITIAL_STATES_SIZE +
                        recording_utilities.get_recording_header_size(1) +
                        recording_utilities.get_recording_data_constant_size(1))
-        per_simtime_us = (self.RECORDING_ELEMENT_SIZE /
+        per_simtime_us = math.ceil(self.RECORDING_ELEMENT_SIZE /
                           globals_variables.get_simulator().machine_time_step)
         return ResourceContainer(
             sdram=TimeBasedSDRAM(fixed_sdram, per_simtime_us))

@@ -15,6 +15,7 @@
 
 from __future__ import division
 from enum import Enum
+import math
 import struct
 from spinn_utilities.overrides import overrides
 from pacman.executor.injection_decorator import inject_items
@@ -88,8 +89,8 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         timestep = globals_variables.get_simulator().machine_time_step
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.RESULTS.value,
-            size=(self.RECORDING_HEADER_SIZE +
-                  (data_simtime_in_us/timestep * self.RECORDING_ELEMENT_SIZE)),
+            size=(self.RECORDING_HEADER_SIZE + math.ceil(
+                data_simtime_in_us / timestep * self.RECORDING_ELEMENT_SIZE)),
             label="results")
 
         # check got right number of keys and edges going into me
