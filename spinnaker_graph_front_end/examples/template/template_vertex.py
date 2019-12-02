@@ -19,7 +19,7 @@ import logging
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
-from pacman.model.resources import ResourceContainer, TimeBasedSDRAM
+from pacman.model.resources import ResourceContainer, VariableSDRAM
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
@@ -71,12 +71,12 @@ class TemplateVertex(
             SYSTEM_BYTES_REQUIREMENT + self.TRANSMISSION_REGION_N_BYTES +
             recording_utilities.get_recording_header_size(1) +
             recording_utilities.get_recording_data_constant_size(1))
-        per_simtime_us = (self.N_RECORDED_PER_TIMESTEP /
-                          globals_variables.get_simulator().machine_time_step)
+        variable_sdram = self.N_RECORDED_PER_TIMESTEP
+        timestep = globals_variables.get_simulator().machine_time_step
         return ResourceContainer(
             cpu_cycles=CPUCyclesPerTickResource(45),
             dtcm=DTCMResource(100),
-            sdram=TimeBasedSDRAM(constant_sdram, per_simtime_us))
+            sdram=VariableSDRAM(constant_sdram, variable_sdram, timestep))
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
