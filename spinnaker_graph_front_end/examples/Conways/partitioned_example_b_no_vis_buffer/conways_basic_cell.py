@@ -15,7 +15,6 @@
 
 from __future__ import division
 from enum import Enum
-import math
 import struct
 from spinn_utilities.overrides import overrides
 from pacman.executor.injection_decorator import inject_items
