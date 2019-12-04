@@ -20,6 +20,7 @@ from spinn_front_end_common.abstract_models import (
     AbstractHasAssociatedBinary)
 from spinn_front_end_common.abstract_models.impl import (
     MachineDataSpecableVertex)
+from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utilities.constants import (
@@ -39,7 +40,10 @@ class SDRAMWriter(
 
     def __init__(self, mebibytes):
         self._size = mebibytes * _SDRAM_READING_SIZE_IN_BYTES_CONVERTER
-        super(SDRAMWriter, self).__init__(label="speed", constraints=None)
+        timestep_in_us = \
+            globals_variables.get_simulator().machine_time_step
+        super(SDRAMWriter, self).__init__(
+            timestep_in_us=timestep_in_us, label="speed", constraints=None)
 
     @property
     def mbs_in_bytes(self):

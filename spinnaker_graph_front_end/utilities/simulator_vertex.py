@@ -16,6 +16,7 @@
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
+from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 
 
@@ -27,8 +28,14 @@ class SimulatorVertex(
 
     __slots__ = ["_binary_name"]
 
-    def __init__(self, label, binary_name, constraints=None):
-        super(SimulatorVertex, self).__init__(label, constraints)
+    def __init__(
+            self, label, binary_name, constraints=None, timestep_in_us=None):
+        if timestep_in_us is None:
+            timestep_in_us = \
+                globals_variables.get_simulator().machine_time_step
+
+        super(SimulatorVertex, self).__init__(
+            timestep_in_us, label, constraints)
         self._binary_name = binary_name
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
