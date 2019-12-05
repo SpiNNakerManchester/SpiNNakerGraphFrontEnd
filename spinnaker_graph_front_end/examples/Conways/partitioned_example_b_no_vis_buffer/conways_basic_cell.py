@@ -95,7 +95,7 @@ class ConwayBasicCell(
 
         # get recorded buffered regions sorted
         spec.switch_write_focus(self.DATA_REGIONS.RESULTS.value)
-        timesteps = globals_variables.us_to_timesteps(data_simtime_in_us)
+        timesteps = self.simtime_in_us_to_timesteps(data_simtime_in_us)
         spec.write_array(recording_utilities.get_recording_header_array(
             [self.RECORDING_ELEMENT_SIZE * timesteps]))
 
@@ -176,10 +176,9 @@ class ConwayBasicCell(
                        self.NEIGHBOUR_INITIAL_STATES_SIZE +
                        recording_utilities.get_recording_header_size(1) +
                        recording_utilities.get_recording_data_constant_size(1))
-        per_timestep_sdram = self.RECORDING_ELEMENT_SIZE
-        timestep = globals_variables.get_simulator().machine_time_step
         return ResourceContainer(
-            sdram=VariableSDRAM(fixed_sdram, per_timestep_sdram, timestep))
+            sdram=VariableSDRAM(
+                fixed_sdram, self.RECORDING_ELEMENT_SIZE, self.timestep_in_us))
 
     @property
     def state(self):

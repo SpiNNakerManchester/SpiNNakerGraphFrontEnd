@@ -86,11 +86,11 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.NEIGHBOUR_INITIAL_STATES.value,
             size=self.NEIGHBOUR_INITIAL_STATES_SIZE, label="neighour_states")
-        timestep = globals_variables.get_simulator().machine_time_step
+        timesteps = self.simtime_in_us_to_timesteps(data_simtime_in_us)
         spec.reserve_memory_region(
             region=self.DATA_REGIONS.RESULTS.value,
             size=(self.RECORDING_HEADER_SIZE + math.ceil(
-                data_simtime_in_us / timestep * self.RECORDING_ELEMENT_SIZE)),
+                timesteps * self.RECORDING_ELEMENT_SIZE)),
             label="results")
 
         # check got right number of keys and edges going into me
@@ -177,10 +177,9 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
                        self.STATE_DATA_SIZE +
                        self.NEIGHBOUR_INITIAL_STATES_SIZE +
                        self.RECORDING_HEADER_SIZE)
-        per_timestep_sdram = self.RECORDING_ELEMENT_SIZE
-        timestep = globals_variables.get_simulator().machine_time_step
         return ResourceContainer(
-            sdram=VariableSDRAM(fixed_sdram, per_timestep_sdram, timestep))
+            sdram=VariableSDRAM(
+                fixed_sdram, self.RECORDING_ELEMENT_SIZE, self.timestep_in_us))
 
     @property
     def state(self):
