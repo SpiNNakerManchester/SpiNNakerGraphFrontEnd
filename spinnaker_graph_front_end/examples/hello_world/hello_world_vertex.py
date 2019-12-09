@@ -65,7 +65,7 @@ class HelloWorldVertex(
             reverse_iptags, machine_time_step, time_scale_factor):
         # Generate the system data region for simulation .c requirements
         generate_system_data_region(spec, self.DATA_REGIONS.SYSTEM.value,
-                                    self, machine_time_step, time_scale_factor)
+                                    self, time_scale_factor)
 
         # Reserve SDRAM space for memory areas:
 
