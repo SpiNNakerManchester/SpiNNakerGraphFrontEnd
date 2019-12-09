@@ -145,7 +145,7 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         # End-of-Spec:
         spec.end_specification()
 
-    def get_data(self, transceiver, placement, n_machine_time_steps):
+    def get_data(self, transceiver, placement, simtime_in_us):
         # Get the data region base address where results are stored for the
         # core
         record_region_base_address = locate_memory_region_for_placement(
@@ -157,6 +157,7 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
                 placement.x, placement.y, record_region_base_address,
                 self.RECORDING_HEADER_SIZE))[0]
 
+        n_machine_time_steps = self.simtime_in_us_to_timesteps(simtime_in_us)
         # read the bytes
         if number_of_bytes_to_read != (
                 n_machine_time_steps * self.RECORDING_ELEMENT_SIZE):

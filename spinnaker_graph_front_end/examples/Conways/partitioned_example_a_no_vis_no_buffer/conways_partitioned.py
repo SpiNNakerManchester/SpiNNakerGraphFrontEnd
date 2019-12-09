@@ -15,6 +15,7 @@
 
 import os
 from pacman.model.graphs.machine import MachineEdge
+from spinn_front_end_common.utilities.constants import US_TO_MS
 import spinnaker_graph_front_end as front_end
 from spinnaker_graph_front_end.examples.Conways.\
     partitioned_example_a_no_vis_no_buffer.conways_basic_cell import (
@@ -99,7 +100,7 @@ if not front_end.use_virtual_machine:
                 front_end.transceiver(),
                 front_end.placements().get_placement_of_vertex(
                     vertices[x][y]),
-                front_end.no_machine_time_steps())
+                runtime * US_TO_MS)
 
     # visualise it in text form (bad but no vis this time)
     for time in range(0, runtime):
