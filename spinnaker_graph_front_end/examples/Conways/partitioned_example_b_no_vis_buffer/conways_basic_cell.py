@@ -73,8 +73,7 @@ class ConwayBasicCell(
         additional_arguments={"data_simtime_in_us"})
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
-            reverse_iptags, machine_time_step, time_scale_factor,
-            data_simtime_in_us):
+            reverse_iptags, time_scale_factor, data_simtime_in_us):
         # Generate the system data region for simulation .c requirements
         generate_system_data_region(spec, self.DATA_REGIONS.SYSTEM.value,
                                     self, time_scale_factor)
