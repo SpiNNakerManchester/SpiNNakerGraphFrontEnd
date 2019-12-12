@@ -90,7 +90,7 @@ front_end.run(runtime)
 # get recorded data
 recorded_data = dict()
 
-if not front_end.use_virtual_machine:
+if not front_end.use_virtual_machine():
     buffer_manager = front_end.buffer_manager()
 
     # get the data per vertex
