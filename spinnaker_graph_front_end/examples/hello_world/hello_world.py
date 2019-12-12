@@ -43,7 +43,7 @@ front_end.run(10)
 
 placements = front_end.placements()
 
-if not front_end.use_virtual_machine:
+if not front_end.use_virtual_machine():
     buffer_manager = front_end.buffer_manager()
     for placement in sorted(placements.placements,
                             key=lambda p: (p.x, p.y, p.p)):

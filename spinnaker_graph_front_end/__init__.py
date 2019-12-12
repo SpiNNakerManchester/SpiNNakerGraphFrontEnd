@@ -407,4 +407,4 @@ def is_allocated_machine():
 
 
 def use_virtual_machine():
-    return _sim().use_virtual_machine
+    return _sim().use_virtual_board
