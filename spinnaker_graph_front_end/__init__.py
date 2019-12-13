@@ -38,7 +38,7 @@ __all__ = ['LivePacketGather', 'ReverseIpTagMultiCastSource', 'MachineEdge',
            'add_edge', 'add_application_edge_instance', 'add_machine_edge',
            'add_machine_edge_instance', 'add_socket_address', 'get_txrx',
            'has_ran', 'machine_time_step',
-           'get_number_of_available_cores_on_machine', 'no_machine_time_steps',
+           'get_number_of_available_cores_on_machine',
            'timescale_factor', 'machine_graph', 'application_graph',
            'routing_infos', 'placements', 'transceiver', 'graph_mapper',
            'buffer_manager', 'machine', 'is_allocated_machine']
@@ -347,10 +347,6 @@ def has_ran():
 
 def machine_time_step():
     return _sim().machine_time_step
-
-
-def no_machine_time_steps():
-    return _sim().no_machine_time_steps
 
 
 def timescale_factor():
