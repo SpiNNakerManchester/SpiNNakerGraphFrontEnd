@@ -30,3 +30,20 @@ class TestHelloWorld(unittest.TestCase):
         print(path)
         os.chdir(path)
         import spinnaker_graph_front_end.examples.hello_world.hello_world   # NOQA
+
+        from spinnaker_graph_front_end.examples.hello_world.hello_world_vertex\
+            import HelloWorldVertex
+        placements = spinnaker_graph_front_end.examples.hello_world.\
+            hello_world.placements
+        buffer_manager = spinnaker_graph_front_end.examples.hello_world.\
+            hello_world.buffer_manager
+        outputs = []
+        for placement in sorted(placements.placements,
+                                key=lambda p: (p.x, p.y, p.p)):
+            if isinstance(placement.vertex, HelloWorldVertex):
+                hello_world = placement.vertex.read(placement, buffer_manager)
+                outputs.append("{}, {}, {} > {}".format(
+                    placement.x, placement.y, placement.p, hello_world))
+
+        assert(len(outputs) == 16)
+        assert(outputs[-1] == "1, 0, 2 > bytearray(b'Hello world')")
