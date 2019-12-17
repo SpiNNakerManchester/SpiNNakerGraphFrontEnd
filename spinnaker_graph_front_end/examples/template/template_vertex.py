@@ -20,7 +20,6 @@ from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
 from pacman.model.resources import ResourceContainer, VariableSDRAM
-from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
 from spinn_front_end_common.utilities.helpful_functions import (

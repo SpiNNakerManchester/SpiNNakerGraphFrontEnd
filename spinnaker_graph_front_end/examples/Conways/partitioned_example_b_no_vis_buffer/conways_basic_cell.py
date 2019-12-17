@@ -23,7 +23,6 @@ from pacman.model.resources import ResourceContainer, VariableSDRAM
 from pacman.utilities.utility_calls import is_single
 from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
-from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
 from spinn_front_end_common.utilities.helpful_functions import (
     locate_memory_region_for_placement)
