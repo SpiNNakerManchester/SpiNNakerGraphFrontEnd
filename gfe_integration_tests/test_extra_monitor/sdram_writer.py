@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from enum import Enum
-from pacman.model.graphs.machine import MachineVertex
+from pacman.model.graphs.machine import MachineTimestepVertex
 from pacman.model.resources import ResourceContainer, ConstantSDRAM
 from spinn_front_end_common.abstract_models import (
     AbstractHasAssociatedBinary)
@@ -31,7 +31,7 @@ _CONFIG_REGION_SIZE = 4
 
 
 class SDRAMWriter(
-        MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
+    MachineTimestepVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),

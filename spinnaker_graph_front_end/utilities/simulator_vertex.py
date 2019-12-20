@@ -14,14 +14,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from spinn_utilities.overrides import overrides
-from pacman.model.graphs.machine import MachineVertex
+from pacman.model.graphs.machine import MachineTimestepVertex
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 
 
 class SimulatorVertex(
-        MachineVertex, AbstractHasAssociatedBinary):
+        MachineTimestepVertex, AbstractHasAssociatedBinary):
     """ A machine vertex that is implemented by a binary APLX that supports\
         the spin1_api simulation control protocol.
     """
