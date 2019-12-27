@@ -346,7 +346,7 @@ def has_ran():
 
 
 def machine_time_step():
-    return _sim().user_time_step_in_us
+    return _sim().user_timestep_in_us
 
 
 def timescale_factor():

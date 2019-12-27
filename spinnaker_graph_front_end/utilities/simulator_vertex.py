@@ -32,7 +32,7 @@ class SimulatorVertex(
             self, label, binary_name, constraints=None, timestep_in_us=None):
         if timestep_in_us is None:
             timestep_in_us = \
-                globals_variables.get_simulator().user_time_step_in_us
+                globals_variables.get_simulator().user_timestep_in_us
 
         super(SimulatorVertex, self).__init__(
             timestep_in_us, label, constraints)

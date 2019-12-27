@@ -41,7 +41,7 @@ class SDRAMWriter(
     def __init__(self, mebibytes):
         self._size = mebibytes * _SDRAM_READING_SIZE_IN_BYTES_CONVERTER
         timestep_in_us = \
-            globals_variables.get_simulator().user_time_step_in_us
+            globals_variables.get_simulator().user_timestep_in_us
         super(SDRAMWriter, self).__init__(
             timestep_in_us=timestep_in_us, label="speed", constraints=None)
 
