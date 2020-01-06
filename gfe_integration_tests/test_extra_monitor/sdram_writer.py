@@ -30,8 +30,8 @@ _SDRAM_READING_SIZE_IN_BYTES_CONVERTER = 1024 * BYTES_PER_KB
 _CONFIG_REGION_SIZE = 4
 
 
-class SDRAMWriter(
-    MachineTimestepVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
+class SDRAMWriter(MachineTimestepVertex, MachineDataSpecableVertex,
+                  AbstractHasAssociatedBinary):
     DATA_REGIONS = Enum(
         value="DATA_REGIONS",
         names=[('SYSTEM', 0),
