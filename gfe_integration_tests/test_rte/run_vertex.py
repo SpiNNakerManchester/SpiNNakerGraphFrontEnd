@@ -20,6 +20,7 @@ from spinn_front_end_common.abstract_models import (
 from spinn_front_end_common.interface.simulation import (
     simulation_utilities as
     utils)
+from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.constants import SIMULATION_N_BYTES
 
 
@@ -44,3 +45,27 @@ class RunVertex(
         spec.write_array(utils.get_simulation_header_array(
             self._aplx_file, 1000, time_scale_factor=1))
         spec.end_specification()
+
+    @property
+    def timestep_in_us(self):
+        return globals_variables.get_simulator().user_timestep_in_us
+
+    def simtime_in_us_to_timesteps(self, simtime_in_us):
+        """
+        Helper function to convert simtime in us to whole timestep
+
+        This function verfies that the simtime is a multile of the timestep.
+
+        :param simtime_in_us: a simulation time in us
+        :type simtime_in_us: int
+        :return: the exact number of timeteps covered by this simtime
+        :rtype: int
+        :raises ValueError: If the simtime is not a mutlple of the timestep
+        """
+        n_timesteps = simtime_in_us // self.timestep_in_us
+        check = n_timesteps * self.timestep_in_us
+        if check != simtime_in_us:
+            raise ValueError(
+                "The requested time {} is not a multiple of the timestep {}"
+                "".format(simtime_in_us, self.timestep_in_us))
+        return n_timesteps
