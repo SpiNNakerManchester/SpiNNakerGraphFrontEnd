@@ -62,6 +62,40 @@ def _get_monitor_placement(monitor_vertices, placement):
     raise Exception("no extra monitor on same chip as {}".format(placement))
 
 
+def _do_transfer(gatherer, gatherers, monitor_vertices, receiver_placement,
+                 writer_placement, writer_vertex):
+    """
+    :param .DataSpeedUpPacketGatherMachineVertex gatherer:
+    :param dict(tuple(int,int),.DataSpeedUpPacketGatherMachineVertex) gatherers:
+    :param list(.ExtraMonitorSupportMachineVertex) monitor_vertices:
+    :param .Placement receiver_placement:
+    :param .Placement writer_placement:
+    :param SDRAMWriter writer_vertex:
+    :rtype: bytearray
+    """
+    with gatherer.streaming(
+            gatherers.values(), sim.transceiver(), monitor_vertices,
+            sim.placements()):
+        return gatherer.get_data(
+            extra_monitor=receiver_placement.vertex,
+            extra_monitor_placement=receiver_placement,
+            memory_address=get_data_region_address(
+                sim.transceiver(), writer_placement,
+                SDRAMWriter.DATA_REGIONS.DATA),
+            length_in_bytes=writer_vertex.mbs_in_bytes,
+            fixed_routes=None)
+
+
+def _get_gatherer_for_monitor(monitor):
+    placement = sim.placements().get_placement_of_vertex(monitor)
+    chip = sim.machine().get_chip_at(placement.x, placement.y)
+    the_sim = sim.globals_variables.get_simulator()
+    # pylint: disable=protected-access
+    gatherers = the_sim._last_run_outputs[_GATHERER_MAP]
+    return (
+        gatherers, gatherers[chip.nearest_ethernet_x, chip.nearest_ethernet_y])
+
+
 def test_extra_monitor():
     mbs = _TRANSFER_SIZE_MEGABYTES
 
@@ -78,28 +112,18 @@ def test_extra_monitor():
     sim.run(12)
 
     writer_placement = sim.placements().get_placement_of_vertex(writer_vertex)
-    writer_chip = sim.machine().get_chip_at(
-        writer_placement.x, writer_placement.y)
 
     # pylint: disable=protected-access
     outputs = sim.globals_variables.get_simulator()._last_run_outputs
     monitor_vertices = outputs[_MONITOR_VERTICES]
-    gatherers = outputs[_GATHERER_MAP]
 
     receiver_plt = _get_monitor_placement(monitor_vertices, writer_placement)
-    gatherer = gatherers[
-        writer_chip.nearest_ethernet_x, writer_chip.nearest_ethernet_y]
+    gatherers, gatherer = _get_gatherer_for_monitor(writer_vertex)
 
     start = float(time.time())
 
-    with gatherer.streaming(
-            gatherers.values(), sim.transceiver(), monitor_vertices,
-            sim.placements()):
-        data = gatherer.get_data(
-            receiver_plt, get_data_region_address(
-                sim.transceiver(), writer_placement,
-                SDRAMWriter.DATA_REGIONS.DATA),
-            writer_vertex.mbs_in_bytes, fixed_routes=None)
+    data = _do_transfer(gatherer, gatherers, monitor_vertices, receiver_plt,
+                        writer_placement, writer_vertex)
 
     end = float(time.time())
 
