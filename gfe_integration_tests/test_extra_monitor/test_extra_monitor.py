@@ -66,7 +66,8 @@ def _do_transfer(gatherer, gatherers, monitor_vertices, receiver_placement,
                  writer_placement, writer_vertex):
     """
     :param .DataSpeedUpPacketGatherMachineVertex gatherer:
-    :param dict(tuple(int,int),.DataSpeedUpPacketGatherMachineVertex) gatherers:
+    :param dict(tuple(int,int),.DataSpeedUpPacketGatherMachineVertex) \
+            gatherers:
     :param list(.ExtraMonitorSupportMachineVertex) monitor_vertices:
     :param .Placement receiver_placement:
     :param .Placement writer_placement:
