@@ -5,6 +5,6 @@
 
 Documentation
 =============
-[SpiNNakerGraphFrontEnd Python documentation](http://spinnakergraphfrontend.readthedocs.io)
+[SpiNNaker Graph Front End Python documentation](http://spinnakergraphfrontend.readthedocs.io)
 
 [Combined python documentation](http://spinnakermanchester.readthedocs.io)
