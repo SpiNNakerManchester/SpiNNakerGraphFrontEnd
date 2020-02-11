@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from testfixtures import LogCapture
 import os
 import unittest
 from spinn_front_end_common.utilities import globals_variables
@@ -29,4 +30,9 @@ class TestHelloWorld(unittest.TestCase):
         path = os.path.dirname(os.path.abspath(class_file))
         print(path)
         os.chdir(path)
-        import spinnaker_graph_front_end.examples.hello_world.hello_world   # NOQA
+        with LogCapture() as lc:
+            import spinnaker_graph_front_end.examples.hello_world.hello_world   # NOQA
+            outputs = lc.records[-16:]
+            for n in range(16):
+                print(outputs[n].getMessage())
+                assert(outputs[n].getMessage()[-13:-2] == "Hello world")
