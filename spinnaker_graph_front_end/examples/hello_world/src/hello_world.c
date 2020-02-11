@@ -93,9 +93,8 @@ static bool initialise_recording(void) {
     address_t recording_region =
 	    data_specification_get_region(RECORDED_DATA, data);
 
-    uint32_t words_read = 0;
     bool success = recording_initialize(
-        recording_region, &recording_flags, &words_read);
+        recording_region, &recording_flags);
     log_info("Recording flags = 0x%08x", recording_flags);
     return success;
 }

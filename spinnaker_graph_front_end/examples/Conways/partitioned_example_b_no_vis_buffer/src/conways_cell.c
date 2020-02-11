@@ -311,10 +311,9 @@ static bool initialize(uint32_t *timer_period) {
     }
     log_info("input_buffer initialised");
 
-    uint32_t words_read = 0;
     bool success = recording_initialize(
 	    data_specification_get_region(RECORDED_DATA, data),
-	    &recording_flags, &words_read);
+	    &recording_flags);
     log_info("Recording flags = 0x%08x", recording_flags);
     return success;
 }

@@ -132,10 +132,9 @@ void resume_callback(void) {
 static bool initialise_recording(void) {
     data_specification_metadata_t *data = data_specification_get_data_address();
 
-    uint32_t words_read = 0;
     bool success = recording_initialize(
 	    data_specification_get_region(RECORDED_DATA, data),
-            &recording_flags, &words_read);
+            &recording_flags);
     log_info("Recording flags = 0x%08x", recording_flags);
     return success;
 }
