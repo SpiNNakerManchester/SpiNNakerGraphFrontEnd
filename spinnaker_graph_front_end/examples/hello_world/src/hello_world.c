@@ -90,10 +90,10 @@ static void record_data(void) {
 //! \return True if recording initialisation is successful, false otherwise
 static bool initialise_recording(void) {
     data_specification_metadata_t *data = data_specification_get_data_address();
-    address_t recording_region =
+    void *recording_region =
 	    data_specification_get_region(RECORDED_DATA, data);
 
-    bool success = recording_initialize(recording_region, &recording_flags);
+    bool success = recording_initialize(&recording_region, &recording_flags);
     log_info("Recording flags = 0x%08x", recording_flags);
     return success;
 }
