@@ -16,6 +16,7 @@
 import os
 import logging
 import sys
+from spinn_utilities.log import FormatAdapter
 from spinn_utilities.socket_address import SocketAddress
 from pacman.model.graphs.machine import MachineEdge
 from spinn_front_end_common.utilities.utility_objs import ExecutableFinder
@@ -27,7 +28,7 @@ from spinnaker_graph_front_end._version import (
 from spinnaker_graph_front_end.spinnaker import SpiNNaker
 from spinnaker_graph_front_end import spinnaker as gfe_file
 
-logger = logging.getLogger(__name__)
+logger = FormatAdapter(logging.getLogger(__name__))
 
 _none_labelled_vertex_count = None
 _none_labelled_edge_count = None
@@ -39,7 +40,7 @@ __all__ = ['LivePacketGather', 'ReverseIpTagMultiCastSource', 'MachineEdge',
            'add_machine_edge_instance', 'add_socket_address', 'get_txrx',
            'has_ran', 'machine_time_step',
            'get_number_of_available_cores_on_machine', 'no_machine_time_steps',
-           'timescale_factor', 'machine_graph', 'application_graph',
+           'time_scale_factor', 'machine_graph', 'application_graph',
            'routing_infos', 'placements', 'transceiver',
            'buffer_manager', 'machine', 'is_allocated_machine']
 
@@ -100,17 +101,18 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
     :raises ConfigurationException if both n_chips_required and
         n_boards_required are used.
     """
+    # pylint: disable=global-statement, redefined-outer-name
     global _none_labelled_vertex_count
     global _none_labelled_edge_count
 
     logger.info(
-        "SpiNNaker graph front end (c) {}, "
-        "University of Manchester".format(__version_year__))
+        "SpiNNaker graph front end (c) {}, University of Manchester",
+        __version_year__)
     parent_dir = os.path.split(os.path.split(gfe_file.__file__)[0])[0]
     logger.info(
-        "Release version {}({}) - {} {}. Installed in folder {}".format(
-            __version__, __version_name__, __version_month__, __version_year__,
-            parent_dir))
+        "Release version {}({}) - {} {}. Installed in folder {}",
+        __version__, __version_name__, __version_month__, __version_year__,
+        parent_dir)
 
     # add the directories where the binaries are located
     executable_finder = ExecutableFinder()
@@ -161,6 +163,7 @@ def run_until_complete():
 def stop():
     """ Do any necessary cleaning up before exiting. Unregisters the controller
     """
+    # pylint: disable=global-variable-undefined
     global _executable_finder
 
     _sim().stop()
@@ -353,7 +356,7 @@ def no_machine_time_steps():
     return _sim().no_machine_time_steps
 
 
-def timescale_factor():
+def time_scale_factor():
     return _sim().time_scale_factor
 
 
@@ -400,3 +403,7 @@ def machine():
 
 def is_allocated_machine():
     return _sim().is_allocated_machine
+
+
+def use_virtual_machine():
+    return _sim().use_virtual_board

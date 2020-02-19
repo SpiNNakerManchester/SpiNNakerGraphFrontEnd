@@ -90,23 +90,27 @@ front_end.run(runtime)
 # get recorded data
 recorded_data = dict()
 
-# get the data per vertex
-for x in range(0, MAX_X_SIZE_OF_FABRIC):
-    for y in range(0, MAX_Y_SIZE_OF_FABRIC):
-        recorded_data[x, y] = vertices[x][y].get_data(
-            front_end.buffer_manager(),
-            front_end.placements().get_placement_of_vertex(vertices[x][y]))
+if not front_end.use_virtual_machine():
+    buffer_manager = front_end.buffer_manager()
 
-# visualise it in text form (bad but no vis this time)
-for time in range(0, runtime):
-    print("at time {}".format(time))
-    output = ""
-    for y in range(MAX_X_SIZE_OF_FABRIC - 1, 0, -1):
-        for x in range(0, MAX_Y_SIZE_OF_FABRIC):
-            output += "X" if recorded_data[x, y][time] else " "
-        output += "\n"
-    print(output)
-    print("\n\n")
+    # get the data per vertex
+    for x in range(0, MAX_X_SIZE_OF_FABRIC):
+        for y in range(0, MAX_Y_SIZE_OF_FABRIC):
+            recorded_data[x, y] = vertices[x][y].get_data(
+                front_end.buffer_manager(),
+                front_end.placements().get_placement_of_vertex(
+                    vertices[x][y]))
+
+    # visualise it in text form (bad but no vis this time)
+    for time in range(0, runtime):
+        print("at time {}".format(time))
+        output = ""
+        for y in range(MAX_X_SIZE_OF_FABRIC - 1, 0, -1):
+            for x in range(0, MAX_Y_SIZE_OF_FABRIC):
+                output += "X" if recorded_data[x, y][time] else " "
+            output += "\n"
+        print(output)
+        print("\n\n")
 
 # clear the machine
 front_end.stop()

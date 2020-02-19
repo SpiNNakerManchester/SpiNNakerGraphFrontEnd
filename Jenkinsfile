@@ -89,7 +89,7 @@ pipeline {
                 sh 'pip install -r SpiNNFrontEndCommon/requirements-test.txt'
                 sh 'pip install -r SpiNNakerGraphFrontEnd/requirements-test.txt'
                 // Additional requirements for testing here
-                sh 'pip install python-coveralls "coverage>=4.4"'
+                sh 'pip install python-coveralls "coverage>=4.4,<5.0"'
                 sh 'pip install pytest-instafail pytest-xdist'
                 // Java install
                 sh 'mvn -f JavaSpiNNaker package'
@@ -124,7 +124,7 @@ pipeline {
                 run_pytest('SpiNNMan/unittests SpiNNMan/integration_tests', 1200, 'SpiNNMan', 'auto')
                 run_pytest('PACMAN/unittests', 1200, 'PACMAN', 'auto')
                 run_pytest('spalloc/tests', 1200, 'spalloc', '1')
-                run_pytest('DataSpecification/unittests DataSpecification/integration_tests', 1200, 'DataSpecification', 'auto')
+                run_pytest('DataSpecification/unittests', 1200, 'DataSpecification', 'auto')
                 run_pytest('SpiNNFrontEndCommon/unittests SpiNNFrontEndCommon/fec_integration_tests', 1200, 'SpiNNFrontEndCommon', 'auto')
                 run_pytest('SpiNNakerGraphFrontEnd/unittests', 1200, 'SpiNNakerGraphFrontEnd', 'auto')
             }
