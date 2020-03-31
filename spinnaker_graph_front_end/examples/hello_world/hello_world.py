@@ -37,7 +37,7 @@ front_end.setup(
 total_number_of_cores = 16
 for x in range(total_number_of_cores):
     front_end.add_machine_vertex_instance(
-        HelloWorldVertex(label="Hello World at {}".format(x)))
+        HelloWorldVertex(n_hellos=10, label="Hello World at {}".format(x)))
 
 front_end.run(10)
 front_end.run(10)
