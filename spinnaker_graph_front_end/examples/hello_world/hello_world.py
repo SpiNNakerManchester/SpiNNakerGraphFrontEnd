@@ -40,6 +40,7 @@ for x in range(total_number_of_cores):
         HelloWorldVertex(label="Hello World at {}".format(x)))
 
 front_end.run(10)
+front_end.run(10)
 
 placements = front_end.placements()
 
