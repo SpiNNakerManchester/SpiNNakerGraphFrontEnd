@@ -104,7 +104,8 @@ class HelloWorldVertex(
         spec.switch_write_focus(self.DATA_REGIONS.PARAMS.value)
         spec.write_value(self._n_repeats)
         spec.write_value(len(self._text))
-        spec.write_array(numpy.array(bytearray(self._text)).view("uint32"))
+        spec.write_array(numpy.array(
+            bytearray(self._text, "ascii")).view("uint32"))
 
         # End-of-Spec:
         spec.end_specification()
