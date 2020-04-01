@@ -37,4 +37,4 @@ class TestHelloWorld(unittest.TestCase):
                 msg = outputs[n].getMessage()
                 print(msg)
                 test_text = "Hello world; " * 20
-                assert(msg[-(len(test_text) + 2):] == test_text)
+                assert(msg[-(len(test_text) + 2):-2] == test_text)

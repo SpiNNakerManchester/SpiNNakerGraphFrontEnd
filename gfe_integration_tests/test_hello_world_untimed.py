@@ -40,8 +40,8 @@ class TestHelloWorldUntimed(unittest.TestCase):
                 if n < 10:
                     expect += " "
                 for i in range(n * 2):
-                    start = -(len(expect) * (i + 1))
-                    end = -(len(expect) * i)
+                    start = -2 - (len(expect) * (i + 1))
+                    end = -2 - (len(expect) * i)
                     if end == 0:
                         end = None
                     frag = msg[start:end]
