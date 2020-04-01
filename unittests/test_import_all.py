@@ -32,6 +32,10 @@ EXCLUSIONS = ["spinnaker_graph_front_end.examples.Conways."
               "partitioned_example_b_no_vis_buffer.conways_partitioned",
 
               "spinnaker_graph_front_end.examples.hello_world.hello_world",
+
+              "spinnaker_graph_front_end.examples."
+              "hello_world_untimed.hello_world",
+
               "spinnaker_graph_front_end.examples.template.python_template",
 
               "spinnaker_graph_front_end.examples.test_extra_monitor.main",
@@ -43,9 +47,6 @@ EXCLUSIONS = ["spinnaker_graph_front_end.examples.Conways."
 
               "spinnaker_graph_front_end.examples."
               "test_fixed_router_transmitter_reciever.hello_world",
-
-              "spinnaker_graph_front_end.examples."
-              "test_fixed_router_transmitter_reciever.hello_world_untimed",
 
               "spinnaker_graph_front_end.examples.test_timer_setup_cost."
               "test_timer_setup_cost"]
