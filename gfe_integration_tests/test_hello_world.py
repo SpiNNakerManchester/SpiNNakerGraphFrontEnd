@@ -34,5 +34,7 @@ class TestHelloWorld(unittest.TestCase):
             import spinnaker_graph_front_end.examples.hello_world.hello_world   # NOQA
             outputs = lc.records[-16:]
             for n in range(16):
-                print(outputs[n].getMessage())
-                assert(outputs[n].getMessage()[-13:-2] == "Hello world")
+                msg = outputs[n].getMessage()
+                print(msg)
+                test_text = "Hello world; " * 20
+                assert(msg[-len(test_text):] == test_text)
