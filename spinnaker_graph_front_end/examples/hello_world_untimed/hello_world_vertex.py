@@ -22,8 +22,8 @@ from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
 from spinn_front_end_common.utilities.helpful_functions import (
     locate_memory_region_for_placement)
-from spinn_front_end_common.abstract_models.impl import (
-    MachineDataSpecableVertex)
+from spinn_front_end_common.abstract_models import (
+    AbstractGeneratesDataSpecification)
 from spinn_front_end_common.interface.buffer_management.buffer_models import (
     AbstractReceiveBuffersToHost)
 from spinn_front_end_common.interface.buffer_management import (
@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 
 class HelloWorldVertex(
-        SimulatorVertex, MachineDataSpecableVertex,
+        SimulatorVertex, AbstractGeneratesDataSpecification,
         AbstractReceiveBuffersToHost):
 
     DATA_REGIONS = Enum(
@@ -76,15 +76,15 @@ class HelloWorldVertex(
     @inject_items({
         "data_n_steps": "DataNSteps"
     })
-    @overrides(MachineDataSpecableVertex.generate_machine_data_specification,
+    @overrides(AbstractGeneratesDataSpecification\
+               .generate_data_specification,
                additional_arguments=["data_n_steps"])
-    def generate_machine_data_specification(
-            self, spec, placement, machine_graph, routing_info, iptags,
-            reverse_iptags, machine_time_step, time_scale_factor,
-            data_n_steps):
+    def generate_data_specification(self, spec, placement, data_n_steps):
         # Generate the system data region for simulation .c requirements
-        generate_system_data_region(spec, self.DATA_REGIONS.SYSTEM.value,
-                                    self, machine_time_step, time_scale_factor)
+        # Note that the time step and time scale factor are unused here
+        generate_system_data_region(
+            spec, self.DATA_REGIONS.SYSTEM.value, self, machine_time_step=0,
+            time_scale_factor=0)
 
         # Create the data regions for hello world
         spec.reserve_memory_region(
