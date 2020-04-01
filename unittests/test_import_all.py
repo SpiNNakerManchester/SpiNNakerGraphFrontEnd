@@ -44,6 +44,9 @@ EXCLUSIONS = ["spinnaker_graph_front_end.examples.Conways."
               "spinnaker_graph_front_end.examples."
               "test_fixed_router_transmitter_reciever.hello_world",
 
+              "spinnaker_graph_front_end.examples."
+              "test_fixed_router_transmitter_reciever.hello_world_untimed",
+
               "spinnaker_graph_front_end.examples.test_timer_setup_cost."
               "test_timer_setup_cost"]
 
