@@ -19,6 +19,15 @@ from spinn_front_end_common.interface.simulation import simulation_utilities
 
 def generate_system_data_region(
         spec, region_id, machine_vertex, machine_time_step, time_scale_factor):
+    """ Generate a system data region for time-based simulations
+
+    :param spec: The data specification to write to
+    :param region_id: The region to write to
+    :param machine_vertex: The machine vertex to write for
+    :param machine_time_step: The time step of the simulation
+    :param time_scale_factor: The time scale of the simulation
+    """
+
     # reserve memory regions
     spec.reserve_memory_region(
         region=region_id, size=SIMULATION_N_BYTES, label='systemInfo')
@@ -28,3 +37,15 @@ def generate_system_data_region(
     spec.write_array(simulation_utilities.get_simulation_header_array(
         machine_vertex.get_binary_file_name(), machine_time_step,
         time_scale_factor))
+
+
+def generate_steps_system_data_region(spec, region_id, machine_vertex):
+    """ Generate a system data region for step-based simulations
+
+    :param spec: The data specification to write to
+    :param region_id: The region to write to
+    :param machine_vertex: The machine vertex to write for
+    """
+    generate_system_data_region(
+        spec, region_id, machine_vertex, machine_time_step=0,
+        time_scale_factor=0)

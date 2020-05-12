@@ -35,13 +35,11 @@ front_end.setup(
 # Put HelloWorldVertex onto 16 cores
 total_number_of_cores = 16
 prints_per_run = 10
-end_scale = 2
+runs = 2
 for x in range(total_number_of_cores):
     front_end.add_machine_vertex_instance(
-        HelloWorldVertex(x * end_scale,
-                         label="Hello World {}".format(x)))
+        HelloWorldVertex(label="Hello World {}".format(x)))
 
-runs = ((total_number_of_cores * end_scale) // prints_per_run) + 1
 for _ in range(runs):
     front_end.run_until_complete(prints_per_run)
 

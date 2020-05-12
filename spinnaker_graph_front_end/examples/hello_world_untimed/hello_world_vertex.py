@@ -30,7 +30,7 @@ from spinn_front_end_common.interface.buffer_management import (
     recording_utilities)
 from spinnaker_graph_front_end.utilities import SimulatorVertex
 from spinnaker_graph_front_end.utilities.data_utils import (
-    generate_system_data_region)
+    generate_steps_system_data_region)
 import numpy
 from pacman.executor.injection_decorator import inject_items
 
@@ -49,42 +49,43 @@ class HelloWorldVertex(
 
     PARAMS_BASE_SIZE = BYTES_PER_WORD * 2
 
-    def __init__(self, n_repeats, label, constraints=None):
+    def __init__(self, label, constraints=None):
+        """
+
+        :param int n_repeats: The number of times to repeat the label in total
+        :param str label: The label, which will be printed
+        :param constraints: The constraints of the vertex
+        """
         super(HelloWorldVertex, self).__init__(
             label, "hello_world.aplx", constraints=constraints)
 
+        # Make the text fit at a word boundary
         self._text = label
         text_extra = len(label) % BYTES_PER_WORD
         if text_extra != 0:
             for _ in range(BYTES_PER_WORD - text_extra):
                 self._text += ' '
 
-        self._n_repeats = n_repeats
-
     @property
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
-        resources = ResourceContainer(
-            sdram=VariableSDRAM(
-                SYSTEM_BYTES_REQUIREMENT +
-                recording_utilities.get_recording_header_size(1) +
-                self.PARAMS_BASE_SIZE + len(self._text),
-                len(self._text)))
-
-        return resources
+        fixed = (
+            SYSTEM_BYTES_REQUIREMENT +
+            recording_utilities.get_recording_header_size(1) +
+            self.PARAMS_BASE_SIZE + len(self._text))
+        variable = len(self._text)
+        return ResourceContainer(sdram=VariableSDRAM(fixed, variable))
 
     @inject_items({
         "data_n_steps": "DataNSteps"
     })
-    @overrides(AbstractGeneratesDataSpecification\
-               .generate_data_specification,
+    @overrides(AbstractGeneratesDataSpecification.generate_data_specification,
                additional_arguments=["data_n_steps"])
     def generate_data_specification(self, spec, placement, data_n_steps):
         # Generate the system data region for simulation .c requirements
         # Note that the time step and time scale factor are unused here
-        generate_system_data_region(
-            spec, self.DATA_REGIONS.SYSTEM.value, self, machine_time_step=0,
-            time_scale_factor=0)
+        generate_steps_system_data_region(
+            spec, self.DATA_REGIONS.SYSTEM.value, self)
 
         # Create the data regions for hello world
         spec.reserve_memory_region(
@@ -102,7 +103,6 @@ class HelloWorldVertex(
 
         # write the data
         spec.switch_write_focus(self.DATA_REGIONS.PARAMS.value)
-        spec.write_value(self._n_repeats)
         spec.write_value(len(self._text))
         spec.write_array(numpy.array(
             bytearray(self._text, "ascii")).view("uint32"))

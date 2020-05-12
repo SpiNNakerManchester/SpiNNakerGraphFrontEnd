@@ -39,7 +39,7 @@ class TestHelloWorldUntimed(unittest.TestCase):
                 expect = "Hello World {}  ".format(n)
                 if n < 10:
                     expect += " "
-                for i in range(n * 2):
+                for i in range(20):
                     start = -2 - (len(expect) * (i + 1))
                     end = -2 - (len(expect) * i)
                     if end == 0:

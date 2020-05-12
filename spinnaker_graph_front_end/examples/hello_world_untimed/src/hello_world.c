@@ -33,7 +33,6 @@ static uint32_t recording_flags = 0;
 
 //! The data
 typedef struct char_data {
-    uint32_t max_index;
     uint32_t n_chars;
     uint8_t chars[];
 } char_data;
@@ -81,11 +80,11 @@ static void run(uint unused0, uint unused1) {
     // Increment the step as it will start at "-1"
     step++;
 
-    log_info("Running from step %u until %u or %u", step, n_steps, c_data->max_index);
-    while ((run_forever || step < n_steps) && step < c_data->max_index) {
+    log_info("Running from step %u until %u", step, n_steps);
+    while (run_forever || step < n_steps) {
         if (recording_flags) {
             record_data();
-            recording_do_timestep_update(step);
+            recording_do_step_update(step);
         }
         step++;
     }
@@ -130,11 +129,9 @@ static bool initialize() {
     }
 
     // set up the simulation interface
-    uint32_t unused_timer_period;
-    if (!simulation_initialise(
+    if (!simulation_steps_initialise(
             data_specification_get_region(SYSTEM_REGION, data),
-            APPLICATION_NAME_HASH, &unused_timer_period, &n_steps,
-            &run_forever, &step, SDP, DMA)) {
+            APPLICATION_NAME_HASH, &n_steps, &run_forever, &step, SDP, DMA)) {
         return false;
     }
 
@@ -174,6 +171,6 @@ void c_main(void) {
 
     simulation_set_exit_function(exit_callback);
     simulation_set_start_function(start_callback);
-    simulation_set_uses_timer(0);
+    simulation_set_uses_timer(false);
     simulation_run();
 }
