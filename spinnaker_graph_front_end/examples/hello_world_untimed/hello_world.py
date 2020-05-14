@@ -12,7 +12,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 """
 Hello World program on SpiNNaker
 
@@ -25,8 +24,8 @@ We then fetch the written data and print it on the python console.
 import logging
 import os
 import spinnaker_graph_front_end as front_end
-from spinnaker_graph_front_end.examples.hello_world.hello_world_vertex import (
-    HelloWorldVertex)
+from spinnaker_graph_front_end.examples.hello_world_untimed\
+    .hello_world_vertex import HelloWorldVertex
 
 logger = logging.getLogger(__name__)
 
@@ -35,12 +34,14 @@ front_end.setup(
 
 # Put HelloWorldVertex onto 16 cores
 total_number_of_cores = 16
+prints_per_run = 10
+runs = 2
 for x in range(total_number_of_cores):
     front_end.add_machine_vertex_instance(
-        HelloWorldVertex(n_hellos=10, label="Hello World at {}".format(x)))
+        HelloWorldVertex(label="Hello World {}".format(x)))
 
-front_end.run(10)
-front_end.run(10)
+for _ in range(runs):
+    front_end.run_until_complete(prints_per_run)
 
 placements = front_end.placements()
 
