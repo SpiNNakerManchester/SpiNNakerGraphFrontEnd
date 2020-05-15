@@ -73,6 +73,55 @@ static bool initialise_recording(void) {
 
 static void resume_callback(void);
 
+void hammer_users(void) {
+    vcpu_t *sark_virtual_processor_info = (vcpu_t *) SV_VCPU;
+    uint processor_id = spin1_get_core_id();
+    uint32_t previous1 = sark_virtual_processor_info[processor_id].user1;
+    uint32_t previous2 = sark_virtual_processor_info[processor_id].user2;
+    uint32_t previous3 = sark_virtual_processor_info[processor_id].user3;
+    log_info("previous1 %d previous2 %d previous3 %d",
+        previous1,
+        previous2,
+        previous3);
+
+    sark_virtual_processor_info[processor_id].user1 = 0;
+    sark_virtual_processor_info[processor_id].user2 = 0;
+    sark_virtual_processor_info[processor_id].user3 = 0;
+    int i = 0;
+    while (i < 100000000) {
+        if (sark_virtual_processor_info[processor_id].user2 > 1000) {
+            sark_virtual_processor_info[5].user3++;
+            sark_virtual_processor_info[6].user3++;
+            sark_virtual_processor_info[7].user3++;
+            sark_virtual_processor_info[8].user3++;
+            sark_virtual_processor_info[9].user3++;
+            sark_virtual_processor_info[10].user3++;
+            sark_virtual_processor_info[11].user3++;
+            sark_virtual_processor_info[12].user3++;
+            sark_virtual_processor_info[13].user3++;
+            sark_virtual_processor_info[14].user3++;
+            sark_virtual_processor_info[15].user3++;
+            log_info("hammered user3");
+            sark_virtual_processor_info[processor_id].user2 = 0;
+        }
+        if (sark_virtual_processor_info[processor_id].user1 > 1000) {
+            sark_virtual_processor_info[processor_id].user2++;
+            sark_virtual_processor_info[processor_id].user1 = 0;
+        } else {
+            sark_virtual_processor_info[processor_id].user1++;
+        }
+        i++;
+    }
+    log_info("i %d user1 %d user2 %d user3 %d", i,
+        sark_virtual_processor_info[processor_id].user1,
+        sark_virtual_processor_info[processor_id].user2,
+        sark_virtual_processor_info[processor_id].user3);
+    sark_virtual_processor_info[processor_id].user1 = previous1;
+    sark_virtual_processor_info[processor_id].user2 = previous2;
+    sark_virtual_processor_info[processor_id].user3 = previous3;
+    log_info("Hammer failed");
+}
+
 static void run(uint unused0, uint unused1) {
     use(unused0);
     use(unused1);
@@ -95,6 +144,7 @@ static void run(uint unused0, uint unused1) {
         recording_finalise();
     }
     log_info("Making ready...");
+    hammer_users();
     simulation_ready_to_read();
     log_info("Done");
 }
