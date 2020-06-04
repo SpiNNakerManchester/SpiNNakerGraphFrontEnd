@@ -154,10 +154,14 @@ def run(duration=None):
     _sim().run(duration)
 
 
-def run_until_complete():
+def run_until_complete(n_steps=None):
     """ Run until the application is complete
+
+    :param n_steps: If not None, this specifies that the simulation should\
+            be requested to run for the given number of steps.  The host will\
+            still wait until the simulation itself says it has completed
     """
-    _sim().run_until_complete()
+    _sim().run_until_complete(n_steps)
 
 
 def stop():

@@ -59,7 +59,7 @@ static void receive_data(uint key, uint payload) {
 static void iobuf_data(void) {
     data_specification_metadata_t *data = data_specification_get_data_address();
     address_t hello_world_address =
-	    data_specification_get_region(RECORDED_DATA, data);
+        data_specification_get_region(RECORDED_DATA, data);
 
     log_info("Hello world address is %08x", hello_world_address);
 
@@ -76,7 +76,7 @@ static void record_data(void) {
     log_debug("Issuing 'Hello World' from chip %d, core %d", chip, core);
 
     bool recorded = recording_record(
-	    0, "Hello world", 11 * sizeof(char));
+        0, "Hello world; ", 13 * sizeof(char));
 
     if (recorded) {
         log_debug("Hello World recorded successfully!");
@@ -91,7 +91,7 @@ static void record_data(void) {
 static bool initialise_recording(void) {
     data_specification_metadata_t *data = data_specification_get_data_address();
     void *recording_region =
-	    data_specification_get_region(RECORDED_DATA, data);
+        data_specification_get_region(RECORDED_DATA, data);
 
     bool success = recording_initialize(&recording_region, &recording_flags);
     log_info("Recording flags = 0x%08x", recording_flags);
@@ -99,7 +99,7 @@ static bool initialise_recording(void) {
 }
 
 static void resume_callback(void) {
-    time = UINT32_MAX;
+    recording_reset();
 }
 
 /****f*
@@ -138,9 +138,8 @@ static void update(uint ticks, uint b) {
         return;
     }
 
-    if (time == 1) {
-        record_data();
-    } else if (time ==  100) {
+    record_data();
+    if (time ==  100) {
         iobuf_data();
     }
 

@@ -12,10 +12,3 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-BUILD_DIRS = hello_world hello_world_untimed Conways template
-all: $(BUILD_DIRS)
-	for d in $(BUILD_DIRS); do (cd $$d; "$(MAKE)") || exit $$?; done
-
-clean: $(BUILD_DIRS)
-	for d in $(BUILD_DIRS); do (cd $$d; "$(MAKE)" clean) || exit $$?; done
