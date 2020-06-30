@@ -93,7 +93,6 @@ recorded_data = dict()
 
 # get the data per vertex
 if not front_end.use_virtual_machine():
-    buffer_manager = front_end.buffer_manager()
     for x in range(0, MAX_X_SIZE_OF_FABRIC):
         for y in range(0, MAX_Y_SIZE_OF_FABRIC):
             recorded_data[x, y] = vertices[x][y].get_data(
