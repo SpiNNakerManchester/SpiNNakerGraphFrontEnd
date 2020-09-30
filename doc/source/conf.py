@@ -57,9 +57,6 @@ fe_link = 'http://spinnfrontendcommon.readthedocs.io/en/latest/'
 intersphinx_mapping = {'spinn_machine':
                        ('http://spinnmachine.readthedocs.io/en/latest/',
                            None),
-                       'spinn_storage_handlers':
-                           ('http://spinnmachine.readthedocs.io/en/latest/',
-                            None),
                        'spinnman':
                            ('http://spinnman.readthedocs.io/en/latest/',
                             None),
