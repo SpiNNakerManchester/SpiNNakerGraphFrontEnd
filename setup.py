@@ -81,3 +81,4 @@ setup(
     maintainer="SpiNNakerTeam",
     maintainer_email="spinnakerusers@googlegroups.com"
 )
+
