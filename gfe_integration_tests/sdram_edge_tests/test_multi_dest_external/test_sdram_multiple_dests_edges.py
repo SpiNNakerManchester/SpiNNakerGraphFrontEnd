@@ -46,6 +46,7 @@ class TestMultiDestSDRAMEdgeBetweenTwoAppVerts(unittest.TestCase):
         sim.add_application_edge_instance(
             ApplicationEdge(vertex_1, vertex_3), "sdram")
         sim.run(100)
+        sim.stop()
 
     def test_local_verts_go_to_local_lpgs(self):
         self.setup()

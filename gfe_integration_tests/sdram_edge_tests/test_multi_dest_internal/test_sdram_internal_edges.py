@@ -33,6 +33,7 @@ class TestMultiDestSDRAMEdgeInsideOneAppVert(unittest.TestCase):
             DestinationSegmentedSDRAMMachinePartition)
         sim.add_vertex_instance(vertex_1)
         sim.run(100)
+        sim.stop()
 
     def test_local_verts_go_to_local_lpgs(self):
         self.setup()

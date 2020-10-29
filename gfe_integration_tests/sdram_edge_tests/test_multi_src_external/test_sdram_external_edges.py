@@ -36,14 +36,12 @@ class TestMultiSrcSDRAMEdgeOverTwoAppVert(unittest.TestCase):
         vertex_2 = SimpleTestVertex(12, fixed_sdram_value=20)
         vertex_2.splitter = SDRAMSplitter(
             SourceSegmentedSDRAMMachinePartition, vertex_1.splitter)
-
         sim.add_vertex_instance(vertex_1)
         sim.add_vertex_instance(vertex_2)
-
         sim.add_application_edge_instance(
             ApplicationEdge(vertex_1, vertex_2), "sdram")
-
         sim.run(100)
+        sim.stop()
 
     def test_local_verts_go_to_local_lpgs(self):
         self.setup()
