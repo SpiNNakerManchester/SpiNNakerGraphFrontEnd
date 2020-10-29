@@ -16,7 +16,8 @@
 BUILD_DIRS = test_constant_internal \
              test_constant_external \
              test_multi_dest_external \
-             test_multi_dest_internal
+             test_multi_dest_internal \
+             test_multi_src_internal
 all: $(BUILD_DIRS)
 	for d in $(BUILD_DIRS); do (cd $$d; "$(MAKE)") || exit $$?; done
 

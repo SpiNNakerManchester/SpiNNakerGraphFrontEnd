@@ -73,9 +73,9 @@ class SDRAM_Splitter(AbstractSplitterCommon):
             0, int(self._governed_app_vertex.n_atoms / self.N_VERTS))
 
         for count in range(1, self.N_VERTS):
-            self._post_slices.append(
+            self._post_slices.append(Slice(
                 self._pre_slice.n_atoms * count,
-                self._pre_slice.n_atoms * count + self._pre_slice.n_atoms)
+                self._pre_slice.n_atoms * count + self._pre_slice.n_atoms))
 
         # mac verts
         self._pre_vertex = (
