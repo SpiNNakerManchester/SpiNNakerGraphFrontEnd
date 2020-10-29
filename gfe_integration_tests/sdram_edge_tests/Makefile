@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-BUILD_DIRS = test_constant_internal test_constant_external
+BUILD_DIRS = test_constant_internal test_constant_external test_multi_dest_external
 all: $(BUILD_DIRS)
 	for d in $(BUILD_DIRS); do (cd $$d; "$(MAKE)") || exit $$?; done
 

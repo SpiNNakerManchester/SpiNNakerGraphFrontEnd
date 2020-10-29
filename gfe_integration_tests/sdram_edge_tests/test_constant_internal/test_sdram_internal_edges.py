@@ -20,14 +20,14 @@ from gfe_integration_tests.sdram_edge_tests.\
     test_constant_internal import SDRAM_Splitter
 from pacman.model.graphs.machine.outgoing_edge_partitions import (
     ConstantSDRAMMachinePartition)
-from gfe_integration_tests.sdram_edge_tests import test_constant_external
+from gfe_integration_tests.sdram_edge_tests import test_constant_internal
 import spinnaker_graph_front_end as sim
 
 
 class TestConstantSDRAMEdgeInsideOneAppVert(unittest.TestCase):
 
     def setup(self):
-        sim.setup(model_binary_module=test_constant_external)
+        sim.setup(model_binary_module=test_constant_internal)
         vertex_1 = SimpleTestVertex(10, fixed_sdram_value=20)
         vertex_1.splitter = SDRAM_Splitter(ConstantSDRAMMachinePartition)
         sim.add_vertex_instance(vertex_1)
