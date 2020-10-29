@@ -14,15 +14,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from enum import Enum
 
-from pacman.model.graphs import AbstractSupportsSDRAMEdges, \
-    AbstractSDRAMPartition
+from pacman.model.graphs import (
+    AbstractSupportsSDRAMEdges, AbstractSDRAMPartition)
 from pacman.model.graphs.machine import MachineVertex
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models.impl import (
     MachineDataSpecableVertex)
 from spinn_front_end_common.interface.simulation import simulation_utilities
-from spinn_front_end_common.utilities.constants import SIMULATION_N_BYTES, \
-    BYTES_PER_WORD
+from spinn_front_end_common.utilities.constants import (
+    SIMULATION_N_BYTES, BYTES_PER_WORD)
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_utilities.overrides import overrides
 
