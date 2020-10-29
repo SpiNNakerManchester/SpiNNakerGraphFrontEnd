@@ -12,22 +12,22 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import os
 import unittest
 
 from fec_integration_tests.interface.interface_functions.\
     simple_test_vertex import SimpleTestVertex
-from gfe_integration_tests.sdram_edge_tests.test_constant import SDRAM_Splitter
+from gfe_integration_tests.sdram_edge_tests.test_constant_external import SDRAM_Splitter
 from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.machine.outgoing_edge_partitions import (
     ConstantSDRAMMachinePartition)
-from gfe_integration_tests.sdram_edge_tests import test_constant
+from gfe_integration_tests.sdram_edge_tests import test_constant_external
 import spinnaker_graph_front_end as sim
 
-class TestLPGPreAllocateRes(unittest.TestCase):
+
+class TestConstantSDRAMEdgeBetweenTwoAppVerts(unittest.TestCase):
 
     def setup(self):
-        sim.setup(model_binary_module=test_constant)
+        sim.setup(model_binary_module=test_constant_external)
         vertex_1 = SimpleTestVertex(2, fixed_sdram_value=20)
         vertex_1.splitter = SDRAM_Splitter(ConstantSDRAMMachinePartition)
         vertex_2 = SimpleTestVertex(2, fixed_sdram_value=20)
