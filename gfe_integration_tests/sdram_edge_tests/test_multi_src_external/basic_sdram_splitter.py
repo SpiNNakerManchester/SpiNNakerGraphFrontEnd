@@ -25,6 +25,6 @@ class BasicSDRAMSplitter(SplitterSliceLegacy):
 
     @overrides(SplitterSliceLegacy.get_post_vertices)
     def get_post_vertices(
-        self, edge, outgoing_edge_partition, src_machine_vertex):
+            self, edge, outgoing_edge_partition, src_machine_vertex):
         return self._get_map([SDRAMMachineEdge])
 
