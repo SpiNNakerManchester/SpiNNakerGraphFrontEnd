@@ -24,7 +24,7 @@ from gfe_integration_tests.sdram_edge_tests import test_multi_dest_internal
 import spinnaker_graph_front_end as sim
 
 
-class TestMultiSrcSDRAMEdgeInsideOneAppVert(unittest.TestCase):
+class TestMultiDestSDRAMEdgeInsideOneAppVert(unittest.TestCase):
 
     def setup(self):
         sim.setup(model_binary_module=test_multi_dest_internal)

@@ -3,5 +3,5 @@ from .sdram_splitter import SDRAM_Splitter
 from .test_sdram_multiple_dests_edges import (
     TestMultiDestSDRAMEdgeBetweenTwoAppVerts)
 
-__all__ = ["SDRAM_Splitter", "SDRAMMachineVertex",
+__all__ = ["SDRAMMachineVertex", "SDRAM_Splitter",
            "TestMultiDestSDRAMEdgeBetweenTwoAppVerts"]
