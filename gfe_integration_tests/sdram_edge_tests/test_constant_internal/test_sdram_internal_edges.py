@@ -16,22 +16,24 @@ import unittest
 
 from fec_integration_tests.interface.interface_functions.\
     simple_test_vertex import SimpleTestVertex
-from gfe_integration_tests.sdram_edge_tests.\
-    test_constant_internal import SDRAM_Splitter
+from gfe_integration_tests.sdram_edge_tests.common import (
+    SDRAMSplitterInternal)
+from gfe_integration_tests.sdram_edge_tests import common
 from pacman.model.graphs.machine.outgoing_edge_partitions import (
     ConstantSDRAMMachinePartition)
-from gfe_integration_tests.sdram_edge_tests import test_constant_internal
 import spinnaker_graph_front_end as sim
 
 
 class TestConstantSDRAMEdgeInsideOneAppVert(unittest.TestCase):
 
     def setup(self):
-        sim.setup(model_binary_module=test_constant_internal)
+        sim.setup(model_binary_module=common)
         vertex_1 = SimpleTestVertex(10, fixed_sdram_value=20)
-        vertex_1.splitter = SDRAM_Splitter(ConstantSDRAMMachinePartition)
+        vertex_1.splitter = SDRAMSplitterInternal(
+            ConstantSDRAMMachinePartition)
         sim.add_vertex_instance(vertex_1)
         sim.run(100)
+        sim.stop()
 
     def test_local_verts_go_to_local_lpgs(self):
         self.setup()

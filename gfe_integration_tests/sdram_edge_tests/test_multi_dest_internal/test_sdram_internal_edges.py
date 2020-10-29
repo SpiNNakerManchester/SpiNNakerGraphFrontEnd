@@ -17,19 +17,19 @@ import unittest
 from fec_integration_tests.interface.interface_functions.\
     simple_test_vertex import SimpleTestVertex
 from gfe_integration_tests.sdram_edge_tests.\
-    test_multi_dest_internal import SDRAM_Splitter
+    test_multi_dest_internal import SDRAMSplitter
 from pacman.model.graphs.machine.outgoing_edge_partitions import (
     DestinationSegmentedSDRAMMachinePartition)
-from gfe_integration_tests.sdram_edge_tests import test_multi_dest_internal
+from gfe_integration_tests.sdram_edge_tests import common
 import spinnaker_graph_front_end as sim
 
 
 class TestMultiDestSDRAMEdgeInsideOneAppVert(unittest.TestCase):
 
     def setup(self):
-        sim.setup(model_binary_module=test_multi_dest_internal)
+        sim.setup(model_binary_module=common)
         vertex_1 = SimpleTestVertex(12, fixed_sdram_value=20)
-        vertex_1.splitter = SDRAM_Splitter(
+        vertex_1.splitter = SDRAMSplitter(
             DestinationSegmentedSDRAMMachinePartition)
         sim.add_vertex_instance(vertex_1)
         sim.run(100)

@@ -12,7 +12,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from gfe_integration_tests.sdram_edge_tests.test_constant_internal import \
+from gfe_integration_tests.sdram_edge_tests.common import \
     SDRAMMachineVertex
 from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs.application import ApplicationEdge
@@ -24,7 +24,7 @@ from pacman.model.partitioner_interfaces import AbstractSplitterCommon
 from spinn_utilities.overrides import overrides
 
 
-class SDRAM_Splitter(AbstractSplitterCommon):
+class SDRAMSplitter(AbstractSplitterCommon):
     """ sdram splitter
     """
 
@@ -39,7 +39,7 @@ class SDRAM_Splitter(AbstractSplitterCommon):
         "_app_edge"]
 
     def __init__(self, partition_type):
-        super(SDRAM_Splitter, self).__init__()
+        super(SDRAMSplitter, self).__init__()
         self._partition_type = partition_type
         self._pre_vertex = None
         self._post_vertices = list()
@@ -110,7 +110,7 @@ class SDRAM_Splitter(AbstractSplitterCommon):
                 vertices=[post_vertex])
 
             # add to mac graph
-            machine_graph.add_vertex(self._post_vertex)
+            machine_graph.add_vertex(post_vertex)
 
         # add outgoing edge partition to mac graph
         machine_graph.add_outgoing_edge_partition(self._partition_type(

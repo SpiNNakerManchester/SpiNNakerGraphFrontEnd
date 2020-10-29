@@ -12,8 +12,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from gfe_integration_tests.sdram_edge_tests.test_constant_external import \
-    SDRAMMachineVertex
+from gfe_integration_tests.sdram_edge_tests.common.\
+    sdram_machine_vertex import SDRAMMachineVertex
 from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs.common import Slice
 from pacman.model.graphs.machine import SDRAMMachineEdge
@@ -23,14 +23,14 @@ from pacman.model.partitioner_splitters import SplitterOneToOneLegacy
 from spinn_utilities.overrides import overrides
 
 
-class SDRAM_Splitter(SplitterOneToOneLegacy):
+class SDRAMSplitterExternal(SplitterOneToOneLegacy):
     """ sdram splitter
     """
 
     __slots__ = ["_partition_type"]
 
     def __init__(self, partition_type):
-        super(SDRAM_Splitter, self).__init__()
+        super(SDRAMSplitterExternal, self).__init__()
         self._partition_type = partition_type
         if self._partition_type == SourceSegmentedSDRAMMachinePartition:
             raise Exception("this splitter not for this")

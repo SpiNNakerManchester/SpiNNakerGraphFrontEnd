@@ -12,19 +12,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from gfe_integration_tests.sdram_edge_tests.test_constant_internal import \
-    SDRAMMachineVertex
+from gfe_integration_tests.sdram_edge_tests.common import SDRAMMachineVertex
 from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.common import Slice
 from pacman.model.graphs.machine import SDRAMMachineEdge
-from pacman.model.graphs.machine.outgoing_edge_partitions import \
-    SourceSegmentedSDRAMMachinePartition
 from pacman.model.partitioner_interfaces import AbstractSplitterCommon
 from spinn_utilities.overrides import overrides
 
 
-class SDRAM_Splitter(AbstractSplitterCommon):
+class SDRAMSplitter(AbstractSplitterCommon):
     """ sdram splitter
     """
 
@@ -39,7 +36,7 @@ class SDRAM_Splitter(AbstractSplitterCommon):
         "_app_edge"]
 
     def __init__(self, partition_type):
-        super(SDRAM_Splitter, self).__init__()
+        super(SDRAMSplitter, self).__init__()
         self._partition_type = partition_type
         self._pre_vertices = list()
         self._post_vertex = None

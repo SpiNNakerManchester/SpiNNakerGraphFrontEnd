@@ -14,8 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from collections import OrderedDict
 
-from gfe_integration_tests.sdram_edge_tests.test_constant_internal import (
-    SDRAMMachineVertex)
+from gfe_integration_tests.sdram_edge_tests.common import SDRAMMachineVertex
 from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.common import Slice
@@ -26,7 +25,7 @@ from spinn_utilities.ordered_set import OrderedSet
 from spinn_utilities.overrides import overrides
 
 
-class SDRAM_Splitter(AbstractDependentSplitter):
+class SDRAMSplitter(AbstractDependentSplitter):
     """ sdram splitter
     """
 
@@ -41,7 +40,7 @@ class SDRAM_Splitter(AbstractDependentSplitter):
         "_app_edge"]
 
     def __init__(self, partition_type, other_splitter):
-        super(SDRAM_Splitter, self).__init__(other_splitter, "")
+        super(SDRAMSplitter, self).__init__(other_splitter, "")
         self._partition_type = partition_type
         self._pre_vertices = OrderedSet()
         self._post_vertex = None
