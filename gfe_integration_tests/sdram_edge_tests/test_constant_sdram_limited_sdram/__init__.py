@@ -15,4 +15,4 @@
 from .test_sdram_internal_edges_low_sdram import (
     TestConstantSDRAMEdgeBetweenTwoAppVerts)
 
-__all__ = [TestConstantSDRAMEdgeBetweenTwoAppVerts
+__all__ = [TestConstantSDRAMEdgeBetweenTwoAppVerts]
