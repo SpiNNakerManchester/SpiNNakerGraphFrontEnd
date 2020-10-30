@@ -18,20 +18,19 @@ from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs import (
     AbstractSupportsSDRAMEdges, AbstractSDRAMPartition)
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, ConstantSDRAM, \
-    VariableSDRAM
+from pacman.model.resources import ResourceContainer, VariableSDRAM
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models.impl import (
     MachineDataSpecableVertex)
-from spinn_front_end_common.interface.buffer_management import \
-    recording_utilities
-from spinn_front_end_common.interface.buffer_management.buffer_models import \
-    AbstractReceiveBuffersToHost
+from spinn_front_end_common.interface.buffer_management import (
+    recording_utilities)
+from spinn_front_end_common.interface.buffer_management.buffer_models import (
+    AbstractReceiveBuffersToHost)
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utilities.constants import (
     SIMULATION_N_BYTES, BYTES_PER_WORD, SARK_PER_MALLOC_SDRAM_USAGE)
-from spinn_front_end_common.utilities.helpful_functions import \
-    locate_memory_region_for_placement
+from spinn_front_end_common.utilities.helpful_functions import (
+    locate_memory_region_for_placement)
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_utilities.overrides import overrides
 
