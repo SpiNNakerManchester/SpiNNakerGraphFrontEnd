@@ -31,10 +31,10 @@ class TestSDRAMEdgeNotEnoughSDRAM(unittest.TestCase):
 
     def setup(self):
         sim.setup(model_binary_module=common)
-        vertex_1 = SimpleTestVertex(2, fixed_sdram_value=20)
+        vertex_1 = SimpleTestVertex(2, fixed_sdram_value=200*1024*1024)
         vertex_1.splitter = SDRAMSplitterExternal(
             ConstantSDRAMMachinePartition)
-        vertex_2 = SimpleTestVertex(2, fixed_sdram_value=20)
+        vertex_2 = SimpleTestVertex(2, fixed_sdram_value=200*1024*1024)
         vertex_2.splitter = SDRAMSplitterExternal(
             ConstantSDRAMMachinePartition)
         sim.add_vertex_instance(vertex_1)
