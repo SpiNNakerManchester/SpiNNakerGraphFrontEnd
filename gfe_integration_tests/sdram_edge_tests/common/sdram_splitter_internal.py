@@ -131,4 +131,3 @@ class SDRAMSplitterInternal(AbstractSplitterCommon):
     @overrides(AbstractSplitterCommon.reset_called)
     def reset_called(self):
         pass
-

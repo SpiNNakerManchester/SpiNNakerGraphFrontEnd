@@ -27,7 +27,7 @@ from pacman.model.graphs.machine.outgoing_edge_partitions import (
 import spinnaker_graph_front_end as sim
 
 
-class TestConstantSDRAMEdgeBetweenTwoAppVerts(unittest.TestCase):
+class TestSDRAMEdgeNotEnoughSDRAM(unittest.TestCase):
 
     def setup(self):
         sim.setup(model_binary_module=common)

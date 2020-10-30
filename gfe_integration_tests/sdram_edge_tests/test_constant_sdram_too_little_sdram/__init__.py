@@ -12,5 +12,4 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from .test_sdram_internal_edges_low_sdram import (
-    TestConstantSDRAMEdgeBetweenTwoAppVerts)
+from .test_sdram_edges_not_enough_sdram import TestSDRAMEdgeNotEnoughSDRAM
