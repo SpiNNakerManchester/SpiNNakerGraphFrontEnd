@@ -15,4 +15,3 @@
 from .test_sdram_edges_not_enough_sdram import TestSDRAMEdgeNotEnoughSDRAM
 
 __all__ = ["TestSDRAMEdgeNotEnoughSDRAM"]
-
