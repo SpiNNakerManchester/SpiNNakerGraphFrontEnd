@@ -14,15 +14,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from enum import Enum
 
+from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs import (
     AbstractSupportsSDRAMEdges, AbstractSDRAMPartition)
 from pacman.model.graphs.machine import MachineVertex
+from pacman.model.resources import ResourceContainer, ConstantSDRAM
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models.impl import (
     MachineDataSpecableVertex)
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utilities.constants import (
-    SIMULATION_N_BYTES, BYTES_PER_WORD)
+    SIMULATION_N_BYTES, BYTES_PER_WORD, SARK_PER_MALLOC_SDRAM_USAGE)
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_utilities.overrides import overrides
 
@@ -43,18 +45,25 @@ class SDRAMMachineVertex(
     SDRAM_PARTITION_BASE_DSG_SIZE = 2 * BYTES_PER_WORD
     SDRAM_PARTITION_COUNTERS = 1 * BYTES_PER_WORD
 
-    def __init__(self, resources, label=None, constraints=None,
+    def __init__(self, label=None, constraints=None,
                  app_vertex=None, vertex_slice=None, sdram_cost=0):
         super(SDRAMMachineVertex, self).__init__(
             label=label, constraints=constraints, app_vertex=app_vertex,
             vertex_slice=vertex_slice)
-        self._resources = resources
         self._sdram_cost = sdram_cost
 
     @property
-    @overrides(MachineVertex.resources_required)
-    def resources_required(self):
-        return self._resources
+    @inject_items({"app_graph": "MemoryApplicationGraph"})
+    @overrides(MachineVertex.resources_required,
+               additional_arguments=["app_graph"])
+    def resources_required(self, app_graph):
+        out_edges = app_graph.get_edges_starting_at_vertex(self.app_vertex)
+        in_edges = app_graph.get_edges_starting_at_vertex(self.app_vertex)
+        return ResourceContainer(sdram=ConstantSDRAM(
+            SIMULATION_N_BYTES + (
+                len(out_edges) * self.SDRAM_PARTITION_BASE_DSG_SIZE) +
+            (len(in_edges) * self.SDRAM_PARTITION_BASE_DSG_SIZE) +
+            (self.SDRAM_PARTITION_COUNTERS * 2) + SARK_PER_MALLOC_SDRAM_USAGE))
 
     @overrides(AbstractSupportsSDRAMEdges.sdram_requirement)
     def sdram_requirement(self, sdram_machine_edge):

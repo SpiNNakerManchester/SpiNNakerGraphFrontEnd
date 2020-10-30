@@ -14,23 +14,35 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
 
+import pytest
+
 from fec_integration_tests.interface.interface_functions.\
     simple_test_vertex import SimpleTestVertex
-from gfe_integration_tests.sdram_edge_tests.test_constant_sdram_limited_sdram import SDRAM_Splitter
+from gfe_integration_tests.sdram_edge_tests import common
+from gfe_integration_tests.sdram_edge_tests.common import (
+    SDRAMSplitterExternal)
+from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.machine.outgoing_edge_partitions import (
     ConstantSDRAMMachinePartition)
-from gfe_integration_tests.sdram_edge_tests import test_constant_internal
 import spinnaker_graph_front_end as sim
 
 
-class TestConstantSDRAMEdgeInsideOneAppVert(unittest.TestCase):
+class TestConstantSDRAMEdgeBetweenTwoAppVerts(unittest.TestCase):
 
     def setup(self):
-        sim.setup(model_binary_module=test_constant_internal)
-        vertex_1 = SimpleTestVertex(10, fixed_sdram_value=20)
-        vertex_1.splitter = SDRAM_Splitter(ConstantSDRAMMachinePartition)
+        sim.setup(model_binary_module=common)
+        vertex_1 = SimpleTestVertex(2, fixed_sdram_value=20)
+        vertex_1.splitter = SDRAMSplitterExternal(
+            ConstantSDRAMMachinePartition)
+        vertex_2 = SimpleTestVertex(2, fixed_sdram_value=20)
+        vertex_2.splitter = SDRAMSplitterExternal(
+            ConstantSDRAMMachinePartition)
         sim.add_vertex_instance(vertex_1)
-        sim.run(100)
+        sim.add_vertex_instance(vertex_2)
+        sim.add_application_edge_instance(
+            ApplicationEdge(vertex_1, vertex_2), "sdram")
+        with pytest.raises(Exception):
+            sim.run(100)
 
-    def test_local_verts_go_to_local_lpgs(self):
+    def test_const_2_verts_external(self):
         self.setup()

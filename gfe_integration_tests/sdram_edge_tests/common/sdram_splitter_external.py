@@ -43,7 +43,6 @@ class SDRAMSplitterExternal(SplitterOneToOneLegacy):
             self._governed_app_vertex.get_resources_used_by_atoms(
                 self._vertex_slice))
         self._machine_vertex = SDRAMMachineVertex(
-            resources=self._resources_required,
             app_vertex=self._governed_app_vertex,
             vertex_slice=self._vertex_slice,
             sdram_cost=self._governed_app_vertex.fixed_sdram_value)

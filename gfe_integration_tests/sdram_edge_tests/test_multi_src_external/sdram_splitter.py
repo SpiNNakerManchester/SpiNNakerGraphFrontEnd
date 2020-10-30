@@ -92,10 +92,7 @@ class SDRAMSplitter(AbstractDependentSplitter):
         # mac verts
         self._post_vertex = (
             SDRAMMachineVertex(
-                vertex_slice=self._post_slice,
-                resources=(
-                    self._governed_app_vertex.get_resources_used_by_atoms(
-                        self._post_slice)), label=None,
+                vertex_slice=self._post_slice, label=None,
                 constraints=None, app_vertex=self._governed_app_vertex,
                 sdram_cost=self._governed_app_vertex.fixed_sdram_value))
         resource_tracker.allocate_constrained_resources(
@@ -107,10 +104,7 @@ class SDRAMSplitter(AbstractDependentSplitter):
         for vertex_slice in self._pre_slices:
             pre_vertex = (
                 SDRAMMachineVertex(
-                    vertex_slice=vertex_slice,
-                    resources=(
-                        self._governed_app_vertex.get_resources_used_by_atoms(
-                            vertex_slice)), label=None,
+                    vertex_slice=vertex_slice, label=None,
                     constraints=None, app_vertex=self._governed_app_vertex,
                     sdram_cost=self._governed_app_vertex.fixed_sdram_value))
             self._pre_vertices.add(pre_vertex)
