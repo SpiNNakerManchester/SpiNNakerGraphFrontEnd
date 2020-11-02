@@ -17,7 +17,8 @@ from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.common import Slice
 from pacman.model.graphs.machine import SDRAMMachineEdge
-from pacman.model.partitioner_interfaces import AbstractSplitterCommon
+from pacman.model.partitioner_splitters.abstract_splitters import (
+    AbstractSplitterCommon)
 from spinn_utilities.overrides import overrides
 
 
