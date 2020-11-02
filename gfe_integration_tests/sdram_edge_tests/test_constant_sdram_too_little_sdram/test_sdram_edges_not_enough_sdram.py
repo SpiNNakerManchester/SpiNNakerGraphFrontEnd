@@ -12,6 +12,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import os
+import sys
 import unittest
 
 import pytest
@@ -25,11 +27,22 @@ from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.machine.outgoing_edge_partitions import (
     ConstantSDRAMMachinePartition)
 import spinnaker_graph_front_end as sim
+from spinn_front_end_common.utilities import globals_variables
 
 
 class TestSDRAMEdgeNotEnoughSDRAM(unittest.TestCase):
 
     def setup(self):
+        # Remove random effect for testing
+        # Set test_seed to None to allow random
+        self._test_seed = 1
+
+        globals_variables.unset_simulator()
+        class_file = sys.modules[self.__module__].__file__
+        path = os.path.dirname(os.path.abspath(class_file))
+        os.chdir(path)
+
+
         sim.setup(model_binary_module=common)
         vertex_1 = SimpleTestVertex(2, fixed_sdram_value=200*1024*1024)
         vertex_1.splitter = SDRAMSplitterExternal(
