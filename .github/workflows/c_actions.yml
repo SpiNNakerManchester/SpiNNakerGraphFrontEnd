@@ -24,8 +24,17 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    # Note: Python is needed for spinn_utilities.make_tools when building
+    strategy:
+      matrix:
+        python-version: [3.6]
 
     steps:
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+        
     - name: Checkout
       uses: actions/checkout@v2
 
@@ -64,6 +73,11 @@ jobs:
             
     - name: Install vera++ and doxygen
       run: sudo apt-get update && sudo apt-get install vera++ doxygen --fix-missing
+
+    - name: Lint C code using Vera++
+      # Note: run this before building to avoid linting modified_src directories
+      run: |
+        support/run-vera.sh neural_modelling/src
     
     - name: Build C code
       run: |
@@ -72,7 +86,3 @@ jobs:
         make -C SpiNNFrontEndCommon/c_common install
         CFLAGS=-fdiagnostics-color make -C spinnaker_graph_front_end/examples
         CFLAGS=-fdiagnostics-color make -C gfe_integration_tests
-        
-    - name: Lint C code using Vera++
-      run: |
-        support/run-vera.sh neural_modelling/src
