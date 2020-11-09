@@ -62,6 +62,9 @@ class TemplateVertex(
 
         self.placement = None
 
+        # Set the recording size here
+        self._recording_size = BYTES_PER_WORD
+
     @property
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
