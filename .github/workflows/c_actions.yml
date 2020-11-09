@@ -67,17 +67,30 @@ jobs:
         release: '9-2019-q4' # The arm-none-eabi-gcc release to use.
             
     - name: Install vera++ and doxygen
-      run: sudo apt-get update && sudo apt-get install vera++ doxygen --fix-missing
+      run: |
+        sudo apt-get update
+        sudo apt-get install vera++ doxygen --fix-missing
 
     - name: Lint C code using Vera++
       # Note: run this before building to avoid linting modified_src directories
       run: |
         support/run-vera.sh neural_modelling/src
     
-    - name: Build C code
+    - name: Build C dependencies
       run: |
         make -C $SPINN_DIRS
         make -C spinn_common install
         make -C SpiNNFrontEndCommon/c_common install
-        CFLAGS=-fdiagnostics-color make -C spinnaker_graph_front_end/examples
-        CFLAGS=-fdiagnostics-color make -C gfe_integration_tests
+
+    - name: Build Example code (spinnaker_graph_front_end/examples)
+      run: |
+        make
+      env:
+        CFLAGS: -fdiagnostics-color
+      working-directory: spinnaker_graph_front_end/examples
+    - name: Build Integration Test code (gfe_integration_tests)
+      run: |
+        make
+      env:
+        CFLAGS: -fdiagnostics-color
+      working-directory: gfe_integration_tests
