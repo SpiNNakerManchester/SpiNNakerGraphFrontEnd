@@ -60,16 +60,11 @@ jobs:
     - name: Install SpiNNUtils
       run: python setup.py install
       working-directory: SpiNNUtils
-                    
-    - name: Install arm-none-eabi-gcc
-      uses: fiam/arm-none-eabi-gcc@v1.0.2
-      with:
-        release: '9-2019-q4' # The arm-none-eabi-gcc release to use.
-            
-    - name: Install vera++ and doxygen
+
+    - name: Install Ubuntu packages
       run: |
         sudo apt-get update
-        sudo apt-get install vera++ doxygen --fix-missing
+        sudo apt-get install vera++ doxygen gcc-arm-none-eabi --fix-missing
 
     - name: Lint C code using Vera++
       # Note: run this before building to avoid linting modified_src directories
@@ -86,13 +81,13 @@ jobs:
       run: |
         make
       env:
-        CFLAGS: -fdiagnostics-color
+        CFLAGS: -fdiagnostics-color=always
         GCC_COLORS: error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32
       working-directory: spinnaker_graph_front_end/examples
     - name: Build Integration Test code (gfe_integration_tests)
       run: |
         make
       env:
-        CFLAGS: -fdiagnostics-color
+        CFLAGS: -fdiagnostics-color=always
         GCC_COLORS: error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32
       working-directory: gfe_integration_tests
