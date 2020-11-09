@@ -1,4 +1,4 @@
 *.rst
 !index.rst
 !modules.rst
-/_build/
+_build
