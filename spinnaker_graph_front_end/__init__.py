@@ -55,7 +55,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
 
     :param hostname:\
         the hostname of the SpiNNaker machine to operate on\
-        (over rides the machine_name from the cfg file).
+        (overrides the machine_name from the cfg file).
     :type hostname: str
     :param graph_label:\
         a human readable label for the graph (used mainly in reports)
@@ -72,12 +72,12 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
     :type model_binary_folder: str
     :param database_socket_addresses:\
         set of SocketAddresses that need to be added for the database\
-        notification functionality. This are over and above the ones used by\
+        notification functionality. These are over and above the ones used by\
         the LiveEventConnection
     :type database_socket_addresses: list of SocketAddresses
     :param user_dsg_algorithm:\
         an algorithm used for generating the application data which is loaded\
-        onto the machine. if not set, will use the data specification language\
+        onto the machine. If not set, will use the data specification language\
         algorithm required for the type of graph being used.
     :type user_dsg_algorithm: str
     :param n_chips_required:\
@@ -101,6 +101,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
     :type extra_pre_run_algorithms: list of str
     :raises ConfigurationException if both n_chips_required and\
         n_boards_required are used.
+
     """
     # pylint: disable=global-statement, redefined-outer-name
     global _none_labelled_vertex_count
