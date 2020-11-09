@@ -48,6 +48,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         "_user_dsg_algorithm"
     )
 
+    #: The name of the configuration file
     CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
     #: The name of the configuration validation configuration file
     VALIDATION_CONFIG_NAME = "validation_config.cfg"
@@ -60,9 +61,25 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             extra_post_run_algorithms=None, time_scale_factor=None,
             machine_time_step=None, default_config_paths=None,
             extra_xml_paths=None):
-
-        global CONFIG_FILE_NAME
-
+        """
+        :param executable_finder:
+        :type executable_finder:
+            ~spinn_front_end_common.utilities.utility_objs.ExecutableFinder
+        :param str host_name:
+        :param str graph_label:
+        :param database_socket_addresses:
+        :type database_socket_addresses:
+            list(~spinn_utilities.socket_address.SocketAddress)
+        :param str dsg_algorithm:
+        :param int n_chips_required:
+        :param int n_boards_required:
+        :param list(str) extra_pre_run_algorithms:
+        :param list(str) extra_post_run_algorithms:
+        :param int time_scale_factor:
+        :param int machine_time_step:
+        :param list(str) default_config_paths:
+        :param list(str) extra_xml_paths:
+        """
         # DSG algorithm store for user defined algorithms
         self._user_dsg_algorithm = dsg_algorithm
 
@@ -114,13 +131,15 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
     @property
     def is_allocated_machine(self):
         """ Is this an allocated machine? Otherwise, it is local.
+
+        :rtype: bool
         """
         return _is_allocated_machine(self.config)
 
     def run(self, run_time):
         """ Run a simulation for a fixed amount of time
 
-        :param run_time: the run duration in milliseconds.
+        :param int run_time: the run duration in milliseconds.
         """
         # set up the correct DSG algorithm
         if self._user_dsg_algorithm is not None:

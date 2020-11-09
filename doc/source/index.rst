@@ -25,7 +25,7 @@ Contents:
 .. toctree::
    :maxdepth: 4
 
-   spinnaker_graph_front_end
+   modules
 
 
 Indices and tables
