@@ -69,7 +69,7 @@ jobs:
     - name: Lint C code using Vera++
       # Note: run this before building to avoid linting modified_src directories
       run: |
-        support/run-vera.sh spinnaker_graph_front_end
+        support/run-vera.sh spinnaker_graph_front_end -P max-dirname-length=40
         support/run-vera.sh gfe_integration_tests
 
     - name: Build C dependencies

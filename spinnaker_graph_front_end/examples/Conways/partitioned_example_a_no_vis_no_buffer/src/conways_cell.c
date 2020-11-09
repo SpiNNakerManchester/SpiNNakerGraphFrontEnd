@@ -143,11 +143,11 @@ void read_input_buffer(void) {
         bool success = circular_buffer_get_next(input_buffer, &current_payload);
         if (success) {
             if (current_payload == DEAD) {
-                 dead_states_recieved_this_tick += 1;
-            } else if(current_payload == ALIVE) {
-                 alive_states_recieved_this_tick += 1;
+                dead_states_recieved_this_tick += 1;
+            } else if (current_payload == ALIVE) {
+                alive_states_recieved_this_tick += 1;
             } else {
-                 log_error("Not recognised payload");
+                log_error("Not recognised payload");
             }
         } else {
             log_debug("couldn't read state from my neighbours.");
