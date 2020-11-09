@@ -51,7 +51,8 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
           n_boards_required=None, extra_pre_run_algorithms=None,
           extra_post_run_algorithms=None,
           time_scale_factor=None, machine_time_step=None):
-    """
+    """ The main method needed to be called to set up a graph.
+
     :param hostname:\
         the hostname of the SpiNNaker machine to operate on\
         (over rides the machine_name from the cfg file).
