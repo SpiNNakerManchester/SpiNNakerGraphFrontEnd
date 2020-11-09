@@ -28,7 +28,7 @@ static uint32_t simulation_ticks;
 static uint32_t infinite_run;
 static uint32_t timer;
 
-void timer_callback(uint timestamp, uint unused1) {
+void timer_callback(uint timestamp, UNUSED uint unused1) {
     if (infinite_run) {
 	if (timestamp < 2000) {
 	    return;
