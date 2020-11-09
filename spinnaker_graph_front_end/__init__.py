@@ -81,12 +81,12 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         algorithm required for the type of graph being used.
     :type user_dsg_algorithm: str
     :param n_chips_required:\
-        Deprecated! Use n_boards_required instead.
+        Deprecated! Use n_boards_required instead. \
         Must be None if n_boards_required specified.
     :type n_chips_required: int or None
     :param n_boards_required:\
         if you need to be allocated a machine (for spalloc) before building\
-        your graph, then fill this in with a general idea of the number of
+        your graph, then fill this in with a general idea of the number of\
         boards you need so that the spalloc system can allocate you a machine\
         big enough for your needs.
     :type n_boards_required: int or None
@@ -99,7 +99,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         algorithms which need to be ran after the simulation has ran. These\
         could be post processing of generated data on the machine for example.
     :type extra_pre_run_algorithms: list of str
-    :raises ConfigurationException if both n_chips_required and
+    :raises ConfigurationException if both n_chips_required and\
         n_boards_required are used.
     """
     # pylint: disable=global-statement, redefined-outer-name
