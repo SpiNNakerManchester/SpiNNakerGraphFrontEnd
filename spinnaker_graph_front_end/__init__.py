@@ -29,9 +29,18 @@ from spinnaker_graph_front_end.spinnaker import SpiNNaker
 from spinnaker_graph_front_end import spinnaker as gfe_file
 
 logger = FormatAdapter(logging.getLogger(__name__))
-
-_none_labelled_vertex_count = None
-_none_labelled_edge_count = None
+MachineEdge.__doc__ += """\
+For full documentation see \
+:py:class:`~pacman.model.graphs.machine.MachineEdge`.
+"""
+LivePacketGather.__doc__ += """\
+For full documentation see \
+:py:class:`~spinn_front_end_common.utility_models.LivePacketGather`.
+"""
+ReverseIpTagMultiCastSource.__doc__ += """\
+For full documentation see \
+:py:class:`~spinn_front_end_common.utility_models.ReverseIpTagMultiCastSource`.
+"""
 
 __all__ = ['LivePacketGather', 'ReverseIpTagMultiCastSource', 'MachineEdge',
            'setup', 'run', 'stop', 'read_xml_file', 'add_vertex_instance',
@@ -51,60 +60,52 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
           n_boards_required=None, extra_pre_run_algorithms=None,
           extra_post_run_algorithms=None,
           time_scale_factor=None, machine_time_step=None):
-    """
-    :param hostname:\
-        the hostname of the SpiNNaker machine to operate on\
-        (over rides the machine_name from the cfg file).
-    :type hostname: str
-    :param graph_label:\
+    """ The main method needed to be called to set up a graph.
+
+    :param str hostname:
+        the hostname of the SpiNNaker machine to operate on
+        (overrides the ``machine_name`` from the cfg file).
+    :param str graph_label:
         a human readable label for the graph (used mainly in reports)
-    :type graph_label: str
-    :param model_binary_module:\
-        the module where the binary files can be found for the c code that is \
-        being used in this application; mutually exclusive with the \
-        model_binary_folder.
-    :type model_binary_module: python module
-    :param model_binary_folder:\
-        the folder where the binary files can be found for the c code that is\
-        being used in this application; mutually exclusive with the\
-        model_binary_module.
-    :type model_binary_folder: str
-    :param database_socket_addresses:\
-        set of SocketAddresses that need to be added for the database\
-        notification functionality. This are over and above the ones used by\
-        the LiveEventConnection
-    :type database_socket_addresses: list of SocketAddresses
-    :param user_dsg_algorithm:\
-        an algorithm used for generating the application data which is loaded\
-        onto the machine. if not set, will use the data specification language\
+    :param module model_binary_module:
+        the Python module where the binary files (``.aplx``) can be found for
+        the compiled C code that is being used in this application; mutually
+        exclusive with the ``model_binary_folder``.
+    :param str model_binary_folder:
+        the folder where the binary files can be found for the c code that is
+        being used in this application; mutually exclusive with the
+        ``model_binary_module``.
+    :param database_socket_addresses:
+        set of SocketAddresses to be added for the database notification
+        system. These are over and above the ones used by the
+        :py:class:`~spinn_front_end_common.utilities.connections.LiveEventConnection`
+    :type database_socket_addresses:
+        list(~spinn_utilities.socket_address.SocketAddress)
+    :param str user_dsg_algorithm:
+        an algorithm used for generating the application data which is loaded
+        onto the machine. If not set, will use the data specification language
         algorithm required for the type of graph being used.
-    :type user_dsg_algorithm: str
-    :param n_chips_required:\
-        Deprecated! Use n_boards_required instead.
-        Must be None if n_boards_required specified.
+    :param n_chips_required:
+        Deprecated! Use ``n_boards_required`` instead.
+        Must be ``None`` if ``n_boards_required`` specified.
     :type n_chips_required: int or None
-    :param n_boards_required:\
-        if you need to be allocated a machine (for spalloc) before building\
+    :param n_boards_required:
+        if you need to be allocated a machine (for spalloc) before building
         your graph, then fill this in with a general idea of the number of
-        boards you need so that the spalloc system can allocate you a machine\
+        boards you need so that the spalloc system can allocate you a machine
         big enough for your needs.
     :type n_boards_required: int or None
-    :param extra_pre_run_algorithms:\
-        algorithms which need to be ran after mapping and loading has occurred\
-        but before the system has ran. These are plugged directly into the\
+    :param list(str) extra_pre_run_algorithms:
+        algorithms which need to be ran after mapping and loading has occurred
+        but before the system has ran. These are plugged directly into the
         work flow management.
-    :type extra_post_run_algorithms: list of str
-    :param extra_post_run_algorithms:\
-        algorithms which need to be ran after the simulation has ran. These\
+    :param list(str) extra_post_run_algorithms:
+        algorithms which need to be ran after the simulation has ran. These
         could be post processing of generated data on the machine for example.
-    :type extra_pre_run_algorithms: list of str
-    :raises ConfigurationException if both n_chips_required and
-        n_boards_required are used.
+    :raise ~spinn_front_end_common.utilities.exceptions.ConfigurationException:
+        if mutually exclusive options are given.
     """
-    # pylint: disable=global-statement, redefined-outer-name
-    global _none_labelled_vertex_count
-    global _none_labelled_edge_count
-
+    # pylint: disable=redefined-outer-name
     logger.info(
         "SpiNNaker graph front end (c) {}, University of Manchester",
         __version_year__)
@@ -141,6 +142,8 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
 
 def _sim():
     """ Gets the current SpiNNaker simulator object.
+
+    :rtype: ~spinn_front_end_common.utilities.SimulatorInterface
     """
     return globals_variables.get_simulator()
 
@@ -148,8 +151,8 @@ def _sim():
 def run(duration=None):
     """ Method to support running an application for a number of microseconds.
 
-    :param duration: the number of microseconds the application should run for
-    :type duration: int
+    :param int duration:
+        the number of microseconds the application should run for
     """
     _sim().run(duration)
 
@@ -157,9 +160,10 @@ def run(duration=None):
 def run_until_complete(n_steps=None):
     """ Run until the application is complete
 
-    :param n_steps: If not None, this specifies that the simulation should\
-            be requested to run for the given number of steps.  The host will\
-            still wait until the simulation itself says it has completed
+    :param int n_steps:
+        If not ``None``, this specifies that the simulation should be
+        requested to run for the given number of steps.  The host will
+        still wait until the simulation itself says it has completed
     """
     _sim().run_until_complete(n_steps)
 
@@ -184,8 +188,7 @@ def read_xml_file(file_path):
     """ Reads a xml file and translates it into an application graph and \
         machine graph (if required).
 
-    :param file_path: the file path in absolute form
-    :rtype: None
+    :param str file_path: the file path in absolute form
     """
     logger.warning("This functionality is not yet supported")
     _sim().read_xml_file(file_path)
@@ -194,15 +197,17 @@ def read_xml_file(file_path):
 def add_vertex(cell_class, cell_params, label=None, constraints=None):
     """ Create an application vertex and add it to the unpartitioned graph.
 
-    :param cell_class: the class object for creating the application vertex
-    :param cell_params: the input parameters for the class object
+    :param class cell_class:
+        the class object for creating the application vertex
+    :param dict(str,object) cell_params:
+        the input parameters for the class object
     :param constraints: any constraints to be applied to the vertex once built
     :param label: the label for this vertex
-    :type cell_class: class
-    :type cell_params: dict(str,object)
-    :type constraints: list(:py:class:`AbstractConstraint`) or None
+    :type constraints:
+        list(~pacman.model.constraints.AbstractConstraint) or None
     :type label: str or None
     :return: the application vertex instance object
+    :rtype: ~pacman.model.graphs.application.ApplicationVertex
     """
     if label is not None:
         cell_params['label'] = label
@@ -217,9 +222,8 @@ def add_vertex(cell_class, cell_params, label=None, constraints=None):
 def add_vertex_instance(vertex_to_add):
     """ Add an existing application vertex to the unpartitioned graph.
 
-    :param vertex_to_add: vertex instance to add to the graph
-    :type vertex_to_add: :py:class:`AbstractPartitionableVertex`
-    :rtype: None
+    :param ~pacman.model.graphs.application.ApplicationVertex vertex_to_add:
+        vertex instance to add to the graph
     """
     _sim().add_application_vertex(vertex_to_add)
 
@@ -228,15 +232,16 @@ def add_machine_vertex(
         cell_class, cell_params, label=None, constraints=None):
     """ Create a machine vertex and add it to the partitioned graph.
 
-    :param cell_class: the class of the machine vertex to create
-    :param cell_params: the input parameters for the class object
+    :param class cell_class: the class of the machine vertex to create
+    :param dict(str,object) cell_params:
+        the input parameters for the class object
     :param constraints: any constraints to be applied to the vertex once built
     :param label: the label for this vertex
-    :type cell_class: class
-    :type cell_params: dict(str,object)
-    :type constraints: list(:py:class:`AbstractConstraint`) or None
+    :type constraints:
+        list(~pacman.model.constraints.AbstractConstraint) or None
     :type label: str or None
     :return: the machine vertex instance object
+    :rtype: ~pacman.model.graphs.machine.MachineVertex
     """
     if label is not None:
         cell_params['label'] = label
@@ -251,8 +256,8 @@ def add_machine_vertex(
 def add_machine_vertex_instance(vertex_to_add):
     """ Add an existing machine vertex to the partitioned graph.
 
-    :param vertex_to_add: the vertex to add to the partitioned graph
-    :rtype: None
+    :param ~pacman.model.graphs.machine.MachineVertex vertex_to_add:
+        the vertex to add to the partitioned graph
     """
     _sim().add_machine_vertex(vertex_to_add)
 
@@ -267,11 +272,13 @@ def _new_edge_label():
 def add_edge(edge_type, edge_parameters, semantic_label, label=None):
     """ Create an application edge and add it to the unpartitioned graph.
 
-    :param edge_type: the kind (class) of application edge to create
-    :param edge_parameters: dict of parameters to pass to the constructor
-    :param semantic_label: the ID of the partition that the edge belongs to
-    :param label: textual label for the edge, or None
+    :param class edge_type: the kind (class) of application edge to create
+    :param dict(str,object) edge_parameters:
+        parameters to pass to the constructor
+    :param str semantic_label: the ID of the partition that the edge belongs to
+    :param str label: textual label for the edge, or None
     :return: the created application edge
+    :rtype: ~pacman.model.graphs.application.ApplicationEdge
     """
     # correct label if needed
     if label is None and 'label' not in edge_parameters:
@@ -288,17 +295,23 @@ def add_edge(edge_type, edge_parameters, semantic_label, label=None):
 
 
 def add_application_edge_instance(edge, partition_id):
+    """
+    :param ~pacman.model.graphs.application.ApplicationEdge edge:
+    :param str partition_id:
+    """
     _sim().add_application_edge(edge, partition_id)
 
 
 def add_machine_edge(edge_type, edge_parameters, semantic_label, label=None):
     """ Create a machine edge and add it to the partitioned graph.
 
-    :param edge_type: the kind (class) of machine edge to create
-    :param edge_parameters: dict of parameters to pass to the constructor
-    :param semantic_label: the ID of the partition that the edge belongs to
-    :param label: textual label for the edge, or None
+    :param class edge_type: the kind (class) of machine edge to create
+    :param dict(str,object) edge_parameters:
+        parameters to pass to the constructor
+    :param str semantic_label: the ID of the partition that the edge belongs to
+    :param str label: textual label for the edge, or None
     :return: the created machine edge
+    :rtype: ~pacman.model.graphs.machine.MachineEdge
     """
     # correct label if needed
     if label is None and 'label' not in edge_parameters:
@@ -315,6 +328,10 @@ def add_machine_edge(edge_type, edge_parameters, semantic_label, label=None):
 
 
 def add_machine_edge_instance(edge, partition_id):
+    """
+    :param ~pacman.model.graphs.machine.MachineEdge edge:
+    :param str partition_id:
+    """
     _sim().add_machine_edge(edge, partition_id)
 
 
@@ -322,10 +339,10 @@ def add_socket_address(
         database_ack_port_num, database_notify_host, database_notify_port_num):
     """ Adds a socket address for the notification protocol.
 
-    :param database_ack_port_num: port number to send acknowledgement to
-    :param database_notify_host: host IP to send notification to
-    :param database_notify_port_num: port that the external device will be\
-        notified on.
+    :param int database_ack_port_num: port number to send acknowledgement to
+    :param str database_notify_host: host IP to send notification to
+    :param int database_notify_port_num:
+        port that the external device will be notified on.
     """
     database_socket = SocketAddress(
         listen_port=database_ack_port_num,
@@ -337,6 +354,8 @@ def add_socket_address(
 
 def get_txrx():
     """ Gets the transceiver used by the tool chain.
+
+    :rtype: ~spinnman.transceiver.Transceiver
     """
     return _sim().transceiver
 
@@ -344,58 +363,94 @@ def get_txrx():
 def get_number_of_available_cores_on_machine():
     """ Gets the number of cores on this machine that are available to the\
         simulation.
+
+    :rtype: int
     """
     return _sim().get_number_of_available_cores_on_machine
 
 
 def has_ran():
+    """
+    :rtype: bool
+    """
     return _sim().has_ran
 
 
 def machine_time_step():
+    """
+    :rtype: int
+    """
     return _sim().machine_time_step
 
 
 def no_machine_time_steps():
+    """
+    :rtype: int
+    """
     return _sim().no_machine_time_steps
 
 
 def time_scale_factor():
+    """
+    :rtype: int
+    """
     return _sim().time_scale_factor
 
 
 def machine_graph():
+    """
+    :rtype: ~pacman.model.graphs.machine.MachineGraph
+    """
     return _sim().machine_graph
 
 
 def application_graph():
+    """
+    :rtype: ~pacman.model.graphs.application.ApplicationGraph
+    """
     return _sim().application_graph
 
 
 def routing_infos():
+    """
+    :rtype: ~pacman.model.routing_info.RoutingInfo
+    """
     return _sim().routing_infos
 
 
 def placements():
+    """
+    :rtype: ~pacman.model.placements.Placements
+    """
     return _sim().placements
 
 
 def transceiver():
+    """
+    :rtype: ~spinnman.transceiver.Transceiver
+    """
     return _sim().transceiver
 
 
 def tags():
+    """
+    :rtype: ~pacman.model.tags.Tags
+    """
     return _sim().tags
 
 
 def buffer_manager():
     """
     :return: the buffer manager being used for loading/extracting buffers
+    :rtype: ~spinn_front_end_common.interface.buffer_management.BufferManager
     """
     return _sim().buffer_manager
 
 
 def machine():
+    """
+    :rtype: ~spinn_machine.Machine
+    """
     logger.warning(
         "If you are getting the machine object to locate how many cores you "
         "can use,\n"
@@ -406,8 +461,14 @@ def machine():
 
 
 def is_allocated_machine():
+    """
+    :rtype: bool
+    """
     return _sim().is_allocated_machine
 
 
 def use_virtual_machine():
+    """
+    :rtype: bool
+    """
     return _sim().use_virtual_board
