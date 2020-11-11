@@ -221,7 +221,7 @@ void c_main(void) {
 
     // initialise the recording section
     // set up recording data structures
-    if(!initialise_recording()) {
+    if (!initialise_recording()) {
          rt_error(RTE_SWERR);
     }
 
