@@ -16,9 +16,8 @@ from gfe_integration_tests.sdram_edge_tests.common.\
     sdram_machine_vertex import SDRAMMachineVertex
 from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs.common import Slice
-from pacman.model.graphs.machine import SDRAMMachineEdge
-from pacman.model.graphs.machine.outgoing_edge_partitions import \
-    SourceSegmentedSDRAMMachinePartition
+from pacman.model.graphs.machine import (
+    SDRAMMachineEdge, SourceSegmentedSDRAMMachinePartition)
 from pacman.model.partitioner_splitters import SplitterOneToOneLegacy
 from spinn_utilities.overrides import overrides
 

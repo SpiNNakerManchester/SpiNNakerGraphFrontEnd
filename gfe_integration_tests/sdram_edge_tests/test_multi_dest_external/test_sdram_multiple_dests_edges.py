@@ -21,7 +21,7 @@ from gfe_integration_tests.sdram_edge_tests.common import (
 from pacman.model.graphs.application import ApplicationEdge
 from gfe_integration_tests.sdram_edge_tests import common
 import spinnaker_graph_front_end as sim
-from pacman.model.graphs.machine.outgoing_edge_partitions import (
+from pacman.model.graphs.machine import (
     DestinationSegmentedSDRAMMachinePartition)
 
 

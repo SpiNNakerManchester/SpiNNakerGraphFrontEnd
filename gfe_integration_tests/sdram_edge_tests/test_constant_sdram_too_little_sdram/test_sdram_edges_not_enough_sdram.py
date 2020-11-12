@@ -21,8 +21,7 @@ from gfe_integration_tests.sdram_edge_tests import common
 from gfe_integration_tests.sdram_edge_tests.common import (
     SDRAMSplitterExternal)
 from pacman.model.graphs.application import ApplicationEdge
-from pacman.model.graphs.machine.outgoing_edge_partitions import (
-    ConstantSDRAMMachinePartition)
+from pacman.model.graphs.machine import ConstantSDRAMMachinePartition
 import spinnaker_graph_front_end as sim
 
 

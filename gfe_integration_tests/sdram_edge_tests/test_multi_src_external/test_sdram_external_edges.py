@@ -17,8 +17,7 @@ import unittest
 from fec_integration_tests.interface.interface_functions.\
     simple_test_vertex import SimpleTestVertex
 from pacman.model.graphs.application import ApplicationEdge
-from pacman.model.graphs.machine.outgoing_edge_partitions import (
-    SourceSegmentedSDRAMMachinePartition)
+from pacman.model.graphs.machine import SourceSegmentedSDRAMMachinePartition
 from gfe_integration_tests.sdram_edge_tests import common
 import spinnaker_graph_front_end as sim
 from gfe_integration_tests.sdram_edge_tests. \

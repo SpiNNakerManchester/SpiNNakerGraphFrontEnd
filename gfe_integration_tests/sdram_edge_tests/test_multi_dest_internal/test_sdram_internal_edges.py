@@ -18,7 +18,7 @@ from fec_integration_tests.interface.interface_functions.\
     simple_test_vertex import SimpleTestVertex
 from gfe_integration_tests.sdram_edge_tests.\
     test_multi_dest_internal import SDRAMSplitter
-from pacman.model.graphs.machine.outgoing_edge_partitions import (
+from pacman.model.graphs.machine import (
     DestinationSegmentedSDRAMMachinePartition)
 from gfe_integration_tests.sdram_edge_tests import common
 import spinnaker_graph_front_end as sim
