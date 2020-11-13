@@ -24,7 +24,7 @@ static uint32_t simulation_ticks;
 uint32_t infinite_run;
 uint32_t time;
 
-void timer_callback(uint time, uint unused1) {
+void timer_callback(uint time, UNUSED uint unused1) {
     if (time == 1) {
         log_warning("Going to run for %u ticks", simulation_ticks + 1000000);
     }
