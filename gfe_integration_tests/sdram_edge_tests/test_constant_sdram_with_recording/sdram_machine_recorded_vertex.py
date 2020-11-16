@@ -111,6 +111,7 @@ class SDRAMMachineRecordedVertex(
             self.get_binary_file_name(), machine_time_step,
             time_scale_factor))
 
+        # TODO use get_sdram_edge_partitions_starting_at_vertex
         # get counters
         outgoing_partitions = (
             machine_graph.get_outgoing_edge_partitions_starting_at_vertex(
