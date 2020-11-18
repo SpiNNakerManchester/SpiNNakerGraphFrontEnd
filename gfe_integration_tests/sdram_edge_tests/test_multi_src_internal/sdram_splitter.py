@@ -104,7 +104,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
             machine_graph.add_vertex(pre_vertex)
 
         # add outgoing edge partition to mac graph
-        machine_graph.add_outgoing_edge_partition(self._partition_type(
+        machine_graph.add_edge_partition(self._partition_type(
             identifier="sdram", pre_vertices=self._pre_vertices,
             label="sdram"))
 

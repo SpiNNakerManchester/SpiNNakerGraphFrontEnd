@@ -132,7 +132,7 @@ class SDRAMSplitter(AbstractDependentSplitter):
                     total_pre_verts.extend(
                         self._other_splitter.get_pre_vertices(
                             incoming_edge, outgoing_edge_partition))
-            machine_graph.add_outgoing_edge_partition(self._partition_type(
+            machine_graph.add_edge_partition(self._partition_type(
                 identifier="sdram", pre_vertices=total_pre_verts,
                 label="sdram"))
 
