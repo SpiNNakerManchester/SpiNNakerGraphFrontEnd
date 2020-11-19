@@ -15,9 +15,8 @@
 from enum import Enum
 
 from pacman.executor.injection_decorator import inject_items
-from pacman.model.graphs import (
-    AbstractSupportsSDRAMEdges, AbstractSDRAMPartition)
-from pacman.model.graphs.machine import MachineVertex
+from pacman.model.graphs import AbstractSupportsSDRAMEdges
+from pacman.model.graphs.machine import (AbstractSDRAMPartition, MachineVertex)
 from pacman.model.resources import ResourceContainer, ConstantSDRAM
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models.impl import (
@@ -94,13 +93,10 @@ class SDRAMMachineVertex(
             time_scale_factor))
 
         # get counters
-        outgoing_partitions = (
-            machine_graph.get_outgoing_edge_partitions_starting_at_vertex(
+        outgoing_partitions = list(
+            machine_graph.get_sdram_edge_partitions_starting_at_vertex(
                 self))
-        n_out_sdrams = 0
-        for outgoing_partition in outgoing_partitions:
-            if isinstance(outgoing_partition, AbstractSDRAMPartition):
-                n_out_sdrams += 1
+        n_out_sdrams = len(outgoing_partitions)
 
         incoming_edges = machine_graph.get_edges_ending_at_vertex(self)
         incoming_partitions = list()
@@ -128,11 +124,10 @@ class SDRAMMachineVertex(
         spec.switch_write_focus(self.DATA_REGIONS.SDRAM_OUT.value)
         spec.write_value(n_out_sdrams)
         for outgoing_partition in outgoing_partitions:
-            if isinstance(outgoing_partition, AbstractSDRAMPartition):
-                spec.write_value(
-                    outgoing_partition.get_sdram_base_address_for(self))
-                spec.write_value(
-                    outgoing_partition.get_sdram_size_of_region_for(self))
+            spec.write_value(
+                outgoing_partition.get_sdram_base_address_for(self))
+            spec.write_value(
+                outgoing_partition.get_sdram_size_of_region_for(self))
 
         # add ins
         spec.switch_write_focus(self.DATA_REGIONS.SDRAM_IN.value)
