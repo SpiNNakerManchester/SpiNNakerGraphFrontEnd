@@ -67,7 +67,7 @@ class SDRAMSplitterExternal(SplitterOneToOneLegacy):
         machine_graph.add_vertex(self._machine_vertex)
         if len(app_graph.get_multicast_edge_partitions_starting_at_vertex(
                 self._governed_app_vertex)) != 0:
-            machine_graph.add_edge_partition(self._partition_type(
+            machine_graph.add_outgoing_edge_partition(self._partition_type(
                 identifier="sdram", pre_vertex=self._machine_vertex,
                 label="sdram"))
         return self._machine_vertex
