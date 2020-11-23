@@ -98,15 +98,9 @@ class SDRAMMachineVertex(
                 self))
         n_out_sdrams = len(outgoing_partitions)
 
-        incoming_edges = machine_graph.get_edges_ending_at_vertex(self)
-        incoming_partitions = list()
-        n_in_sdrams = 0
-        for incoming_edge in incoming_edges:
-            incoming_partition = machine_graph.get_outgoing_partition_for_edge(
-                incoming_edge)
-            if isinstance(incoming_partition, AbstractSDRAMPartition):
-                n_in_sdrams += 1
-                incoming_partitions.append(incoming_partition)
+        incoming_partitions = list(
+            machine_graph.get_sdram_edge_partitions_ending_at_vertex(self))
+        n_in_sdrams = len(incoming_partitions)
 
         # reserve memory regions
         spec.reserve_memory_region(
