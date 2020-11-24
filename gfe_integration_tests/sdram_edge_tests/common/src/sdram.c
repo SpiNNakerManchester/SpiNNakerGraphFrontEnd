@@ -168,7 +168,7 @@ void timer_callback(UNUSED uint timer_count, UNUSED uint unused) {
                     words_index < (uint32_t)
                         in_data->regions[region_id].size / 4;
                     words_index++) {
-                if(in_data->regions[region_id].base_address[
+                if (in_data->regions[region_id].base_address[
                         words_index] != time) {
                     log_info(
                         "in region %d has %d instead of %d. BOOM!",
