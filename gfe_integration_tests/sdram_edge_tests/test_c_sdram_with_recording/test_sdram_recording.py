@@ -17,9 +17,9 @@ import unittest
 from fec_integration_tests.interface.interface_functions.\
     simple_test_vertex import SimpleTestVertex
 from gfe_integration_tests.sdram_edge_tests import (
-    test_constant_sdram_with_recording)
+    test_c_sdram_with_recording)
 from gfe_integration_tests.sdram_edge_tests.\
-    test_constant_sdram_with_recording import (
+    test_c_sdram_with_recording import (
         SDRAMSplitterExternal)
 from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.machine import ConstantSDRAMMachinePartition
@@ -29,7 +29,7 @@ import spinnaker_graph_front_end as sim
 class TestSDRAMEdgeWithRecording(unittest.TestCase):
 
     def setup(self):
-        sim.setup(model_binary_module=test_constant_sdram_with_recording)
+        sim.setup(model_binary_module=test_c_sdram_with_recording)
         vertex_1 = SimpleTestVertex(2, fixed_sdram_value=20)
         vertex_1.splitter = SDRAMSplitterExternal(
             ConstantSDRAMMachinePartition)

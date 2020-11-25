@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from gfe_integration_tests.sdram_edge_tests.\
-    test_constant_sdram_with_recording.\
+    test_c_sdram_with_recording.\
     sdram_machine_recorded_vertex import SDRAMMachineRecordedVertex
 from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs.common import Slice
