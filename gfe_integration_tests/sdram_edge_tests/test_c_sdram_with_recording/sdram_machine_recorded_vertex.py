@@ -120,9 +120,6 @@ class SDRAMMachineRecordedVertex(
 
         incoming_partitions = list(
             machine_graph.get_sdram_edge_partitions_ending_at_vertex(self))
-
-        incoming_partitions = list(
-            machine_graph.get_sdram_edge_partitions_ending_at_vertex(self))
         n_in_sdrams = len(incoming_partitions)
 
         # reserve memory regions
