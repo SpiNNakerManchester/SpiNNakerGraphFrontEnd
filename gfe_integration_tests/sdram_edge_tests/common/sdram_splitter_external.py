@@ -46,13 +46,13 @@ class SDRAMSplitterExternal(SplitterOneToOneLegacy):
             vertex_slice=self._vertex_slice,
             sdram_cost=self._governed_app_vertex.fixed_sdram_value)
 
-    @overrides(SplitterOneToOneLegacy.get_pre_vertices)
-    def get_pre_vertices(self, edge, outgoing_edge_partition):
+    @overrides(SplitterOneToOneLegacy.get_out_going_vertices)
+    def get_out_going_vertices(self, edge, outgoing_edge_partition):
         return {self._machine_vertex: [SDRAMMachineEdge]}
 
-    @overrides(SplitterOneToOneLegacy.get_post_vertices)
-    def get_post_vertices(self, edge, outgoing_edge_partition,
-                          src_machine_vertex):
+    @overrides(SplitterOneToOneLegacy.get_in_coming_vertices)
+    def get_in_coming_vertices(
+            self, edge, outgoing_edge_partition, src_machine_vertex):
         return {self._machine_vertex: [SDRAMMachineEdge]}
 
     @inject_items({"app_graph": "MemoryApplicationGraph"})

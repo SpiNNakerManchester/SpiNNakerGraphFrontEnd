@@ -49,15 +49,15 @@ class SDRAMSplitter(AbstractSplitterCommon):
         if self._partition_type == SourceSegmentedSDRAMMachinePartition:
             raise Exception("this splitter not for this")
 
-    @overrides(AbstractSplitterCommon.get_pre_vertices)
-    def get_pre_vertices(self, edge, outgoing_edge_partition):
+    @overrides(AbstractSplitterCommon.get_out_going_vertices)
+    def get_out_going_vertices(self, edge, outgoing_edge_partition):
         if edge == self._app_edge:
             return {}
         return {self._pre_vertex: [SDRAMMachineEdge]}
 
-    @overrides(AbstractSplitterCommon.get_post_vertices)
-    def get_post_vertices(self, edge, outgoing_edge_partition,
-                          src_machine_vertex):
+    @overrides(AbstractSplitterCommon.get_in_coming_vertices)
+    def get_in_coming_vertices(
+            self, edge, outgoing_edge_partition, src_machine_vertex):
         if edge == self._app_edge:
             return {}
         return {self._post_vertex: [SDRAMMachineEdge]}

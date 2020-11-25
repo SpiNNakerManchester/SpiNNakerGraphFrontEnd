@@ -45,15 +45,15 @@ class SDRAMSplitter(AbstractSplitterCommon):
         self._post_slice = None
         self._app_edge = None
 
-    @overrides(AbstractSplitterCommon.get_pre_vertices)
-    def get_pre_vertices(self, edge, outgoing_edge_partition):
+    @overrides(AbstractSplitterCommon.get_out_going_vertices)
+    def get_out_going_vertices(self, edge, outgoing_edge_partition):
         if edge == self._app_edge:
             return {}
         return {self._pre_vertices: [SDRAMMachineEdge]}
 
-    @overrides(AbstractSplitterCommon.get_post_vertices)
-    def get_post_vertices(self, edge, outgoing_edge_partition,
-                          src_machine_vertex):
+    @overrides(AbstractSplitterCommon.get_in_coming_vertices)
+    def get_in_coming_vertices(
+            self, edge, outgoing_edge_partition, src_machine_vertex):
         if edge == self._app_edge:
             return {}
         return {self._post_vertex: [SDRAMMachineEdge]}

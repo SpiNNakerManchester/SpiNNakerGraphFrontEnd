@@ -60,15 +60,15 @@ class SDRAMSplitter(AbstractDependentSplitter):
             result[vertex] = edge_types
         return result
 
-    @overrides(AbstractDependentSplitter.get_pre_vertices)
-    def get_pre_vertices(self, edge, outgoing_edge_partition):
+    @overrides(AbstractDependentSplitter.get_out_going_vertices)
+    def get_out_going_vertices(self, edge, outgoing_edge_partition):
         if edge == self._app_edge:
             return {}
         return self._get_new_map([SDRAMMachineEdge], self._pre_vertices)
 
-    @overrides(AbstractDependentSplitter.get_post_vertices)
-    def get_post_vertices(self, edge, outgoing_edge_partition,
-                          src_machine_vertex):
+    @overrides(AbstractDependentSplitter.get_in_coming_vertices)
+    def get_in_coming_vertices(
+            self, edge, outgoing_edge_partition, src_machine_vertex):
         if edge == self._app_edge:
             return {}
         return self._get_new_map([SDRAMMachineEdge], [self._post_vertex])
@@ -130,7 +130,7 @@ class SDRAMSplitter(AbstractDependentSplitter):
                         app_graph.get_outgoing_partition_for_edge(
                             incoming_edge))
                     total_pre_verts.extend(
-                        self._other_splitter.get_pre_vertices(
+                        self._other_splitter.get_out_going_vertices(
                             incoming_edge, outgoing_edge_partition))
             machine_graph.add_outgoing_edge_partition(self._partition_type(
                 identifier="sdram", pre_vertices=total_pre_verts,

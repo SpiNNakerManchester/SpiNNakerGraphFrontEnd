@@ -19,11 +19,11 @@ from spinn_utilities.overrides import overrides
 
 class BasicSDRAMSplitter(SplitterSliceLegacy):
 
-    @overrides(SplitterSliceLegacy.get_pre_vertices)
-    def get_pre_vertices(self, edge, outgoing_edge_partition):
+    @overrides(SplitterSliceLegacy.get_out_going_vertices)
+    def get_out_going_vertices(self, edge, outgoing_edge_partition):
         return self._get_map([SDRAMMachineEdge])
 
-    @overrides(SplitterSliceLegacy.get_post_vertices)
-    def get_post_vertices(
+    @overrides(SplitterSliceLegacy.get_in_coming_vertices)
+    def get_in_coming_vertices(
             self, edge, outgoing_edge_partition, src_machine_vertex):
         return self._get_map([SDRAMMachineEdge])
