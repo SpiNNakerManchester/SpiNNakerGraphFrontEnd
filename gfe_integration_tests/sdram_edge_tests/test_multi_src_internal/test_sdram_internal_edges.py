@@ -26,7 +26,7 @@ import spinnaker_graph_front_end as sim
 class TestMultiSrcSDRAMEdgeInsideOneAppVert(unittest.TestCase):
 
     def setup(self):
-        sim.setup(model_binary_module=common)
+        sim.setup(model_binary_module=common, time_scale_factor=5)
         vertex_1 = SimpleTestVertex(12, fixed_sdram_value=20)
         vertex_1.splitter = SDRAMSplitter(
             SourceSegmentedSDRAMMachinePartition)
