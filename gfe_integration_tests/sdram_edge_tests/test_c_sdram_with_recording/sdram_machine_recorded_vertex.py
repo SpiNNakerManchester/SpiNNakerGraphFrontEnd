@@ -15,9 +15,8 @@
 from enum import Enum
 
 from pacman.executor.injection_decorator import inject_items
-from pacman.model.graphs import (
-    AbstractSupportsSDRAMEdges, AbstractSDRAMPartition)
-from pacman.model.graphs.machine import MachineVertex
+from pacman.model.graphs import AbstractSupportsSDRAMEdges
+from pacman.model.graphs.machine import MachineVertex, AbstractSDRAMPartition
 from pacman.model.resources import ResourceContainer, VariableSDRAM
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models.impl import (
