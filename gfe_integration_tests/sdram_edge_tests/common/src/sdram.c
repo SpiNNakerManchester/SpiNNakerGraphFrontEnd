@@ -166,6 +166,7 @@ void timer_callback(UNUSED uint timer_count, UNUSED uint unused) {
     }
     else {
         reads += 1;
+        bool fails = false;
         for (uint32_t region_id = 0; region_id < in_data->n_regions;
                 region_id++) {
             for (uint32_t words_index = 0;
@@ -179,9 +180,12 @@ void timer_callback(UNUSED uint timer_count, UNUSED uint unused) {
                         region_id,
                         in_data->regions[region_id].base_address[words_index],
                         reads);
-                    rt_error(RTE_SWERR);
+                    fails = true;
                 }
             }
+        }
+        if (fails) {
+            rt_error(RTE_SWERR);
         }
         log_info("all regions were correct number");
     }
