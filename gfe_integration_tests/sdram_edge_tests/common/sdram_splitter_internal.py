@@ -67,9 +67,9 @@ class SDRAMSplitterInternal(AbstractSplitterCommon):
     def create_machine_vertices(
             self, resource_tracker, machine_graph, app_graph):
         # slices
-        self._pre_slice = Slice(0, self._governed_app_vertex.n_atoms / 2)
+        self._pre_slice = Slice(0, int(self._governed_app_vertex.n_atoms / 2))
         self._post_slice = Slice(
-            (self._governed_app_vertex.n_atoms / 2) + 1,
+            int(self._governed_app_vertex.n_atoms / 2) + 1,
             self._governed_app_vertex.n_atoms - 1)
 
         # mac verts
