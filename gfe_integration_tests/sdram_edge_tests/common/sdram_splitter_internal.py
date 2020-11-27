@@ -70,7 +70,7 @@ class SDRAMSplitterInternal(AbstractSplitterCommon):
         self._pre_slice = Slice(0, int(self._governed_app_vertex.n_atoms / 2))
         self._post_slice = Slice(
             int(self._governed_app_vertex.n_atoms / 2) + 1,
-            self._governed_app_vertex.n_atoms - 1)
+            int(self._governed_app_vertex.n_atoms - 1))
 
         # mac verts
         self._pre_vertex = (
