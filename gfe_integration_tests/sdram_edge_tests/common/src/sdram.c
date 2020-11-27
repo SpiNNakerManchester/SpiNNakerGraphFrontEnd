@@ -76,6 +76,9 @@ static uint32_t simulation_ticks = 0;
 //! Determines if this model should run for infinite time
 static uint32_t infinite_run;
 
+//! read counter
+static uint32_t reads = 0;
+
 //! \brief Initialises the model by reading in the regions and checking
 //!        recording data.
 //! \return True if it successfully initialised, false otherwise
@@ -162,6 +165,7 @@ void timer_callback(UNUSED uint timer_count, UNUSED uint unused) {
         log_info("incremented all regions");
     }
     else {
+        reads += 1;
         for (uint32_t region_id = 0; region_id < in_data->n_regions;
                 region_id++) {
             for (uint32_t words_index = 0;
@@ -169,12 +173,12 @@ void timer_callback(UNUSED uint timer_count, UNUSED uint unused) {
                         in_data->regions[region_id].size / 4;
                     words_index++) {
                 if (in_data->regions[region_id].base_address[
-                        words_index] != time) {
+                        words_index] != reads) {
                     log_info(
                         "in region %d has %d instead of %d. BOOM!",
                         region_id,
                         in_data->regions[region_id].base_address[words_index],
-                        time);
+                        reads);
                     rt_error(RTE_SWERR);
                 }
             }
