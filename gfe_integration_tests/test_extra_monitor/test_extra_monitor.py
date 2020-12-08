@@ -13,15 +13,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import struct
 import time
 import os
-import spinnaker_graph_front_end as sim
-from spinn_front_end_common.utilities import globals_variables
 from data_specification.utility_calls import get_region_base_address_offset
+from spinn_front_end_common.utilities import globals_variables
+from spinn_front_end_common.utilities.helpful_functions import n_word_struct
+import spinnaker_graph_front_end as sim
 from gfe_integration_tests.test_extra_monitor.sdram_writer import SDRAMWriter
 
-_ONE_WORD = struct.Struct("<I")
 _MONITOR_VERTICES = 'MemoryExtraMonitorVertices'
 _GATHERER_MAP = 'MemoryMCGatherVertexToEthernetConnectedChipMapping'
 _TRANSFER_SIZE_MEGABYTES = 20
@@ -33,15 +32,14 @@ def get_data_region_address(transceiver, placement, region):
         placement.x, placement.y, placement.p).user[0]
 
     # Get the provenance region base address
-    base_address_offset = get_region_base_address_offset(
+    address_location = get_region_base_address_offset(
         app_data_base_address, region.value)
-    return _ONE_WORD.unpack(transceiver.read_memory(
-        placement.x, placement.y, base_address_offset, _ONE_WORD.size))[0]
+    return transceiver.read_word(placement.x, placement.y, address_location)
 
 
 def check_data(data):
     # check data is correct here
-    ints = struct.unpack("<{}I".format(len(data) // 4), data)
+    ints = n_word_struct(len(data) // 4).unpack(data)
     start_value = 0
     for value in ints:
         if value != start_value:
