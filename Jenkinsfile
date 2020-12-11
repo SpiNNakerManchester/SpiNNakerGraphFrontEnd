@@ -22,7 +22,7 @@ pipeline {
         // This is where 'pip install --user' puts things
         PATH = "$HOME/.local/bin:$PATH"
         // Magic to make matplotlib behave nicely
-        MPLBACKEND = module://matplotlib.backends.backend_agg
+        MPLBACKEND = "module://matplotlib.backends.backend_agg"
     }
     options {
         skipDefaultCheckout true
