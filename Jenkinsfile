@@ -21,6 +21,8 @@ pipeline {
     environment {
         // This is where 'pip install --user' puts things
         PATH = "$HOME/.local/bin:$PATH"
+        // Magic to make matplotlib behave nicely
+        MPLBACKEND = module://matplotlib.backends.backend_agg
     }
     options {
         skipDefaultCheckout true
@@ -44,7 +46,7 @@ pipeline {
                 sh 'git clone https://github.com/SpiNNakerManchester/SupportScripts.git support'
                 sh 'pip3 install --upgrade setuptools wheel'
                 sh 'pip install --user --upgrade pip'
-                sh 'pip install --user --only-binary=numpy,scipy,matplotlib numpy scipy matplotlib'
+                sh 'pip install --user --only-binary=matplotlib matplotlib'
                 // SpiNNakerManchester internal dependencies; development mode
                 sh 'support/gitclone.sh https://github.com/SpiNNakerManchester/SpiNNUtils.git'
                 sh 'support/gitclone.sh https://github.com/SpiNNakerManchester/SpiNNMachine.git'
