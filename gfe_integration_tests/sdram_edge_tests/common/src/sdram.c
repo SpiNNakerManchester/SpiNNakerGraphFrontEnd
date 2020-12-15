@@ -102,7 +102,7 @@ static bool initialise(void) {
         return false;
     }
 
-    // HANDLE SDRAM EDGE STUFF
+    // Handle SDRAM stuff
     out_data = (sdram_regions_t*) data_specification_get_region(
         SDRAM_OUT, ds_regions);
     in_data = (sdram_regions_t*) data_specification_get_region(
