@@ -151,7 +151,7 @@ void timer_callback(UNUSED uint timer_count, UNUSED uint unused) {
         return;
     }
 
-    // if odd. add 1 to all out regions. else read ins and check count matches
+    // if even, read ins and check count matches, else add 1 to all out regions
     if (time % 2 == 0) {
         for (uint32_t region_id = 0; region_id < out_data->n_regions;
                 region_id++) {
