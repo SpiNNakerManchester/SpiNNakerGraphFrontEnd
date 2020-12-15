@@ -97,8 +97,8 @@ class ConwayBasicCell(
             [self.RECORDING_ELEMENT_SIZE * data_n_time_steps]))
 
         # check got right number of keys and edges going into me
-        partitions = \
-            machine_graph.get_outgoing_edge_partitions_starting_at_vertex(self)
+        partitions = machine_graph.\
+            get_multicast_edge_partitions_starting_at_vertex(self)
         if not is_single(partitions):
             raise ConfigurationException(
                 "Can only handle one type of partition.")
