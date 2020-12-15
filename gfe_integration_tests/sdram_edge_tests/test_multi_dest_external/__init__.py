@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2019 The University of Manchester
+# Copyright (c) 2020-2021 The University of Manchester
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,10 +12,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from .test_sdram_multiple_dests_edges import (
+    TestMultiDestSDRAMEdgeBetweenTwoAppVerts)
 
-BUILD_DIRS = test_rte test_extra_monitor sdram_edge_tests
-all: $(BUILD_DIRS)
-	for d in $(BUILD_DIRS); do (cd $$d; "$(MAKE)") || exit $$?; done
-
-clean: $(BUILD_DIRS)
-	for d in $(BUILD_DIRS); do (cd $$d; "$(MAKE)" clean) || exit $$?; done
+__all__ = ["TestMultiDestSDRAMEdgeBetweenTwoAppVerts"]
