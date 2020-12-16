@@ -137,6 +137,12 @@ pipeline {
                 run_pytest('SpiNNakerGraphFrontEnd/gfe_integration_tests/', 1200, 'SpiNNakerGraphFrontEnd_Integration', '1')
             }
         }
+        stage('Run example scripts') {
+            steps {
+                sh 'SpiNNakerGraphFrontEnd/gfe_integration_tests/scripts_test/build_script.py'
+                run_pytest('SpiNNakerGraphFrontEnd/gfe_integration_tests/scripts_test/examples_auto_test.py', 1200, 'sPyNNaker8Scripts', 'auto')
+            }
+        }
         stage('Reports') {
             steps {
                 sh 'find . -maxdepth 3 -type f -wholename "*/reports/*" -print -exec cat \\{\\}  \\;'
