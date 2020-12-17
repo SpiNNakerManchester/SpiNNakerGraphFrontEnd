@@ -139,7 +139,7 @@ pipeline {
         }
         stage('Run example scripts') {
             steps {
-                sh 'SpiNNakerGraphFrontEnd/gfe_integration_tests/scripts_test/build_script.py'
+                sh 'python SpiNNakerGraphFrontEnd/gfe_integration_tests/scripts_test/build_script.py'
                 run_pytest('SpiNNakerGraphFrontEnd/gfe_integration_tests/scripts_test/examples_auto_test.py', 1200, 'sPyNNaker8Scripts', 'auto')
             }
         }
