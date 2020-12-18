@@ -19,13 +19,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - name: Install Ubuntu packages
-      run: sudo apt-get install doxygen gcc-arm-none-eabi --fix-missing
-    - name: Set up Python 3.6
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.6
-
     - name: Checkout
       uses: actions/checkout@v2
     - name: Checkout SupportScripts
@@ -33,6 +26,14 @@ jobs:
       with:
         repository: SpiNNakerManchester/SupportScripts
         path: support
+    - name: Install Ubuntu packages
+      uses: ./support/actions/apt-get-install
+      with:
+        packages: doxygen gcc-arm-none-eabi
+    - name: Set up Python 3.6
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.6
     - name: Checkout SpiNNaker Dependencies
       uses: ./support/actions/checkout-spinn-deps
       with:
