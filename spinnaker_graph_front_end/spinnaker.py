@@ -17,6 +17,7 @@ import logging
 import os
 from six import add_metaclass
 from spinn_utilities.abstract_base import AbstractBase
+from spinn_utilities.log import FormatAdapter
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
 from spinn_front_end_common.utilities import SimulatorInterface
@@ -24,7 +25,7 @@ from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.failed_state import FailedState
 from ._version import __version__ as version
 
-logger = logging.getLogger(__name__)
+logger = FormatAdapter(logging.getLogger(__name__))
 
 
 def _is_allocated_machine(config):
