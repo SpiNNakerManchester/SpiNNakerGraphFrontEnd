@@ -107,18 +107,18 @@ static void resume_callback(void) {
 }
 
 
-static void exit_callback() {
+static void exit_callback(void) {
     if (recording_flags) {
         recording_finalise();
     }
 }
 
-static void start_callback() {
+static void start_callback(void) {
     log_info("Scheduling callback from start");
     spin1_schedule_callback(run, 0, 0, 1);
 }
 
-static bool initialize() {
+static bool initialize(void) {
     // Get the address this core's DTCM data starts at from SRAM
     data_specification_metadata_t *data = data_specification_get_data_address();
 
