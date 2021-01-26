@@ -13,9 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from setuptools import setup
 from collections import defaultdict
 import os
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 __version__ = None
 exec(open("spinnaker_graph_front_end/_version.py").read())
