@@ -15,7 +15,6 @@
 
 import logging
 import os
-from six import add_metaclass
 from spinn_utilities.abstract_base import AbstractBase
 from spinn_utilities.log import FormatAdapter
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
@@ -33,8 +32,8 @@ def _is_allocated_machine(config):
             config.get("Machine", "remote_spinnaker_url") != "None")
 
 
-@add_metaclass(AbstractBase)
-class GraphFrontEndSimulatorInterface(SimulatorInterface):
+class GraphFrontEndSimulatorInterface(
+        SimulatorInterface, metaclass=AbstractBase):
     """ The simulator interface exported by the graph front end. A very thin\
         layer over the capabilities of the Front End Common package.
     """
