@@ -29,7 +29,7 @@ class SDRAMSplitterExternal(SplitterOneToOneLegacy):
     __slots__ = ["_partition_type"]
 
     def __init__(self, partition_type):
-        super(SDRAMSplitterExternal, self).__init__()
+        super().__init__()
         self._partition_type = partition_type
         if self._partition_type == SourceSegmentedSDRAMMachinePartition:
             raise Exception("this splitter not for this")

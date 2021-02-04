@@ -39,7 +39,7 @@ class SDRAMWriter(
 
     def __init__(self, mebibytes):
         self._size = mebibytes * _SDRAM_READING_SIZE_IN_BYTES_CONVERTER
-        super(SDRAMWriter, self).__init__(label="speed", constraints=None)
+        super().__init__(label="speed", constraints=None)
 
     @property
     def mbs_in_bytes(self):

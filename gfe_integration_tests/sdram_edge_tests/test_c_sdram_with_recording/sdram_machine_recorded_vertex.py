@@ -55,7 +55,7 @@ class SDRAMMachineRecordedVertex(
 
     def __init__(self, label=None, constraints=None,
                  app_vertex=None, vertex_slice=None, sdram_cost=0):
-        super(SDRAMMachineRecordedVertex, self).__init__(
+        super().__init__(
             label=label, constraints=constraints, app_vertex=app_vertex,
             vertex_slice=vertex_slice)
         self._sdram_cost = sdram_cost

@@ -37,7 +37,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
         "_app_edge"]
 
     def __init__(self, partition_type):
-        super(SDRAMSplitter, self).__init__()
+        super().__init__()
         self._partition_type = partition_type
         self._pre_vertices = list()
         self._post_vertex = None

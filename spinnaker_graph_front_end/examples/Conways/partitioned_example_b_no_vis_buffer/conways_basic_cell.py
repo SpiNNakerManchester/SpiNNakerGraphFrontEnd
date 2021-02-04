@@ -60,7 +60,7 @@ class ConwayBasicCell(
                ('RESULTS', 4)])
 
     def __init__(self, label, state):
-        super(ConwayBasicCell, self).__init__(label, "conways_cell.aplx")
+        super().__init__(label, "conways_cell.aplx")
 
         # app specific data items
         self._state = bool(state)

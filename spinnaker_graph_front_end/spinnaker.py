@@ -92,7 +92,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         if default_config_paths is not None:
             this_default_config_paths.extend(default_config_paths)
 
-        super(SpiNNaker, self).__init__(
+        super().__init__(
             configfile=self.CONFIG_FILE_NAME,
             executable_finder=executable_finder,
             graph_label=graph_label,
@@ -146,11 +146,11 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             self.dsg_algorithm = self._user_dsg_algorithm
 
         # run normal procedure
-        AbstractSpinnakerBase.run(self, run_time)
+        super().run(run_time)
 
     def __repr__(self):
-        return "SpiNNaker Graph Front End object for machine {}"\
-            .format(self._hostname)
+        return "SpiNNaker Graph Front End object for machine {}".format(
+            self._hostname)
 
 
 class _GraphFrontEndFailedState(GraphFrontEndSimulatorInterface, FailedState):
