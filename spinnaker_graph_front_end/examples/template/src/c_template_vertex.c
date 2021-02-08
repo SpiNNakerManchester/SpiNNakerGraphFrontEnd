@@ -77,6 +77,7 @@ static uint32_t my_key;
 //! \param[in] payload is the payload of packet [none].
 //! \return None
 void receive_data_no_payload(uint key, uint payload) {
+    use(key);
     use(payload);
 
     // TODO: Handle a received multicast packet without a payload
@@ -87,6 +88,8 @@ void receive_data_no_payload(uint key, uint payload) {
 //! \param[in] payload is the payload of packet.
 //! \return None
 void receive_data_payload(uint key, uint payload) {
+    use(key);
+    use(payload);
 
     // TODO: Handle a received multicast packet with a payload
 }
@@ -102,6 +105,8 @@ void receive_data_payload(uint key, uint payload) {
 //! \param[in] time the tracked timer.
 //! \return None
 static void do_update(uint ticks, uint32_t time) {
+    use(ticks);
+    use(time);
 
     // TODO: Handle a timer tick
 
