@@ -13,8 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from enum import Enum
-import struct
+from enum import IntEnum
 from spinn_utilities.overrides import overrides
 from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs.machine import MachineVertex
@@ -24,12 +23,21 @@ from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
 from spinn_front_end_common.utilities.helpful_functions import (
-    locate_memory_region_for_placement)
+    locate_memory_region_for_placement, n_word_struct)
 from spinn_front_end_common.abstract_models.impl import (
     MachineDataSpecableVertex)
 from spinnaker_graph_front_end.utilities import SimulatorVertex
 from spinnaker_graph_front_end.utilities.data_utils import (
     generate_system_data_region)
+
+
+# Regions for populations
+class DATA_REGIONS(IntEnum):
+    SYSTEM = 0
+    TRANSMISSIONS = 1
+    STATE = 2
+    NEIGHBOUR_INITIAL_STATES = 3
+    RESULTS = 4
 
 
 class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
@@ -46,15 +54,6 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
     RECORDING_HEADER_SIZE = BYTES_PER_WORD
     RECORDING_ELEMENT_SIZE = STATE_DATA_SIZE  # A recording of the state
 
-    # Regions for populations
-    DATA_REGIONS = Enum(
-        value="DATA_REGIONS",
-        names=[('SYSTEM', 0),
-               ('TRANSMISSIONS', 1),
-               ('STATE', 2),
-               ('NEIGHBOUR_INITIAL_STATES', 3),
-               ('RESULTS', 4)])
-
     def __init__(self, label, state):
         super().__init__(label, "conways_cell.aplx")
 
@@ -69,22 +68,29 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
             self, spec, placement, machine_graph, routing_info, iptags,
             reverse_iptags, machine_time_step, time_scale_factor,
             data_n_time_steps):
+        """
+        :param ~.DataSpecificationGenerator spec:
+        :param ~.MachineGraph machine_graph:
+        :param ~.RoutingInfo routing_info:
+        """
+        # pylint: disable=arguments-differ
+
         # Generate the system data region for simulation .c requirements
-        generate_system_data_region(spec, self.DATA_REGIONS.SYSTEM.value,
+        generate_system_data_region(spec, DATA_REGIONS.SYSTEM,
                                     self, machine_time_step, time_scale_factor)
 
         # reserve memory regions
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.TRANSMISSIONS.value,
+            region=DATA_REGIONS.TRANSMISSIONS,
             size=self.TRANSMISSION_DATA_SIZE, label="inputs")
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.STATE.value,
+            region=DATA_REGIONS.STATE,
             size=self.STATE_DATA_SIZE, label="state")
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.NEIGHBOUR_INITIAL_STATES.value,
+            region=DATA_REGIONS.NEIGHBOUR_INITIAL_STATES,
             size=self.NEIGHBOUR_INITIAL_STATES_SIZE, label="neighour_states")
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.RESULTS.value,
+            region=DATA_REGIONS.RESULTS,
             size=(self.RECORDING_HEADER_SIZE +
                   (data_n_time_steps * self.RECORDING_ELEMENT_SIZE)),
             label="results")
@@ -107,34 +113,25 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         for edge in edges:
             if edge.pre_vertex == self:
                 raise ConfigurationException(
-                    "I'm connected to myself, this is deemed an error"
-                    " please fix.")
+                    "I'm connected to myself, this is deemed an error "
+                    "please fix.")
 
         # write key needed to transmit with
         key = routing_info.get_first_key_from_pre_vertex(
             self, self.PARTITION_ID)
 
-        spec.switch_write_focus(
-            region=self.DATA_REGIONS.TRANSMISSIONS.value)
-        spec.write_value(0 if key is None else 1)
+        spec.switch_write_focus(DATA_REGIONS.TRANSMISSIONS)
+        spec.write_value(int(key is not None))
         spec.write_value(0 if key is None else key)
 
         # write state value
-        spec.switch_write_focus(
-            region=self.DATA_REGIONS.STATE.value)
+        spec.switch_write_focus(DATA_REGIONS.STATE)
         spec.write_value(int(bool(self._state)))
 
         # write neighbours data state
-        spec.switch_write_focus(
-            region=self.DATA_REGIONS.NEIGHBOUR_INITIAL_STATES.value)
-        alive = 0
-        dead = 0
-        for edge in edges:
-            if edge.pre_vertex.state:
-                alive += 1
-            else:
-                dead += 1
-
+        spec.switch_write_focus(DATA_REGIONS.NEIGHBOUR_INITIAL_STATES)
+        alive = sum(edge.pre_vertex.state for edge in edges)
+        dead = sum(not edge.pre_vertex.state for edge in edges)
         spec.write_value(alive)
         spec.write_value(dead)
 
@@ -145,26 +142,26 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         # Get the data region base address where results are stored for the
         # core
         record_region_base_address = locate_memory_region_for_placement(
-            placement, self.DATA_REGIONS.RESULTS.value, transceiver)
+            placement, DATA_REGIONS.RESULTS, transceiver)
 
         # find how many bytes are needed to be read
-        number_of_bytes_to_read = \
-            struct.unpack("<I", transceiver.read_memory(
-                placement.x, placement.y, record_region_base_address,
-                self.RECORDING_HEADER_SIZE))[0]
+        number_of_bytes_to_read = transceiver.read_word(
+            placement.x, placement.y, record_region_base_address)
+        expected_bytes = n_machine_time_steps * self.RECORDING_ELEMENT_SIZE
+        if number_of_bytes_to_read != expected_bytes:
+            raise ConfigurationException(
+                "number of bytes seems wrong; have {} but expected {}".format(
+                    number_of_bytes_to_read, expected_bytes))
 
         # read the bytes
-        if number_of_bytes_to_read != (
-                n_machine_time_steps * self.RECORDING_ELEMENT_SIZE):
-            raise ConfigurationException("number of bytes seems wrong")
         raw_data = transceiver.read_memory(
             placement.x, placement.y,
             record_region_base_address + self.RECORDING_HEADER_SIZE,
             number_of_bytes_to_read)
 
         # convert to booleans
-        return [bool(element) for element in struct.unpack(
-            "<{}I".format(n_machine_time_steps), raw_data)]
+        return [bool(element) for element in
+                n_word_struct(n_machine_time_steps).unpack(raw_data)]
 
     @property
     @overrides(MachineVertex.resources_required)
