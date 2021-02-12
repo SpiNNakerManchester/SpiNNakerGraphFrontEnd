@@ -59,7 +59,7 @@ class ConwayBasicCell(
     RECORDING_ELEMENT_SIZE = STATE_DATA_SIZE  # A recording of the state
 
     def __init__(self, label, state):
-        super(ConwayBasicCell, self).__init__(label, "conways_cell.aplx")
+        super().__init__(label, "conways_cell.aplx")
 
         # app specific data items
         self._state = bool(state)

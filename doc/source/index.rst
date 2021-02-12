@@ -19,6 +19,7 @@ SpiNNakerGraphFrontEnd
 ======================
 
 .. automodule:: spinnaker_graph_front_end
+   :noindex:
 
 Contents:
 
@@ -27,11 +28,9 @@ Contents:
 
    modules
 
-
 Indices and tables
 ==================
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

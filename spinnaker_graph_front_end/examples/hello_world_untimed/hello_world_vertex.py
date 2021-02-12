@@ -56,8 +56,7 @@ class HelloWorldVertex(
         :param str label: The label, which will be printed
         :param constraints: The constraints of the vertex
         """
-        super(HelloWorldVertex, self).__init__(
-            label, "hello_world.aplx", constraints=constraints)
+        super().__init__(label, "hello_world.aplx", constraints=constraints)
 
         # Make the text fit at a word boundary
         self._text = label

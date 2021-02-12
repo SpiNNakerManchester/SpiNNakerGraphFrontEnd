@@ -56,7 +56,7 @@ class TemplateVertex(
                ('RECORDED_DATA', 2)])
 
     def __init__(self, label, constraints=None):
-        super(TemplateVertex, self).__init__(
+        super().__init__(
             label=label, binary_name="c_template_vertex.aplx",
             constraints=constraints)
 

@@ -15,7 +15,6 @@
 
 import logging
 import os
-from six import add_metaclass
 from spinn_utilities.abstract_base import AbstractBase
 from spinn_utilities.log import FormatAdapter
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
@@ -33,8 +32,8 @@ def _is_allocated_machine(config):
             config.get("Machine", "remote_spinnaker_url") != "None")
 
 
-@add_metaclass(AbstractBase)
-class GraphFrontEndSimulatorInterface(SimulatorInterface):
+class GraphFrontEndSimulatorInterface(
+        SimulatorInterface, metaclass=AbstractBase):
     """ The simulator interface exported by the graph front end. A very thin\
         layer over the capabilities of the Front End Common package.
     """
@@ -93,7 +92,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         if default_config_paths is not None:
             this_default_config_paths.extend(default_config_paths)
 
-        super(SpiNNaker, self).__init__(
+        super().__init__(
             configfile=self.CONFIG_FILE_NAME,
             executable_finder=executable_finder,
             graph_label=graph_label,
@@ -147,11 +146,11 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             self.dsg_algorithm = self._user_dsg_algorithm
 
         # run normal procedure
-        AbstractSpinnakerBase.run(self, run_time)
+        super().run(run_time)
 
     def __repr__(self):
-        return "SpiNNaker Graph Front End object for machine {}"\
-            .format(self._hostname)
+        return "SpiNNaker Graph Front End object for machine {}".format(
+            self._hostname)
 
 
 class _GraphFrontEndFailedState(GraphFrontEndSimulatorInterface, FailedState):
