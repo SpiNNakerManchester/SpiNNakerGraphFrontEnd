@@ -16,6 +16,8 @@
 import logging
 import os
 from spinn_utilities.abstract_base import AbstractBase
+import spinn_utilities.conf_loader as conf_loader
+from spinn_utilities.overrides import overrides
 from spinn_utilities.log import FormatAdapter
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
@@ -157,6 +159,15 @@ class _GraphFrontEndFailedState(GraphFrontEndSimulatorInterface, FailedState):
     """ The special object that indicates that the simulator has failed.
     """
     __slots__ = ()
+
+    @property
+    @overrides(FailedState.config)
+    def config(self):
+        logger.warning(
+            "Accessing config before setup is not recommended as setup could"
+            " change some config values. ")
+        return conf_loader.load_config(
+            filename=SpiNNaker.CONFIG_FILE_NAME, defaults=[])
 
 
 # At import time change the default FailedState
