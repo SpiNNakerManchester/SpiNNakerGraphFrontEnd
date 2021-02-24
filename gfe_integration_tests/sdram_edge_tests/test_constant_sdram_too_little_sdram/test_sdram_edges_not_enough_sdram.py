@@ -12,20 +12,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import unittest
-import pytest
-
 from fec_integration_tests.interface.interface_functions.\
     simple_test_vertex import SimpleTestVertex
 from gfe_integration_tests.sdram_edge_tests import common
 from gfe_integration_tests.sdram_edge_tests.common import (
     SDRAMSplitterExternal)
+from pacman.exceptions import PacmanValueError
 from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.machine import ConstantSDRAMMachinePartition
 import spinnaker_graph_front_end as sim
+from spinnaker_testbase import BaseTestCase
 
 
-class TestSDRAMEdgeNotEnoughSDRAM(unittest.TestCase):
+class TestSDRAMEdgeNotEnoughSDRAM(BaseTestCase):
 
     def setup(self):
         sim.setup(model_binary_module=common)
@@ -39,8 +38,8 @@ class TestSDRAMEdgeNotEnoughSDRAM(unittest.TestCase):
         sim.add_vertex_instance(vertex_2)
         sim.add_application_edge_instance(
             ApplicationEdge(vertex_1, vertex_2), "sdram")
-        with pytest.raises(Exception):
+        with self.assertRaises(PacmanValueError):
             sim.run(100)
 
     def test_const_2_verts_external(self):
-        self.setup()
+        self.runsafe(self.setup)
