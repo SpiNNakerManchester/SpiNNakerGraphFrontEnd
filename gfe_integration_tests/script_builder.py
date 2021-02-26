@@ -29,7 +29,7 @@ class ScriptBuilder(RootScriptBuilder):
         # It does not matter if this picks up classes with no main
         # For those it just acts like test_import_all does
         self.create_test_scripts(
-            ["examples/Conways"])
+            ["gfe_examples/Conways"])
 
 
 if __name__ == '__main__':

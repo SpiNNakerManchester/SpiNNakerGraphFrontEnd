@@ -26,7 +26,7 @@ class TestHelloWorld(ScriptChecker):
     def test_hello_world(self):
         with LogCapture() as lc:
             self.check_script(
-                "examples/hello_world/hello_world.py")
+                "gfe_examples/hello_world/hello_world.py")
             outputs = lc.records[-16:]
             for n in range(16):
                 msg = outputs[n].getMessage()

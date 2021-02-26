@@ -14,7 +14,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from testfixtures import LogCapture
-import os
 from spinn_front_end_common.utilities import globals_variables
 from spinnaker_testbase import ScriptChecker
 
@@ -27,7 +26,7 @@ class TestHelloWorldUntimed(ScriptChecker):
     def test_hello_world_untimed(self):
         with LogCapture() as lc:
             self.check_script(
-                "examples/hello_world_untimed/hello_world.py")
+                "gfe_examples/hello_world_untimed/hello_world.py")
             outputs = lc.records[-16:]
             for n in range(16):
                 msg = outputs[n].getMessage()

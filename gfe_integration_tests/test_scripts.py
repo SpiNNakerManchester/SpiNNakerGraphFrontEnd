@@ -30,22 +30,22 @@ class TestScripts(ScriptChecker):
     # flake8: noqa
 
     def test_spinnaker_graph_front_end_examples_Conways_one_no_graph_example_conways_no_graph(self):
-        self.check_script("examples/Conways/one_no_graph_example/conways_no_graph.py")
+        self.check_script("gfe_examples/Conways/one_no_graph_example/conways_no_graph.py")
 
     def test_spinnaker_graph_front_end_examples_Conways_partitioned_example_a_no_vis_no_buffer_conways_basic_cell(self):
-        self.check_script("examples/Conways/partitioned_example_a_no_vis_no_buffer/conways_basic_cell.py")
+        self.check_script("gfe_examples/Conways/partitioned_example_a_no_vis_no_buffer/conways_basic_cell.py")
 
     def test_spinnaker_graph_front_end_examples_Conways_partitioned_example_a_no_vis_no_buffer_conways_partitioned(self):
-        self.check_script("examples/Conways/partitioned_example_a_no_vis_no_buffer/conways_partitioned.py")
+        self.check_script("gfe_examples/Conways/partitioned_example_a_no_vis_no_buffer/conways_partitioned.py")
 
     def test_spinnaker_graph_front_end_examples_Conways_partitioned_example_b_no_vis_buffer_conways_basic_cell(self):
-        self.check_script("examples/Conways/partitioned_example_b_no_vis_buffer/conways_basic_cell.py")
+        self.check_script("gfe_examples/Conways/partitioned_example_b_no_vis_buffer/conways_basic_cell.py")
 
     def test_spinnaker_graph_front_end_examples_Conways_partitioned_example_b_no_vis_buffer_conways_partitioned(self):
-        self.check_script("examples/Conways/partitioned_example_b_no_vis_buffer/conways_partitioned.py")
+        self.check_script("gfe_examples/Conways/partitioned_example_b_no_vis_buffer/conways_partitioned.py")
 
     def test_spinnaker_graph_front_end_examples_Conways_no_edges_examples_conways_basic_cell(self):
-        self.check_script("examples/Conways/no_edges_examples/conways_basic_cell.py")
+        self.check_script("gfe_examples/Conways/no_edges_examples/conways_basic_cell.py")
 
     def test_spinnaker_graph_front_end_examples_Conways_no_edges_examples_conways_no_edges(self):
-        self.check_script("examples/Conways/no_edges_examples/conways_no_edges.py")
+        self.check_script("gfe_examples/Conways/no_edges_examples/conways_no_edges.py")

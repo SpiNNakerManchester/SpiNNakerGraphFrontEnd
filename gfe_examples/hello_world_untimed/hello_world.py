@@ -24,7 +24,8 @@ We then fetch the written data and print it on the python console.
 import logging
 import os
 import spinnaker_graph_front_end as front_end
-from examples.hello_world_untimed.hello_world_vertex import HelloWorldVertex
+from gfe_examples.hello_world_untimed.hello_world_vertex import (
+    HelloWorldVertex)
 
 logger = logging.getLogger(__name__)
 
