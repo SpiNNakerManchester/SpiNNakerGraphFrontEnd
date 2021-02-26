@@ -64,11 +64,11 @@ jobs:
         coveralls-token: ${{ secrets.COVERALLS_REPO_TOKEN }}
 
     - name: Lint with flake8
-      run: flake8 spinnaker_graph_front_end unittests
+      run: flake8 spinnaker_graph_front_end unittests examples
     - name: Lint with pylint
       uses: ./support/actions/pylint
       with:
-        package: spinnaker_graph_front_end
+        package: spinnaker_graph_front_end examples
 
     - name: Run rat copyright enforcement
       if: matrix.python-version == 3.8

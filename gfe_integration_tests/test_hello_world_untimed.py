@@ -27,8 +27,7 @@ class TestHelloWorldUntimed(ScriptChecker):
     def test_hello_world_untimed(self):
         with LogCapture() as lc:
             self.check_script(
-                "spinnaker_graph_front_end/examples/hello_world_untimed/"
-                "hello_world.py")
+                "examples/hello_world_untimed/hello_world.py")
             outputs = lc.records[-16:]
             for n in range(16):
                 msg = outputs[n].getMessage()

@@ -24,7 +24,7 @@ import spinnaker_graph_front_end
 
 
 class Test(unittest.TestCase):
-    """ Tests for the SCAMP version comparison
+    """ Tests for the component version comparison
     """
 
     def test_compare_versions(self):
