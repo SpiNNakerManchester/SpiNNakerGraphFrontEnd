@@ -16,7 +16,6 @@
 import logging
 import os
 from spinn_utilities.abstract_base import AbstractBase
-import spinn_utilities.conf_loader as conf_loader
 from spinn_utilities.overrides import overrides
 from spinn_utilities.log import FormatAdapter
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
@@ -29,13 +28,13 @@ from ._version import __version__ as version
 
 logger = FormatAdapter(logging.getLogger(__name__))
 
+#: The name of the configuration file
+CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
+
 
 def _is_allocated_machine(config):
     return (config.get("Machine", "spalloc_server") != "None" or
             config.get("Machine", "remote_spinnaker_url") != "None")
-
-#: The name of the configuration file
-CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
 
 
 class GraphFrontEndSimulatorInterface(
