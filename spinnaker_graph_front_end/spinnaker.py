@@ -16,17 +16,20 @@
 import logging
 import os
 from spinn_utilities.abstract_base import AbstractBase
-import spinn_utilities.conf_loader as conf_loader
 from spinn_utilities.overrides import overrides
 from spinn_utilities.log import FormatAdapter
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
+from spinn_front_end_common.interface.config_handler import ConfigHandler
 from spinn_front_end_common.utilities import SimulatorInterface
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.failed_state import FailedState
 from ._version import __version__ as version
 
 logger = FormatAdapter(logging.getLogger(__name__))
+
+#: The name of the configuration file
+CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
 
 
 def _is_allocated_machine(config):
@@ -50,10 +53,12 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         "_user_dsg_algorithm"
     )
 
-    #: The name of the configuration file
-    CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
     #: The name of the configuration validation configuration file
     VALIDATION_CONFIG_NAME = "validation_config.cfg"
+
+    @staticmethod
+    def extended_config_path():
+        return os.path.join(os.path.dirname(__file__), CONFIG_FILE_NAME)
 
     def __init__(
             self, executable_finder, host_name=None, graph_label=None,
@@ -89,13 +94,12 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
         # support extra configs
         this_default_config_paths = list()
-        this_default_config_paths.append(
-            os.path.join(os.path.dirname(__file__), self.CONFIG_FILE_NAME))
+        this_default_config_paths.append(self.extended_config_path())
         if default_config_paths is not None:
             this_default_config_paths.extend(default_config_paths)
 
         super().__init__(
-            configfile=self.CONFIG_FILE_NAME,
+            configfile=CONFIG_FILE_NAME,
             executable_finder=executable_finder,
             graph_label=graph_label,
             database_socket_addresses=database_socket_addresses,
@@ -166,8 +170,9 @@ class _GraphFrontEndFailedState(GraphFrontEndSimulatorInterface, FailedState):
         logger.warning(
             "Accessing config before setup is not recommended as setup could"
             " change some config values. ")
-        return conf_loader.load_config(
-            filename=SpiNNaker.CONFIG_FILE_NAME, defaults=[])
+        handler = ConfigHandler(
+            CONFIG_FILE_NAME, [SpiNNaker.extended_config_path()], [])
+        return handler.config
 
 
 # At import time change the default FailedState
