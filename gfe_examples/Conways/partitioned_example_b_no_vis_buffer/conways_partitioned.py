@@ -16,8 +16,8 @@
 import os
 from pacman.model.graphs.machine import MachineEdge
 import spinnaker_graph_front_end as front_end
-from spinnaker_graph_front_end.examples.Conways.\
-    partitioned_example_a_no_vis_no_buffer.conways_basic_cell import (
+from gfe_examples.Conways.partitioned_example_b_no_vis_buffer.\
+    conways_basic_cell import (
         ConwayBasicCell)
 
 runtime = 50
@@ -90,15 +90,16 @@ front_end.run(runtime)
 # get recorded data
 recorded_data = dict()
 
-# get the data per vertex
 if not front_end.use_virtual_machine():
+    buffer_manager = front_end.buffer_manager()
+
+    # get the data per vertex
     for x in range(0, MAX_X_SIZE_OF_FABRIC):
         for y in range(0, MAX_Y_SIZE_OF_FABRIC):
             recorded_data[x, y] = vertices[x][y].get_data(
-                front_end.transceiver(),
+                front_end.buffer_manager(),
                 front_end.placements().get_placement_of_vertex(
-                    vertices[x][y]),
-                front_end.no_machine_time_steps())
+                    vertices[x][y]))
 
     # visualise it in text form (bad but no vis this time)
     for time in range(0, runtime):

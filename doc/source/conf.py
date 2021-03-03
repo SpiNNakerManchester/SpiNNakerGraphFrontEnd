@@ -39,6 +39,9 @@ sys.path[:0] = [os.path.abspath("../..")]
 
 # -- General configuration ------------------------------------------------
 
+# The Python name of the overall package we are documenting.
+_package_base = "spinnaker_graph_front_end"
+
 # If your documentation needs a minimal Sphinx version, state it here.
 # needs_sphinx = '1.0'
 
@@ -388,7 +391,6 @@ def filtered_files(base, unfiltered_files_filename):
 
 _output_dir = os.path.abspath(".")
 _unfiltered_files = os.path.abspath("../unfiltered-files.txt")
-_package_base = "spinnaker_graph_front_end"
 
 # Do the rst generation; remove files which aren't in git first!
 for fl in os.listdir("."):
@@ -398,6 +400,4 @@ for fl in os.listdir("."):
 os.chdir("../..")  # WARNING! RELATIVE FILENAMES CHANGE MEANING HERE!
 apidoc.main([
     '-o', _output_dir, _package_base,
-    # No examples at all
-    "spinnaker_graph_front_end/examples",
     *filtered_files(_package_base, _unfiltered_files)])
