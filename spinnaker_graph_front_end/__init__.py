@@ -185,7 +185,7 @@ def stop_run():
 
 
 def read_xml_file(file_path):
-    """ Reads a xml file and translates it into an application graph and \
+    """ Reads an XML file and translates it into an application graph and \
         machine graph (if required).
 
     :param str file_path: the file path in absolute form
@@ -194,18 +194,17 @@ def read_xml_file(file_path):
     _sim().read_xml_file(file_path)
 
 
-def add_vertex(cell_class, cell_params, label=None, constraints=None):
+def add_vertex(cell_class, cell_params, label=None, constraints=()):
     """ Create an application vertex and add it to the unpartitioned graph.
 
-    :param class cell_class:
+    :param type cell_class:
         the class object for creating the application vertex
     :param dict(str,object) cell_params:
         the input parameters for the class object
-    :param constraints: any constraints to be applied to the vertex once built
     :param label: the label for this vertex
-    :type constraints:
-        list(~pacman.model.constraints.AbstractConstraint) or None
     :type label: str or None
+    :param list(~pacman.model.constraints.AbstractConstraint) constraints:
+        any constraints to be applied to the vertex once built
     :return: the application vertex instance object
     :rtype: ~pacman.model.graphs.application.ApplicationVertex
     """
@@ -229,17 +228,18 @@ def add_vertex_instance(vertex_to_add):
 
 
 def add_machine_vertex(
-        cell_class, cell_params, label=None, constraints=None):
+        cell_class, cell_params, label=None, constraints=()):
     """ Create a machine vertex and add it to the partitioned graph.
 
-    :param class cell_class: the class of the machine vertex to create
+    :param type cell_class:
+        the class of the machine vertex to create
     :param dict(str,object) cell_params:
         the input parameters for the class object
-    :param constraints: any constraints to be applied to the vertex once built
-    :param label: the label for this vertex
-    :type constraints:
-        list(~pacman.model.constraints.AbstractConstraint) or None
+    :param label:
+        the label for this vertex
     :type label: str or None
+    :param list(~pacman.model.constraints.AbstractConstraint) constraints:
+        any constraints to be applied to the vertex once built
     :return: the machine vertex instance object
     :rtype: ~pacman.model.graphs.machine.MachineVertex
     """
@@ -272,11 +272,14 @@ def _new_edge_label():
 def add_edge(edge_type, edge_parameters, semantic_label, label=None):
     """ Create an application edge and add it to the unpartitioned graph.
 
-    :param class edge_type: the kind (class) of application edge to create
+    :param type edge_type:
+        the kind (class) of application edge to create
     :param dict(str,object) edge_parameters:
         parameters to pass to the constructor
-    :param str semantic_label: the ID of the partition that the edge belongs to
-    :param str label: textual label for the edge, or None
+    :param str semantic_label:
+        the ID of the partition that the edge belongs to
+    :param str label:
+        textual label for the edge, or None
     :return: the created application edge
     :rtype: ~pacman.model.graphs.application.ApplicationEdge
     """
@@ -295,9 +298,12 @@ def add_edge(edge_type, edge_parameters, semantic_label, label=None):
 
 
 def add_application_edge_instance(edge, partition_id):
-    """
+    """ Add an edge to the unpartitioned graph.
+
     :param ~pacman.model.graphs.application.ApplicationEdge edge:
+        The edge to add.
     :param str partition_id:
+        The ID of the partition that the edge belongs to.
     """
     _sim().add_application_edge(edge, partition_id)
 
@@ -305,11 +311,14 @@ def add_application_edge_instance(edge, partition_id):
 def add_machine_edge(edge_type, edge_parameters, semantic_label, label=None):
     """ Create a machine edge and add it to the partitioned graph.
 
-    :param class edge_type: the kind (class) of machine edge to create
+    :param class edge_type:
+        the kind (class) of machine edge to create
     :param dict(str,object) edge_parameters:
         parameters to pass to the constructor
-    :param str semantic_label: the ID of the partition that the edge belongs to
-    :param str label: textual label for the edge, or None
+    :param str semantic_label:
+        the ID of the partition that the edge belongs to
+    :param str label:
+        textual label for the edge, or None
     :return: the created machine edge
     :rtype: ~pacman.model.graphs.machine.MachineEdge
     """
@@ -328,19 +337,24 @@ def add_machine_edge(edge_type, edge_parameters, semantic_label, label=None):
 
 
 def add_machine_edge_instance(edge, partition_id):
-    """
+    """ Add an edge to the partitioned graph.
+
     :param ~pacman.model.graphs.machine.MachineEdge edge:
+        The edge to add.
     :param str partition_id:
+        The ID of the partition that the edge belongs to.
     """
     _sim().add_machine_edge(edge, partition_id)
 
 
 def add_socket_address(
         database_ack_port_num, database_notify_host, database_notify_port_num):
-    """ Adds a socket address for the notification protocol.
+    """ Add a socket address for the notification protocol.
 
-    :param int database_ack_port_num: port number to send acknowledgement to
-    :param str database_notify_host: host IP to send notification to
+    :param int database_ack_port_num:
+        port number to send acknowledgement to
+    :param str database_notify_host:
+        host IP to send notification to
     :param int database_notify_port_num:
         port that the external device will be notified on.
     """
@@ -353,7 +367,7 @@ def add_socket_address(
 
 
 def get_txrx():
-    """ Gets the transceiver used by the tool chain.
+    """ Get the transceiver used by the tool chain.
 
     :rtype: ~spinnman.transceiver.Transceiver
     """
@@ -361,7 +375,7 @@ def get_txrx():
 
 
 def get_number_of_available_cores_on_machine():
-    """ Gets the number of cores on this machine that are available to the\
+    """ Get the number of cores on this machine that are available to the\
         simulation.
 
     :rtype: int
@@ -370,7 +384,8 @@ def get_number_of_available_cores_on_machine():
 
 
 def has_ran():
-    """
+    """ Get whether the simulation has already run.
+
     :rtype: bool
     """
     return _sim().has_ran
@@ -398,42 +413,48 @@ def time_scale_factor():
 
 
 def machine_graph():
-    """
+    """ Get the partitioned graph.
+
     :rtype: ~pacman.model.graphs.machine.MachineGraph
     """
     return _sim().machine_graph
 
 
 def application_graph():
-    """
+    """ Get the unpartitioned graph.
+
     :rtype: ~pacman.model.graphs.application.ApplicationGraph
     """
     return _sim().application_graph
 
 
 def routing_infos():
-    """
+    """ Get information about how messages are routed on the machine.
+
     :rtype: ~pacman.model.routing_info.RoutingInfo
     """
     return _sim().routing_infos
 
 
 def placements():
-    """
+    """ Get the planned locations of machine vertices on the machine.
+
     :rtype: ~pacman.model.placements.Placements
     """
     return _sim().placements
 
 
 def transceiver():
-    """
+    """ Get the transceiver, for talking directly to the SpiNNaker system.
+
     :rtype: ~spinnman.transceiver.Transceiver
     """
     return _sim().transceiver
 
 
 def tags():
-    """
+    """ Get the IPTAGs allocated on the machine.
+
     :rtype: ~pacman.model.tags.Tags
     """
     return _sim().tags
@@ -448,7 +469,8 @@ def buffer_manager():
 
 
 def machine():
-    """
+    """ Get the model of the attached/allocated machine.
+
     :rtype: ~spinn_machine.Machine
     """
     logger.warning(
@@ -461,14 +483,20 @@ def machine():
 
 
 def is_allocated_machine():
-    """
+    """ Get whether a machine is allocated.
+
     :rtype: bool
     """
     return _sim().is_allocated_machine
 
 
 def use_virtual_machine():
-    """
+    """ Get whether a virtual machine is being used.
+
+    .. note::
+        Virtual machines cannot execute any programs.
+        However, they can be used to check whether code can be deployed.
+
     :rtype: bool
     """
     return _sim().use_virtual_board
