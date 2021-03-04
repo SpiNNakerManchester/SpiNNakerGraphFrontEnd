@@ -75,7 +75,7 @@ def _do_transfer(gatherer, gatherers, monitor_vertices, receiver_placement,
     """
     with gatherer.streaming(
             gatherers.values(), sim.transceiver(), monitor_vertices,
-            sim.placements(), False):
+            sim.placements()):
         return gatherer.get_data(
             extra_monitor=receiver_placement.vertex,
             extra_monitor_placement=receiver_placement,
