@@ -200,7 +200,7 @@ static bool initialize(uint32_t *timer_period) {
 
     // initialise transmission keys
     transmission_region_t *transmission_region =
-      data_specification_get_region(TRANSMISSIONS, data);
+	    data_specification_get_region(TRANSMISSIONS, data);
     if (transmission_region->has_key == 1) {
         my_key = transmission_region->my_key;
         log_info("my key is %d\n", my_key);

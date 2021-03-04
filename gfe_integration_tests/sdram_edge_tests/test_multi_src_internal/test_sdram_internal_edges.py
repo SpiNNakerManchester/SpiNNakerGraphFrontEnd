@@ -12,8 +12,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import unittest
-
 from fec_integration_tests.interface.interface_functions.\
     simple_test_vertex import SimpleTestVertex
 from gfe_integration_tests.sdram_edge_tests.\
@@ -21,9 +19,10 @@ from gfe_integration_tests.sdram_edge_tests.\
 from pacman.model.graphs.machine import SourceSegmentedSDRAMMachinePartition
 from gfe_integration_tests.sdram_edge_tests import common
 import spinnaker_graph_front_end as sim
+from spinnaker_testbase import BaseTestCase
 
 
-class TestMultiSrcSDRAMEdgeInsideOneAppVert(unittest.TestCase):
+class TestMultiSrcSDRAMEdgeInsideOneAppVert(BaseTestCase):
 
     def setup(self):
         sim.setup(model_binary_module=common, time_scale_factor=5)
@@ -35,4 +34,4 @@ class TestMultiSrcSDRAMEdgeInsideOneAppVert(unittest.TestCase):
         sim.stop()
 
     def test_local_verts_go_to_local_lpgs(self):
-        self.setup()
+        self.runsafe(self.setup)

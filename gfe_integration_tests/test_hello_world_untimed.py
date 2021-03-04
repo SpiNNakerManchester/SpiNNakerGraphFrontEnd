@@ -14,24 +14,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from testfixtures import LogCapture
-import os
-import unittest
 from spinn_front_end_common.utilities import globals_variables
+from spinnaker_testbase import ScriptChecker
 
 
-class TestHelloWorldUntimed(unittest.TestCase):
+class TestHelloWorldUntimed(ScriptChecker):
 
     def setUp(self):
         globals_variables.unset_simulator()
 
     def test_hello_world_untimed(self):
-        import spinnaker_graph_front_end.examples.hello_world as hw_dir
-        class_file = hw_dir.__file__
-        path = os.path.dirname(os.path.abspath(class_file))
-        print(path)
-        os.chdir(path)
         with LogCapture() as lc:
-            import spinnaker_graph_front_end.examples.hello_world_untimed.hello_world   # NOQA
+            self.check_script(
+                "gfe_examples/hello_world_untimed/hello_world.py")
             outputs = lc.records[-16:]
             for n in range(16):
                 msg = outputs[n].getMessage()

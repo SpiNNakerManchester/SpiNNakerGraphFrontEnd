@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2019 The University of Manchester
+# Copyright (c) 2017-2021 The University of Manchester
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,13 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import unittest
-import spinn_utilities.package_loader as package_loader
-_CI = os.environ.get('CONTINUOUS_INTEGRATION', 'false').lower()
+# Files are listed here if they are NOT imported into their directory/module's
+# __init__.py and reexported with __all__.
 
-
-class ImportAllModule(unittest.TestCase):
-    def test_import_all(self):
-        package_loader.load_module("spinnaker_graph_front_end",
-                                   remove_pyc_files=(_CI != 'true'))
+spinnaker_graph_front_end/spinnaker.py
+spinnaker_graph_front_end/utilities/data_utils.py

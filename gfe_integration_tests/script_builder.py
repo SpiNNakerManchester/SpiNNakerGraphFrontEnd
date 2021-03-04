@@ -13,13 +13,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import unittest
-import spinn_utilities.package_loader as package_loader
-_CI = os.environ.get('CONTINUOUS_INTEGRATION', 'false').lower()
+from spinnaker_testbase import RootScriptBuilder
 
 
-class ImportAllModule(unittest.TestCase):
-    def test_import_all(self):
-        package_loader.load_module("spinnaker_graph_front_end",
-                                   remove_pyc_files=(_CI != 'true'))
+class ScriptBuilder(RootScriptBuilder):
+    """
+    This file will recreate the test_scripts.py file
+
+    To skip the too_long scripts run this script with a parameter
+    """
+
+    def build_scripts(self):
+        # create_test_scripts supports test that are too long or exceptions
+
+        # It does not matter if this picks up classes with no main
+        # For those it just acts like test_import_all does
+        self.create_test_scripts(
+            ["gfe_examples/Conways"])
+
+
+if __name__ == '__main__':
+    builder = ScriptBuilder()
+    builder.build_scripts()

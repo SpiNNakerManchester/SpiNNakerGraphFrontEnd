@@ -20,6 +20,7 @@ from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.helpful_functions import n_word_struct
 import spinnaker_graph_front_end as sim
 from gfe_integration_tests.test_extra_monitor.sdram_writer import SDRAMWriter
+from spinnaker_testbase import BaseTestCase
 
 _MONITOR_VERTICES = 'MemoryExtraMonitorVertices'
 _GATHERER_MAP = 'MemoryMCGatherVertexToEthernetConnectedChipMapping'
@@ -95,40 +96,45 @@ def _get_gatherer_for_monitor(monitor):
         gatherers, gatherers[chip.nearest_ethernet_x, chip.nearest_ethernet_y])
 
 
-def test_extra_monitor():
-    mbs = _TRANSFER_SIZE_MEGABYTES
+class TestExtraMonitors(BaseTestCase):
 
-    # setup system
-    globals_variables.unset_simulator()
-    sim.setup(model_binary_folder=os.path.dirname(__file__),
-              n_chips_required=2)
+    def check_extra_monitor(self):
+        mbs = _TRANSFER_SIZE_MEGABYTES
 
-    # build verts
-    writer_vertex = SDRAMWriter(mbs)
+        # setup system
+        globals_variables.unset_simulator()
+        sim.setup(model_binary_folder=os.path.dirname(__file__),
+                  n_chips_required=2)
 
-    # add verts to graph
-    sim.add_machine_vertex_instance(writer_vertex)
-    sim.run(12)
+        # build verts
+        writer_vertex = SDRAMWriter(mbs)
 
-    writer_placement = sim.placements().get_placement_of_vertex(writer_vertex)
+        # add verts to graph
+        sim.add_machine_vertex_instance(writer_vertex)
+        sim.run(12)
 
-    # pylint: disable=protected-access
-    outputs = sim.globals_variables.get_simulator()._last_run_outputs
-    monitor_vertices = outputs[_MONITOR_VERTICES]
+        writer_placement = sim.placements().get_placement_of_vertex(writer_vertex)
 
-    receiver_plt = _get_monitor_placement(monitor_vertices, writer_placement)
-    gatherers, gatherer = _get_gatherer_for_monitor(writer_vertex)
+        # pylint: disable=protected-access
+        outputs = sim.globals_variables.get_simulator()._last_run_outputs
+        monitor_vertices = outputs[_MONITOR_VERTICES]
 
-    start = float(time.time())
+        receiver_plt = _get_monitor_placement(monitor_vertices, writer_placement)
+        gatherers, gatherer = _get_gatherer_for_monitor(writer_vertex)
 
-    data = _do_transfer(gatherer, gatherers, monitor_vertices, receiver_plt,
-                        writer_placement, writer_vertex)
+        start = float(time.time())
 
-    end = float(time.time())
+        data = _do_transfer(gatherer, gatherers, monitor_vertices, receiver_plt,
+                            writer_placement, writer_vertex)
 
-    print("time taken to extract {} MB is {}. Transfer rate: {} Mb/s".format(
-        mbs, end - start, (mbs * 8) / (end - start)))
+        end = float(time.time())
 
-    check_data(data)
+        print("time taken to extract {} MB is {}. Transfer rate: {} Mb/s".format(
+            mbs, end - start, (mbs * 8) / (end - start)))
 
-    sim.stop()
+        check_data(data)
+
+        sim.stop()
+
+    def test_extra_monitors(self):
+        self.runsafe(self.check_extra_monitor)

@@ -124,15 +124,15 @@ void do_safety_check(void) {
     // if we've missed events
     cpsr = spin1_int_disable();
     int total = alive_states_recieved_this_tick +
-      dead_states_recieved_this_tick;
+	    dead_states_recieved_this_tick;
     if (total != 8){
          log_error("didn't receive the correct number of states");
          log_error("only received %d states", total);
     }
     log_debug("only received %d alive states",
-      alive_states_recieved_this_tick);
+	    alive_states_recieved_this_tick);
     log_debug("only received %d dead states",
-      dead_states_recieved_this_tick);
+	    dead_states_recieved_this_tick);
     spin1_mode_restore(cpsr);
 }
 
@@ -166,7 +166,7 @@ void send_state(void) {
 
     // send my new state to the simulation neighbours
     log_debug("sending my state of %d via multicast with key %d",
-      my_state, my_key);
+	    my_state, my_key);
     while (!spin1_send_mc_packet(my_key, my_state, WITH_PAYLOAD)) {
         spin1_delay_us(1);
     }
@@ -282,11 +282,11 @@ static bool initialize(uint32_t *timer_period) {
 
     // initialise transmission keys
     transmission_region_t *transmission_sdram =
-      data_specification_get_region(TRANSMISSIONS, data);
+	    data_specification_get_region(TRANSMISSIONS, data);
     if (!transmission_sdram->has_key) {
         log_error(
-          "this conways cell can't affect anything, deduced as an error,"
-          "please fix the application fabric and try again");
+        	"this conways cell can't affect anything, deduced as an error,"
+        	"please fix the application fabric and try again");
         return false;
     }
     my_key = transmission_sdram->my_key;
@@ -299,7 +299,7 @@ static bool initialize(uint32_t *timer_period) {
 
     // read neighbour states for initial tick
     neighbour_states_t *neigbhour_state_sdram =
-      data_specification_get_region(NEIGHBOUR_INITIAL_STATES, data);
+	    data_specification_get_region(NEIGHBOUR_INITIAL_STATES, data);
     alive_states_recieved_this_tick = neigbhour_state_sdram->alive_states;
     dead_states_recieved_this_tick = neigbhour_state_sdram->dead_states;
 
