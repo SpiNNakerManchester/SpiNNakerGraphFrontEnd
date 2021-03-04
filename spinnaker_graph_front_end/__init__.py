@@ -13,6 +13,42 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""
+The API for running SpiNNaker simulations based on a basic (non-neural) graph.
+
+The general usage pattern for this API something like is::
+
+    import spinnaker_graph_front_end as gfe
+
+    # Uses information from your configuration file
+    # You might need to specify how many SpiNNaker boards to allocate
+    gfe.setup()
+
+    # Make the bits that do the computation
+    for each vertex to add:
+        gfe.add_machine_vertex_instance(vertex)
+
+    # Connect them together so computations are coordinated
+    for each edge to add:
+        gfe.add_machine_edge_instance(edge)
+
+    # Actually plan and run the simulation
+    gfe.run(number_of_steps)
+
+    # Get the results back; what this means can be complex
+    for each vertex:
+        results += vertex.retrieve_relevant_results()
+
+    # Shut everything down
+    # Only your retrieved results really exist after this
+    gfe.stop()
+
+    # Analyse/render the results; totally application-specific!
+
+It is possible to use GFE-style vertices in a neural graph (e.g., to simulate
+the external world). Talk to the SpiNNaker team for more details.
+"""
+
 import os
 import logging
 import sys
@@ -63,7 +99,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         (overrides the ``machine_name`` from the cfg file).
     :param str graph_label:
         a human readable label for the graph (used mainly in reports)
-    :param module model_binary_module:
+    :param ~types.ModuleType model_binary_module:
         the Python module where the binary files (``.aplx``) can be found for
         the compiled C code that is being used in this application; mutually
         exclusive with the ``model_binary_folder``.
