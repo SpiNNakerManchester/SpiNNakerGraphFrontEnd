@@ -52,7 +52,8 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
           n_boards_required=None, extra_pre_run_algorithms=(),
           extra_post_run_algorithms=(),
           time_scale_factor=None, machine_time_step=None):
-    """ Set up a graph, ready to have vertices and edges added to it.
+    """ Set up a graph, ready to have vertices and edges added to it, and the\
+        simulator engine that will execute the graph.
 
     .. note::
         This must be called *before* the other functions in this API.
@@ -136,7 +137,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
 
 
 def _sim():
-    """ Gets the current SpiNNaker simulator object.
+    """ Get the current SpiNNaker simulator object.
 
     :rtype: ~spinn_front_end_common.utilities.SimulatorInterface
     """
@@ -180,8 +181,11 @@ def stop_run():
 
 
 def read_xml_file(file_path):
-    """ Reads an XML file and translates it into an application graph and \
-        machine graph (if required).
+    """ Read an XML file containing a graph description and translate it into\
+        an application graph and machine graph (if required).
+
+    .. warning::
+        This is not officially supported functionality yet.
 
     :param str file_path: the file path in absolute form
     """
