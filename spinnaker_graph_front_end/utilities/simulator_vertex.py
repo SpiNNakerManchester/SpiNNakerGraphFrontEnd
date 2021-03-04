@@ -37,8 +37,7 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
         :param constraints:
             Any placement or key-allocation constraints on the vertex.
         :type constraints:
-            ~collections.abc.Iterable(
-            ~pacman.model.constraints.AbstractConstraint)
+            ~collections.abc.Iterable(~pacman.model.constraints.AbstractConstraint)
         """
         super().__init__(label, constraints)
         self._binary_name = binary_name

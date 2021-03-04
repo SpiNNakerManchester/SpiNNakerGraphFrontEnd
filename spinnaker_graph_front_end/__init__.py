@@ -19,29 +19,20 @@ import sys
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.socket_address import SocketAddress
 from pacman.model.graphs.application import ApplicationEdge, ApplicationVertex
-from pacman.model.graphs.machine import MachineEdge, MachineVertex
+from pacman.model.graphs.machine import MachineEdge as _ME, MachineVertex
 from spinn_front_end_common.utilities.utility_objs import ExecutableFinder
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utility_models import (
-    LivePacketGather, ReverseIpTagMultiCastSource)
+    LivePacketGather as
+    _LPG, ReverseIpTagMultiCastSource as
+    _RIPTMCS)
 from spinnaker_graph_front_end._version import (
     __version__, __version_name__, __version_month__, __version_year__)
 from spinnaker_graph_front_end.spinnaker import SpiNNaker
 from spinnaker_graph_front_end import spinnaker as gfe_file
 
 logger = FormatAdapter(logging.getLogger(__name__))
-MachineEdge.__doc__ += """\
-For full documentation see \
-:py:class:`~pacman.model.graphs.machine.MachineEdge`.
-"""
-LivePacketGather.__doc__ += """\
-For full documentation see \
-:py:class:`~spinn_front_end_common.utility_models.LivePacketGather`.
-"""
-ReverseIpTagMultiCastSource.__doc__ += """\
-For full documentation see \
-:py:class:`~spinn_front_end_common.utility_models.ReverseIpTagMultiCastSource`.
-"""
+
 
 __all__ = ['LivePacketGather', 'ReverseIpTagMultiCastSource', 'MachineEdge',
            'setup', 'run', 'stop', 'read_xml_file', 'add_vertex_instance',
@@ -84,8 +75,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         system. These are over and above the ones used by the
         :py:class:`~spinn_front_end_common.utilities.connections.LiveEventConnection`
     :type database_socket_addresses:
-        ~collections.abc.Iterable(
-        ~spinn_utilities.socket_address.SocketAddress)
+        ~collections.abc.Iterable(~spinn_utilities.socket_address.SocketAddress)
     :param str user_dsg_algorithm:
         an algorithm used for generating the application data which is loaded
         onto the machine. If not set, will use the data specification language
@@ -154,16 +144,16 @@ def _sim():
 
 
 def run(duration=None):
-    """ Method to support running an application for a number of microseconds.
+    """ Run a simulation for a number of microseconds.
 
     :param int duration:
-        the number of microseconds the application should run for
+        the number of microseconds the application code should run for
     """
     _sim().run(duration)
 
 
 def run_until_complete(n_steps=None):
-    """ Run until the application is complete
+    """ Run until the simulation is complete.
 
     :param int n_steps:
         If not ``None``, this specifies that the simulation should be
@@ -326,7 +316,7 @@ def add_application_edge_instance(edge, partition_id):
 def add_machine_edge(edge_type, edge_parameters, semantic_label, label=None):
     """ Create a machine edge and add it to the partitioned graph.
 
-    :param class edge_type:
+    :param type edge_type:
         the kind (class) of machine edge to create
     :param dict(str,object) edge_parameters:
         parameters to pass to the constructor
@@ -337,7 +327,7 @@ def add_machine_edge(edge_type, edge_parameters, semantic_label, label=None):
     :return: the created machine edge
     :rtype: ~pacman.model.graphs.machine.MachineEdge
     """
-    if not issubclass(edge_type, MachineEdge):
+    if not issubclass(edge_type, _ME):
         raise TypeError(f"{edge_type} is not a machine edge class")
     # correct label if needed
     if label is None and 'label' not in edge_parameters:
@@ -409,21 +399,24 @@ def has_ran():
 
 
 def machine_time_step():
-    """
+    """ Get the size of machine time step, in microseconds.
+
     :rtype: int
     """
     return _sim().machine_time_step
 
 
 def no_machine_time_steps():
-    """
+    """ Get the number of time/simulation steps executed.
+
     :rtype: int
     """
     return _sim().no_machine_time_steps
 
 
 def time_scale_factor():
-    """
+    """ Get the time scaling factor.
+
     :rtype: int
     """
     return _sim().time_scale_factor
@@ -478,8 +471,8 @@ def tags():
 
 
 def buffer_manager():
-    """
-    :return: the buffer manager being used for loading/extracting buffers
+    """ Get the buffer manager being used for loading/extracting buffers
+
     :rtype: ~spinn_front_end_common.interface.buffer_management.BufferManager
     """
     return _sim().buffer_manager
@@ -517,3 +510,28 @@ def use_virtual_machine():
     :rtype: bool
     """
     return _sim().use_virtual_board
+
+
+# Thin wrappers for documentation purposes only
+class MachineEdge(_ME):
+    """
+    For full documentation see
+    :py:class:`~pacman.model.graphs.machine.MachineEdge`.
+    """
+    __slots__ = ()
+
+
+class LivePacketGather(_LPG):
+    """
+    For full documentation see
+    :py:class:`~spinn_front_end_common.utility_models.LivePacketGather`.
+    """
+    __slots__ = ()
+
+
+class ReverseIpTagMultiCastSource(_RIPTMCS):
+    """
+    For full documentation see
+    :py:class:`~spinn_front_end_common.utility_models.ReverseIpTagMultiCastSource`.
+    """
+    __slots__ = ()

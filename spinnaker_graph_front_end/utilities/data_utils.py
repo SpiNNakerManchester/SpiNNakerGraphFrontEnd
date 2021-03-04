@@ -22,11 +22,11 @@ def generate_system_data_region(
         spec, region_id, machine_vertex, machine_time_step, time_scale_factor):
     """ Generate a system data region for time-based simulations.
 
-    :param data_specification.DataSpecificationGenerator spec:
+    :param ~data_specification.DataSpecificationGenerator spec:
         The data specification to write to
     :param int region_id:
         The region to write to
-    :param ~pacman.models.graph.machine.MachineVertex machine_vertex:
+    :param ~pacman.model.graphs.machine.MachineVertex machine_vertex:
         The machine vertex to write for
     :param int machine_time_step:
         The time step of the simulation
@@ -52,7 +52,7 @@ def generate_steps_system_data_region(spec, region_id, machine_vertex):
         The data specification to write to
     :param int region_id:
         The region to write to
-    :param ~pacman.models.graph.machine.MachineVertex machine_vertex:
+    :param ~pacman.model.graphs.machine.MachineVertex machine_vertex:
         The machine vertex to write for
     """
     generate_system_data_region(
