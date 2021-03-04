@@ -18,7 +18,8 @@ import logging
 import sys
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.socket_address import SocketAddress
-from pacman.model.graphs.machine import MachineEdge
+from pacman.model.graphs.application import ApplicationEdge, ApplicationVertex
+from pacman.model.graphs.machine import MachineEdge, MachineVertex
 from spinn_front_end_common.utilities.utility_objs import ExecutableFinder
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utility_models import (
@@ -55,12 +56,15 @@ __all__ = ['LivePacketGather', 'ReverseIpTagMultiCastSource', 'MachineEdge',
 
 
 def setup(hostname=None, graph_label=None, model_binary_module=None,
-          model_binary_folder=None, database_socket_addresses=None,
+          model_binary_folder=None, database_socket_addresses=(),
           user_dsg_algorithm=None, n_chips_required=None,
-          n_boards_required=None, extra_pre_run_algorithms=None,
-          extra_post_run_algorithms=None,
+          n_boards_required=None, extra_pre_run_algorithms=(),
+          extra_post_run_algorithms=(),
           time_scale_factor=None, machine_time_step=None):
-    """ The main method needed to be called to set up a graph.
+    """ Set up a graph, ready to have vertices and edges added to it.
+
+    .. note::
+        This must be called *before* the other functions in this API.
 
     :param str hostname:
         the hostname of the SpiNNaker machine to operate on
@@ -80,7 +84,8 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         system. These are over and above the ones used by the
         :py:class:`~spinn_front_end_common.utilities.connections.LiveEventConnection`
     :type database_socket_addresses:
-        list(~spinn_utilities.socket_address.SocketAddress)
+        ~collections.abc.Iterable(
+        ~spinn_utilities.socket_address.SocketAddress)
     :param str user_dsg_algorithm:
         an algorithm used for generating the application data which is loaded
         onto the machine. If not set, will use the data specification language
@@ -95,11 +100,11 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         boards you need so that the spalloc system can allocate you a machine
         big enough for your needs.
     :type n_boards_required: int or None
-    :param list(str) extra_pre_run_algorithms:
+    :param ~collections.abc.Iterable(str) extra_pre_run_algorithms:
         algorithms which need to be ran after mapping and loading has occurred
         but before the system has ran. These are plugged directly into the
         work flow management.
-    :param list(str) extra_post_run_algorithms:
+    :param ~collections.abc.Iterable(str) extra_post_run_algorithms:
         algorithms which need to be ran after the simulation has ran. These
         could be post processing of generated data on the machine for example.
     :raise ~spinn_front_end_common.utilities.exceptions.ConfigurationException:
@@ -126,7 +131,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         file_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
         executable_finder.add_path(file_dir)
 
-    # set up the spinnaker object
+    # set up the spinnaker object; after this, _sim() returns this object
     SpiNNaker(
         host_name=hostname, graph_label=graph_label,
         executable_finder=executable_finder,
@@ -203,11 +208,15 @@ def add_vertex(cell_class, cell_params, label=None, constraints=()):
         the input parameters for the class object
     :param label: the label for this vertex
     :type label: str or None
-    :param list(~pacman.model.constraints.AbstractConstraint) constraints:
+    :param constraints:
         any constraints to be applied to the vertex once built
+    :type constraints:
+        ~collections.abc.Iterable(~pacman.model.constraints.AbstractConstraint)
     :return: the application vertex instance object
     :rtype: ~pacman.model.graphs.application.ApplicationVertex
     """
+    if not issubclass(cell_class, ApplicationVertex):
+        raise TypeError(f"{cell_class} is not an application vertex class")
     if label is not None:
         cell_params['label'] = label
     # graph handles label is None
@@ -238,11 +247,15 @@ def add_machine_vertex(
     :param label:
         the label for this vertex
     :type label: str or None
-    :param list(~pacman.model.constraints.AbstractConstraint) constraints:
+    :param constraints:
         any constraints to be applied to the vertex once built
+    :type constraints:
+        ~collections.abc.Iterable(~pacman.model.constraints.AbstractConstraint)
     :return: the machine vertex instance object
     :rtype: ~pacman.model.graphs.machine.MachineVertex
     """
+    if not issubclass(cell_class, MachineVertex):
+        raise TypeError(f"{cell_class} is not a machine vertex class")
     if label is not None:
         cell_params['label'] = label
     # graph handles label is None
@@ -263,9 +276,9 @@ def add_machine_vertex_instance(vertex_to_add):
 
 
 def _new_edge_label():
-    spinnaker = _sim()
-    label = "Edge {}".format(spinnaker.none_labelled_edge_count)
-    spinnaker.increment_none_labelled_edge_count()
+    sim = _sim()
+    label = f"Edge {sim.none_labelled_edge_count}"
+    sim.increment_none_labelled_edge_count()
     return label
 
 
@@ -283,6 +296,8 @@ def add_edge(edge_type, edge_parameters, semantic_label, label=None):
     :return: the created application edge
     :rtype: ~pacman.model.graphs.application.ApplicationEdge
     """
+    if not issubclass(edge_type, ApplicationEdge):
+        raise TypeError(f"{edge_type} is not an application edge class")
     # correct label if needed
     if label is None and 'label' not in edge_parameters:
         edge_parameters['label'] = _new_edge_label()
@@ -322,6 +337,8 @@ def add_machine_edge(edge_type, edge_parameters, semantic_label, label=None):
     :return: the created machine edge
     :rtype: ~pacman.model.graphs.machine.MachineEdge
     """
+    if not issubclass(edge_type, MachineEdge):
+        raise TypeError(f"{edge_type} is not a machine edge class")
     # correct label if needed
     if label is None and 'label' not in edge_parameters:
         edge_parameters['label'] = _new_edge_label()
