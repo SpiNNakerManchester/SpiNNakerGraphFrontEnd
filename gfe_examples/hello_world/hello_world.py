@@ -22,13 +22,9 @@ Each core stores into its region in SDRAM the string:
 We then fetch the written data and print it on the python console.
 """
 
-import logging
 import os
-from spinn_utilities.log import FormatAdapter
 import spinnaker_graph_front_end as front_end
 from gfe_examples.hello_world.hello_world_vertex import HelloWorldVertex
-
-logger = FormatAdapter(logging.getLogger(__name__))
 
 front_end.setup(
     n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
@@ -47,7 +43,7 @@ if not front_end.use_virtual_machine():
                             key=lambda p: (p.x, p.y, p.p)):
         if isinstance(placement.vertex, HelloWorldVertex):
             hello_world = placement.vertex.read()
-            logger.info("{}, {}, {} > {}",
-                placement.x, placement.y, placement.p, hello_world)
+            print(
+                f"{placement.x}, {placement.y}, {placement.p} > {hello_world}")
 
 front_end.stop()

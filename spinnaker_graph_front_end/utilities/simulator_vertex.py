@@ -19,7 +19,8 @@ from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinnaker_graph_front_end.utilities.data_utils import (
     generate_system_data_region)
-from spinn_front_end_common.interface.buffer_management import recording_utilities
+from spinn_front_end_common.interface.buffer_management import (
+    recording_utilities)
 
 
 class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
