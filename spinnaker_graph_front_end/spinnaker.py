@@ -47,6 +47,10 @@ class GraphFrontEndSimulatorInterface(
 
 class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
     """ The implementation of the SpiNNaker simulation interface.
+
+    .. note::
+        You should not normally instantiate this directly from user code.
+        Call :py:func:`~spinnaker_graph_front_end.setup` instead.
     """
     #: The base name of the configuration file (but no path)
     __slots__ = (
@@ -58,34 +62,53 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
     @staticmethod
     def extended_config_path():
+        """ The full name of the configuration file.
+
+        :rtype: str
+        """
         return os.path.join(os.path.dirname(__file__), CONFIG_FILE_NAME)
 
     def __init__(
             self, executable_finder, host_name=None, graph_label=None,
-            database_socket_addresses=None, dsg_algorithm=None,
+            database_socket_addresses=(), dsg_algorithm=None,
             n_chips_required=None, n_boards_required=None,
-            extra_pre_run_algorithms=None,
-            extra_post_run_algorithms=None, time_scale_factor=None,
-            machine_time_step=None, default_config_paths=None,
-            extra_xml_paths=None):
+            extra_pre_run_algorithms=(),
+            extra_post_run_algorithms=(), time_scale_factor=None,
+            machine_time_step=None, default_config_paths=(),
+            extra_xml_paths=()):
         """
         :param executable_finder:
+            How to find the executables
         :type executable_finder:
             ~spinn_front_end_common.utilities.utility_objs.ExecutableFinder
         :param str host_name:
+            The SpiNNaker machine address
         :param str graph_label:
+            A label for the graph
         :param database_socket_addresses:
+            Extra sockets that will want to be notified about the location of
+            the runtime database.
         :type database_socket_addresses:
-            list(~spinn_utilities.socket_address.SocketAddress)
+            ~collections.abc.Iterable(~spinn_utilities.socket_address.SocketAddress)
         :param str dsg_algorithm:
+            Algorithm to use for generating data
         :param int n_chips_required:
+            How many chips are required.
+            *Prefer ``n_boards_required`` if possible.*
         :param int n_boards_required:
-        :param list(str) extra_pre_run_algorithms:
-        :param list(str) extra_post_run_algorithms:
+            How many boards are required. Unnecessary with a local board.
+        :param ~collections.abc.Iterable(str) extra_pre_run_algorithms:
+            The names of any extra algorithms to call before running
+        :param ~collections.abc.Iterable(str) extra_post_run_algorithms:
+            The names of any extra algorithms to call after running
         :param int time_scale_factor:
+            The time slow-down factor
         :param int machine_time_step:
-        :param list(str) default_config_paths:
-        :param list(str) extra_xml_paths:
+            The size of the machine time step, in microseconds
+        :param ~collections.abc.Iterable(str) default_config_paths:
+            Where to look for configurations
+        :param ~collections.abc.Iterable(str) extra_xml_paths:
+            Where to look for algorithm descriptors
         """
         # DSG algorithm store for user defined algorithms
         self._user_dsg_algorithm = dsg_algorithm
@@ -147,6 +170,8 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
         :param int run_time: the run duration in milliseconds.
         """
+        # pylint: disable=arguments-differ
+
         # set up the correct DSG algorithm
         if self._user_dsg_algorithm is not None:
             self.dsg_algorithm = self._user_dsg_algorithm
