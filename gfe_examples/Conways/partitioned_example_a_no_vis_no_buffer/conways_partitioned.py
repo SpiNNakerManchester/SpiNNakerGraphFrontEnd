@@ -16,7 +16,9 @@
 import os
 from pacman.model.graphs.machine import MachineEdge
 import spinnaker_graph_front_end as front_end
-from .conways_basic_cell import ConwayBasicCell
+from gfe_examples.Conways.partitioned_example_a_no_vis_no_buffer.\
+    conways_basic_cell import (
+        ConwayBasicCell)
 
 runtime = 50
 # machine_time_step = 100
