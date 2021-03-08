@@ -44,14 +44,11 @@ front_end.run(10)
 
 # set up placements (this is a simple example based on hello_world example
 # that should be edited to suit the application)
-placements = front_end.placements()
-buffer_manager = front_end.buffer_manager()
-
-for placement in sorted(placements.placements,
+for placement in sorted(front_end.placements().placements,
                         key=lambda p: (p.x, p.y, p.p)):
 
     if isinstance(placement.vertex, TemplateVertex):
-        template_info = placement.vertex.read(placement, buffer_manager)
+        template_info = placement.vertex.read()
         logger.info("{}, {}, {} > {}".format(
             placement.x, placement.y, placement.p, template_info))
 

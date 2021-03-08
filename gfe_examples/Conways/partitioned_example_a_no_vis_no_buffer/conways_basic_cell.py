@@ -32,7 +32,7 @@ from spinnaker_graph_front_end.utilities.data_utils import (
 
 
 # Regions for populations
-class DATA_REGIONS(IntEnum):
+class DataRegions(IntEnum):
     SYSTEM = 0
     TRANSMISSIONS = 1
     STATE = 2
@@ -55,6 +55,10 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
     RECORDING_ELEMENT_SIZE = STATE_DATA_SIZE  # A recording of the state
 
     def __init__(self, label, state):
+        """
+        :param str label:
+        :param bool state:
+        """
         super().__init__(label, "conways_cell.aplx")
 
         # app specific data items
@@ -76,21 +80,21 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         # pylint: disable=arguments-differ
 
         # Generate the system data region for simulation .c requirements
-        generate_system_data_region(spec, DATA_REGIONS.SYSTEM,
+        generate_system_data_region(spec, DataRegions.SYSTEM,
                                     self, machine_time_step, time_scale_factor)
 
         # reserve memory regions
         spec.reserve_memory_region(
-            region=DATA_REGIONS.TRANSMISSIONS,
+            region=DataRegions.TRANSMISSIONS,
             size=self.TRANSMISSION_DATA_SIZE, label="inputs")
         spec.reserve_memory_region(
-            region=DATA_REGIONS.STATE,
+            region=DataRegions.STATE,
             size=self.STATE_DATA_SIZE, label="state")
         spec.reserve_memory_region(
-            region=DATA_REGIONS.NEIGHBOUR_INITIAL_STATES,
+            region=DataRegions.NEIGHBOUR_INITIAL_STATES,
             size=self.NEIGHBOUR_INITIAL_STATES_SIZE, label="neighour_states")
         spec.reserve_memory_region(
-            region=DATA_REGIONS.RESULTS,
+            region=DataRegions.RESULTS,
             size=(self.RECORDING_HEADER_SIZE +
                   (data_n_time_steps * self.RECORDING_ELEMENT_SIZE)),
             label="results")
@@ -120,16 +124,16 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         key = routing_info.get_first_key_from_pre_vertex(
             self, self.PARTITION_ID)
 
-        spec.switch_write_focus(DATA_REGIONS.TRANSMISSIONS)
+        spec.switch_write_focus(DataRegions.TRANSMISSIONS)
         spec.write_value(int(key is not None))
         spec.write_value(0 if key is None else key)
 
         # write state value
-        spec.switch_write_focus(DATA_REGIONS.STATE)
+        spec.switch_write_focus(DataRegions.STATE)
         spec.write_value(int(bool(self._state)))
 
         # write neighbours data state
-        spec.switch_write_focus(DATA_REGIONS.NEIGHBOUR_INITIAL_STATES)
+        spec.switch_write_focus(DataRegions.NEIGHBOUR_INITIAL_STATES)
         alive = sum(edge.pre_vertex.state for edge in edges)
         dead = sum(not edge.pre_vertex.state for edge in edges)
         spec.write_value(alive)
@@ -138,30 +142,33 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         # End-of-Spec:
         spec.end_specification()
 
-    def get_data(self, transceiver, placement, n_machine_time_steps):
+    def get_data(self):
+        txrx = self.front_end.transceiver()
+        placement = self.placement
+        n_steps = self.front_end.no_machine_time_steps()
         # Get the data region base address where results are stored for the
         # core
         record_region_base_address = locate_memory_region_for_placement(
-            placement, DATA_REGIONS.RESULTS, transceiver)
+            placement, DataRegions.RESULTS, txrx)
 
         # find how many bytes are needed to be read
-        number_of_bytes_to_read = transceiver.read_word(
+        number_of_bytes_to_read = txrx.read_word(
             placement.x, placement.y, record_region_base_address)
-        expected_bytes = n_machine_time_steps * self.RECORDING_ELEMENT_SIZE
+        expected_bytes = n_steps * self.RECORDING_ELEMENT_SIZE
         if number_of_bytes_to_read != expected_bytes:
             raise ConfigurationException(
                 "number of bytes seems wrong; have {} but expected {}".format(
                     number_of_bytes_to_read, expected_bytes))
 
         # read the bytes
-        raw_data = transceiver.read_memory(
+        raw_data = txrx.read_memory(
             placement.x, placement.y,
             record_region_base_address + self.RECORDING_HEADER_SIZE,
             number_of_bytes_to_read)
 
         # convert to booleans
         return [bool(element) for element in
-                n_word_struct(n_machine_time_steps).unpack(raw_data)]
+                n_word_struct(n_steps).unpack(raw_data)]
 
     @property
     @overrides(MachineVertex.resources_required)

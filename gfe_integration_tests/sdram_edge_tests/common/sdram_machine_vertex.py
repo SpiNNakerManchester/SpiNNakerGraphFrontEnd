@@ -12,7 +12,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from enum import Enum
+from enum import IntEnum
 
 from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs import AbstractSupportsSDRAMEdges
@@ -28,18 +28,17 @@ from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_utilities.overrides import overrides
 
 
+class DataRegions(IntEnum):
+    SYSTEM = 0
+    SDRAM_IN = 1
+    SDRAM_OUT = 2
+
+
 class SDRAMMachineVertex(
         MachineVertex, AbstractSupportsSDRAMEdges,
         AbstractHasAssociatedBinary, MachineDataSpecableVertex):
     """ A MachineVertex that stores its own resources.
     """
-
-    # Regions for populations
-    DATA_REGIONS = Enum(
-        value="DATA_REGIONS",
-        names=[('SYSTEM', 0),
-               ('SDRAM_IN', 1),
-               ('SDRAM_OUT', 2)])
 
     SDRAM_PARTITION_BASE_DSG_SIZE = 2 * BYTES_PER_WORD
     SDRAM_PARTITION_COUNTERS = 1 * BYTES_PER_WORD
@@ -83,11 +82,11 @@ class SDRAMMachineVertex(
 
         # reserve memory regions
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.SYSTEM.value, size=SIMULATION_N_BYTES,
+            region=DataRegions.SYSTEM, size=SIMULATION_N_BYTES,
             label='systemInfo')
 
         # simulation .c requirements
-        spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
+        spec.switch_write_focus(DataRegions.SYSTEM)
         spec.write_array(simulation_utilities.get_simulation_header_array(
             self.get_binary_file_name(), machine_time_step,
             time_scale_factor))
@@ -104,18 +103,18 @@ class SDRAMMachineVertex(
 
         # reserve memory regions
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.SDRAM_OUT.value,
+            region=DataRegions.SDRAM_OUT,
             size=(
                 (n_out_sdrams * self.SDRAM_PARTITION_BASE_DSG_SIZE) +
                 self.SDRAM_PARTITION_COUNTERS), label="sdrams_out")
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.SDRAM_IN.value,
+            region=DataRegions.SDRAM_IN,
             size=(
                 (n_in_sdrams * self.SDRAM_PARTITION_BASE_DSG_SIZE) +
                 self.SDRAM_PARTITION_COUNTERS), label="sdrams_in")
 
         # add outs
-        spec.switch_write_focus(self.DATA_REGIONS.SDRAM_OUT.value)
+        spec.switch_write_focus(DataRegions.SDRAM_OUT)
         spec.write_value(n_out_sdrams)
         for outgoing_partition in outgoing_partitions:
             spec.write_value(
@@ -124,7 +123,7 @@ class SDRAMMachineVertex(
                 outgoing_partition.get_sdram_size_of_region_for(self))
 
         # add ins
-        spec.switch_write_focus(self.DATA_REGIONS.SDRAM_IN.value)
+        spec.switch_write_focus(DataRegions.SDRAM_IN)
         spec.write_value(n_in_sdrams)
         for incoming_partition in incoming_partitions:
             if isinstance(incoming_partition, AbstractSDRAMPartition):
