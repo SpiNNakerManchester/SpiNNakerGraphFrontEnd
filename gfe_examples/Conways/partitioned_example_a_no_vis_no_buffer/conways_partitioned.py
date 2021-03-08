@@ -16,9 +16,7 @@
 import os
 from pacman.model.graphs.machine import MachineEdge
 import spinnaker_graph_front_end as front_end
-from gfe_examples.Conways.partitioned_example_a_no_vis_no_buffer.\
-    conways_basic_cell import (
-        ConwayBasicCell)
+from .conways_basic_cell import ConwayBasicCell
 
 runtime = 50
 # machine_time_step = 100
@@ -36,9 +34,7 @@ if cores <= (MAX_X_SIZE_OF_FABRIC * MAX_Y_SIZE_OF_FABRIC):
     raise KeyError("Don't have enough cores to run simulation")
 
 # contain the vertices for the connection aspect
-vertices = [
-    [None for _ in range(MAX_X_SIZE_OF_FABRIC)]
-    for _ in range(MAX_Y_SIZE_OF_FABRIC)]
+vertices = dict()
 
 active_states = [(2, 2), (3, 2), (3, 3), (4, 3), (2, 4)]
 
@@ -48,14 +44,14 @@ for x in range(0, MAX_X_SIZE_OF_FABRIC):
         vert = ConwayBasicCell(
             "cell{}".format((x * MAX_X_SIZE_OF_FABRIC) + y),
             (x, y) in active_states)
-        vertices[x][y] = vert
+        vertices[x, y] = vert
         front_end.add_machine_vertex_instance(vert)
 
 # verify the initial state
 output = ""
 for y in range(MAX_X_SIZE_OF_FABRIC - 1, 0, -1):
     for x in range(0, MAX_Y_SIZE_OF_FABRIC):
-        output += "X" if vertices[x][y].state else " "
+        output += "X" if vertices[x, y].state else " "
     output += "\n"
 print(output)
 print("\n\n")
@@ -81,7 +77,7 @@ for x in range(0, MAX_X_SIZE_OF_FABRIC):
         for (dest_x, dest_y, compass) in positions:
             front_end.add_machine_edge_instance(
                 MachineEdge(
-                    vertices[x][y], vertices[dest_x][dest_y],
+                    vertices[x, y], vertices[dest_x, dest_y],
                     label=compass), ConwayBasicCell.PARTITION_ID)
 
 # run the simulation
@@ -94,11 +90,7 @@ recorded_data = dict()
 if not front_end.use_virtual_machine():
     for x in range(0, MAX_X_SIZE_OF_FABRIC):
         for y in range(0, MAX_Y_SIZE_OF_FABRIC):
-            recorded_data[x, y] = vertices[x][y].get_data(
-                front_end.transceiver(),
-                front_end.placements().get_placement_of_vertex(
-                    vertices[x][y]),
-                front_end.no_machine_time_steps())
+            recorded_data[x, y] = vertices[x, y].get_data()
 
     # visualise it in text form (bad but no vis this time)
     for time in range(0, runtime):
@@ -106,7 +98,7 @@ if not front_end.use_virtual_machine():
         output = ""
         for y in range(MAX_X_SIZE_OF_FABRIC - 1, 0, -1):
             for x in range(0, MAX_Y_SIZE_OF_FABRIC):
-                output += "X" if recorded_data[x, y][time] else " "
+                output += ("X" if recorded_data[x, y][time] else " ")
             output += "\n"
         print(output)
         print("\n\n")

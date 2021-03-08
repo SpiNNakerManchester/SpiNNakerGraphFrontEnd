@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from enum import Enum
+from enum import IntEnum
 import logging
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
@@ -37,17 +37,26 @@ from pacman.executor.injection_decorator import inject_items
 logger = logging.getLogger(__name__)
 
 
+class DataRegions(IntEnum):
+    """ The data regions that the C code uses
+    """
+    SYSTEM = 0
+    PARAMS = 1
+    STRING_DATA = 2
+
+
+class Channels(IntEnum):
+    """ The recording channel IDs that the C code uses
+    """
+    HELLO = 0
+
+
 class HelloWorldVertex(
         SimulatorVertex, AbstractGeneratesDataSpecification,
         AbstractReceiveBuffersToHost):
-
-    DATA_REGIONS = Enum(
-        value="DATA_REGIONS",
-        names=[('SYSTEM', 0),
-               ('PARAMS', 1),
-               ('STRING_DATA', 2)])
-
     PARAMS_BASE_SIZE = BYTES_PER_WORD * 2
+
+    _ENCODING = "ascii"
 
     def __init__(self, label, constraints=None):
         """
@@ -70,7 +79,7 @@ class HelloWorldVertex(
     def resources_required(self):
         fixed = (
             SYSTEM_BYTES_REQUIREMENT +
-            recording_utilities.get_recording_header_size(1) +
+            recording_utilities.get_recording_header_size(len(Channels)) +
             self.PARAMS_BASE_SIZE + len(self._text))
         variable = len(self._text)
         return ResourceContainer(sdram=VariableSDRAM(fixed, variable))
@@ -81,52 +90,47 @@ class HelloWorldVertex(
     @overrides(AbstractGeneratesDataSpecification.generate_data_specification,
                additional_arguments=["data_n_steps"])
     def generate_data_specification(self, spec, placement, data_n_steps):
+        # pylint: disable=arguments-differ
+
         # Generate the system data region for simulation .c requirements
         # Note that the time step and time scale factor are unused here
         generate_steps_system_data_region(
-            spec, self.DATA_REGIONS.SYSTEM.value, self)
+            spec, DataRegions.SYSTEM, self)
 
         # Create the data regions for hello world
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.PARAMS.value,
+            region=DataRegions.PARAMS,
             size=self.PARAMS_BASE_SIZE + len(self._text))
-        spec.reserve_memory_region(
-            region=self.DATA_REGIONS.STRING_DATA.value,
-            size=recording_utilities.get_recording_header_size(1),
-            label="Recording")
 
         # write data for the recording
-        spec.switch_write_focus(self.DATA_REGIONS.STRING_DATA.value)
-        spec.write_array(recording_utilities.get_recording_header_array(
-            [data_n_steps * len(self._text)]))
+        self.generate_recording_region(
+            spec, DataRegions.STRING_DATA, [data_n_steps * len(self._text)])
 
         # write the data
-        spec.switch_write_focus(self.DATA_REGIONS.PARAMS.value)
+        spec.switch_write_focus(DataRegions.PARAMS)
         spec.write_value(len(self._text))
         spec.write_array(numpy.array(
-            bytearray(self._text, "ascii")).view("uint32"))
+            bytearray(self._text, self._ENCODING)).view("uint32"))
 
         # End-of-Spec:
         spec.end_specification()
 
-    def read(self, placement, buffer_manager):
+    def read(self):
         """ Get the data written into SDRAM
 
-        :param placement: the location of this vertex
-        :param buffer_manager: the buffer manager
         :return: string output
         """
-        raw_data, missing_data = buffer_manager.get_data_by_placement(
-            placement, 0)
+        raw_data, missing_data = self.get_recording_channel_data(
+            Channels.HELLO)
         if missing_data:
             raise Exception("missing data!")
-        return str(bytearray(raw_data))
+        return str(raw_data, self._ENCODING)
 
     @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)
     def get_recorded_region_ids(self):
-        return [0]
+        return [Channels.HELLO]
 
     @overrides(AbstractReceiveBuffersToHost.get_recording_region_base_address)
     def get_recording_region_base_address(self, txrx, placement):
         return locate_memory_region_for_placement(
-            placement, self.DATA_REGIONS.STRING_DATA.value, txrx)
+            placement, DataRegions.STRING_DATA, txrx)
