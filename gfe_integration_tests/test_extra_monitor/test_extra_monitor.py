@@ -19,7 +19,8 @@ from data_specification.utility_calls import get_region_base_address_offset
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.helpful_functions import n_word_struct
 import spinnaker_graph_front_end as sim
-from gfe_integration_tests.test_extra_monitor.sdram_writer import SDRAMWriter
+from gfe_integration_tests.test_extra_monitor.sdram_writer import (
+    SDRAMWriter, DataRegions)
 from spinnaker_testbase import BaseTestCase
 
 _MONITOR_VERTICES = 'MemoryExtraMonitorVertices'
@@ -80,8 +81,7 @@ def _do_transfer(gatherer, gatherers, monitor_vertices, receiver_placement,
             extra_monitor=receiver_placement.vertex,
             extra_monitor_placement=receiver_placement,
             memory_address=get_data_region_address(
-                sim.transceiver(), writer_placement,
-                SDRAMWriter.DATA_REGIONS.DATA),
+                sim.transceiver(), writer_placement, DataRegions.DATA),
             length_in_bytes=writer_vertex.mbs_in_bytes,
             fixed_routes=None)
 
