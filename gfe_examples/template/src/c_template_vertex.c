@@ -112,7 +112,6 @@ static void do_update(uint ticks, uint32_t time) {
 
     // TODO: Add any other functionality e.g. recording, iobuf etc.
     //       For further useful functions e.g. recording_record,
-    //       recording_do_timestep_update, see other graph_front_end examples
 
 }
 

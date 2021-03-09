@@ -142,14 +142,6 @@ static void update(uint ticks, uint b) {
     if (time ==  100) {
         iobuf_data();
     }
-
-    // trigger buffering_out_mechanism
-    log_info("recording flags is %d", recording_flags);
-    if (recording_flags > 0) {
-        log_info("doing timer tick update");
-        recording_do_timestep_update(time);
-        log_info("done timer tick update");
-    }
 }
 
 static bool initialize(uint32_t *timer_period) {

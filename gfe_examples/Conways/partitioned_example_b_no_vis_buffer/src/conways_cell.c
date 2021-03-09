@@ -248,7 +248,6 @@ void update(uint ticks, uint b) {
         send_state();
 
         recording_record(0, &my_state, 4);
-        recording_do_timestep_update(time);
     }
 }
 

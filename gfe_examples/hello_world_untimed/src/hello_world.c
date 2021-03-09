@@ -84,7 +84,6 @@ static void run(uint unused0, uint unused1) {
     while (run_forever || step < n_steps) {
         if (recording_flags) {
             record_data();
-            recording_do_step_update(step);
         }
         step++;
     }
