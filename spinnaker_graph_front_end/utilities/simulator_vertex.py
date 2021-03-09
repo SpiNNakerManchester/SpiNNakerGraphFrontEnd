@@ -111,8 +111,8 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
             Defaults to 0 because it is almost always the first one.
         """
         generate_system_data_region(
-            spec, region_id, self, self.__front_end.machine_time_step,
-            self.__front_end.time_scale_factor)
+            spec, region_id, self, self.__front_end.machine_time_step(),
+            self.__front_end.time_scale_factor())
 
     def generate_recording_region(self, spec, region_id, channel_sizes):
         """

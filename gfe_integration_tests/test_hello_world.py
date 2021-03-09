@@ -24,12 +24,12 @@ class TestHelloWorld(ScriptChecker):
         globals_variables.unset_simulator()
 
     def test_hello_world(self):
-        with LogCapture() as lc:
+        with LogCapture("hello_world") as lc:
             self.check_script(
                 "gfe_examples/hello_world/hello_world.py")
-            outputs = lc.records[-16:]
-            for n in range(16):
-                msg = outputs[n].getMessage()
-                print(msg)
-                test_text = "Hello world; " * 20
-                assert(msg[-(len(test_text) + 2):-2] == test_text)
+
+        test_text = "Hello world; " * 20
+        for record in lc.records:
+            msg = record.getMessage()
+            print(msg)
+            assert test_text in msg

@@ -25,7 +25,8 @@ import logging
 import os
 from spinn_utilities.log import FormatAdapter
 import spinnaker_graph_front_end as front_end
-from .hello_world_vertex import HelloWorldVertex
+from gfe_examples.hello_world_untimed.hello_world_vertex import (
+    HelloWorldVertex)
 
 logger = FormatAdapter(logging.getLogger(__name__))
 
