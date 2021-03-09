@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from enum import Enum
+from enum import IntEnum
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, ConstantSDRAM
 from spinn_front_end_common.abstract_models import (
@@ -29,14 +29,14 @@ _SDRAM_READING_SIZE_IN_BYTES_CONVERTER = 1024 * BYTES_PER_KB
 _CONFIG_REGION_SIZE = 4
 
 
+class DataRegions(IntEnum):
+    SYSTEM = 0
+    CONFIG = 1
+    DATA = 2
+
+
 class SDRAMWriter(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
-    DATA_REGIONS = Enum(
-        value="DATA_REGIONS",
-        names=[('SYSTEM', 0),
-               ('CONFIG', 1),
-               ('DATA', 2)])
-
     def __init__(self, mebibytes):
         self._size = mebibytes * _SDRAM_READING_SIZE_IN_BYTES_CONVERTER
         super().__init__(label="speed", constraints=None)
@@ -60,12 +60,12 @@ class SDRAMWriter(
         self._reserve_memory_regions(spec)
 
         # write data for the simulation data item
-        spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
+        spec.switch_write_focus(DataRegions.SYSTEM)
         spec.write_array(simulation_utilities.get_simulation_header_array(
             self.get_binary_file_name(), machine_time_step,
             time_scale_factor))
 
-        spec.switch_write_focus(self.DATA_REGIONS.CONFIG.value)
+        spec.switch_write_focus(DataRegions.CONFIG)
         spec.write_value(self._size)
 
         # End-of-Spec:
@@ -73,15 +73,15 @@ class SDRAMWriter(
 
     def _reserve_memory_regions(self, spec):
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.SYSTEM.value,
+            region=DataRegions.SYSTEM,
             size=SIMULATION_N_BYTES,
             label='systemInfo')
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.CONFIG.value,
+            region=DataRegions.CONFIG,
             size=_CONFIG_REGION_SIZE,
             label="config")
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.DATA.value,
+            region=DataRegions.DATA,
             size=self._size,
             label="data region")
 

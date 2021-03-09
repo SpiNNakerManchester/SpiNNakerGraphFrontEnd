@@ -24,20 +24,14 @@ class TestHelloWorldUntimed(ScriptChecker):
         globals_variables.unset_simulator()
 
     def test_hello_world_untimed(self):
-        with LogCapture() as lc:
+        with LogCapture("hello_world") as lc:
             self.check_script(
                 "gfe_examples/hello_world_untimed/hello_world.py")
-            outputs = lc.records[-16:]
-            for n in range(16):
-                msg = outputs[n].getMessage()
-                print(msg)
-                expect = "Hello World {}  ".format(n)
-                if n < 10:
-                    expect += " "
-                for i in range(20):
-                    start = -2 - (len(expect) * (i + 1))
-                    end = -2 - (len(expect) * i)
-                    if end == 0:
-                        end = None
-                    frag = msg[start:end]
-                    assert(frag == expect)
+
+        for n, output in enumerate(lc.records):
+            msg = output.getMessage()
+            print(msg)
+            expect = "Hello World {}  ".format(n)
+            if n < 10:
+                expect += " "
+            assert msg.endswith(expect * 20)

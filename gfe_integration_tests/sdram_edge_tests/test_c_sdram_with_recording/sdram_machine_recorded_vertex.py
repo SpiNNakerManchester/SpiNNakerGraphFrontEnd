@@ -12,7 +12,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from enum import Enum
+from enum import IntEnum
 
 from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs import AbstractSupportsSDRAMEdges
@@ -34,20 +34,23 @@ from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_utilities.overrides import overrides
 
 
+class DataRegions(IntEnum):
+    SYSTEM = 0
+    SDRAM_IN = 1
+    SDRAM_OUT = 2
+    RESULTS = 3
+
+
+class Channels(IntEnum):
+    RESULTS = 0
+
+
 class SDRAMMachineRecordedVertex(
         MachineVertex, AbstractSupportsSDRAMEdges,
         AbstractHasAssociatedBinary, MachineDataSpecableVertex,
         AbstractReceiveBuffersToHost):
     """ A MachineVertex that stores its own resources.
     """
-
-    # Regions for populations
-    DATA_REGIONS = Enum(
-        value="DATA_REGIONS",
-        names=[('SYSTEM', 0),
-               ('SDRAM_IN', 1),
-               ('SDRAM_OUT', 2),
-               ('RESULTS', 3)])
 
     SDRAM_PARTITION_BASE_DSG_SIZE = 2 * BYTES_PER_WORD
     SDRAM_PARTITION_COUNTERS = 1 * BYTES_PER_WORD
@@ -74,8 +77,9 @@ class SDRAMMachineRecordedVertex(
                 (len(in_edges) * self.SDRAM_PARTITION_BASE_DSG_SIZE) +
                 (self.SDRAM_PARTITION_COUNTERS * 2) +
                 SARK_PER_MALLOC_SDRAM_USAGE +
-                recording_utilities.get_recording_header_size(1) +
-                recording_utilities.get_recording_data_constant_size(1)),
+                recording_utilities.get_recording_header_size(len(Channels)) +
+                recording_utilities.get_recording_data_constant_size(
+                    len(Channels))),
             per_timestep_sdram=self.RECORDING_ELEMENT_SIZE))
 
     @overrides(AbstractSupportsSDRAMEdges.sdram_requirement)
@@ -101,11 +105,11 @@ class SDRAMMachineRecordedVertex(
 
         # reserve memory regions
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.SYSTEM.value, size=SIMULATION_N_BYTES,
+            region=DataRegions.SYSTEM, size=SIMULATION_N_BYTES,
             label='systemInfo')
 
         # simulation .c requirements
-        spec.switch_write_focus(self.DATA_REGIONS.SYSTEM.value)
+        spec.switch_write_focus(DataRegions.SYSTEM)
         spec.write_array(simulation_utilities.get_simulation_header_array(
             self.get_binary_file_name(), machine_time_step,
             time_scale_factor))
@@ -123,18 +127,18 @@ class SDRAMMachineRecordedVertex(
 
         # reserve memory regions
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.SDRAM_OUT.value,
+            region=DataRegions.SDRAM_OUT,
             size=(
                 (n_out_sdrams * self.SDRAM_PARTITION_BASE_DSG_SIZE) +
                 self.SDRAM_PARTITION_COUNTERS), label="sdrams_out")
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.SDRAM_IN.value,
+            region=DataRegions.SDRAM_IN,
             size=(
                 (n_in_sdrams * self.SDRAM_PARTITION_BASE_DSG_SIZE) +
                 self.SDRAM_PARTITION_COUNTERS), label="sdrams_in")
 
         # add outs
-        spec.switch_write_focus(self.DATA_REGIONS.SDRAM_OUT.value)
+        spec.switch_write_focus(DataRegions.SDRAM_OUT)
         spec.write_value(n_out_sdrams)
         for outgoing_partition in outgoing_partitions:
             spec.write_value(
@@ -143,7 +147,7 @@ class SDRAMMachineRecordedVertex(
                 outgoing_partition.get_sdram_size_of_region_for(self))
 
         # add ins
-        spec.switch_write_focus(self.DATA_REGIONS.SDRAM_IN.value)
+        spec.switch_write_focus(DataRegions.SDRAM_IN)
         spec.write_value(n_in_sdrams)
         for incoming_partition in incoming_partitions:
             if isinstance(incoming_partition, AbstractSDRAMPartition):
@@ -153,19 +157,19 @@ class SDRAMMachineRecordedVertex(
                     incoming_partition.get_sdram_size_of_region_for(self))
 
         spec.reserve_memory_region(
-            region=self.DATA_REGIONS.RESULTS.value,
-            size=recording_utilities.get_recording_header_size(1))
+            region=DataRegions.RESULTS,
+            size=recording_utilities.get_recording_header_size(len(Channels)))
 
         # get recorded buffered regions sorted
-        spec.switch_write_focus(self.DATA_REGIONS.RESULTS.value)
+        spec.switch_write_focus(DataRegions.RESULTS)
         spec.write_array(recording_utilities.get_recording_header_array(
             [self.RECORDING_ELEMENT_SIZE * data_n_time_steps]))
 
         spec.end_specification()
 
     def get_recorded_region_ids(self):
-        return [0]
+        return [Channels.RESULTS]
 
     def get_recording_region_base_address(self, txrx, placement):
         return locate_memory_region_for_placement(
-            placement, self.DATA_REGIONS.RESULTS.value, txrx)
+            placement, DataRegions.RESULTS, txrx)
