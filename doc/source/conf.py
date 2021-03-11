@@ -27,16 +27,20 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-# import sys
+import sys
 import os
-from sphinx import apidoc
+from sphinx.ext import apidoc
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-# sys.path.insert(0, os.path.abspath('.'))
+
+sys.path[:0] = [os.path.abspath("../..")]
 
 # -- General configuration ------------------------------------------------
+
+# The Python name of the overall package we are documenting.
+_package_base = "spinnaker_graph_front_end"
 
 # If your documentation needs a minimal Sphinx version, state it here.
 # needs_sphinx = '1.0'
@@ -51,23 +55,22 @@ extensions = [
     'sphinx.ext.intersphinx'
 ]
 
-ds_link = 'http://dataspecification.readthedocs.io/en/latest/'
-fe_link = 'http://spinnfrontendcommon.readthedocs.io/en/latest/'
-
-intersphinx_mapping = {'spinn_machine':
-                       ('http://spinnmachine.readthedocs.io/en/latest/',
-                           None),
-                       'spinn_storage_handlers':
-                           ('http://spinnmachine.readthedocs.io/en/latest/',
-                            None),
-                       'spinnman':
-                           ('http://spinnman.readthedocs.io/en/latest/',
-                            None),
-                       'pacman': ('http://pacman.readthedocs.io/en/latest/',
-                                  None),
-                       'data_specification': (ds_link, None),
-                       'spinn_front_end_common': (fe_link, None)
-                       }
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3.8', None),
+    'numpy': ("https://numpy.org/doc/1.20/", None),
+    'spinn_utilities': (
+        'https://spinnutils.readthedocs.io/en/latest/', None),
+    'spinn_machine': (
+        'https://spinnmachine.readthedocs.io/en/latest/', None),
+    'spinnman': (
+        'https://spinnman.readthedocs.io/en/latest/', None),
+    'pacman': (
+        'https://pacman.readthedocs.io/en/latest/', None),
+    'data_specification': (
+        'https://dataspecification.readthedocs.io/en/latest/', None),
+    'spinn_front_end_common': (
+        'https://spinnfrontendcommon.readthedocs.io/en/latest/', None)
+    }
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -370,10 +373,31 @@ epub_exclude_files = ['search.html']
 
 autoclass_content = 'both'
 
-# Do the rst generation
-for f in os.listdir("."):
-    if (os.path.isfile(f) and f.endswith(
-            ".rst") and f != "index.rst" and f != "modules.rst"):
-        os.remove(f)
-apidoc.main([None, '-o', ".", "../../spinnaker_graph_front_end",
-             "../../spinnaker_graph_front_end/examples"])
+
+def filtered_files(base, unfiltered_files_filename):
+    with open(unfiltered_files_filename) as f:
+        lines = [line.rstrip() for line in f]
+    # Skip comments and empty lines to get list of files we DON'T want to
+    # filter out; this is definitely complicated
+    unfiltered = set(
+        line for line in lines if not line.startswith("#") and line != "")
+    for root, _dirs, files in os.walk(base):
+        for filename in files:
+            if filename.endswith(".py") and not filename.startswith("_"):
+                full = root + "/" + filename
+                if full not in unfiltered:
+                    yield full
+
+
+_output_dir = os.path.abspath(".")
+_unfiltered_files = os.path.abspath("../unfiltered-files.txt")
+
+# Do the rst generation; remove files which aren't in git first!
+for fl in os.listdir("."):
+    if (os.path.isfile(fl) and fl.endswith(".rst") and
+            fl not in ("index.rst", "modules.rst")):
+        os.remove(fl)
+os.chdir("../..")  # WARNING! RELATIVE FILENAMES CHANGE MEANING HERE!
+apidoc.main([
+    '-o', _output_dir, _package_base,
+    *filtered_files(_package_base, _unfiltered_files)])

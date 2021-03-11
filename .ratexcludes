@@ -1,5 +1,11 @@
 **/spinnaker_tools/**
 **/spinn_common/**
+**/SpiNNUtils/**
+**/SpiNNMachine/**
+**/SpiNNMan/**
+**/PACMAN/**
+**/DataSpecification/**
+**/spalloc/**
 **/SpiNNFrontEndCommon/**
 **/modified_src/**
 **/reports/**

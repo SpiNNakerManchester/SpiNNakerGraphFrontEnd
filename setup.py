@@ -13,9 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from setuptools import setup
 from collections import defaultdict
 import os
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 __version__ = None
 exec(open("spinnaker_graph_front_end/_version.py").read())
@@ -23,13 +26,13 @@ assert __version__
 
 # Build a list of all project modules, as well as supplementary files
 main_package = "spinnaker_graph_front_end"
-extensions = {".aplx", ".boot", ".cfg", ".json", ".sql", ".template", ".xml",
-              ".xsd"}
+extensions = {
+    ".aplx", ".boot", ".cfg", ".json", ".sql", ".template", ".xml", ".xsd"}
 main_package_dir = os.path.join(os.path.dirname(__file__), main_package)
 start = len(main_package_dir)
 packages = []
 package_data = defaultdict(list)
-for dirname, dirnames, filenames in os.walk(main_package_dir):
+for dirname, _dirnames, filenames in os.walk(main_package_dir):
     if '__init__.py' in filenames:
         package = "{}{}".format(
             main_package, dirname[start:].replace(os.sep, '.'))
@@ -53,7 +56,7 @@ setup(
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
 
-        "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
 
         "Natural Language :: English",
 
@@ -61,15 +64,16 @@ setup(
         "Operating System :: Microsoft :: Windows",
         "Operating System :: MacOS",
 
+        "Programming Language :: C",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     packages=packages,
     package_data=package_data,
     install_requires=['SpiNNUtilities >= 1!5.1.1, < 1!6.0.0',
-                      'SpiNNStorageHandlers >= 1!5.1.1, < 1!6.0.0',
                       'SpiNNMachine >= 1!5.1.1, < 1!6.0.0',
                       'SpiNNMan >= 1!5.1.1, < 1!6.0.0',
                       'SpiNNaker_PACMAN >= 1!5.1.1, < 1!6.0.0',

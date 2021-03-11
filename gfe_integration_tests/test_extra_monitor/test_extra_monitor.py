@@ -13,15 +13,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import struct
 import time
 import os
-import spinnaker_graph_front_end as sim
-from spinn_front_end_common.utilities import globals_variables
 from data_specification.utility_calls import get_region_base_address_offset
-from gfe_integration_tests.test_extra_monitor.sdram_writer import SDRAMWriter
+from spinn_front_end_common.utilities import globals_variables
+from spinn_front_end_common.utilities.helpful_functions import n_word_struct
+import spinnaker_graph_front_end as sim
+from gfe_integration_tests.test_extra_monitor.sdram_writer import (
+    SDRAMWriter, DataRegions)
+from spinnaker_testbase import BaseTestCase
 
-_ONE_WORD = struct.Struct("<I")
 _MONITOR_VERTICES = 'MemoryExtraMonitorVertices'
 _GATHERER_MAP = 'MemoryMCGatherVertexToEthernetConnectedChipMapping'
 _TRANSFER_SIZE_MEGABYTES = 20
@@ -33,15 +34,14 @@ def get_data_region_address(transceiver, placement, region):
         placement.x, placement.y, placement.p).user[0]
 
     # Get the provenance region base address
-    base_address_offset = get_region_base_address_offset(
+    address_location = get_region_base_address_offset(
         app_data_base_address, region.value)
-    return _ONE_WORD.unpack(transceiver.read_memory(
-        placement.x, placement.y, base_address_offset, _ONE_WORD.size))[0]
+    return transceiver.read_word(placement.x, placement.y, address_location)
 
 
 def check_data(data):
     # check data is correct here
-    ints = struct.unpack("<{}I".format(len(data) // 4), data)
+    ints = n_word_struct(len(data) // 4).unpack(data)
     start_value = 0
     for value in ints:
         if value != start_value:
@@ -81,8 +81,7 @@ def _do_transfer(gatherer, gatherers, monitor_vertices, receiver_placement,
             extra_monitor=receiver_placement.vertex,
             extra_monitor_placement=receiver_placement,
             memory_address=get_data_region_address(
-                sim.transceiver(), writer_placement,
-                SDRAMWriter.DATA_REGIONS.DATA),
+                sim.transceiver(), writer_placement, DataRegions.DATA),
             length_in_bytes=writer_vertex.mbs_in_bytes,
             fixed_routes=None)
 
@@ -97,40 +96,45 @@ def _get_gatherer_for_monitor(monitor):
         gatherers, gatherers[chip.nearest_ethernet_x, chip.nearest_ethernet_y])
 
 
-def test_extra_monitor():
-    mbs = _TRANSFER_SIZE_MEGABYTES
+class TestExtraMonitors(BaseTestCase):
 
-    # setup system
-    globals_variables.unset_simulator()
-    sim.setup(model_binary_folder=os.path.dirname(__file__),
-              n_chips_required=2)
+    def check_extra_monitor(self):
+        mbs = _TRANSFER_SIZE_MEGABYTES
 
-    # build verts
-    writer_vertex = SDRAMWriter(mbs)
+        # setup system
+        globals_variables.unset_simulator()
+        sim.setup(model_binary_folder=os.path.dirname(__file__),
+                  n_chips_required=2)
 
-    # add verts to graph
-    sim.add_machine_vertex_instance(writer_vertex)
-    sim.run(12)
+        # build verts
+        writer_vertex = SDRAMWriter(mbs)
 
-    writer_placement = sim.placements().get_placement_of_vertex(writer_vertex)
+        # add verts to graph
+        sim.add_machine_vertex_instance(writer_vertex)
+        sim.run(12)
 
-    # pylint: disable=protected-access
-    outputs = sim.globals_variables.get_simulator()._last_run_outputs
-    monitor_vertices = outputs[_MONITOR_VERTICES]
+        writer_placement = sim.placements().get_placement_of_vertex(writer_vertex)
 
-    receiver_plt = _get_monitor_placement(monitor_vertices, writer_placement)
-    gatherers, gatherer = _get_gatherer_for_monitor(writer_vertex)
+        # pylint: disable=protected-access
+        outputs = sim.globals_variables.get_simulator()._last_run_outputs
+        monitor_vertices = outputs[_MONITOR_VERTICES]
 
-    start = float(time.time())
+        receiver_plt = _get_monitor_placement(monitor_vertices, writer_placement)
+        gatherers, gatherer = _get_gatherer_for_monitor(writer_vertex)
 
-    data = _do_transfer(gatherer, gatherers, monitor_vertices, receiver_plt,
-                        writer_placement, writer_vertex)
+        start = float(time.time())
 
-    end = float(time.time())
+        data = _do_transfer(gatherer, gatherers, monitor_vertices, receiver_plt,
+                            writer_placement, writer_vertex)
 
-    print("time taken to extract {} MB is {}. Transfer rate: {} Mb/s".format(
-        mbs, end - start, (mbs * 8) / (end - start)))
+        end = float(time.time())
 
-    check_data(data)
+        print("time taken to extract {} MB is {}. Transfer rate: {} Mb/s".format(
+            mbs, end - start, (mbs * 8) / (end - start)))
 
-    sim.stop()
+        check_data(data)
+
+        sim.stop()
+
+    def test_extra_monitors(self):
+        self.runsafe(self.check_extra_monitor)

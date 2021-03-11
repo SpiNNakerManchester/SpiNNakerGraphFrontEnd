@@ -1,0 +1,78 @@
+# Copyright (c) 2020 The University of Manchester
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+name: C Actions
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Checkout SupportScripts
+      uses: actions/checkout@v2
+      with:
+        repository: SpiNNakerManchester/SupportScripts
+        path: support
+    - name: Install Ubuntu packages
+      uses: ./support/actions/apt-get-install
+      with:
+        packages: doxygen gcc-arm-none-eabi
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Checkout SpiNNaker Dependencies
+      uses: ./support/actions/checkout-spinn-deps
+      with:
+        # Note: SpiNNUtils needed for spinn_utilities.make_tools
+        repositories: spinnaker_tools spinn_common SpiNNFrontEndCommon SpiNNUtils
+    - name: Install SpiNNUtils
+      # Must be separate install; don't want to install FEC
+      run: python setup.py install
+      working-directory: SpiNNUtils
+
+    # Note: run these before building to avoid linting modified_src directories
+    - name: Lint C code using Vera++
+      uses: ./support/actions/vera
+      with:
+        base-dir: spinnaker_graph_front_end
+        options: -P max-dirname-length=40
+    - name: Lint C code using Vera++
+      uses: ./support/actions/vera
+      with:
+        base-dir: gfe_integration_tests
+
+    - name: Build C dependencies
+      run: |
+        export SPINN_DIRS=$PWD/spinnaker_tools
+        echo "SPINN_DIRS=$PWD/spinnaker_tools" >> $GITHUB_ENV
+        make -C spinnaker_tools
+        make -C spinn_common install
+        make -C SpiNNFrontEndCommon/c_common install
+
+    - name: Build Example code
+      run: make
+      env:
+        CFLAGS: -fdiagnostics-color=always
+        GCC_COLORS: error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32
+      working-directory: gfe_examples
+
+    - name: Build Integration Test code (gfe_integration_tests)
+      run: make
+      env:
+        CFLAGS: -fdiagnostics-color=always
+        GCC_COLORS: error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32
+      working-directory: gfe_integration_tests

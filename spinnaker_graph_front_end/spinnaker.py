@@ -15,16 +15,21 @@
 
 import logging
 import os
-from six import add_metaclass
 from spinn_utilities.abstract_base import AbstractBase
+from spinn_utilities.overrides import overrides
+from spinn_utilities.log import FormatAdapter
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
+from spinn_front_end_common.interface.config_handler import ConfigHandler
 from spinn_front_end_common.utilities import SimulatorInterface
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.failed_state import FailedState
 from ._version import __version__ as version
 
-logger = logging.getLogger(__name__)
+logger = FormatAdapter(logging.getLogger(__name__))
+
+#: The name of the configuration file
+CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
 
 
 def _is_allocated_machine(config):
@@ -32,8 +37,8 @@ def _is_allocated_machine(config):
             config.get("Machine", "remote_spinnaker_url") != "None")
 
 
-@add_metaclass(AbstractBase)
-class GraphFrontEndSimulatorInterface(SimulatorInterface):
+class GraphFrontEndSimulatorInterface(
+        SimulatorInterface, metaclass=AbstractBase):
     """ The simulator interface exported by the graph front end. A very thin\
         layer over the capabilities of the Front End Common package.
     """
@@ -42,27 +47,69 @@ class GraphFrontEndSimulatorInterface(SimulatorInterface):
 
 class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
     """ The implementation of the SpiNNaker simulation interface.
+
+    .. note::
+        You should not normally instantiate this directly from user code.
+        Call :py:func:`~spinnaker_graph_front_end.setup` instead.
     """
     #: The base name of the configuration file (but no path)
     __slots__ = (
         "_user_dsg_algorithm"
     )
 
-    CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
     #: The name of the configuration validation configuration file
     VALIDATION_CONFIG_NAME = "validation_config.cfg"
 
+    @staticmethod
+    def extended_config_path():
+        """ The full name of the configuration file.
+
+        :rtype: str
+        """
+        return os.path.join(os.path.dirname(__file__), CONFIG_FILE_NAME)
+
     def __init__(
             self, executable_finder, host_name=None, graph_label=None,
-            database_socket_addresses=None, dsg_algorithm=None,
+            database_socket_addresses=(), dsg_algorithm=None,
             n_chips_required=None, n_boards_required=None,
-            extra_pre_run_algorithms=None,
-            extra_post_run_algorithms=None, time_scale_factor=None,
-            machine_time_step=None, default_config_paths=None,
-            extra_xml_paths=None):
-
-        global CONFIG_FILE_NAME
-
+            extra_pre_run_algorithms=(),
+            extra_post_run_algorithms=(), time_scale_factor=None,
+            machine_time_step=None, default_config_paths=(),
+            extra_xml_paths=()):
+        """
+        :param executable_finder:
+            How to find the executables
+        :type executable_finder:
+            ~spinn_front_end_common.utilities.utility_objs.ExecutableFinder
+        :param str host_name:
+            The SpiNNaker machine address
+        :param str graph_label:
+            A label for the graph
+        :param database_socket_addresses:
+            Extra sockets that will want to be notified about the location of
+            the runtime database.
+        :type database_socket_addresses:
+            ~collections.abc.Iterable(~spinn_utilities.socket_address.SocketAddress)
+        :param str dsg_algorithm:
+            Algorithm to use for generating data
+        :param int n_chips_required:
+            How many chips are required.
+            *Prefer ``n_boards_required`` if possible.*
+        :param int n_boards_required:
+            How many boards are required. Unnecessary with a local board.
+        :param ~collections.abc.Iterable(str) extra_pre_run_algorithms:
+            The names of any extra algorithms to call before running
+        :param ~collections.abc.Iterable(str) extra_post_run_algorithms:
+            The names of any extra algorithms to call after running
+        :param int time_scale_factor:
+            The time slow-down factor
+        :param int machine_time_step:
+            The size of the machine time step, in microseconds
+        :param ~collections.abc.Iterable(str) default_config_paths:
+            Where to look for configurations
+        :param ~collections.abc.Iterable(str) extra_xml_paths:
+            Where to look for algorithm descriptors
+        """
         # DSG algorithm store for user defined algorithms
         self._user_dsg_algorithm = dsg_algorithm
 
@@ -70,13 +117,12 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
         # support extra configs
         this_default_config_paths = list()
-        this_default_config_paths.append(
-            os.path.join(os.path.dirname(__file__), self.CONFIG_FILE_NAME))
+        this_default_config_paths.append(self.extended_config_path())
         if default_config_paths is not None:
             this_default_config_paths.extend(default_config_paths)
 
-        super(SpiNNaker, self).__init__(
-            configfile=self.CONFIG_FILE_NAME,
+        super().__init__(
+            configfile=CONFIG_FILE_NAME,
             executable_finder=executable_finder,
             graph_label=graph_label,
             database_socket_addresses=database_socket_addresses,
@@ -114,30 +160,44 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
     @property
     def is_allocated_machine(self):
         """ Is this an allocated machine? Otherwise, it is local.
+
+        :rtype: bool
         """
         return _is_allocated_machine(self.config)
 
     def run(self, run_time):
         """ Run a simulation for a fixed amount of time
 
-        :param run_time: the run duration in milliseconds.
+        :param int run_time: the run duration in milliseconds.
         """
+        # pylint: disable=arguments-differ
+
         # set up the correct DSG algorithm
         if self._user_dsg_algorithm is not None:
             self.dsg_algorithm = self._user_dsg_algorithm
 
         # run normal procedure
-        AbstractSpinnakerBase.run(self, run_time)
+        super().run(run_time)
 
     def __repr__(self):
-        return "SpiNNaker Graph Front End object for machine {}"\
-            .format(self._hostname)
+        return "SpiNNaker Graph Front End object for machine {}".format(
+            self._hostname)
 
 
 class _GraphFrontEndFailedState(GraphFrontEndSimulatorInterface, FailedState):
     """ The special object that indicates that the simulator has failed.
     """
     __slots__ = ()
+
+    @property
+    @overrides(FailedState.config)
+    def config(self):
+        logger.warning(
+            "Accessing config before setup is not recommended as setup could"
+            " change some config values. ")
+        handler = ConfigHandler(
+            CONFIG_FILE_NAME, [SpiNNaker.extended_config_path()], [])
+        return handler.config
 
 
 # At import time change the default FailedState

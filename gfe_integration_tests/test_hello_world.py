@@ -14,27 +14,22 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from testfixtures import LogCapture
-import os
-import unittest
 from spinn_front_end_common.utilities import globals_variables
+from spinnaker_testbase import ScriptChecker
 
 
-class TestHelloWorld(unittest.TestCase):
+class TestHelloWorld(ScriptChecker):
 
     def setUp(self):
         globals_variables.unset_simulator()
 
     def test_hello_world(self):
-        import spinnaker_graph_front_end.examples.hello_world as hw_dir
-        class_file = hw_dir.__file__
-        path = os.path.dirname(os.path.abspath(class_file))
-        print(path)
-        os.chdir(path)
-        with LogCapture() as lc:
-            import spinnaker_graph_front_end.examples.hello_world.hello_world   # NOQA
-            outputs = lc.records[-16:]
-            for n in range(16):
-                msg = outputs[n].getMessage()
-                print(msg)
-                test_text = "Hello world; " * 20
-                assert(msg[-(len(test_text) + 2):-2] == test_text)
+        with LogCapture("hello_world") as lc:
+            self.check_script(
+                "gfe_examples/hello_world/hello_world.py")
+
+        test_text = "Hello world; " * 20
+        for record in lc.records:
+            msg = record.getMessage()
+            print(msg)
+            assert test_text in msg

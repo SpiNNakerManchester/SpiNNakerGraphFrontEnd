@@ -28,7 +28,7 @@ class RunVertex(
         AbstractGeneratesDataSpecification):
 
     def __init__(self, aplx_file, executable_type):
-        super(RunVertex, self).__init__(ResourceContainer())
+        super().__init__(ResourceContainer())
         self._aplx_file = aplx_file
         self._executable_type = executable_type
 
