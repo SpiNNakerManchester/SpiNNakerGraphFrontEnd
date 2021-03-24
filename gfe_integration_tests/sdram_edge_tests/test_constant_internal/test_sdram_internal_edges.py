@@ -12,8 +12,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from fec_integration_tests.interface.interface_functions.\
-    simple_test_vertex import SimpleTestVertex
+from gfe_integration_tests.simple_test_vertex import SimpleTestVertex
 from gfe_integration_tests.sdram_edge_tests.common import (
     SDRAMSplitterInternal)
 from gfe_integration_tests.sdram_edge_tests import common
