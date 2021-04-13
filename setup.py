@@ -51,7 +51,7 @@ setup(
                 "basic graph",
     url="https://github.com/SpiNNakerManchester/SpiNNakerGraphFrontEnd",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 5 - Production/Stable",
 
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
