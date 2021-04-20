@@ -18,7 +18,7 @@ import os
 from spinn_utilities.abstract_base import AbstractBase
 from spinn_utilities.log import FormatAdapter
 from pacman.config_holder import (
-    add_default_cfg, get_config_bool, get_config_str, set_config)
+    get_config_bool, get_config_str, set_cfg_files, set_config)
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
 from spinn_front_end_common.utilities import SimulatorInterface
@@ -30,6 +30,8 @@ logger = FormatAdapter(logging.getLogger(__name__))
 
 #: The name of the configuration file
 CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
+#: The name of the configuration validation configuration file
+VALIDATION_CONFIG_NAME = "validation_config.cfg"
 
 
 def _is_allocated_machine():
@@ -56,9 +58,6 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
     __slots__ = (
         "_user_dsg_algorithm"
     )
-
-    #: The name of the configuration validation configuration file
-    VALIDATION_CONFIG_NAME = "validation_config.cfg"
 
     @staticmethod
     def extended_config_path():
@@ -113,15 +112,12 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         front_end_versions = [("SpiNNakerGraphFrontEnd", version)]
 
         super().__init__(
-            configfile=CONFIG_FILE_NAME,
             executable_finder=executable_finder,
             graph_label=graph_label,
             database_socket_addresses=database_socket_addresses,
             extra_algorithm_xml_paths=extra_xml_paths,
             n_chips_required=n_chips_required,
             n_boards_required=n_boards_required,
-            validation_cfg=os.path.join(os.path.dirname(__file__),
-                                        self.VALIDATION_CONFIG_NAME),
             front_end_versions=front_end_versions)
 
         if _is_allocated_machine() and \
@@ -182,4 +178,9 @@ class _GraphFrontEndFailedState(GraphFrontEndSimulatorInterface, FailedState):
 
 # At import time change the default FailedState
 globals_variables.set_failed_state(_GraphFrontEndFailedState())
-add_default_cfg(os.path.join(os.path.dirname(__file__), CONFIG_FILE_NAME))
+# add the default at import time in case needed before setup
+set_cfg_files(
+    configfile=CONFIG_FILE_NAME,
+    default=os.path.join(os.path.dirname(__file__), CONFIG_FILE_NAME),
+    validation_cfg=os.path.join(
+        os.path.dirname(__file__), VALIDATION_CONFIG_NAME))
