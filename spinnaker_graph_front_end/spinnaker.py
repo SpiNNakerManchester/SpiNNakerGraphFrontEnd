@@ -18,7 +18,7 @@ import os
 from spinn_utilities.abstract_base import AbstractBase
 from spinn_utilities.log import FormatAdapter
 from pacman.config_holder import (
-    get_config_bool, get_config_str, set_config)
+    add_default_cfg, get_config_bool, get_config_str, set_config)
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
 from spinn_front_end_common.utilities import SimulatorInterface
@@ -74,8 +74,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             n_chips_required=None, n_boards_required=None,
             extra_pre_run_algorithms=(),
             extra_post_run_algorithms=(), time_scale_factor=None,
-            machine_time_step=None, default_config_paths=(),
-            extra_xml_paths=()):
+            machine_time_step=None, extra_xml_paths=()):
         """
         :param executable_finder:
             How to find the executables
@@ -105,8 +104,6 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             The time slow-down factor
         :param int machine_time_step:
             The size of the machine time step, in microseconds
-        :param ~collections.abc.Iterable(str) default_config_paths:
-            Where to look for configurations
         :param ~collections.abc.Iterable(str) extra_xml_paths:
             Where to look for algorithm descriptors
         """
@@ -114,12 +111,6 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         self._user_dsg_algorithm = dsg_algorithm
 
         front_end_versions = [("SpiNNakerGraphFrontEnd", version)]
-
-        # support extra configs
-        this_default_config_paths = list()
-        this_default_config_paths.append(self.extended_config_path())
-        if default_config_paths is not None:
-            this_default_config_paths.extend(default_config_paths)
 
         super().__init__(
             configfile=CONFIG_FILE_NAME,
@@ -129,7 +120,6 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             extra_algorithm_xml_paths=extra_xml_paths,
             n_chips_required=n_chips_required,
             n_boards_required=n_boards_required,
-            default_config_paths=this_default_config_paths,
             validation_cfg=os.path.join(os.path.dirname(__file__),
                                         self.VALIDATION_CONFIG_NAME),
             front_end_versions=front_end_versions)
@@ -192,3 +182,4 @@ class _GraphFrontEndFailedState(GraphFrontEndSimulatorInterface, FailedState):
 
 # At import time change the default FailedState
 globals_variables.set_failed_state(_GraphFrontEndFailedState())
+add_default_cfg(os.path.join(os.path.dirname(__file__), CONFIG_FILE_NAME))
