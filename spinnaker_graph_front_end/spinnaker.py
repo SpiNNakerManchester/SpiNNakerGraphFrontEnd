@@ -16,11 +16,11 @@
 import logging
 import os
 from spinn_utilities.abstract_base import AbstractBase
-from spinn_utilities.overrides import overrides
 from spinn_utilities.log import FormatAdapter
+from pacman.utilities.config_holder import (
+    get_config_bool, get_config_str, set_config)
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
-from spinn_front_end_common.interface.config_handler import ConfigHandler
 from spinn_front_end_common.utilities import SimulatorInterface
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.failed_state import FailedState
@@ -32,9 +32,9 @@ logger = FormatAdapter(logging.getLogger(__name__))
 CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
 
 
-def _is_allocated_machine(config):
-    return (config.get("Machine", "spalloc_server") != "None" or
-            config.get("Machine", "remote_spinnaker_url") != "None")
+def _is_allocated_machine():
+    return (get_config_str("Machine", "spalloc_server") or
+            get_config_str("Machine", "remote_spinnaker_url"))
 
 
 class GraphFrontEndSimulatorInterface(
@@ -134,13 +134,13 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
                                         self.VALIDATION_CONFIG_NAME),
             front_end_versions=front_end_versions)
 
-        if _is_allocated_machine(self.config) and \
+        if _is_allocated_machine() and \
                 n_chips_required is None and n_boards_required is None:
             self.set_n_boards_required(1)
 
         extra_mapping_inputs = dict()
-        extra_mapping_inputs["CreateAtomToEventIdMapping"] = self.config.\
-            getboolean("Database", "create_routing_info_to_atom_id_mapping")
+        extra_mapping_inputs["CreateAtomToEventIdMapping"] = get_config_bool(
+            "Database", "create_routing_info_to_atom_id_mapping")
 
         self.update_extra_mapping_inputs(extra_mapping_inputs)
         self.prepend_extra_pre_run_algorithms(extra_pre_run_algorithms)
@@ -151,7 +151,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
         # if not set at all, set to 1 for real time execution.
         if self.time_scale_factor is None:
-            self._config.set("Machine", "time_scale_factor", 1)
+            set_config("Machine", "time_scale_factor", 1)
         logger.info("Setting time scale factor to {}."
                     .format(self.time_scale_factor))
         logger.info("Setting machine time step to {} micro-seconds."
@@ -163,7 +163,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
         :rtype: bool
         """
-        return _is_allocated_machine(self.config)
+        return _is_allocated_machine()
 
     def run(self, run_time):
         """ Run a simulation for a fixed amount of time
@@ -188,16 +188,6 @@ class _GraphFrontEndFailedState(GraphFrontEndSimulatorInterface, FailedState):
     """ The special object that indicates that the simulator has failed.
     """
     __slots__ = ()
-
-    @property
-    @overrides(FailedState.config)
-    def config(self):
-        logger.warning(
-            "Accessing config before setup is not recommended as setup could"
-            " change some config values. ")
-        handler = ConfigHandler(
-            CONFIG_FILE_NAME, [SpiNNaker.extended_config_path()], [])
-        return handler.config
 
 
 # At import time change the default FailedState
