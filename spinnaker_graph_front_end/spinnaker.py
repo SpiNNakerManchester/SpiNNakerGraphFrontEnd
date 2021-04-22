@@ -16,11 +16,11 @@
 import logging
 import os
 from spinn_utilities.abstract_base import AbstractBase
-from spinn_utilities.overrides import overrides
 from spinn_utilities.log import FormatAdapter
+from pacman.config_holder import (
+    get_config_bool, get_config_str, set_cfg_files, set_config)
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
-from spinn_front_end_common.interface.config_handler import ConfigHandler
 from spinn_front_end_common.utilities import SimulatorInterface
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.failed_state import FailedState
@@ -30,11 +30,13 @@ logger = FormatAdapter(logging.getLogger(__name__))
 
 #: The name of the configuration file
 CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
+#: The name of the configuration validation configuration file
+VALIDATION_CONFIG_NAME = "validation_config.cfg"
 
 
-def _is_allocated_machine(config):
-    return (config.get("Machine", "spalloc_server") != "None" or
-            config.get("Machine", "remote_spinnaker_url") != "None")
+def _is_allocated_machine():
+    return (get_config_str("Machine", "spalloc_server") or
+            get_config_str("Machine", "remote_spinnaker_url"))
 
 
 class GraphFrontEndSimulatorInterface(
@@ -57,9 +59,6 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         "_user_dsg_algorithm"
     )
 
-    #: The name of the configuration validation configuration file
-    VALIDATION_CONFIG_NAME = "validation_config.cfg"
-
     @staticmethod
     def extended_config_path():
         """ The full name of the configuration file.
@@ -74,8 +73,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             n_chips_required=None, n_boards_required=None,
             extra_pre_run_algorithms=(),
             extra_post_run_algorithms=(), time_scale_factor=None,
-            machine_time_step=None, default_config_paths=(),
-            extra_xml_paths=()):
+            machine_time_step=None, extra_xml_paths=()):
         """
         :param executable_finder:
             How to find the executables
@@ -105,8 +103,6 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             The time slow-down factor
         :param int machine_time_step:
             The size of the machine time step, in microseconds
-        :param ~collections.abc.Iterable(str) default_config_paths:
-            Where to look for configurations
         :param ~collections.abc.Iterable(str) extra_xml_paths:
             Where to look for algorithm descriptors
         """
@@ -115,32 +111,22 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
         front_end_versions = [("SpiNNakerGraphFrontEnd", version)]
 
-        # support extra configs
-        this_default_config_paths = list()
-        this_default_config_paths.append(self.extended_config_path())
-        if default_config_paths is not None:
-            this_default_config_paths.extend(default_config_paths)
-
         super().__init__(
-            configfile=CONFIG_FILE_NAME,
             executable_finder=executable_finder,
             graph_label=graph_label,
             database_socket_addresses=database_socket_addresses,
             extra_algorithm_xml_paths=extra_xml_paths,
             n_chips_required=n_chips_required,
             n_boards_required=n_boards_required,
-            default_config_paths=this_default_config_paths,
-            validation_cfg=os.path.join(os.path.dirname(__file__),
-                                        self.VALIDATION_CONFIG_NAME),
             front_end_versions=front_end_versions)
 
-        if _is_allocated_machine(self.config) and \
+        if _is_allocated_machine() and \
                 n_chips_required is None and n_boards_required is None:
             self.set_n_boards_required(1)
 
         extra_mapping_inputs = dict()
-        extra_mapping_inputs["CreateAtomToEventIdMapping"] = self.config.\
-            getboolean("Database", "create_routing_info_to_atom_id_mapping")
+        extra_mapping_inputs["CreateAtomToEventIdMapping"] = get_config_bool(
+            "Database", "create_routing_info_to_atom_id_mapping")
 
         self.update_extra_mapping_inputs(extra_mapping_inputs)
         self.prepend_extra_pre_run_algorithms(extra_pre_run_algorithms)
@@ -151,7 +137,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
         # if not set at all, set to 1 for real time execution.
         if self.time_scale_factor is None:
-            self._config.set("Machine", "time_scale_factor", 1)
+            set_config("Machine", "time_scale_factor", 1)
         logger.info("Setting time scale factor to {}."
                     .format(self.time_scale_factor))
         logger.info("Setting machine time step to {} micro-seconds."
@@ -163,7 +149,7 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
 
         :rtype: bool
         """
-        return _is_allocated_machine(self.config)
+        return _is_allocated_machine()
 
     def run(self, run_time):
         """ Run a simulation for a fixed amount of time
@@ -189,16 +175,12 @@ class _GraphFrontEndFailedState(GraphFrontEndSimulatorInterface, FailedState):
     """
     __slots__ = ()
 
-    @property
-    @overrides(FailedState.config)
-    def config(self):
-        logger.warning(
-            "Accessing config before setup is not recommended as setup could"
-            " change some config values. ")
-        handler = ConfigHandler(
-            CONFIG_FILE_NAME, [SpiNNaker.extended_config_path()], [])
-        return handler.config
-
 
 # At import time change the default FailedState
 globals_variables.set_failed_state(_GraphFrontEndFailedState())
+# add the default at import time in case needed before setup
+set_cfg_files(
+    configfile=CONFIG_FILE_NAME,
+    default=os.path.join(os.path.dirname(__file__), CONFIG_FILE_NAME),
+    validation_cfg=os.path.join(
+        os.path.dirname(__file__), VALIDATION_CONFIG_NAME))
