@@ -125,9 +125,6 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             self.set_n_boards_required(1)
 
         extra_mapping_inputs = dict()
-        extra_mapping_inputs["CreateAtomToEventIdMapping"] = get_config_bool(
-            "Database", "create_routing_info_to_atom_id_mapping")
-
         self.update_extra_mapping_inputs(extra_mapping_inputs)
         self.prepend_extra_pre_run_algorithms(extra_pre_run_algorithms)
         self.extend_extra_post_run_algorithms(extra_post_run_algorithms)
