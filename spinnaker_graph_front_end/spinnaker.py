@@ -17,7 +17,7 @@ import logging
 import os
 from spinn_utilities.abstract_base import AbstractBase
 from spinn_utilities.log import FormatAdapter
-from pacman.config_holder import (
+from spinn_utilities.config_holder import (
     get_config_bool, get_config_str, set_cfg_files, set_config)
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
