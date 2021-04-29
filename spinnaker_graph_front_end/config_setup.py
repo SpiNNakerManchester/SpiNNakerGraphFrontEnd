@@ -41,4 +41,3 @@ def add_gfe_cfg():
     set_cfg_files(
         configfile=CONFIG_FILE_NAME,
         default=os.path.join(os.path.dirname(__file__), CONFIG_FILE_NAME))
-
