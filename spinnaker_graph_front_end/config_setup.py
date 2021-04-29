@@ -40,5 +40,5 @@ def add_gfe_cfg():
     add_spinnaker_cfg()  # This add its dependencies too
     set_cfg_files(
         configfile=CONFIG_FILE_NAME,
-        default=os.path.join(os.path.dirname(__file__), CONFIG_FILE_NAME),
-        validation_cfg=VALIDATION_CONFIG_NAME)
+        default=os.path.join(os.path.dirname(__file__), CONFIG_FILE_NAME))
+        #validation_cfg=VALIDATION_CONFIG_NAME)
