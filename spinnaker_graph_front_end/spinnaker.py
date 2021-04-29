@@ -29,7 +29,6 @@ from ._version import __version__ as version
 logger = FormatAdapter(logging.getLogger(__name__))
 
 
-
 def _is_allocated_machine():
     return (get_config_str("Machine", "spalloc_server") or
             get_config_str("Machine", "remote_spinnaker_url"))
