@@ -14,24 +14,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import os
 from spinn_utilities.abstract_base import AbstractBase
 from spinn_utilities.log import FormatAdapter
-from pacman.config_holder import (
-    get_config_bool, get_config_str, set_cfg_files, set_config)
+from spinn_utilities.config_holder import (
+    get_config_bool, get_config_str, set_config)
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
 from spinn_front_end_common.utilities import SimulatorInterface
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utilities.failed_state import FailedState
+from spinnaker_graph_front_end.config_setup import reset_configs
 from ._version import __version__ as version
 
 logger = FormatAdapter(logging.getLogger(__name__))
-
-#: The name of the configuration file
-CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
-#: The name of the configuration validation configuration file
-VALIDATION_CONFIG_NAME = "validation_config.cfg"
 
 
 def _is_allocated_machine():
@@ -58,14 +53,6 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
     __slots__ = (
         "_user_dsg_algorithm"
     )
-
-    @staticmethod
-    def extended_config_path():
-        """ The full name of the configuration file.
-
-        :rtype: str
-        """
-        return os.path.join(os.path.dirname(__file__), CONFIG_FILE_NAME)
 
     def __init__(
             self, executable_finder, host_name=None, graph_label=None,
@@ -178,9 +165,4 @@ class _GraphFrontEndFailedState(GraphFrontEndSimulatorInterface, FailedState):
 
 # At import time change the default FailedState
 globals_variables.set_failed_state(_GraphFrontEndFailedState())
-# add the default at import time in case needed before setup
-set_cfg_files(
-    configfile=CONFIG_FILE_NAME,
-    default=os.path.join(os.path.dirname(__file__), CONFIG_FILE_NAME),
-    validation_cfg=os.path.join(
-        os.path.dirname(__file__), VALIDATION_CONFIG_NAME))
+reset_configs()
