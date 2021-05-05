@@ -30,7 +30,7 @@ from spinn_front_end_common.interface.buffer_management import (
     recording_utilities)
 from spinnaker_graph_front_end.utilities import SimulatorVertex
 from spinnaker_graph_front_end.utilities.data_utils import (
-    generate_steps_system_data_region)
+    generate_system_data_region)
 import numpy
 from pacman.executor.injection_decorator import inject_items
 
@@ -94,8 +94,8 @@ class HelloWorldVertex(
 
         # Generate the system data region for simulation .c requirements
         # Note that the time step and time scale factor are unused here
-        generate_steps_system_data_region(
-            spec, DataRegions.SYSTEM, self)
+        generate_system_data_region(spec, DataRegions.SYSTEM, self, machine_time_step=1000,
+        time_scale_factor=1)
 
         # Create the data regions for hello world
         spec.reserve_memory_region(

@@ -43,18 +43,3 @@ def generate_system_data_region(
     spec.write_array(get_simulation_header_array(
         machine_vertex.get_binary_file_name(), machine_time_step,
         time_scale_factor))
-
-
-def generate_steps_system_data_region(spec, region_id, machine_vertex):
-    """ Generate a system data region for step-based simulations.
-
-    :param data_specification.DataSpecificationGenerator spec:
-        The data specification to write to
-    :param int region_id:
-        The region to write to
-    :param ~pacman.model.graphs.machine.MachineVertex machine_vertex:
-        The machine vertex to write for
-    """
-    generate_system_data_region(
-        spec, region_id, machine_vertex, machine_time_step=0,
-        time_scale_factor=0)
