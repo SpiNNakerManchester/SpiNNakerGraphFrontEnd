@@ -80,8 +80,7 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         # pylint: disable=arguments-differ
 
         # Generate the system data region for simulation .c requirements
-        generate_system_data_region(spec, DataRegions.SYSTEM,
-                                    self, machine_time_step, time_scale_factor)
+        generate_system_data_region(spec, DataRegions.SYSTEM, self)
 
         # reserve memory regions
         spec.reserve_memory_region(

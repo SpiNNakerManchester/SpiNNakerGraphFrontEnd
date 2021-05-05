@@ -18,8 +18,7 @@ from spinn_front_end_common.interface.simulation.simulation_utilities import (
     get_simulation_header_array)
 
 
-def generate_system_data_region(
-        spec, region_id, machine_vertex, machine_time_step, time_scale_factor):
+def generate_system_data_region(spec, region_id, machine_vertex):
     """ Generate a system data region for time-based simulations.
 
     :param ~data_specification.DataSpecificationGenerator spec:
@@ -34,6 +33,9 @@ def generate_system_data_region(
         The time scale of the simulation
     """
 
+    from spinn_utilities.config_holder import get_config_int
+    machine_time_step = get_config_int("Machine", "machine_time_step")
+    time_scale_factor = get_config_int("Machine", "time_scale_factor")
     # reserve memory regions
     spec.reserve_memory_region(
         region=region_id, size=SIMULATION_N_BYTES, label='systemInfo')
