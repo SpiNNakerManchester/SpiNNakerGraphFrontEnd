@@ -20,8 +20,6 @@ from spinn_front_end_common.interface.config_setup import add_spinnaker_cfg
 
 #: The name of the configuration file
 CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
-#: The name of the configuration validation configuration file
-VALIDATION_CONFIG_NAME = "validation_config.cfg"
 
 
 def reset_configs():
