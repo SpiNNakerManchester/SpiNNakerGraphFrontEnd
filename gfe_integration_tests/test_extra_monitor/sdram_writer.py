@@ -55,15 +55,14 @@ class SDRAMWriter(
 
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
-            reverse_iptags, machine_time_step, time_scale_factor):
+            reverse_iptags):
         # Reserve SDRAM space for memory areas:
         self._reserve_memory_regions(spec)
 
         # write data for the simulation data item
         spec.switch_write_focus(DataRegions.SYSTEM)
         spec.write_array(simulation_utilities.get_simulation_header_array(
-            self.get_binary_file_name(), machine_time_step,
-            time_scale_factor))
+            self.get_binary_file_name()))
 
         spec.switch_write_focus(DataRegions.CONFIG)
         spec.write_value(self._size)

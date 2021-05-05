@@ -78,8 +78,7 @@ class ConwayBasicCell(
         additional_arguments={"data_n_time_steps"})
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
-            reverse_iptags, machine_time_step, time_scale_factor,
-            data_n_time_steps):
+            reverse_iptags, data_n_time_steps):
         """
         :param ~.DataSpecificationGenerator spec:
         :param ~.MachineGraph machine_graph:
