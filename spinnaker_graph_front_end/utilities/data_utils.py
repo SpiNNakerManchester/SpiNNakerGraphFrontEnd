@@ -27,10 +27,6 @@ def generate_system_data_region(spec, region_id, machine_vertex):
         The region to write to
     :param ~pacman.model.graphs.machine.MachineVertex machine_vertex:
         The machine vertex to write for
-    :param int machine_time_step:
-        The time step of the simulation
-    :param int time_scale_factor:
-        The time scale of the simulation
     """
 
     # reserve memory regions
