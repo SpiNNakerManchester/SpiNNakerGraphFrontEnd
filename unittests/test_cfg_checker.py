@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import unittest
 from spinn_utilities.config_holder import run_config_checks
 from spinnaker_graph_front_end.config_setup import reset_configs
@@ -25,9 +26,16 @@ class TestCfgChecker(unittest.TestCase):
         reset_configs()
 
     def test_config_checks(self):
+        unittests = os.path.dirname(__file__)
+        parent = os.path.dirname(unittests)
+        gfe_examples = os.path.join(parent, "gfe_examples")
+        gfe_integration_tests = os.path.join(parent, "gfe_integration_tests")
+        gfe = os.path.join(parent, "spinnaker_graph_front_end")
         repeaters = [
             "application_to_machine_graph_algorithms",
             "machine_graph_to_machine_algorithms",
             "machine_graph_to_virtual_machine_algorithms",
             "loading_algorithms"]
-        run_config_checks("spinnaker_graph_front_end", repeaters=repeaters)
+        run_config_checks(
+            directories=[gfe_examples, gfe_integration_tests, gfe, unittests],
+            repeaters=repeaters)
