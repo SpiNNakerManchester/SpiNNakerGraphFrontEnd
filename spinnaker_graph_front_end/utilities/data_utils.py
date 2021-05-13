@@ -41,6 +41,7 @@ def generate_system_data_region(spec, region_id, machine_vertex):
 
 def generate_steps_system_data_region(spec, region_id, machine_vertex):
     """ Generate a system data region for step-based simulations.
+
     :param data_specification.DataSpecificationGenerator spec:
         The data specification to write to
     :param int region_id:
