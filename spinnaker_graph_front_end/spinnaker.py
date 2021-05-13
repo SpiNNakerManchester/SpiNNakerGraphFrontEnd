@@ -14,9 +14,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+from spinn_utilities.config_holder import (
+    get_config_int, get_config_str, set_config)
 from spinn_utilities.abstract_base import AbstractBase
 from spinn_utilities.log import FormatAdapter
-from spinn_utilities.config_holder import (get_config_int, get_config_str)
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
 from spinn_front_end_common.utilities import SimulatorInterface
@@ -118,6 +119,9 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
         self.set_up_machine_specifics(host_name)
         self.set_up_timings(machine_time_step, time_scale_factor)
 
+        # if not set at all, set to 1 for real time execution.
+        if get_config_int("Machine", "time_scale_factor") is None:
+            set_config("Machine", "time_scale_factor", 1)
         logger.info(f'Setting time scale factor to '
                     f'{get_config_int("Machine", "time_scale_factor")}.')
         logger.info(f'Setting machine time step to '
