@@ -15,7 +15,7 @@
 
 from spinn_front_end_common.utilities.constants import SIMULATION_N_BYTES
 from spinn_front_end_common.interface.simulation.simulation_utilities import (
-    get_simulation_header_array)
+    get_simulation_header_array, get_simulation_header_array_no_timestep)
 
 
 def generate_system_data_region(spec, region_id, machine_vertex):
@@ -36,4 +36,23 @@ def generate_system_data_region(spec, region_id, machine_vertex):
     # simulation .c requirements
     spec.switch_write_focus(region_id)
     spec.write_array(get_simulation_header_array(
+        machine_vertex.get_binary_file_name()))
+
+
+def generate_steps_system_data_region(spec, region_id, machine_vertex):
+    """ Generate a system data region for step-based simulations.
+    :param data_specification.DataSpecificationGenerator spec:
+        The data specification to write to
+    :param int region_id:
+        The region to write to
+    :param ~pacman.model.graphs.machine.MachineVertex machine_vertex:
+        The machine vertex to write for
+    """
+    # reserve memory regions
+    spec.reserve_memory_region(
+        region=region_id, size=SIMULATION_N_BYTES, label='systemInfo')
+
+    # simulation .c requirements
+    spec.switch_write_focus(region_id)
+    spec.write_array(get_simulation_header_array_no_timestep(
         machine_vertex.get_binary_file_name()))
