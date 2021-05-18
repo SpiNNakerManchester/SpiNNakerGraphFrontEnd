@@ -21,8 +21,6 @@ from spinn_utilities.config_holder import (
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
 from spinn_front_end_common.utilities import SimulatorInterface
-from spinn_front_end_common.utilities import globals_variables
-from spinn_front_end_common.utilities.failed_state import FailedState
 from spinnaker_graph_front_end.config_setup import reset_configs
 from ._version import __version__ as version
 
@@ -157,12 +155,5 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             self._hostname)
 
 
-class _GraphFrontEndFailedState(GraphFrontEndSimulatorInterface, FailedState):
-    """ The special object that indicates that the simulator has failed.
-    """
-    __slots__ = ()
-
-
 # At import time change the default FailedState
-globals_variables.set_failed_state(_GraphFrontEndFailedState())
 reset_configs()
