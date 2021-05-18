@@ -20,7 +20,6 @@ from spinn_utilities.config_holder import (
     get_config_bool, get_config_str, set_config)
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
-from spinn_front_end_common.utilities import SimulatorInterface
 from spinnaker_graph_front_end.config_setup import reset_configs
 from ._version import __version__ as version
 
@@ -32,15 +31,7 @@ def _is_allocated_machine():
             get_config_str("Machine", "remote_spinnaker_url"))
 
 
-class GraphFrontEndSimulatorInterface(
-        SimulatorInterface, metaclass=AbstractBase):
-    """ The simulator interface exported by the graph front end. A very thin\
-        layer over the capabilities of the Front End Common package.
-    """
-    __slots__ = ()
-
-
-class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
+class SpiNNaker(AbstractSpinnakerBase):
     """ The implementation of the SpiNNaker simulation interface.
 
     .. note::
