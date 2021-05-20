@@ -14,8 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from spinn_utilities.config_holder import (
-    get_config_int, get_config_str, set_config)
+from spinn_utilities.config_holder import get_config_str
 from spinn_utilities.abstract_base import AbstractBase
 from spinn_utilities.log import FormatAdapter
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
