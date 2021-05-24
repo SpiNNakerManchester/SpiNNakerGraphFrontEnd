@@ -55,7 +55,7 @@ class SDRAMSplitterExternal(SplitterOneToOneLegacy):
             self, edge, outgoing_edge_partition, src_machine_vertex):
         return {self._machine_vertex: [SDRAMMachineEdge]}
 
-    @inject_items({"app_graph": "MemoryApplicationGraph"})
+    @inject_items({"app_graph": "ApplicationGraph"})
     @overrides(
         SplitterOneToOneLegacy.create_machine_vertices,
         additional_arguments=["app_graph"])
