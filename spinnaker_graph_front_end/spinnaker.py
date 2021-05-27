@@ -14,15 +14,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from spinn_utilities.abstract_base import AbstractBase
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.config_holder import (
     get_config_bool, get_config_str, set_config)
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
-from spinn_front_end_common.utilities import SimulatorInterface
-from spinn_front_end_common.utilities import globals_variables
-from spinn_front_end_common.utilities.failed_state import FailedState
 from spinnaker_graph_front_end.config_setup import reset_configs
 from ._version import __version__ as version
 
@@ -34,15 +30,7 @@ def _is_allocated_machine():
             get_config_str("Machine", "remote_spinnaker_url"))
 
 
-class GraphFrontEndSimulatorInterface(
-        SimulatorInterface, metaclass=AbstractBase):
-    """ The simulator interface exported by the graph front end. A very thin\
-        layer over the capabilities of the Front End Common package.
-    """
-    __slots__ = ()
-
-
-class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
+class SpiNNaker(AbstractSpinnakerBase):
     """ The implementation of the SpiNNaker simulation interface.
 
     .. note::
@@ -157,12 +145,5 @@ class SpiNNaker(AbstractSpinnakerBase, GraphFrontEndSimulatorInterface):
             self._hostname)
 
 
-class _GraphFrontEndFailedState(GraphFrontEndSimulatorInterface, FailedState):
-    """ The special object that indicates that the simulator has failed.
-    """
-    __slots__ = ()
-
-
 # At import time change the default FailedState
-globals_variables.set_failed_state(_GraphFrontEndFailedState())
 reset_configs()
