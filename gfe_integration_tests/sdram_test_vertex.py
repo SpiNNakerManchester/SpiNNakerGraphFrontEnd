@@ -16,8 +16,7 @@
 """ test vertex used in many unit tests
 """
 from spinn_utilities.overrides import overrides
-from pacman.model.graphs.machine import SimpleMachineVertex
-from pacman_test_objects import SimpleTestVertex
+from pacman_test_objects import SimpleTestVertex, MockMachineVertex
 
 
 class SdramTestVertex(SimpleTestVertex):
@@ -38,6 +37,6 @@ class SdramTestVertex(SimpleTestVertex):
     def create_machine_vertex(
             self, vertex_slice, resources_required, label=None,
             constraints=None):
-        return SimpleMachineVertex(
+        return MockMachineVertex(
             resources_required, label, constraints, self, vertex_slice,
-            sdram_cost=self._fixed_sdram_value)
+            sdram_requirement=self._fixed_sdram_value)
