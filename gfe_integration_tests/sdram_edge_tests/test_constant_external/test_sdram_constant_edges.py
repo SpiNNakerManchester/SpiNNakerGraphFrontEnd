@@ -12,8 +12,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from fec_integration_tests.interface.interface_functions.\
-    simple_test_vertex import SimpleTestVertex
+from gfe_integration_tests.sdram_test_vertex import SdramTestVertex
 from gfe_integration_tests.sdram_edge_tests import common
 from gfe_integration_tests.sdram_edge_tests.common import (
     SDRAMSplitterExternal)
@@ -27,10 +26,10 @@ class TestConstantSDRAMEdgeBetweenTwoAppVerts(BaseTestCase):
 
     def setup(self):
         sim.setup(model_binary_module=common)
-        vertex_1 = SimpleTestVertex(2, fixed_sdram_value=20)
+        vertex_1 = SdramTestVertex(2, fixed_sdram_value=20)
         vertex_1.splitter = SDRAMSplitterExternal(
             ConstantSDRAMMachinePartition)
-        vertex_2 = SimpleTestVertex(2, fixed_sdram_value=20)
+        vertex_2 = SdramTestVertex(2, fixed_sdram_value=20)
         vertex_2.splitter = SDRAMSplitterExternal(
             ConstantSDRAMMachinePartition)
         sim.add_vertex_instance(vertex_1)
