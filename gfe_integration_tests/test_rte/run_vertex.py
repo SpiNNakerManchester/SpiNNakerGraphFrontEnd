@@ -41,6 +41,5 @@ class RunVertex(
     def generate_data_specification(self, spec, placement):
         spec.reserve_memory_region(0, SIMULATION_N_BYTES)
         spec.switch_write_focus(0)
-        spec.write_array(utils.get_simulation_header_array(
-            self._aplx_file, 1000, time_scale_factor=1))
+        spec.write_array(utils.get_simulation_header_array(self._aplx_file))
         spec.end_specification()

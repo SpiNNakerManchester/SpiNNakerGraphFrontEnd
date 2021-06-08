@@ -100,8 +100,7 @@ class SDRAMMachineRecordedVertex(
         additional_arguments={"data_n_time_steps"})
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
-            reverse_iptags, machine_time_step, time_scale_factor,
-            data_n_time_steps):
+            reverse_iptags, data_n_time_steps):
 
         # reserve memory regions
         spec.reserve_memory_region(
@@ -111,8 +110,7 @@ class SDRAMMachineRecordedVertex(
         # simulation .c requirements
         spec.switch_write_focus(DataRegions.SYSTEM)
         spec.write_array(simulation_utilities.get_simulation_header_array(
-            self.get_binary_file_name(), machine_time_step,
-            time_scale_factor))
+            self.get_binary_file_name()))
 
         # TODO use get_sdram_edge_partitions_starting_at_vertex
         # get counters

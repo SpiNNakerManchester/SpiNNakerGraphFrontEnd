@@ -78,7 +78,7 @@ class SDRAMMachineVertex(
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
-            reverse_iptags, machine_time_step, time_scale_factor):
+            reverse_iptags):
 
         # reserve memory regions
         spec.reserve_memory_region(
@@ -88,8 +88,7 @@ class SDRAMMachineVertex(
         # simulation .c requirements
         spec.switch_write_focus(DataRegions.SYSTEM)
         spec.write_array(simulation_utilities.get_simulation_header_array(
-            self.get_binary_file_name(), machine_time_step,
-            time_scale_factor))
+            self.get_binary_file_name()))
 
         # get counters
         outgoing_partitions = list(

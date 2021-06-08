@@ -14,9 +14,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+from spinn_utilities.config_holder import get_config_str
 from spinn_utilities.log import FormatAdapter
-from spinn_utilities.config_holder import (
-    get_config_bool, get_config_str, set_config)
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
 from spinnaker_graph_front_end.config_setup import reset_configs
@@ -100,9 +99,6 @@ class SpiNNaker(AbstractSpinnakerBase):
             self.set_n_boards_required(1)
 
         extra_mapping_inputs = dict()
-        extra_mapping_inputs["CreateAtomToEventIdMapping"] = get_config_bool(
-            "Database", "create_routing_info_to_atom_id_mapping")
-
         self.update_extra_mapping_inputs(extra_mapping_inputs)
         self.prepend_extra_pre_run_algorithms(extra_pre_run_algorithms)
         self.extend_extra_post_run_algorithms(extra_post_run_algorithms)
@@ -112,11 +108,12 @@ class SpiNNaker(AbstractSpinnakerBase):
 
         # if not set at all, set to 1 for real time execution.
         if self.time_scale_factor is None:
-            set_config("Machine", "time_scale_factor", 1)
-        logger.info("Setting time scale factor to {}."
-                    .format(self.time_scale_factor))
-        logger.info("Setting machine time step to {} micro-seconds."
-                    .format(self.machine_time_step))
+            self.time_scale_factor = 1
+        logger.info(f'Setting time scale factor to '
+                    f'{self.time_scale_factor}.')
+        logger.info(f'Setting machine time step to '
+                    f'{self.machine_time_step} '
+                    f'micro-seconds.')
 
     @property
     def is_allocated_machine(self):
