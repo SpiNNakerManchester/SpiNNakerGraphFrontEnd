@@ -75,9 +75,8 @@ __all__ = ['LivePacketGather', 'ReverseIpTagMultiCastSource', 'MachineEdge',
            'add_vertex', 'add_machine_vertex', 'add_machine_vertex_instance',
            'add_edge', 'add_application_edge_instance', 'add_machine_edge',
            'add_machine_edge_instance', 'add_socket_address', 'get_txrx',
-           'has_ran', 'machine_time_step',
-           'get_number_of_available_cores_on_machine', 'no_machine_time_steps',
-           'time_scale_factor', 'machine_graph', 'application_graph',
+           'has_ran', 'get_number_of_available_cores_on_machine',
+           'no_machine_time_steps', 'machine_graph', 'application_graph',
            'routing_infos', 'placements', 'transceiver',
            'buffer_manager', 'machine', 'is_allocated_machine']
 
@@ -438,28 +437,12 @@ def has_ran():
     return _sim().has_ran
 
 
-def machine_time_step():
-    """ Get the size of machine time step, in microseconds.
-
-    :rtype: int
-    """
-    return _sim().machine_time_step
-
-
 def no_machine_time_steps():
     """ Get the number of time/simulation steps executed.
 
     :rtype: int
     """
     return _sim().no_machine_time_steps
-
-
-def time_scale_factor():
-    """ Get the time scaling factor.
-
-    :rtype: int
-    """
-    return _sim().time_scale_factor
 
 
 def machine_graph():

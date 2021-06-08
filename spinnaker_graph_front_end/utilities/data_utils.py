@@ -15,11 +15,10 @@
 
 from spinn_front_end_common.utilities.constants import SIMULATION_N_BYTES
 from spinn_front_end_common.interface.simulation.simulation_utilities import (
-    get_simulation_header_array)
+    get_simulation_header_array, get_simulation_header_array_no_timestep)
 
 
-def generate_system_data_region(
-        spec, region_id, machine_vertex, machine_time_step, time_scale_factor):
+def generate_system_data_region(spec, region_id, machine_vertex):
     """ Generate a system data region for time-based simulations.
 
     :param ~data_specification.DataSpecificationGenerator spec:
@@ -28,10 +27,6 @@ def generate_system_data_region(
         The region to write to
     :param ~pacman.model.graphs.machine.MachineVertex machine_vertex:
         The machine vertex to write for
-    :param int machine_time_step:
-        The time step of the simulation
-    :param int time_scale_factor:
-        The time scale of the simulation
     """
 
     # reserve memory regions
@@ -41,8 +36,7 @@ def generate_system_data_region(
     # simulation .c requirements
     spec.switch_write_focus(region_id)
     spec.write_array(get_simulation_header_array(
-        machine_vertex.get_binary_file_name(), machine_time_step,
-        time_scale_factor))
+        machine_vertex.get_binary_file_name()))
 
 
 def generate_steps_system_data_region(spec, region_id, machine_vertex):
@@ -55,6 +49,11 @@ def generate_steps_system_data_region(spec, region_id, machine_vertex):
     :param ~pacman.model.graphs.machine.MachineVertex machine_vertex:
         The machine vertex to write for
     """
-    generate_system_data_region(
-        spec, region_id, machine_vertex, machine_time_step=0,
-        time_scale_factor=0)
+    # reserve memory regions
+    spec.reserve_memory_region(
+        region=region_id, size=SIMULATION_N_BYTES, label='systemInfo')
+
+    # simulation .c requirements
+    spec.switch_write_focus(region_id)
+    spec.write_array(get_simulation_header_array_no_timestep(
+        machine_vertex.get_binary_file_name()))

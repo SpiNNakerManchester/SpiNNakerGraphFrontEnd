@@ -21,7 +21,6 @@ from gfe_examples.Conways.partitioned_example_a_no_vis_no_buffer.\
         ConwayBasicCell)
 
 runtime = 50
-# machine_time_step = 100
 MAX_X_SIZE_OF_FABRIC = 7
 MAX_Y_SIZE_OF_FABRIC = 7
 n_chips = (MAX_X_SIZE_OF_FABRIC * MAX_Y_SIZE_OF_FABRIC) // 15

@@ -94,8 +94,7 @@ class HelloWorldVertex(
 
         # Generate the system data region for simulation .c requirements
         # Note that the time step and time scale factor are unused here
-        generate_steps_system_data_region(
-            spec, DataRegions.SYSTEM, self)
+        generate_steps_system_data_region(spec, DataRegions.SYSTEM, self)
 
         # Create the data regions for hello world
         spec.reserve_memory_region(
