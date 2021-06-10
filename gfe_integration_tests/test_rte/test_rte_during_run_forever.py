@@ -19,14 +19,12 @@ from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_front_end_common.utilities.exceptions import (
     ExecutableFailedToStopException)
 from spinn_front_end_common.utilities.database import DatabaseConnection
-from spinn_front_end_common.utilities import globals_variables
 import spinnaker_graph_front_end as s
 from gfe_integration_tests.test_rte.run_vertex import RunVertex
 import pytest
 
 
 def test_rte_during_run_forever():
-    globals_variables.unset_simulator()
 
     def start():
         sleep(3.0)
