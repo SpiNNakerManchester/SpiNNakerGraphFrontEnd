@@ -57,4 +57,3 @@ def unittest_setup():
     clear_cfg_files(True)
     add_spinnaker_cfg()  # This add its dependencies too
     add_default_cfg(os.path.join(os.path.dirname(__file__), CONFIG_FILE_NAME))
-
