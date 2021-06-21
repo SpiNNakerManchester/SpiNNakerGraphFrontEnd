@@ -20,9 +20,6 @@ from spinnaker_testbase import ScriptChecker
 
 class TestHelloWorld(ScriptChecker):
 
-    def setUp(self):
-        globals_variables.unset_simulator()
-
     def test_hello_world(self):
         with LogCapture("hello_world") as lc:
             self.check_script(
