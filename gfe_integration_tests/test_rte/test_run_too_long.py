@@ -23,7 +23,6 @@ from gfe_integration_tests.test_rte.run_vertex import RunVertex
 
 
 def test_run_too_long():
-    globals_variables.unset_simulator()
     s.setup(model_binary_folder=os.path.dirname(__file__))
     s.add_machine_vertex_instance(RunVertex(
         "test_run_too_long.aplx",
