@@ -20,6 +20,9 @@ _CI = os.environ.get('CONTINUOUS_INTEGRATION', 'false').lower()
 
 
 class ImportAllModule(unittest.TestCase):
+
+    # no unittest_setup to check all imports work without it
+
     def test_import_all(self):
         package_loader.load_module("spinnaker_graph_front_end",
                                    remove_pyc_files=(_CI != 'true'))

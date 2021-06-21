@@ -18,7 +18,7 @@ from spinn_utilities.config_holder import get_config_str
 from spinn_utilities.log import FormatAdapter
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
-from spinnaker_graph_front_end.config_setup import reset_configs
+from spinnaker_graph_front_end.config_setup import setup_configs
 from ._version import __version__ as version
 
 logger = FormatAdapter(logging.getLogger(__name__))
@@ -81,6 +81,9 @@ class SpiNNaker(AbstractSpinnakerBase):
             Where to look for algorithm descriptors
         """
         # DSG algorithm store for user defined algorithms
+
+        # At import time change the default FailedState
+        setup_configs()
         self._user_dsg_algorithm = dsg_algorithm
 
         front_end_versions = [("SpiNNakerGraphFrontEnd", version)]
@@ -140,7 +143,3 @@ class SpiNNaker(AbstractSpinnakerBase):
     def __repr__(self):
         return "SpiNNaker Graph Front End object for machine {}".format(
             self._hostname)
-
-
-# At import time change the default FailedState
-reset_configs()
