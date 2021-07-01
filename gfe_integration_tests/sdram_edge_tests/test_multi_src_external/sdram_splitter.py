@@ -73,7 +73,7 @@ class SDRAMSplitter(AbstractDependentSplitter):
             return {}
         return self._get_new_map([SDRAMMachineEdge], [self._post_vertex])
 
-    @inject_items({"app_graph": "MemoryApplicationGraph"})
+    @inject_items({"app_graph": "ApplicationGraph"})
     @overrides(
         AbstractDependentSplitter.create_machine_vertices,
         additional_arguments=["app_graph"])

@@ -51,7 +51,7 @@ class SDRAMMachineVertex(
         self._sdram_cost = sdram_cost
 
     @property
-    @inject_items({"app_graph": "MemoryApplicationGraph"})
+    @inject_items({"app_graph": "ApplicationGraph"})
     @overrides(MachineVertex.resources_required,
                additional_arguments=["app_graph"])
     def resources_required(self, app_graph):

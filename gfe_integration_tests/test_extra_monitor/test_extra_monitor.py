@@ -23,8 +23,8 @@ from gfe_integration_tests.test_extra_monitor.sdram_writer import (
     SDRAMWriter, DataRegions)
 from spinnaker_testbase import BaseTestCase
 
-_MONITOR_VERTICES = 'MemoryExtraMonitorVertices'
-_GATHERER_MAP = 'MemoryMCGatherVertexToEthernetConnectedChipMapping'
+_MONITOR_VERTICES = 'ExtraMonitorVertices'
+_GATHERER_MAP = 'VertexToEthernetConnectedChipMapping'
 _TRANSFER_SIZE_MEGABYTES = 20
 
 

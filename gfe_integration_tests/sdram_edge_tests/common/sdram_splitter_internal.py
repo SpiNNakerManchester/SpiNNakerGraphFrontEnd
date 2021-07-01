@@ -60,7 +60,7 @@ class SDRAMSplitterInternal(AbstractSplitterCommon):
             return {}
         return {self._post_vertex: [SDRAMMachineEdge]}
 
-    @inject_items({"app_graph": "MemoryApplicationGraph"})
+    @inject_items({"app_graph": "ApplicationGraph"})
     @overrides(
         AbstractSplitterCommon.create_machine_vertices,
         additional_arguments=["app_graph"])
