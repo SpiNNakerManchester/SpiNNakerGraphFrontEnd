@@ -126,12 +126,9 @@ class SDRAMSplitter(AbstractDependentSplitter):
                     self._governed_app_vertex):
                 if (incoming_edge.pre_vertex.splitter ==
                         self._other_splitter):
-                    outgoing_edge_partition = (
-                        app_graph.get_outgoing_partition_for_edge(
-                            incoming_edge))
                     total_pre_verts.extend(
                         self._other_splitter.get_out_going_vertices(
-                            incoming_edge, outgoing_edge_partition))
+                            incoming_edge, None))
             machine_graph.add_outgoing_edge_partition(self._partition_type(
                 identifier="sdram", pre_vertices=total_pre_verts,
                 label="sdram"))
