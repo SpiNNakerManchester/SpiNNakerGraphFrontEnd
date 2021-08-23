@@ -68,8 +68,10 @@ class SDRAMMachineRecordedVertex(
     @overrides(MachineVertex.resources_required,
                additional_arguments=["app_graph"])
     def resources_required(self, app_graph):
-        out_edges = app_graph.get_edges_starting_at_vertex(self.app_vertex)
-        in_edges = app_graph.get_edges_starting_at_vertex(self.app_vertex)
+        out_edges = list(
+            app_graph.get_edges_starting_at_vertex(self.app_vertex))
+        in_edges = list(
+            app_graph.get_edges_ending_at_vertex(self.app_vertex))
         return ResourceContainer(sdram=VariableSDRAM(
             fixed_sdram=(
                 SIMULATION_N_BYTES + (

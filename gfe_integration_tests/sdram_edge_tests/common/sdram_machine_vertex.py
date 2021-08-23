@@ -55,8 +55,10 @@ class SDRAMMachineVertex(
     @overrides(MachineVertex.resources_required,
                additional_arguments=["app_graph"])
     def resources_required(self, app_graph):
-        out_edges = app_graph.get_edges_starting_at_vertex(self.app_vertex)
-        in_edges = app_graph.get_edges_starting_at_vertex(self.app_vertex)
+        out_edges = list(
+            app_graph.get_edges_starting_at_vertex(self.app_vertex))
+        in_edges = list(
+            app_graph.get_edges_ending_at_vertex(self.app_vertex))
         return ResourceContainer(sdram=ConstantSDRAM(
             SIMULATION_N_BYTES + (
                 len(out_edges) * self.SDRAM_PARTITION_BASE_DSG_SIZE) +
@@ -125,9 +127,8 @@ class SDRAMMachineVertex(
         spec.switch_write_focus(DataRegions.SDRAM_IN)
         spec.write_value(n_in_sdrams)
         for incoming_partition in incoming_partitions:
-            if isinstance(incoming_partition, AbstractSDRAMPartition):
-                spec.write_value(
-                    incoming_partition.get_sdram_base_address_for(self))
-                spec.write_value(
-                    incoming_partition.get_sdram_size_of_region_for(self))
+            spec.write_value(
+                incoming_partition.get_sdram_base_address_for(self))
+            spec.write_value(
+                incoming_partition.get_sdram_size_of_region_for(self))
         spec.end_specification()
