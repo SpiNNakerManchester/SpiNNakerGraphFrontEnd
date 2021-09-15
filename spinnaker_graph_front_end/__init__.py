@@ -83,8 +83,7 @@ __all__ = ['LivePacketGather', 'ReverseIpTagMultiCastSource', 'MachineEdge',
 
 def setup(hostname=None, graph_label=None, model_binary_module=None,
           model_binary_folder=None, database_socket_addresses=(),
-          user_dsg_algorithm=None, n_chips_required=None,
-          n_boards_required=None,
+          n_chips_required=None, n_boards_required=None,
           time_scale_factor=None, machine_time_step=None):
     """ Set up a graph, ready to have vertices and edges added to it, and the\
         simulator engine that will execute the graph.
@@ -111,10 +110,6 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         :py:class:`~spinn_front_end_common.utilities.connections.LiveEventConnection`
     :type database_socket_addresses:
         ~collections.abc.Iterable(~spinn_utilities.socket_address.SocketAddress)
-    :param str user_dsg_algorithm:
-        an algorithm used for generating the application data which is loaded
-        onto the machine. If not set, will use the data specification language
-        algorithm required for the type of graph being used.
     :param n_chips_required:
         Deprecated! Use ``n_boards_required`` instead.
         Must be ``None`` if ``n_boards_required`` specified.
@@ -154,7 +149,6 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         host_name=hostname, graph_label=graph_label,
         executable_finder=executable_finder,
         database_socket_addresses=database_socket_addresses,
-        dsg_algorithm=user_dsg_algorithm,
         n_chips_required=n_chips_required,
         n_boards_required=n_boards_required,
         machine_time_step=machine_time_step,

@@ -36,14 +36,11 @@ class SpiNNaker(AbstractSpinnakerBase):
         You should not normally instantiate this directly from user code.
         Call :py:func:`~spinnaker_graph_front_end.setup` instead.
     """
-    #: The base name of the configuration file (but no path)
-    __slots__ = (
-        "_user_dsg_algorithm"
-    )
+    __slots__ = ()
 
     def __init__(
             self, executable_finder, host_name=None, graph_label=None,
-            database_socket_addresses=(), dsg_algorithm=None,
+            database_socket_addresses=(),
             n_chips_required=None, n_boards_required=None,
             extra_pre_run_algorithms=(),
             extra_post_run_algorithms=(), time_scale_factor=None,
@@ -62,8 +59,6 @@ class SpiNNaker(AbstractSpinnakerBase):
             the runtime database.
         :type database_socket_addresses:
             ~collections.abc.Iterable(~spinn_utilities.socket_address.SocketAddress)
-        :param str dsg_algorithm:
-            Algorithm to use for generating data
         :param int n_chips_required:
             How many chips are required.
             *Prefer ``n_boards_required`` if possible.*
@@ -84,7 +79,6 @@ class SpiNNaker(AbstractSpinnakerBase):
 
         # At import time change the default FailedState
         setup_configs()
-        self._user_dsg_algorithm = dsg_algorithm
 
         front_end_versions = [("SpiNNakerGraphFrontEnd", version)]
 
@@ -125,20 +119,6 @@ class SpiNNaker(AbstractSpinnakerBase):
         :rtype: bool
         """
         return _is_allocated_machine()
-
-    def run(self, run_time):
-        """ Run a simulation for a fixed amount of time
-
-        :param int run_time: the run duration in milliseconds.
-        """
-        # pylint: disable=arguments-differ
-
-        # set up the correct DSG algorithm
-        if self._user_dsg_algorithm is not None:
-            self.dsg_algorithm = self._user_dsg_algorithm
-
-        # run normal procedure
-        super().run(run_time)
 
     def __repr__(self):
         return "SpiNNaker Graph Front End object for machine {}".format(
