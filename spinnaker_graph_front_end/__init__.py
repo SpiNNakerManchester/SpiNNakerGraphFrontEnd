@@ -84,8 +84,7 @@ __all__ = ['LivePacketGather', 'ReverseIpTagMultiCastSource', 'MachineEdge',
 def setup(hostname=None, graph_label=None, model_binary_module=None,
           model_binary_folder=None, database_socket_addresses=(),
           user_dsg_algorithm=None, n_chips_required=None,
-          n_boards_required=None, extra_pre_run_algorithms=(),
-          extra_post_run_algorithms=(),
+          n_boards_required=None,
           time_scale_factor=None, machine_time_step=None):
     """ Set up a graph, ready to have vertices and edges added to it, and the\
         simulator engine that will execute the graph.
@@ -126,13 +125,6 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         boards you need so that the spalloc system can allocate you a machine
         big enough for your needs.
     :type n_boards_required: int or None
-    :param ~collections.abc.Iterable(str) extra_pre_run_algorithms:
-        algorithms which need to be ran after mapping and loading has occurred
-        but before the system has ran. These are plugged directly into the
-        work flow management.
-    :param ~collections.abc.Iterable(str) extra_post_run_algorithms:
-        algorithms which need to be ran after the simulation has ran. These
-        could be post processing of generated data on the machine for example.
     :raise ~spinn_front_end_common.utilities.exceptions.ConfigurationException:
         if mutually exclusive options are given.
     """
@@ -165,8 +157,6 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         dsg_algorithm=user_dsg_algorithm,
         n_chips_required=n_chips_required,
         n_boards_required=n_boards_required,
-        extra_pre_run_algorithms=extra_pre_run_algorithms,
-        extra_post_run_algorithms=extra_post_run_algorithms,
         machine_time_step=machine_time_step,
         time_scale_factor=time_scale_factor)
 
