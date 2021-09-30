@@ -23,27 +23,26 @@ We then fetch the written data and print it on the python console.
 """
 
 import os
+from spinnaker_testbase import BaseTestCase
 import spinnaker_graph_front_end as front_end
 from gfe_examples.hello_world.hello_world_vertex import HelloWorldVertex
 
-front_end.setup(
-    n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
 
-# Put HelloWorldVertex onto 16 cores
-total_number_of_cores = 16
-for x in range(total_number_of_cores):
-    front_end.add_machine_vertex_instance(
-        HelloWorldVertex(n_hellos=10, label=f"Hello World at {x}"))
+class TestHelloWorld(BaseTestCase):
 
-front_end.run(10)
-front_end.run(10)
+    # NO unittest_setup() as sim.setup is called
 
-if not front_end.use_virtual_machine():
-    for placement in sorted(front_end.placements().placements,
-                            key=lambda p: (p.x, p.y, p.p)):
-        if isinstance(placement.vertex, HelloWorldVertex):
-            hello_world = placement.vertex.read()
-            print(
-                f"{placement.x}, {placement.y}, {placement.p} > {hello_world}")
+    def test_hello_world(self):
+        front_end.setup(
+            n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
 
-front_end.stop()
+        # Put HelloWorldVertex onto 16 cores
+        total_number_of_cores = 16
+        for x in range(total_number_of_cores):
+            front_end.add_machine_vertex_instance(
+                HelloWorldVertex(n_hellos=10, label=f"Hello World at {x}"))
+
+        front_end.run(10)
+        front_end.run(10)
+
+        front_end.stop()
