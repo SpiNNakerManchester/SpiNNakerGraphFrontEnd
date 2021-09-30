@@ -47,6 +47,8 @@ jobs:
           SpiNNUtils SpiNNMachine SpiNNMan PACMAN DataSpecification spalloc
           SpiNNFrontEndCommon TestBase
         install: true
+    - name: Install matplotlib
+      uses: ./support/actions/install-matplotlib
     - name: Setup
       uses: ./support/actions/run-setup
 
