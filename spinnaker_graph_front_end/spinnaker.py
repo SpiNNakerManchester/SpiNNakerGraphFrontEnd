@@ -36,18 +36,13 @@ class SpiNNaker(AbstractSpinnakerBase):
         You should not normally instantiate this directly from user code.
         Call :py:func:`~spinnaker_graph_front_end.setup` instead.
     """
-    #: The base name of the configuration file (but no path)
-    __slots__ = (
-        "_user_dsg_algorithm"
-    )
+    __slots__ = ()
 
     def __init__(
             self, executable_finder, host_name=None, graph_label=None,
-            database_socket_addresses=(), dsg_algorithm=None,
+            database_socket_addresses=(),
             n_chips_required=None, n_boards_required=None,
-            extra_pre_run_algorithms=(),
-            extra_post_run_algorithms=(), time_scale_factor=None,
-            machine_time_step=None, extra_xml_paths=()):
+            time_scale_factor=None, machine_time_step=None):
         """
         :param executable_finder:
             How to find the executables
@@ -62,29 +57,20 @@ class SpiNNaker(AbstractSpinnakerBase):
             the runtime database.
         :type database_socket_addresses:
             ~collections.abc.Iterable(~spinn_utilities.socket_address.SocketAddress)
-        :param str dsg_algorithm:
-            Algorithm to use for generating data
         :param int n_chips_required:
             How many chips are required.
             *Prefer ``n_boards_required`` if possible.*
         :param int n_boards_required:
             How many boards are required. Unnecessary with a local board.
-        :param ~collections.abc.Iterable(str) extra_pre_run_algorithms:
-            The names of any extra algorithms to call before running
-        :param ~collections.abc.Iterable(str) extra_post_run_algorithms:
-            The names of any extra algorithms to call after running
         :param int time_scale_factor:
             The time slow-down factor
         :param int machine_time_step:
             The size of the machine time step, in microseconds
-        :param ~collections.abc.Iterable(str) extra_xml_paths:
-            Where to look for algorithm descriptors
         """
         # DSG algorithm store for user defined algorithms
 
         # At import time change the default FailedState
         setup_configs()
-        self._user_dsg_algorithm = dsg_algorithm
 
         front_end_versions = [("SpiNNakerGraphFrontEnd", version)]
 
@@ -92,7 +78,6 @@ class SpiNNaker(AbstractSpinnakerBase):
             executable_finder=executable_finder,
             graph_label=graph_label,
             database_socket_addresses=database_socket_addresses,
-            extra_algorithm_xml_paths=extra_xml_paths,
             n_chips_required=n_chips_required,
             n_boards_required=n_boards_required,
             front_end_versions=front_end_versions)
@@ -100,11 +85,6 @@ class SpiNNaker(AbstractSpinnakerBase):
         if _is_allocated_machine() and \
                 n_chips_required is None and n_boards_required is None:
             self.set_n_boards_required(1)
-
-        extra_mapping_inputs = dict()
-        self.update_extra_mapping_inputs(extra_mapping_inputs)
-        self.prepend_extra_pre_run_algorithms(extra_pre_run_algorithms)
-        self.extend_extra_post_run_algorithms(extra_post_run_algorithms)
 
         self.set_up_machine_specifics(host_name)
         self.set_up_timings(machine_time_step, time_scale_factor)
@@ -125,20 +105,6 @@ class SpiNNaker(AbstractSpinnakerBase):
         :rtype: bool
         """
         return _is_allocated_machine()
-
-    def run(self, run_time):
-        """ Run a simulation for a fixed amount of time
-
-        :param int run_time: the run duration in milliseconds.
-        """
-        # pylint: disable=arguments-differ
-
-        # set up the correct DSG algorithm
-        if self._user_dsg_algorithm is not None:
-            self.dsg_algorithm = self._user_dsg_algorithm
-
-        # run normal procedure
-        super().run(run_time)
 
     def __repr__(self):
         return "SpiNNaker Graph Front End object for machine {}".format(
