@@ -12,9 +12,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from .sdram_splitter_external import SDRAMSplitterExternal
 from .sdram_splitter_internal import SDRAMSplitterInternal
 from .sdram_machine_vertex import SDRAMMachineVertex
 
-__all__ = ["SDRAMMachineVertex", "SDRAMSplitterExternal",
-           "SDRAMSplitterInternal"]
+__all__ = ["SDRAMMachineVertex", "SDRAMSplitterInternal"]
