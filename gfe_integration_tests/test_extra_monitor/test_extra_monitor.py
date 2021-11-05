@@ -23,7 +23,6 @@ from gfe_integration_tests.test_extra_monitor.sdram_writer import (
     SDRAMWriter, DataRegions)
 from spinnaker_testbase import BaseTestCase
 
-_MONITOR_VERTICES = 'ExtraMonitorVertices'
 _GATHERER_MAP = 'VertexToEthernetConnectedChipMapping'
 _TRANSFER_SIZE_MEGABYTES = 20
 
@@ -79,7 +78,7 @@ def _do_transfer(gatherer, gatherers, monitor_vertices, receiver_placement,
             sim.placements()):
         return gatherer.get_data(
             extra_monitor=receiver_placement.vertex,
-            extra_monitor_placement=receiver_placement,
+            placement=receiver_placement,
             memory_address=get_data_region_address(
                 sim.transceiver(), writer_placement, DataRegions.DATA),
             length_in_bytes=writer_vertex.mbs_in_bytes,
@@ -91,7 +90,7 @@ def _get_gatherer_for_monitor(monitor):
     chip = sim.machine().get_chip_at(placement.x, placement.y)
     the_sim = sim.globals_variables.get_simulator()
     # pylint: disable=protected-access
-    gatherers = the_sim._last_run_outputs[_GATHERER_MAP]
+    gatherers = the_sim._vertex_to_ethernet_connected_chip_mapping
     return (
         gatherers, gatherers[chip.nearest_ethernet_x, chip.nearest_ethernet_y])
 
@@ -112,13 +111,16 @@ class TestExtraMonitors(BaseTestCase):
         sim.add_machine_vertex_instance(writer_vertex)
         sim.run(12)
 
-        writer_placement = sim.placements().get_placement_of_vertex(writer_vertex)
+        writer_placement = sim.placements().get_placement_of_vertex(
+            writer_vertex)
 
+        print("here")
         # pylint: disable=protected-access
-        outputs = sim.globals_variables.get_simulator()._last_run_outputs
-        monitor_vertices = outputs[_MONITOR_VERTICES]
+        monitor_vertices = sim.globals_variables.get_simulator().\
+            _extra_monitor_vertices
 
-        receiver_plt = _get_monitor_placement(monitor_vertices, writer_placement)
+        receiver_plt = _get_monitor_placement(
+            monitor_vertices, writer_placement)
         gatherers, gatherer = _get_gatherer_for_monitor(writer_vertex)
 
         start = float(time.time())
@@ -128,8 +130,8 @@ class TestExtraMonitors(BaseTestCase):
 
         end = float(time.time())
 
-        print("time taken to extract {} MB is {}. Transfer rate: {} Mb/s".format(
-            mbs, end - start, (mbs * 8) / (end - start)))
+        print(f"time taken to extract {mbs} MB is {end - start}. "
+              f"Transfer rate: {(mbs * 8) / (end - start)} Mb/s")
 
         check_data(data)
 
