@@ -55,7 +55,7 @@ class SDRAMSplitterInternal(AbstractSplitterCommon):
     def get_in_coming_vertices(self, outgoing_edge_partition):
         return [self._post_vertex]
 
-    def create_machine_vertices(self, plan_n_timesteps):
+    def create_machine_vertices(self, chip_counter):
         # slices
         self._pre_slice = Slice(0, int(self._governed_app_vertex.n_atoms / 2))
         self._post_slice = Slice(
@@ -69,14 +69,14 @@ class SDRAMSplitterInternal(AbstractSplitterCommon):
                 constraints=None, app_vertex=self._governed_app_vertex,
                 sdram_cost=self._governed_app_vertex.fixed_sdram_value))
         self._governed_app_vertex.remember_machine_vertex(self._pre_vertex)
+        chip_counter.add_core(self._pre_vertex.resources_required)
         self._post_vertex = (
             SDRAMMachineVertex(
                 vertex_slice=self._post_slice, label=None,
                 constraints=None, app_vertex=self._governed_app_vertex,
                 sdram_cost=self._governed_app_vertex.fixed_sdram_value))
         self._governed_app_vertex.remember_machine_vertex(self._post_vertex)
-
-        return 1
+        chip_counter.add_core(self._pre_vertex.resources_required)
 
     @overrides(AbstractSplitterCommon.get_out_going_slices)
     def get_out_going_slices(self):
