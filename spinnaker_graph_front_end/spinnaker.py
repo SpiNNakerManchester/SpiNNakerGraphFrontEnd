@@ -36,7 +36,6 @@ class SpiNNaker(AbstractSpinnakerBase):
         You should not normally instantiate this directly from user code.
         Call :py:func:`~spinnaker_graph_front_end.setup` instead.
     """
-    __slots__ = ()
 
     def __init__(
             self, executable_finder, host_name=None, graph_label=None,
@@ -87,16 +86,8 @@ class SpiNNaker(AbstractSpinnakerBase):
             self.set_n_boards_required(1)
 
         self.set_up_machine_specifics(host_name)
-        self.set_up_timings(machine_time_step, time_scale_factor)
-
-        # if not set at all, set to 1 for real time execution.
-        if self.time_scale_factor is None:
-            self.time_scale_factor = 1
-        logger.info(f'Setting time scale factor to '
-                    f'{self.time_scale_factor}.')
-        logger.info(f'Setting machine time step to '
-                    f'{self.machine_time_step} '
-                    f'micro-seconds.')
+        self._data_writer.set_up_timings(
+            machine_time_step, time_scale_factor, 1)
 
     @property
     def is_allocated_machine(self):
