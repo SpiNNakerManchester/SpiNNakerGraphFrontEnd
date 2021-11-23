@@ -15,9 +15,8 @@
 
 import time
 import os
-from spinn_front_end_common.utilities.utility_calls import (
-    get_region_base_address_offset)
-from spinn_front_end_common.utilities.helpful_functions import n_word_struct
+from spinn_front_end_common.utilities.helpful_functions import (
+    get_region_base_address_offset, n_word_struct)
 import spinnaker_graph_front_end as sim
 from gfe_integration_tests.test_extra_monitor.sdram_writer import (
     SDRAMWriter, DataRegions)
