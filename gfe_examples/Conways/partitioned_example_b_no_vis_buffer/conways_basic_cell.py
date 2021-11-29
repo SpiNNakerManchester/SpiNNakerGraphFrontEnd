@@ -15,10 +15,10 @@
 
 from enum import IntEnum
 from spinn_utilities.overrides import overrides
-from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, VariableSDRAM
 from pacman.utilities.utility_calls import is_single
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
@@ -72,13 +72,11 @@ class ConwayBasicCell(
         # app specific data items
         self._state = bool(state)
 
-    @inject_items({"data_n_time_steps": "DataNTimeSteps"})
     @overrides(
-        MachineDataSpecableVertex.generate_machine_data_specification,
-        additional_arguments={"data_n_time_steps"})
+        MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
-            reverse_iptags, data_n_time_steps):
+            reverse_iptags):
         """
         :param ~.DataSpecificationGenerator spec:
         :param ~.MachineGraph machine_graph:
@@ -102,7 +100,7 @@ class ConwayBasicCell(
         # get recorded buffered regions sorted
         self.generate_recording_region(
             spec, DataRegions.RESULTS,
-            [self.RECORDING_ELEMENT_SIZE * data_n_time_steps])
+            [self.RECORDING_ELEMENT_SIZE * FecDataView().max_run_time_steps])
 
         # check got right number of keys and edges going into me
         partitions = machine_graph.\

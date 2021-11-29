@@ -21,6 +21,7 @@ from pacman.model.resources import ResourceContainer, VariableSDRAM
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models.impl import (
     MachineDataSpecableVertex)
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.buffer_management import (
     recording_utilities)
 from spinn_front_end_common.interface.buffer_management.buffer_models import (
@@ -94,13 +95,11 @@ class SDRAMMachineRecordedVertex(
     def get_binary_start_type(self):
         return ExecutableType.USES_SIMULATION_INTERFACE
 
-    @inject_items({"data_n_time_steps": "DataNTimeSteps"})
     @overrides(
-        MachineDataSpecableVertex.generate_machine_data_specification,
-        additional_arguments={"data_n_time_steps"})
+        MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec, placement, machine_graph, routing_info, iptags,
-            reverse_iptags, data_n_time_steps):
+            reverse_iptags):
 
         # reserve memory regions
         spec.reserve_memory_region(
@@ -161,7 +160,7 @@ class SDRAMMachineRecordedVertex(
         # get recorded buffered regions sorted
         spec.switch_write_focus(DataRegions.RESULTS)
         spec.write_array(recording_utilities.get_recording_header_array(
-            [self.RECORDING_ELEMENT_SIZE * data_n_time_steps]))
+            [self.RECORDING_ELEMENT_SIZE * FecDataView().max_run_time_steps]))
 
         spec.end_specification()
 
