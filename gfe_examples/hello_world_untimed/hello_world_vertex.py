@@ -25,6 +25,7 @@ from spinn_front_end_common.utilities.helpful_functions import (
     locate_memory_region_for_placement)
 from spinn_front_end_common.abstract_models import (
     AbstractGeneratesDataSpecification)
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.buffer_management.buffer_models import (
     AbstractReceiveBuffersToHost)
 from spinn_front_end_common.interface.buffer_management import (
@@ -33,7 +34,6 @@ from spinnaker_graph_front_end.utilities import SimulatorVertex
 from spinnaker_graph_front_end.utilities.data_utils import (
     generate_steps_system_data_region)
 import numpy
-
 
 logger = logging.getLogger(__name__)
 
