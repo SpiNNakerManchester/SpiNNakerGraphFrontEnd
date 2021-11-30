@@ -76,7 +76,7 @@ __all__ = ['LivePacketGather', 'ReverseIpTagMultiCastSource', 'MachineEdge',
            'add_edge', 'add_application_edge_instance', 'add_machine_edge',
            'add_machine_edge_instance', 'add_socket_address', 'get_txrx',
            'has_ran', 'get_number_of_available_cores_on_machine',
-           'no_machine_time_steps', 'machine_graph', 'application_graph',
+           'machine_graph', 'application_graph',
            'routing_infos', 'placements', 'transceiver',
            'buffer_manager', 'machine', 'is_allocated_machine']
 
@@ -419,14 +419,6 @@ def has_ran():
     :rtype: bool
     """
     return _sim().has_ran
-
-
-def no_machine_time_steps():
-    """ Get the number of time/simulation steps executed.
-
-    :rtype: int
-    """
-    return _sim().no_machine_time_steps
 
 
 def machine_graph():
