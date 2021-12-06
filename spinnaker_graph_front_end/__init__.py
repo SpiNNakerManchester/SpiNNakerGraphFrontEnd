@@ -421,22 +421,6 @@ def has_ran():
     return _sim().has_ran
 
 
-def machine_graph():
-    """ Get the partitioned graph.
-
-    :rtype: ~pacman.model.graphs.machine.MachineGraph
-    """
-    return _sim().machine_graph
-
-
-def application_graph():
-    """ Get the unpartitioned graph.
-
-    :rtype: ~pacman.model.graphs.application.ApplicationGraph
-    """
-    return _sim().application_graph
-
-
 def routing_infos():
     """ Get information about how messages are routed on the machine.
 
