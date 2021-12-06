@@ -14,13 +14,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from enum import IntEnum
 
-from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs import AbstractSupportsSDRAMEdges
 from pacman.model.graphs.machine import (AbstractSDRAMPartition, MachineVertex)
 from pacman.model.resources import ResourceContainer, ConstantSDRAM
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models.impl import (
     MachineDataSpecableVertex)
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utilities.constants import (
     SIMULATION_N_BYTES, BYTES_PER_WORD, SARK_PER_MALLOC_SDRAM_USAGE)
@@ -51,10 +51,9 @@ class SDRAMMachineVertex(
         self._sdram_cost = sdram_cost
 
     @property
-    @inject_items({"app_graph": "ApplicationGraph"})
-    @overrides(MachineVertex.resources_required,
-               additional_arguments=["app_graph"])
-    def resources_required(self, app_graph):
+    @overrides(MachineVertex.resources_required)
+    def resources_required(self):
+        app_graph = FecDataView().runtime_graph
         out_edges = app_graph.get_edges_starting_at_vertex(self.app_vertex)
         in_edges = app_graph.get_edges_starting_at_vertex(self.app_vertex)
         return ResourceContainer(sdram=ConstantSDRAM(

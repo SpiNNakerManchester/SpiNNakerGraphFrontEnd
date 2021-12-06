@@ -13,13 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from gfe_integration_tests.sdram_edge_tests.common import SDRAMMachineVertex
-from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.common import Slice
 from pacman.model.graphs.machine import SDRAMMachineEdge
 from pacman.model.partitioner_splitters.abstract_splitters import (
     AbstractSplitterCommon)
 from spinn_utilities.overrides import overrides
+from spinn_front_end_common.data import FecDataView
 
 
 class SDRAMSplitter(AbstractSplitterCommon):
@@ -58,13 +58,11 @@ class SDRAMSplitter(AbstractSplitterCommon):
             return {}
         return {self._post_vertex: [SDRAMMachineEdge]}
 
-    @inject_items({"app_graph": "ApplicationGraph"})
-    @overrides(
-        AbstractSplitterCommon.create_machine_vertices,
-        additional_arguments=["app_graph"])
+    @overrides(AbstractSplitterCommon.create_machine_vertices)
     def create_machine_vertices(
-            self, resource_tracker, machine_graph, app_graph):
+            self, resource_tracker, machine_graph):
 
+        app_graph = FecDataView().runtime_graph
         # slices
         self._post_slice = Slice(
             0, int(self._governed_app_vertex.n_atoms / self.N_VERTS))

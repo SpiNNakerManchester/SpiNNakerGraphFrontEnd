@@ -14,12 +14,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from gfe_integration_tests.sdram_edge_tests.common.\
     sdram_machine_vertex import SDRAMMachineVertex
-from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs.common import Slice
 from pacman.model.graphs.machine import (
     SDRAMMachineEdge, SourceSegmentedSDRAMMachinePartition)
 from pacman.model.partitioner_splitters import SplitterOneToOneLegacy
 from spinn_utilities.overrides import overrides
+from spinn_front_end_common.data import FecDataView
 
 
 class SDRAMSplitterExternal(SplitterOneToOneLegacy):
@@ -55,12 +55,9 @@ class SDRAMSplitterExternal(SplitterOneToOneLegacy):
             self, edge, outgoing_edge_partition, src_machine_vertex):
         return {self._machine_vertex: [SDRAMMachineEdge]}
 
-    @inject_items({"app_graph": "ApplicationGraph"})
-    @overrides(
-        SplitterOneToOneLegacy.create_machine_vertices,
-        additional_arguments=["app_graph"])
-    def create_machine_vertices(
-            self, resource_tracker, machine_graph, app_graph):
+    @overrides(SplitterOneToOneLegacy.create_machine_vertices)
+    def create_machine_vertices(self, resource_tracker, machine_graph):
+        app_graph = FecDataView().runtime_graph
         resource_tracker.allocate_constrained_resources(
             self._resources_required, self._governed_app_vertex.constraints,
             vertices=[self._machine_vertex])

@@ -14,7 +14,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from enum import IntEnum
 
-from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs import AbstractSupportsSDRAMEdges
 from pacman.model.graphs.machine import MachineVertex, AbstractSDRAMPartition
 from pacman.model.resources import ResourceContainer, VariableSDRAM
@@ -65,10 +64,9 @@ class SDRAMMachineRecordedVertex(
         self._sdram_cost = sdram_cost
 
     @property
-    @inject_items({"app_graph": "ApplicationGraph"})
-    @overrides(MachineVertex.resources_required,
-               additional_arguments=["app_graph"])
+    @overrides(MachineVertex.resources_required)
     def resources_required(self, app_graph):
+        app_graph = FecDataView().runtime_graph
         out_edges = app_graph.get_edges_starting_at_vertex(self.app_vertex)
         in_edges = app_graph.get_edges_starting_at_vertex(self.app_vertex)
         return ResourceContainer(sdram=VariableSDRAM(

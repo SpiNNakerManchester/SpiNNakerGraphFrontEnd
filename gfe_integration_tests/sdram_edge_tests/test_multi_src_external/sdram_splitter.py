@@ -15,7 +15,6 @@
 from collections import OrderedDict
 
 from gfe_integration_tests.sdram_edge_tests.common import SDRAMMachineVertex
-from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.common import Slice
 from pacman.model.graphs.machine import SDRAMMachineEdge
@@ -23,6 +22,7 @@ from pacman.model.partitioner_splitters.abstract_splitters import (
     AbstractDependentSplitter)
 from spinn_utilities.ordered_set import OrderedSet
 from spinn_utilities.overrides import overrides
+from spinn_front_end_common.data import FecDataView
 
 
 class SDRAMSplitter(AbstractDependentSplitter):
@@ -73,13 +73,11 @@ class SDRAMSplitter(AbstractDependentSplitter):
             return {}
         return self._get_new_map([SDRAMMachineEdge], [self._post_vertex])
 
-    @inject_items({"app_graph": "ApplicationGraph"})
-    @overrides(
-        AbstractDependentSplitter.create_machine_vertices,
-        additional_arguments=["app_graph"])
+    @overrides(AbstractDependentSplitter.create_machine_vertices)
     def create_machine_vertices(
             self, resource_tracker, machine_graph, app_graph):
 
+        app_graph = FecDataView().runtime_graph
         # slices
         self._post_slice = Slice(
             0, int(self._governed_app_vertex.n_atoms / self.N_VERTS))
