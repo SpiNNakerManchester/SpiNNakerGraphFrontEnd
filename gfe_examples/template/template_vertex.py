@@ -139,6 +139,6 @@ class TemplateVertex(
         return [RecordingChannels.RECORDING]
 
     @overrides(AbstractReceiveBuffersToHost.get_recording_region_base_address)
-    def get_recording_region_base_address(self, txrx, placement):
+    def get_recording_region_base_address(self, placement):
         return locate_memory_region_for_placement(
-            placement, DataRegions.RECORDED_DATA, txrx)
+            placement, DataRegions.RECORDED_DATA)

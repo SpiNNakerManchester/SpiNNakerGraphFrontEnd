@@ -146,7 +146,7 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         # Get the data region base address where results are stored for the
         # core
         record_region_base_address = locate_memory_region_for_placement(
-            placement, DataRegions.RESULTS, txrx)
+            placement, DataRegions.RESULTS)
 
         # find how many bytes are needed to be read
         number_of_bytes_to_read = txrx.read_word(

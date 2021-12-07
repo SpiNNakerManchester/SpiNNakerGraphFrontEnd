@@ -164,6 +164,6 @@ class SDRAMMachineRecordedVertex(
     def get_recorded_region_ids(self):
         return [Channels.RESULTS]
 
-    def get_recording_region_base_address(self, txrx, placement):
+    def get_recording_region_base_address(self, placement):
         return locate_memory_region_for_placement(
-            placement, DataRegions.RESULTS, txrx)
+            placement, DataRegions.RESULTS)
