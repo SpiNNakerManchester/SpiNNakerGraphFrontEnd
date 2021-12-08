@@ -73,8 +73,7 @@ def _do_transfer(gatherer, gatherers, monitor_vertices, receiver_placement,
     :rtype: bytearray
     """
     with gatherer.streaming(
-            gatherers.values(), sim.transceiver(), monitor_vertices,
-            sim.placements()):
+            gatherers.values(), monitor_vertices, sim.placements()):
         return gatherer.get_data(
             extra_monitor=receiver_placement.vertex,
             placement=receiver_placement,
