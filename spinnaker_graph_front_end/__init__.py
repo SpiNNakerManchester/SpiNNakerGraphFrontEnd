@@ -74,9 +74,8 @@ __all__ = ['LivePacketGather', 'ReverseIpTagMultiCastSource', 'MachineEdge',
            'setup', 'run', 'stop', 'read_xml_file', 'add_vertex_instance',
            'add_vertex', 'add_machine_vertex', 'add_machine_vertex_instance',
            'add_edge', 'add_application_edge_instance', 'add_machine_edge',
-           'add_machine_edge_instance', 'add_socket_address', 'get_txrx',
+           'add_machine_edge_instance', 'add_socket_address',
            'has_ran', 'get_number_of_available_cores_on_machine',
-           'machine_graph', 'application_graph',
            'routing_infos', 'placements', 'transceiver',
            'buffer_manager', 'machine', 'is_allocated_machine']
 
@@ -396,14 +395,6 @@ def add_socket_address(
     _sim().add_socket_address(database_socket)
 
 
-def get_txrx():
-    """ Get the transceiver used by the tool chain.
-
-    :rtype: ~spinnman.transceiver.Transceiver
-    """
-    return _sim().transceiver
-
-
 def get_number_of_available_cores_on_machine():
     """ Get the number of cores on this machine that are available to the\
         simulation.
@@ -435,14 +426,6 @@ def placements():
     :rtype: ~pacman.model.placements.Placements
     """
     return _sim().placements
-
-
-def transceiver():
-    """ Get the transceiver, for talking directly to the SpiNNaker system.
-
-    :rtype: ~spinnman.transceiver.Transceiver
-    """
-    return _sim().transceiver
 
 
 def tags():

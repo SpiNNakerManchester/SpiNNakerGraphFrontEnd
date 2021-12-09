@@ -15,6 +15,7 @@
 
 import time
 import os
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utilities.helpful_functions import (
     get_region_base_address_offset, n_word_struct)
 import spinnaker_graph_front_end as sim
@@ -26,8 +27,9 @@ _GATHERER_MAP = 'VertexToEthernetConnectedChipMapping'
 _TRANSFER_SIZE_MEGABYTES = 20
 
 
-def get_data_region_address(transceiver, placement, region):
+def get_data_region_address(placement, region):
     # Get the App Data for the core
+    transceiver = FecDataView().transceiver
     app_data_base_address = transceiver.get_cpu_information_from_core(
         placement.x, placement.y, placement.p).user[0]
 
@@ -78,7 +80,7 @@ def _do_transfer(gatherer, gatherers, monitor_vertices, receiver_placement,
             extra_monitor=receiver_placement.vertex,
             placement=receiver_placement,
             memory_address=get_data_region_address(
-                sim.transceiver(), writer_placement, DataRegions.DATA),
+                writer_placement, DataRegions.DATA),
             length_in_bytes=writer_vertex.mbs_in_bytes,
             fixed_routes=None)
 

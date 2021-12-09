@@ -140,9 +140,10 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         spec.end_specification()
 
     def get_data(self):
-        txrx = self.front_end.transceiver()
+        view = FecDataView()
+        txrx = view.transceiver
         placement = self.placement
-        n_steps = FecDataView().current_run_timesteps
+        n_steps =view.current_run_timesteps
         # Get the data region base address where results are stored for the
         # core
         record_region_base_address = locate_memory_region_for_placement(
