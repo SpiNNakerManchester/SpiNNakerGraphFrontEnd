@@ -76,7 +76,7 @@ __all__ = ['LivePacketGather', 'ReverseIpTagMultiCastSource', 'MachineEdge',
            'add_edge', 'add_application_edge_instance', 'add_machine_edge',
            'add_machine_edge_instance', 'add_socket_address',
            'has_ran', 'get_number_of_available_cores_on_machine',
-           'routing_infos', 'placements', 'transceiver',
+           'routing_infos', 'placements',
            'buffer_manager', 'machine', 'is_allocated_machine']
 
 
