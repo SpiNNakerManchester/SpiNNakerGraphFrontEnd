@@ -65,7 +65,7 @@ class SDRAMMachineRecordedVertex(
 
     @property
     @overrides(MachineVertex.resources_required)
-    def resources_required(self, app_graph):
+    def resources_required(self):
         app_graph = FecDataView().runtime_graph
         out_edges = app_graph.get_edges_starting_at_vertex(self.app_vertex)
         in_edges = app_graph.get_edges_starting_at_vertex(self.app_vertex)
