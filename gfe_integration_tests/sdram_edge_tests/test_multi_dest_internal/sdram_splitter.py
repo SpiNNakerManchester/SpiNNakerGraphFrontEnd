@@ -63,8 +63,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
         return {self._post_vertex: [SDRAMMachineEdge]}
 
     @overrides(AbstractSplitterCommon.create_machine_vertices)
-    def create_machine_vertices(
-            self, resource_tracker, machine_graph, app_graph):
+    def create_machine_vertices(self, resource_tracker, machine_graph):
         app_graph = FecDataView().runtime_graph
         # slices
         self._pre_slice = Slice(
