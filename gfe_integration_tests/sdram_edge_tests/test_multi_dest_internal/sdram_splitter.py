@@ -52,7 +52,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
         return [self._pre_vertex.vertex_slice]
 
     @overrides(AbstractSplitterCommon.get_in_coming_vertices)
-    def get_in_coming_vertices(self, outgoing_edge_partition, pre_m_vertex):
+    def get_in_coming_vertices(self, outgoing_edge_partition):
         return [v.vertex_slice for v in self._post_vertices]
 
     def create_machine_vertices(self, chip_counter):
