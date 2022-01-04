@@ -56,8 +56,7 @@ class SDRAMSplitterExternal(SplitterOneToOneLegacy):
         return {self._machine_vertex: [SDRAMMachineEdge]}
 
     @overrides(SplitterOneToOneLegacy.create_machine_vertices)
-    def create_machine_vertices(
-            self, resource_tracker, machine_graph, app_graph):
+    def create_machine_vertices(self, resource_tracker, machine_graph):
         app_graph = FecDataView().runtime_graph
         resource_tracker.allocate_constrained_resources(
             self._resources_required, self._governed_app_vertex.constraints,
