@@ -56,6 +56,7 @@ from spinn_utilities.log import FormatAdapter
 from spinn_utilities.socket_address import SocketAddress
 from pacman.model.graphs.application import ApplicationEdge, ApplicationVertex
 from pacman.model.graphs.machine import MachineEdge as _ME, MachineVertex
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utilities.utility_objs import ExecutableFinder
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utility_models import (
@@ -425,7 +426,7 @@ def placements():
 
     :rtype: ~pacman.model.placements.Placements
     """
-    return _sim().placements
+    return FecDataView().placements
 
 
 def tags():
