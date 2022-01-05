@@ -39,7 +39,7 @@ front_end.run(10)
 front_end.run(10)
 
 if not front_end.use_virtual_machine():
-    for placement in sorted(front_end.placements().placements,
+    for placement in sorted(front_end.placements(),
                             key=lambda p: (p.x, p.y, p.p)):
         if isinstance(placement.vertex, HelloWorldVertex):
             hello_world = placement.vertex.read()

@@ -45,7 +45,7 @@ for _ in range(runs):
     front_end.run_until_complete(prints_per_run)
 
 if not front_end.use_virtual_machine():
-    for placement in sorted(front_end.placements().placements,
+    for placement in sorted(front_end.placements(),
                             key=lambda p: (p.x, p.y, p.p)):
 
         if isinstance(placement.vertex, HelloWorldVertex):
