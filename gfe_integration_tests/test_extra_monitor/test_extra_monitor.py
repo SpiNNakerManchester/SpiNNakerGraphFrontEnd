@@ -86,8 +86,8 @@ def _do_transfer(gatherer, gatherers, monitor_vertices, receiver_placement,
 
 
 def _get_gatherer_for_monitor(monitor):
-    placement = sim.placements().get_placement_of_vertex(monitor)
-    chip = sim.machine().get_chip_at(placement.x, placement.y)
+    placement = FecDataView.placements.get_placement_of_vertex(monitor)
+    chip = FecDataView.get_chip_at(placement.x, placement.y)
     the_sim = sim.globals_variables.get_simulator()
     # pylint: disable=protected-access
     gatherers = the_sim._vertex_to_ethernet_connected_chip_mapping
