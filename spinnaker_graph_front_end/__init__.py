@@ -426,7 +426,7 @@ def placements():
 
     :rtype: ~pacman.model.placements.Placements
     """
-    return FecDataView().placements
+    return FecDataView.get_placements()
 
 
 def tags():

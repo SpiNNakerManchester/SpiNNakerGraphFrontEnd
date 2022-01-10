@@ -56,7 +56,7 @@ def _get_monitor_placement(monitor_vertices, placement):
     """ Get the receiver placement on the same chip as a given placement
     """
     for vertex in monitor_vertices:
-        vtx_plt = sim.placements().get_placement_of_vertex(vertex)
+        vtx_plt = FecDataView.get_placement_of_vertex(vertex)
         if vtx_plt.x == placement.x and vtx_plt.y == placement.y:
             return vtx_plt
     raise Exception("no extra monitor on same chip as {}".format(placement))
@@ -86,7 +86,7 @@ def _do_transfer(gatherer, gatherers, monitor_vertices, receiver_placement,
 
 
 def _get_gatherer_for_monitor(monitor):
-    placement = FecDataView.placements.get_placement_of_vertex(monitor)
+    placement = FecDataView.get_placement_of_vertex(monitor)
     chip = FecDataView.get_chip_at(placement.x, placement.y)
     the_sim = sim.globals_variables.get_simulator()
     # pylint: disable=protected-access
@@ -111,7 +111,7 @@ class TestExtraMonitors(BaseTestCase):
         sim.add_machine_vertex_instance(writer_vertex)
         sim.run(12)
 
-        writer_placement = sim.placements().get_placement_of_vertex(
+        writer_placement = FecDataView.get_placement_of_vertex(
             writer_vertex)
 
         print("here")
