@@ -74,8 +74,7 @@ def _do_transfer(gatherer, gatherers, monitor_vertices, receiver_placement,
     :param SDRAMWriter writer_vertex:
     :rtype: bytearray
     """
-    with gatherer.streaming(
-            gatherers.values(), monitor_vertices, sim.placements()):
+    with gatherer.streaming(gatherers.values(), monitor_vertices):
         return gatherer.get_data(
             extra_monitor=receiver_placement.vertex,
             placement=receiver_placement,
