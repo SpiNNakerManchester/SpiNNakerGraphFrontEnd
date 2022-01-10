@@ -67,15 +67,18 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
     @overrides(
         MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
-            self, spec, placement, machine_graph, routing_info, iptags,
-            reverse_iptags):
+            self, spec, placement, iptags, reverse_iptags):
         """
+
         :param ~.DataSpecificationGenerator spec:
-        :param ~.MachineGraph machine_graph:
-        :param ~.RoutingInfo routing_info:
+        :param placement:
+        :param iptags:
+        :param reverse_iptags:
+        :return:
         """
         # pylint: disable=arguments-differ
 
+        machine_graph = FecDataView.get_runtime_machine_graph()
         # Generate the system data region for simulation .c requirements
         generate_system_data_region(spec, DataRegions.SYSTEM, self)
 
@@ -118,7 +121,7 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
                     "please fix.")
 
         # write key needed to transmit with
-        key = routing_info.get_first_key_from_pre_vertex(
+        key = FecDataView.get_routing_infos().get_first_key_from_pre_vertex(
             self, self.PARTITION_ID)
 
         spec.switch_write_focus(DataRegions.TRANSMISSIONS)

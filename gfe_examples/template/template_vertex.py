@@ -19,6 +19,7 @@ from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
 from pacman.model.resources import ResourceContainer, VariableSDRAM
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
 from spinn_front_end_common.utilities.helpful_functions import (
@@ -83,8 +84,7 @@ class TemplateVertex(
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
-            self, spec, placement, machine_graph, routing_info, iptags,
-            reverse_iptags):
+            self, spec, placement, iptags, reverse_iptags):
         """ Generate data
 
         :param placement: the placement object for the DSG
@@ -100,7 +100,7 @@ class TemplateVertex(
 
         # Generate the application data regions
         self._reserve_app_memory_regions(spec)
-        self._write_app_memory_regions(spec, routing_info, iptags)
+        self._write_app_memory_regions(spec, iptags)
 
         # Generate the recording region
         self.generate_recording_region(
@@ -114,8 +114,9 @@ class TemplateVertex(
             region=DataRegions.TRANSMISSION,
             size=self.TRANSMISSION_REGION_N_BYTES, label="transmission")
 
-    def _write_app_memory_regions(self, spec, routing_info, iptags):
+    def _write_app_memory_regions(self, spec, iptags):
         # Get the key, assuming all outgoing edges use the same key
+        routing_info = FecDataView.get_routing_infos()
         key = routing_info.get_first_key_from_pre_vertex(self, PARTITION_ID)
 
         # Write the transmission region

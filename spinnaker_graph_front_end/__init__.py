@@ -418,7 +418,7 @@ def routing_infos():
 
     :rtype: ~pacman.model.routing_info.RoutingInfo
     """
-    return _sim().routing_infos
+    return FecDataView.get_routing_infos()
 
 
 def placements():

@@ -76,9 +76,9 @@ class SDRAMMachineVertex(
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
-            self, spec, placement, machine_graph, routing_info, iptags,
-            reverse_iptags):
+            self, spec, placement, iptags, reverse_iptags):
 
+        machine_graph = FecDataView.get_runtime_machine_graph()
         # reserve memory regions
         spec.reserve_memory_region(
             region=DataRegions.SYSTEM, size=SIMULATION_N_BYTES,
