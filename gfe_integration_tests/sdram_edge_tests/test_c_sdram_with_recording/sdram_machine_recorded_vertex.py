@@ -157,7 +157,8 @@ class SDRAMMachineRecordedVertex(
         # get recorded buffered regions sorted
         spec.switch_write_focus(DataRegions.RESULTS)
         spec.write_array(recording_utilities.get_recording_header_array(
-            [self.RECORDING_ELEMENT_SIZE * FecDataView().max_run_time_steps]))
+            [self.RECORDING_ELEMENT_SIZE *
+             FecDataView.get_max_run_time_steps()]))
 
         spec.end_specification()
 

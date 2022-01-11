@@ -103,7 +103,8 @@ class ConwayBasicCell(
         # get recorded buffered regions sorted
         self.generate_recording_region(
             spec, DataRegions.RESULTS,
-            [self.RECORDING_ELEMENT_SIZE * FecDataView().max_run_time_steps])
+            [self.RECORDING_ELEMENT_SIZE *
+             FecDataView.get_max_run_time_steps()])
 
         # check got right number of keys and edges going into me
         partitions = machine_graph.\

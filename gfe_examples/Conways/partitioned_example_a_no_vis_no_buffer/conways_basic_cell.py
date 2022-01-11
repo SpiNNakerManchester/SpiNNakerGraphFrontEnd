@@ -95,7 +95,7 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         spec.reserve_memory_region(
             region=DataRegions.RESULTS,
             size=(self.RECORDING_HEADER_SIZE +
-                  (FecDataView().max_run_time_steps *
+                  (FecDataView.get_max_run_time_steps() *
                    self.RECORDING_ELEMENT_SIZE)),
             label="results")
 
@@ -143,10 +143,9 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         spec.end_specification()
 
     def get_data(self):
-        view = FecDataView()
         txrx = FecDataView.get_transceiver()
         placement = self.placement
-        n_steps = view.current_run_timesteps
+        n_steps = FecDataView.get_current_run_timesteps()
         # Get the data region base address where results are stored for the
         # core
         record_region_base_address = locate_memory_region_for_placement(

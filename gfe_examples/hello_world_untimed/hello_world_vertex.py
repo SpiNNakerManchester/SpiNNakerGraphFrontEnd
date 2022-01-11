@@ -100,7 +100,7 @@ class HelloWorldVertex(
         # write data for the recording
         self.generate_recording_region(
             spec, DataRegions.STRING_DATA,
-            [FecDataView().max_run_time_steps * len(self._text)])
+            [FecDataView.get_max_run_time_steps() * len(self._text)])
 
         # write the data
         spec.switch_write_focus(DataRegions.PARAMS)
