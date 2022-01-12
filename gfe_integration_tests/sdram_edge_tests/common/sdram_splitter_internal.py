@@ -48,11 +48,11 @@ class SDRAMSplitterInternal(AbstractSplitterCommon):
             raise Exception("this splitter not for this")
 
     @overrides(AbstractSplitterCommon.get_out_going_vertices)
-    def get_out_going_vertices(self, outgoing_edge_partition):
+    def get_out_going_vertices(self, partition_id):
         return [self._pre_vertex]
 
     @overrides(AbstractSplitterCommon.get_in_coming_vertices)
-    def get_in_coming_vertices(self, outgoing_edge_partition):
+    def get_in_coming_vertices(self, partition_id):
         return [self._post_vertex]
 
     def create_machine_vertices(self, chip_counter):
