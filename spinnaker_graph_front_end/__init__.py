@@ -434,7 +434,7 @@ def tags():
 
     :rtype: ~pacman.model.tags.Tags
     """
-    return _sim().tags
+    return FecDataView.get_tags()
 
 
 def buffer_manager():
