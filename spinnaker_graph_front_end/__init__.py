@@ -72,11 +72,10 @@ logger = FormatAdapter(logging.getLogger(__name__))
 
 __all__ = ['LivePacketGather', 'ReverseIpTagMultiCastSource', 'MachineEdge',
            'setup', 'run', 'stop', 'read_xml_file', 'add_vertex_instance',
-           'add_vertex', 'add_machine_vertex', 'add_machine_vertex_instance',
-           'add_edge', 'add_application_edge_instance', 'add_machine_edge',
-           'add_machine_edge_instance', 'add_socket_address', 'get_txrx',
+           'add_vertex', 'add_edge', 'add_application_edge_instance',
+           'add_socket_address', 'get_txrx',
            'has_ran', 'get_number_of_available_cores_on_machine',
-           'no_machine_time_steps', 'machine_graph', 'application_graph',
+           'no_machine_time_steps', 'application_graph',
            'routing_infos', 'placements', 'transceiver',
            'buffer_manager', 'machine', 'is_allocated_machine']
 
@@ -247,45 +246,6 @@ def add_vertex_instance(vertex_to_add):
         vertex instance to add to the graph
     """
     _sim().add_application_vertex(vertex_to_add)
-
-
-def add_machine_vertex(
-        cell_class, cell_params, label=None, constraints=()):
-    """ Create a machine vertex and add it to the partitioned graph.
-
-    :param type cell_class:
-        the class of the machine vertex to create
-    :param dict(str,object) cell_params:
-        the input parameters for the class object
-    :param label:
-        the label for this vertex
-    :type label: str or None
-    :param constraints:
-        any constraints to be applied to the vertex once built
-    :type constraints:
-        ~collections.abc.Iterable(~pacman.model.constraints.AbstractConstraint)
-    :return: the machine vertex instance object
-    :rtype: ~pacman.model.graphs.machine.MachineVertex
-    """
-    if not issubclass(cell_class, MachineVertex):
-        raise TypeError(f"{cell_class} is not a machine vertex class")
-    if label is not None:
-        cell_params['label'] = label
-    # graph handles label is None
-    cell_params['constraints'] = constraints
-    # add vertex
-    vertex = cell_class(**cell_params)
-    add_machine_vertex_instance(vertex)
-    return vertex
-
-
-def add_machine_vertex_instance(vertex_to_add):
-    """ Add an existing machine vertex to the partitioned graph.
-
-    :param ~pacman.model.graphs.machine.MachineVertex vertex_to_add:
-        the vertex to add to the partitioned graph
-    """
-    _sim().add_machine_vertex(vertex_to_add)
 
 
 def _new_edge_label():
