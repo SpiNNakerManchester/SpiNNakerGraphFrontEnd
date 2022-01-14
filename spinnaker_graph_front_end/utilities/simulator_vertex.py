@@ -93,7 +93,7 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
         :return: the data, and whether any data was lost
         :rtype: tuple(bytes, bool)
         """
-        buffer_manager = self.front_end.buffer_manager()
+        buffer_manager = FecDataView.get_buffer_manager()
         return buffer_manager.get_data_by_placement(
             self.placement, recording_id)
 

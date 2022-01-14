@@ -442,7 +442,7 @@ def buffer_manager():
 
     :rtype: ~spinn_front_end_common.interface.buffer_management.BufferManager
     """
-    return _sim().buffer_manager
+    return FecDataView.get_buffer_manager()
 
 
 def machine():
