@@ -38,15 +38,11 @@ class SpiNNaker(AbstractSpinnakerBase):
     """
 
     def __init__(
-            self, executable_finder, host_name=None, graph_label=None,
+            self, host_name=None, graph_label=None,
             database_socket_addresses=(),
             n_chips_required=None, n_boards_required=None,
             time_scale_factor=None, machine_time_step=None):
         """
-        :param executable_finder:
-            How to find the executables
-        :type executable_finder:
-            ~spinn_front_end_common.utilities.utility_objs.ExecutableFinder
         :param str host_name:
             The SpiNNaker machine address
         :param str graph_label:
@@ -74,7 +70,6 @@ class SpiNNaker(AbstractSpinnakerBase):
         front_end_versions = [("SpiNNakerGraphFrontEnd", version)]
 
         super().__init__(
-            executable_finder=executable_finder,
             graph_label=graph_label,
             database_socket_addresses=database_socket_addresses,
             n_chips_required=n_chips_required,

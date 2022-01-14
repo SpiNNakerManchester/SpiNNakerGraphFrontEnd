@@ -57,7 +57,6 @@ from spinn_utilities.socket_address import SocketAddress
 from pacman.model.graphs.application import ApplicationEdge, ApplicationVertex
 from pacman.model.graphs.machine import MachineEdge as _ME, MachineVertex
 from spinn_front_end_common.data import FecDataView
-from spinn_front_end_common.utilities.utility_objs import ExecutableFinder
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utility_models import (
     LivePacketGather as
@@ -134,7 +133,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
         parent_dir)
 
     # add the directories where the binaries are located
-    executable_finder = ExecutableFinder()
+    executable_finder = FecDataView.get_executable_finder()
     if model_binary_module is not None:
         executable_finder.add_path(
             os.path.dirname(model_binary_module.__file__))
@@ -147,7 +146,6 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
     # set up the spinnaker object; after this, _sim() returns this object
     SpiNNaker(
         host_name=hostname, graph_label=graph_label,
-        executable_finder=executable_finder,
         database_socket_addresses=database_socket_addresses,
         n_chips_required=n_chips_required,
         n_boards_required=n_boards_required,
