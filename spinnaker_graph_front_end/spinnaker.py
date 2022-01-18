@@ -112,5 +112,4 @@ class SpiNNaker(AbstractSpinnakerBase):
         return _is_allocated_machine()
 
     def __repr__(self):
-        return "SpiNNaker Graph Front End object for machine {}".format(
-            self._hostname)
+        return f"SpiNNaker Graph Front End object for machine {self.hostname}"
