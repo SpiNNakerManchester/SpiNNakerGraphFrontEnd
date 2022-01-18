@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from spinn_utilities.config_holder import get_config_str
+from spinn_utilities.config_holder import get_config_str, set_config
 from spinn_utilities.log import FormatAdapter
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
@@ -69,6 +69,11 @@ class SpiNNaker(AbstractSpinnakerBase):
         """
         # DSG algorithm store for user defined algorithms
 
+        if host_name:
+            logger.warning("The host_name from setup call is overriding "
+                           "the machine_name defined in the config file")
+            set_config("Machine", "machine_name", host_name)
+
         # At import time change the default FailedState
         setup_configs()
 
@@ -86,7 +91,7 @@ class SpiNNaker(AbstractSpinnakerBase):
                 n_chips_required is None and n_boards_required is None:
             self.set_n_boards_required(1)
 
-        self.set_up_machine_specifics(host_name)
+        self.check_machine_specifics()
         self.set_up_timings(machine_time_step, time_scale_factor)
 
         # if not set at all, set to 1 for real time execution.
