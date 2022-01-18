@@ -72,13 +72,9 @@ class SpiNNaker(AbstractSpinnakerBase):
         super().__init__(
             graph_label=graph_label,
             database_socket_addresses=database_socket_addresses,
-            n_chips_required=n_chips_required,
-            n_boards_required=n_boards_required,
             front_end_versions=front_end_versions)
 
-        if _is_allocated_machine() and \
-                n_chips_required is None and n_boards_required is None:
-            self.set_n_boards_required(1)
+        self._data_writer.set_n_required(n_boards_required, n_chips_required)
 
         self.set_up_machine_specifics(host_name)
         self._data_writer.set_up_timings(
