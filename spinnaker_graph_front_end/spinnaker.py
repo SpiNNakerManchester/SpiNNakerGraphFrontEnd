@@ -39,7 +39,7 @@ class SpiNNaker(AbstractSpinnakerBase):
     __slots__ = ()
 
     def __init__(
-            self, executable_finder, host_name=None, graph_label=None,
+            self, executable_finder, graph_label=None,
             database_socket_addresses=(),
             n_chips_required=None, n_boards_required=None,
             time_scale_factor=None, machine_time_step=None):
@@ -48,8 +48,6 @@ class SpiNNaker(AbstractSpinnakerBase):
             How to find the executables
         :type executable_finder:
             ~spinn_front_end_common.utilities.utility_objs.ExecutableFinder
-        :param str host_name:
-            The SpiNNaker machine address
         :param str graph_label:
             A label for the graph
         :param database_socket_addresses:
@@ -68,11 +66,6 @@ class SpiNNaker(AbstractSpinnakerBase):
             The size of the machine time step, in microseconds
         """
         # DSG algorithm store for user defined algorithms
-
-        if host_name:
-            logger.warning("The host_name from setup call is overriding "
-                           "the machine_name defined in the config file")
-            set_config("Machine", "machine_name", host_name)
 
         # At import time change the default FailedState
         setup_configs()
