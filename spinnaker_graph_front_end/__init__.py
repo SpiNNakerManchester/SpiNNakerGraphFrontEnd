@@ -81,7 +81,7 @@ __all__ = ['LivePacketGather', 'ReverseIpTagMultiCastSource', 'MachineEdge',
            'buffer_manager', 'machine', 'is_allocated_machine']
 
 
-def setup(hostname=None, graph_label=None, model_binary_module=None,
+def setup(graph_label=None, model_binary_module=None,
           model_binary_folder=None, database_socket_addresses=(),
           n_chips_required=None, n_boards_required=None,
           time_scale_factor=None, machine_time_step=None):
@@ -91,9 +91,6 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
     .. note::
         This must be called *before* the other functions in this API.
 
-    :param str hostname:
-        the hostname of the SpiNNaker machine to operate on
-        (overrides the ``machine_name`` from the cfg file).
     :param str graph_label:
         a human readable label for the graph (used mainly in reports)
     :param ~types.ModuleType model_binary_module:
@@ -146,7 +143,7 @@ def setup(hostname=None, graph_label=None, model_binary_module=None,
 
     # set up the spinnaker object; after this, _sim() returns this object
     SpiNNaker(
-        host_name=hostname, graph_label=graph_label,
+        graph_label=graph_label,
         executable_finder=executable_finder,
         database_socket_addresses=database_socket_addresses,
         n_chips_required=n_chips_required,
