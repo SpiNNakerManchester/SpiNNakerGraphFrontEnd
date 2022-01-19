@@ -81,6 +81,7 @@ class SpiNNaker(AbstractSpinnakerBase):
             front_end_versions=front_end_versions)
 
         self.set_up_timings(machine_time_step, time_scale_factor)
+        self.check_machine_specifics()
 
         # if not set at all, set to 1 for real time execution.
         if self.time_scale_factor is None:
