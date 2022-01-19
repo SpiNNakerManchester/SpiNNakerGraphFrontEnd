@@ -87,11 +87,6 @@ class SpiNNaker(AbstractSpinnakerBase):
             n_boards_required=n_boards_required,
             front_end_versions=front_end_versions)
 
-        if _is_allocated_machine() and \
-                n_chips_required is None and n_boards_required is None:
-            self.set_n_boards_required(1)
-
-        self.check_machine_specifics()
         self.set_up_timings(machine_time_step, time_scale_factor)
 
         # if not set at all, set to 1 for real time execution.
@@ -103,13 +98,6 @@ class SpiNNaker(AbstractSpinnakerBase):
                     f'{self.machine_time_step} '
                     f'micro-seconds.')
 
-    @property
-    def is_allocated_machine(self):
-        """ Is this an allocated machine? Otherwise, it is local.
-
-        :rtype: bool
-        """
-        return _is_allocated_machine()
-
     def __repr__(self):
-        return f"SpiNNaker Graph Front End object for machine {self.hostname}"
+        return f"SpiNNaker Graph Front End object " \
+               f"for machine {self._ipaddress}"
