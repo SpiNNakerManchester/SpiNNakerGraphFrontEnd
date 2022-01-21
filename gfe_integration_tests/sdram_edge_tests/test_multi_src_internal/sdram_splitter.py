@@ -96,8 +96,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
             # allocate res
             resource_tracker.allocate_constrained_resources(
                 pre_vertex.resources_required,
-                self._governed_app_vertex.constraints,
-                vertices=[pre_vertex])
+                self._governed_app_vertex.constraint)
 
             # add to mac graph
             machine_graph.add_vertex(pre_vertex)
