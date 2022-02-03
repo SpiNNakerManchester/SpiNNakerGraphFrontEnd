@@ -18,6 +18,7 @@ from spinn_utilities.config_holder import get_config_str
 from spinn_utilities.log import FormatAdapter
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
+from spinn_front_end_common.interface.provenance import ProvenanceWriter
 from spinnaker_graph_front_end.config_setup import setup_configs
 from ._version import __version__ as version
 
@@ -67,12 +68,12 @@ class SpiNNaker(AbstractSpinnakerBase):
         # At import time change the default FailedState
         setup_configs()
 
-        front_end_versions = [("SpiNNakerGraphFrontEnd", version)]
-
         super().__init__(
             graph_label=graph_label,
-            database_socket_addresses=database_socket_addresses,
-            front_end_versions=front_end_versions)
+            database_socket_addresses=database_socket_addresses)
+
+        with ProvenanceWriter() as db:
+            db.insert_version("SpiNNakerGraphFrontEnd", version)
 
         self._data_writer.set_n_required(n_boards_required, n_chips_required)
 
