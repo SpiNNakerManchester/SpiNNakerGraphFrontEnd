@@ -80,8 +80,7 @@ def _do_transfer(gatherer, gatherers, monitor_vertices, receiver_placement,
             placement=receiver_placement,
             memory_address=get_data_region_address(
                 writer_placement, DataRegions.DATA),
-            length_in_bytes=writer_vertex.mbs_in_bytes,
-            fixed_routes=None)
+            length_in_bytes=writer_vertex.mbs_in_bytes)
 
 
 def _get_gatherer_for_monitor(monitor):
