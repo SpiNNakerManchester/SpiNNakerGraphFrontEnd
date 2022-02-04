@@ -50,7 +50,7 @@ for placement in sorted(front_end.placements().placements,
 
     if isinstance(placement.vertex, TemplateVertex):
         template_info = placement.vertex.read()
-        logger.info("{}, {}, {} > {}",
-            placement.x, placement.y, placement.p, template_info)
+        logger.info("{}, {}, {} > {}", placement.x, placement.y,
+                    placement.p, template_info)
 
 front_end.stop()
