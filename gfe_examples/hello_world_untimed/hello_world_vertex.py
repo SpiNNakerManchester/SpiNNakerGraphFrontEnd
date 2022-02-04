@@ -15,6 +15,7 @@
 
 from enum import IntEnum
 import logging
+from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, VariableSDRAM
@@ -34,7 +35,7 @@ from spinnaker_graph_front_end.utilities.data_utils import (
     generate_steps_system_data_region)
 import numpy
 
-logger = logging.getLogger(__name__)
+logger = FormatAdapter(logging.getLogger(__name__))
 
 
 class DataRegions(IntEnum):

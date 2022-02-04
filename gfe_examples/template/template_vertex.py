@@ -15,6 +15,7 @@
 
 from enum import IntEnum
 import logging
+from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import CPUCyclesPerTickResource, DTCMResource
@@ -32,7 +33,7 @@ from spinn_front_end_common.interface.buffer_management import (
     recording_utilities)
 from spinnaker_graph_front_end.utilities import SimulatorVertex
 
-logger = logging.getLogger(__name__)
+logger = FormatAdapter(logging.getLogger(__name__))
 
 PARTITION_ID = "DATA"
 
@@ -52,6 +53,7 @@ class RecordingChannels(IntEnum):
 class TemplateVertex(
         SimulatorVertex, MachineDataSpecableVertex,
         AbstractReceiveBuffersToHost):
+    # pylint: disable=unused-argument
 
     # The number of bytes for the has_key flag and the key
     TRANSMISSION_REGION_N_BYTES = 2 * BYTES_PER_WORD
