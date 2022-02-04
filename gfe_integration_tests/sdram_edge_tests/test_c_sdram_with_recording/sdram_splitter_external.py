@@ -63,8 +63,7 @@ class SDRAMSplitterExternal(SplitterOneToOneLegacy):
     def create_machine_vertices(
             self, resource_tracker, machine_graph, app_graph):
         resource_tracker.allocate_constrained_resources(
-            self._resources_required, self._governed_app_vertex.constraints,
-            vertices=[self._machine_vertex])
+            self._resources_required, self._governed_app_vertex.constraints)
         machine_graph.add_vertex(self._machine_vertex)
         if len(app_graph.get_outgoing_edge_partitions_starting_at_vertex(
                 self._governed_app_vertex)) != 0:
