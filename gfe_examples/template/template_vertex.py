@@ -36,13 +36,11 @@ logger = FormatAdapter(logging.getLogger(__name__))
 
 PARTITION_ID = "DATA"
 
-
 # TODO: Update with the regions of the application
 class DataRegions(IntEnum):
     SYSTEM = 0
     TRANSMISSION = 1
     RECORDED_DATA = 2
-
 
 # TODO: Update with the recording channels of the application
 class RecordingChannels(IntEnum):
@@ -52,6 +50,7 @@ class RecordingChannels(IntEnum):
 class TemplateVertex(
         SimulatorVertex, MachineDataSpecableVertex,
         AbstractReceiveBuffersToHost):
+    # pylint: disable=unused-argument
 
     # The number of bytes for the has_key flag and the key
     TRANSMISSION_REGION_N_BYTES = 2 * BYTES_PER_WORD
