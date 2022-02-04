@@ -15,6 +15,7 @@
 
 from enum import IntEnum
 import logging
+from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, ConstantSDRAM
@@ -30,7 +31,7 @@ from spinn_front_end_common.interface.buffer_management.recording_utilities \
         get_recording_header_size)
 from spinnaker_graph_front_end.utilities import SimulatorVertex
 
-logger = logging.getLogger(__name__)
+logger = FormatAdapter(logging.getLogger(__name__))
 
 
 class DataRegions(IntEnum):
