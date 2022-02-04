@@ -36,11 +36,13 @@ logger = FormatAdapter(logging.getLogger(__name__))
 
 PARTITION_ID = "DATA"
 
+
 # TODO: Update with the regions of the application
 class DataRegions(IntEnum):
     SYSTEM = 0
     TRANSMISSION = 1
     RECORDED_DATA = 2
+
 
 # TODO: Update with the recording channels of the application
 class RecordingChannels(IntEnum):
