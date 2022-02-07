@@ -287,9 +287,7 @@ def add_machine_vertex_instance(vertex_to_add):
 
 
 def _new_edge_label():
-    sim = _sim()
-    label = f"Edge {sim.none_labelled_edge_count}"
-    sim.increment_none_labelled_edge_count()
+    label = f"Edge {FecDataView.get_next_none_labelled_edge_number()}"
     return label
 
 
