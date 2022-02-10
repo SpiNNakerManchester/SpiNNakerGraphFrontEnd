@@ -19,10 +19,11 @@ Template for a Graph Front End program on SpiNNaker
 
 import logging
 import os
+from spinn_utilities.log import FormatAdapter
 import spinnaker_graph_front_end as front_end
 from gfe_examples.template.template_vertex import TemplateVertex
 
-logger = logging.getLogger(__name__)
+logger = FormatAdapter(logging.getLogger(__name__))
 
 front_end.setup(
     n_chips_required=None, model_binary_folder=os.path.dirname(__file__))
@@ -49,7 +50,7 @@ for placement in sorted(front_end.placements().placements,
 
     if isinstance(placement.vertex, TemplateVertex):
         template_info = placement.vertex.read()
-        logger.info("{}, {}, {} > {}".format(
-            placement.x, placement.y, placement.p, template_info))
+        logger.info("{}, {}, {} > {}", placement.x, placement.y,
+                    placement.p, template_info)
 
 front_end.stop()

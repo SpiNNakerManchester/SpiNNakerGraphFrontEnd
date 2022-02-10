@@ -23,7 +23,6 @@ class SdramTestVertex(SimpleTestVertex):
     """
     test vertex with fixed_sdram_value
     """
-    # pylint: disable=unused-argument
 
     def __init__(self, n_atoms, fixed_sdram_value=None):
         super().__init__(n_atoms=n_atoms)
