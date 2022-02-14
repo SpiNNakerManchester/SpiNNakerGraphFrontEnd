@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from spinn_utilities.config_holder import get_config_bool
 from pacman.model.graphs.machine import MachineEdge
 import spinnaker_graph_front_end as front_end
 from gfe_examples.Conways.partitioned_example_a_no_vis_no_buffer.\
@@ -88,7 +89,7 @@ front_end.run(runtime)
 recorded_data = dict()
 
 # get the data per vertex
-if not front_end.use_virtual_machine():
+if not get_config_bool("Machine", "virtual_board"):
     for x in range(0, MAX_X_SIZE_OF_FABRIC):
         for y in range(0, MAX_Y_SIZE_OF_FABRIC):
             recorded_data[x, y] = vertices[x, y].get_data()

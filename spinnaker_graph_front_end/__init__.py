@@ -460,18 +460,6 @@ def is_allocated_machine():
     return _sim().is_allocated_machine
 
 
-def use_virtual_machine():
-    """ Get whether a virtual machine is being used.
-
-    .. note::
-        Virtual machines cannot execute any programs.
-        However, they can be used to check whether code can be deployed.
-
-    :rtype: bool
-    """
-    return _sim().use_virtual_board
-
-
 # Thin wrappers for documentation purposes only
 class MachineEdge(_ME):
     """
