@@ -39,13 +39,11 @@ class SpiNNaker(AbstractSpinnakerBase):
     """
 
     def __init__(
-            self, host_name=None, graph_label=None,
+            self, graph_label=None,
             database_socket_addresses=(),
             n_chips_required=None, n_boards_required=None,
             time_scale_factor=None, machine_time_step=None):
         """
-        :param str host_name:
-            The SpiNNaker machine address
         :param str graph_label:
             A label for the graph
         :param database_socket_addresses:
@@ -77,18 +75,9 @@ class SpiNNaker(AbstractSpinnakerBase):
 
         self._data_writer.set_n_required(n_boards_required, n_chips_required)
 
-        self.set_up_machine_specifics(host_name)
         self._data_writer.set_up_timings(
             machine_time_step, time_scale_factor, 1)
 
-    @property
-    def is_allocated_machine(self):
-        """ Is this an allocated machine? Otherwise, it is local.
-
-        :rtype: bool
-        """
-        return _is_allocated_machine()
-
     def __repr__(self):
-        return "SpiNNaker Graph Front End object for machine {}".format(
-            self._hostname)
+        return f"SpiNNaker Graph Front End object " \
+               f"for machine {self._ipaddress}"
