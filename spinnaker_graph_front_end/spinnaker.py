@@ -16,6 +16,7 @@
 import logging
 from spinn_utilities.config_holder import get_config_str
 from spinn_utilities.log import FormatAdapter
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
 from spinn_front_end_common.interface.provenance import ProvenanceWriter
@@ -79,5 +80,8 @@ class SpiNNaker(AbstractSpinnakerBase):
             machine_time_step, time_scale_factor, 1)
 
     def __repr__(self):
-        return f"SpiNNaker Graph Front End object " \
-               f"for machine {self._ipaddress}"
+        if FecDataView.has_ipaddress():
+            return f"SpiNNaker Graph Front End object " \
+                   f"for machine {FecDataView.get_ipaddress()}"
+        else:
+            return "SpiNNaker Graph Front End object no machine set"
