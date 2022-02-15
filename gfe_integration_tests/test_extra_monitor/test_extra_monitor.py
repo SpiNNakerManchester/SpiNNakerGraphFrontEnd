@@ -55,7 +55,7 @@ def check_data(data):
 def _get_monitor_placement(monitor_vertices, placement):
     """ Get the receiver placement on the same chip as a given placement
     """
-    for vertex in monitor_vertices:
+    for vertex in monitor_vertices.values():
         vtx_plt = sim.placements().get_placement_of_vertex(vertex)
         if vtx_plt.x == placement.x and vtx_plt.y == placement.y:
             return vtx_plt
@@ -115,10 +115,9 @@ class TestExtraMonitors(BaseTestCase):
         writer_placement = sim.placements().get_placement_of_vertex(
             writer_vertex)
 
-        print("here")
         # pylint: disable=protected-access
         monitor_vertices = sim.globals_variables.get_simulator().\
-            _extra_monitor_vertices
+            _extra_monitor_to_chip_mapping
 
         receiver_plt = _get_monitor_placement(
             monitor_vertices, writer_placement)
