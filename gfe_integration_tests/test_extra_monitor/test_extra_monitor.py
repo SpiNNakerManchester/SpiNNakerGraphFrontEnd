@@ -18,6 +18,7 @@ import os
 from spinn_front_end_common.utilities.utility_calls import (
     get_region_base_address_offset)
 from spinn_front_end_common.utilities.helpful_functions import n_word_struct
+from spinn_front_end_common.utility_models import StreamingContextManager
 import spinnaker_graph_front_end as sim
 from gfe_integration_tests.test_extra_monitor.sdram_writer import (
     SDRAMWriter, DataRegions)
@@ -54,7 +55,7 @@ def check_data(data):
 def _get_monitor_placement(monitor_vertices, placement):
     """ Get the receiver placement on the same chip as a given placement
     """
-    for vertex in monitor_vertices:
+    for vertex in monitor_vertices.values():
         vtx_plt = sim.placements().get_placement_of_vertex(vertex)
         if vtx_plt.x == placement.x and vtx_plt.y == placement.y:
             return vtx_plt
@@ -73,7 +74,7 @@ def _do_transfer(gatherer, gatherers, monitor_vertices, receiver_placement,
     :param SDRAMWriter writer_vertex:
     :rtype: bytearray
     """
-    with gatherer.streaming(
+    with StreamingContextManager(
             gatherers.values(), sim.transceiver(), monitor_vertices,
             sim.placements()):
         return gatherer.get_data(
@@ -114,10 +115,9 @@ class TestExtraMonitors(BaseTestCase):
         writer_placement = sim.placements().get_placement_of_vertex(
             writer_vertex)
 
-        print("here")
         # pylint: disable=protected-access
         monitor_vertices = sim.globals_variables.get_simulator().\
-            _extra_monitor_vertices
+            _extra_monitor_to_chip_mapping
 
         receiver_plt = _get_monitor_placement(
             monitor_vertices, writer_placement)
