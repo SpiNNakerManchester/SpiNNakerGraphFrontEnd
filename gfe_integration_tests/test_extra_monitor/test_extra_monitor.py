@@ -75,9 +75,7 @@ def _do_transfer(gatherer, gatherers, monitor_vertices, receiver_placement,
     :param SDRAMWriter writer_vertex:
     :rtype: bytearray
     """
-    with StreamingContextManager(
-            gatherers.values(), FecDataView.get_transceiver(),
-            monitor_vertices, FecDataView.get_placements()):
+    with StreamingContextManager(gatherers.values(), monitor_vertices):
         return gatherer.get_data(
             extra_monitor=receiver_placement.vertex,
             placement=receiver_placement,
