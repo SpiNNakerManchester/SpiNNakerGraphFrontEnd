@@ -53,29 +53,15 @@ def check_data(data):
             start_value += 1
 
 
-def _get_monitor_placement(monitor_vertices, placement):
-    """ Get the receiver placement on the same chip as a given placement
-    """
-    for vertex in monitor_vertices.values():
-        vtx_plt = FecDataView.get_placement_of_vertex(vertex)
-        if vtx_plt.x == placement.x and vtx_plt.y == placement.y:
-            return vtx_plt
-    raise Exception("no extra monitor on same chip as {}".format(placement))
-
-
-def _do_transfer(gatherer, gatherers, monitor_vertices, receiver_placement,
-                 writer_placement, writer_vertex):
+def _do_transfer(gatherer, receiver_placement, writer_placement, writer_vertex):
     """
     :param .DataSpeedUpPacketGatherMachineVertex gatherer:
-    :param dict(tuple(int,int),.DataSpeedUpPacketGatherMachineVertex) \
-            gatherers:
-    :param list(.ExtraMonitorSupportMachineVertex) monitor_vertices:
     :param .Placement receiver_placement:
     :param .Placement writer_placement:
     :param SDRAMWriter writer_vertex:
     :rtype: bytearray
     """
-    with StreamingContextManager(gatherers.values(), monitor_vertices):
+    with StreamingContextManager(FecDataView.iterate_gathers()):
         return gatherer.get_data(
             extra_monitor=receiver_placement.vertex,
             placement=receiver_placement,
@@ -87,11 +73,9 @@ def _do_transfer(gatherer, gatherers, monitor_vertices, receiver_placement,
 def _get_gatherer_for_monitor(monitor):
     placement = FecDataView.get_placement_of_vertex(monitor)
     chip = FecDataView.get_chip_at(placement.x, placement.y)
-    the_sim = sim.globals_variables.get_simulator()
     # pylint: disable=protected-access
-    gatherers = the_sim._vertex_to_ethernet_connected_chip_mapping
-    return (
-        gatherers, gatherers[chip.nearest_ethernet_x, chip.nearest_ethernet_y])
+    return FecDataView.get_gatherer_by_xy(
+        chip.nearest_ethernet_x, chip.nearest_ethernet_y)
 
 
 class TestExtraMonitors(BaseTestCase):
@@ -114,17 +98,16 @@ class TestExtraMonitors(BaseTestCase):
             writer_vertex)
 
         # pylint: disable=protected-access
-        monitor_vertices = sim.globals_variables.get_simulator().\
-            _extra_monitor_to_chip_mapping
 
-        receiver_plt = _get_monitor_placement(
-            monitor_vertices, writer_placement)
-        gatherers, gatherer = _get_gatherer_for_monitor(writer_vertex)
+        receiver_monitor = FecDataView.get_monitor_by_xy(
+            writer_placement.x, writer_placement.y)
+        receiver_plt = FecDataView.get_placement_of_vertex(receiver_monitor)
+        gatherer = _get_gatherer_for_monitor(writer_vertex)
 
         start = float(time.time())
 
-        data = _do_transfer(gatherer, gatherers, monitor_vertices, receiver_plt,
-                            writer_placement, writer_vertex)
+        data = _do_transfer(
+            gatherer, receiver_plt, writer_placement, writer_vertex)
 
         end = float(time.time())
 
