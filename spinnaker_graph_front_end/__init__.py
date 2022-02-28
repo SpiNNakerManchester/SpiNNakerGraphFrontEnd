@@ -147,7 +147,7 @@ def setup(graph_label=None, model_binary_module=None,
         n_boards_required=n_boards_required,
         machine_time_step=machine_time_step,
         time_scale_factor=time_scale_factor)
-    FecDataView.add_socket_addresses(database_socket_addresses)
+    FecDataView.add_database_socket_addresses(database_socket_addresses)
 
 
 def _sim():
@@ -386,7 +386,7 @@ def add_socket_address(
         notify_host_name=database_notify_host,
         notify_port_no=database_notify_port_num)
 
-    FecDataView.add_socket_address(database_socket)
+    FecDataView.add_database_socket_address(database_socket)
 
 
 def get_number_of_available_cores_on_machine():
