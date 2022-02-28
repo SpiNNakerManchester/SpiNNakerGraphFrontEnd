@@ -143,11 +143,11 @@ def setup(graph_label=None, model_binary_module=None,
     # set up the spinnaker object; after this, _sim() returns this object
     SpiNNaker(
         graph_label=graph_label,
-        database_socket_addresses=database_socket_addresses,
         n_chips_required=n_chips_required,
         n_boards_required=n_boards_required,
         machine_time_step=machine_time_step,
         time_scale_factor=time_scale_factor)
+    FecDataView.add_socket_addresses(database_socket_addresses)
 
 
 def _sim():

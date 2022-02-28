@@ -41,17 +41,11 @@ class SpiNNaker(AbstractSpinnakerBase):
 
     def __init__(
             self, graph_label=None,
-            database_socket_addresses=(),
             n_chips_required=None, n_boards_required=None,
             time_scale_factor=None, machine_time_step=None):
         """
         :param str graph_label:
             A label for the graph
-        :param database_socket_addresses:
-            Extra sockets that will want to be notified about the location of
-            the runtime database.
-        :type database_socket_addresses:
-            ~collections.abc.Iterable(~spinn_utilities.socket_address.SocketAddress)
         :param int n_chips_required:
             How many chips are required.
             *Prefer ``n_boards_required`` if possible.*
@@ -67,9 +61,7 @@ class SpiNNaker(AbstractSpinnakerBase):
         # At import time change the default FailedState
         setup_configs()
 
-        super().__init__(
-            graph_label=graph_label,
-            database_socket_addresses=database_socket_addresses)
+        super().__init__(graph_label=graph_label)
 
         with ProvenanceWriter() as db:
             db.insert_version("SpiNNakerGraphFrontEnd", version)
