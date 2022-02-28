@@ -241,7 +241,7 @@ def add_vertex_instance(vertex_to_add):
     :param ~pacman.model.graphs.application.ApplicationVertex vertex_to_add:
         vertex instance to add to the graph
     """
-    _sim().add_application_vertex(vertex_to_add)
+    FecDataView.add_vertex(vertex_to_add)
 
 
 def add_machine_vertex(
@@ -280,7 +280,7 @@ def add_machine_vertex_instance(vertex_to_add):
     :param ~pacman.model.graphs.machine.MachineVertex vertex_to_add:
         the vertex to add to the partitioned graph
     """
-    _sim().add_machine_vertex(vertex_to_add)
+    FecDataView.add_machine_vertex(vertex_to_add)
 
 
 def _new_edge_label():
@@ -326,7 +326,7 @@ def add_application_edge_instance(edge, partition_id):
     :param str partition_id:
         The ID of the partition that the edge belongs to.
     """
-    _sim().add_application_edge(edge, partition_id)
+    FecDataView.add_edge(edge, partition_id)
 
 
 def add_machine_edge(edge_type, edge_parameters, semantic_label, label=None):
@@ -367,7 +367,7 @@ def add_machine_edge_instance(edge, partition_id):
     :param str partition_id:
         The ID of the partition that the edge belongs to.
     """
-    _sim().add_machine_edge(edge, partition_id)
+    FecDataView.add_machine_edge(edge, partition_id)
 
 
 def add_socket_address(
@@ -386,7 +386,7 @@ def add_socket_address(
         notify_host_name=database_notify_host,
         notify_port_no=database_notify_port_num)
 
-    _sim().add_socket_address(database_socket)
+    FecDataView.add_socket_address(database_socket)
 
 
 def get_number_of_available_cores_on_machine():
