@@ -40,7 +40,7 @@ class SpiNNaker(AbstractSpinnakerBase):
     __slots__ = ()
 
     def __init__(
-            self, executable_finder, host_name=None, graph_label=None,
+            self, executable_finder, graph_label=None,
             database_socket_addresses=(),
             n_chips_required=None, n_boards_required=None,
             time_scale_factor=None, machine_time_step=None):
@@ -49,8 +49,6 @@ class SpiNNaker(AbstractSpinnakerBase):
             How to find the executables
         :type executable_finder:
             ~spinn_front_end_common.utilities.utility_objs.ExecutableFinder
-        :param str host_name:
-            The SpiNNaker machine address
         :param str graph_label:
             A label for the graph
         :param database_socket_addresses:
@@ -83,12 +81,8 @@ class SpiNNaker(AbstractSpinnakerBase):
         with ProvenanceWriter() as db:
             db.insert_version("SpiNNakerGraphFrontEnd", version)
 
-        if _is_allocated_machine() and \
-                n_chips_required is None and n_boards_required is None:
-            self.set_n_boards_required(1)
-
-        self.set_up_machine_specifics(host_name)
         self.set_up_timings(machine_time_step, time_scale_factor)
+        self.check_machine_specifics()
 
         # if not set at all, set to 1 for real time execution.
         if self.time_scale_factor is None:
@@ -99,14 +93,6 @@ class SpiNNaker(AbstractSpinnakerBase):
                     f'{self.machine_time_step} '
                     f'micro-seconds.')
 
-    @property
-    def is_allocated_machine(self):
-        """ Is this an allocated machine? Otherwise, it is local.
-
-        :rtype: bool
-        """
-        return _is_allocated_machine()
-
     def __repr__(self):
-        return "SpiNNaker Graph Front End object for machine {}".format(
-            self._hostname)
+        return f"SpiNNaker Graph Front End object " \
+               f"for machine {self._ipaddress}"
