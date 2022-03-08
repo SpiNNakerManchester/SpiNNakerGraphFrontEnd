@@ -403,7 +403,7 @@ def has_ran():
 
     :rtype: bool
     """
-    return _sim().has_ran
+    return FecDataView.is_ran_ever()
 
 
 def routing_infos():
