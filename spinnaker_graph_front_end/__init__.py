@@ -457,7 +457,7 @@ def is_allocated_machine():
 
     :rtype: bool
     """
-    return _sim().is_allocated_machine
+    return FecDataView.has_machine()
 
 
 # Thin wrappers for documentation purposes only
