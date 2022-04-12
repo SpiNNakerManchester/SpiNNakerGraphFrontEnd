@@ -78,8 +78,7 @@ setup(
                       'SpiNNMan == 1!6.0.1',
                       'SpiNNaker_PACMAN == 1!6.0.1',
                       'SpiNNaker_DataSpecification == 1!6.0.1',
-                      'SpiNNFrontEndCommon == 1!6.0.1',
-                      'lxml'],
+                      'SpiNNFrontEndCommon == 1!6.0.1'],
     maintainer="SpiNNakerTeam",
     maintainer_email="spinnakerusers@googlegroups.com"
 )
