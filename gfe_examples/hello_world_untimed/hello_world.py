@@ -35,14 +35,12 @@ front_end.setup(
 
 # Put HelloWorldVertex onto 16 cores
 total_number_of_cores = 16
-prints_per_run = 10
-runs = 2
+n_prints = 10
 for x in range(total_number_of_cores):
     front_end.add_machine_vertex_instance(
         HelloWorldVertex(label=f"Hello World {x}"))
 
-for _ in range(runs):
-    front_end.run_until_complete(prints_per_run)
+front_end.run_until_complete(n_prints)
 
 if not front_end.use_virtual_machine():
     for placement in sorted(front_end.placements().placements,
