@@ -130,15 +130,14 @@ def setup(graph_label=None, model_binary_module=None,
         parent_dir)
 
     # add the directories where the binaries are located
-    executable_finder = FecDataView.get_executable_finder()
     if model_binary_module is not None:
-        executable_finder.add_path(
+        FecDataView.register_binary_search_path(
             os.path.dirname(model_binary_module.__file__))
     elif model_binary_folder is not None:
-        executable_finder.add_path(model_binary_folder)
+        FecDataView.register_binary_search_path(model_binary_folder)
     else:
         file_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-        executable_finder.add_path(file_dir)
+        FecDataView.register_binary_search_path(file_dir)
 
     # set up the spinnaker object; after this, _sim() returns this object
     SpiNNaker(
