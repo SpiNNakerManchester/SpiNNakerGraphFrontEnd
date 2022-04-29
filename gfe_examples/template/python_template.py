@@ -45,7 +45,7 @@ front_end.run(10)
 
 # set up placements (this is a simple example based on hello_world example
 # that should be edited to suit the application)
-for placement in sorted(front_end.placements(),
+for placement in sorted(front_end.placements().placements,
                         key=lambda p: (p.x, p.y, p.p)):
 
     if isinstance(placement.vertex, TemplateVertex):

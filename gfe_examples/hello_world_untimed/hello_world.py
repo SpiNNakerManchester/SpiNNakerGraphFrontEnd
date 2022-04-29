@@ -46,7 +46,7 @@ for _ in range(runs):
     front_end.run_until_complete(prints_per_run)
 
 if not get_config_bool("Machine", "virtual_board"):
-    for placement in sorted(front_end.placements(),
+    for placement in sorted(front_end.placements().placements,
                             key=lambda p: (p.x, p.y, p.p)):
 
         if isinstance(placement.vertex, HelloWorldVertex):
