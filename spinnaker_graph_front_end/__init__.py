@@ -12,7 +12,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from pacman.model.graphs.application.application_edge import ApplicationEdge
 """
 The API for running SpiNNaker simulations based on a basic (non-neural) graph.
 
@@ -56,6 +55,7 @@ from spinn_utilities.log import FormatAdapter
 from spinn_utilities.socket_address import SocketAddress
 from pacman.model.graphs.application.abstract import (
     AbstractOneAppOneMachineVertex)
+from pacman.model.graphs.application.application_edge import ApplicationEdge
 from spinn_front_end_common.utilities.utility_objs import ExecutableFinder
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utility_models import (
@@ -69,8 +69,8 @@ logger = FormatAdapter(logging.getLogger(__name__))
 
 
 __all__ = ['ReverseIpTagMultiCastSource',
-           'setup', 'run', 'stop', 'read_xml_file', 'add_vertex_instance',
-           'add_vertex', 'add_edge', 'add_edge_instance',
+           'setup', 'run', 'stop', 'add_vertex_instance',
+           'add_edge_instance',
            'add_socket_address', 'get_txrx',
            'has_ran', 'get_number_of_available_cores_on_machine',
            'no_machine_time_steps', 'application_graph',

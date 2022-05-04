@@ -29,7 +29,7 @@ boot_chip = machine.boot_chip
 boot_vertex = SyncTestVertex(True, f"Lead-{boot_chip.x},{boot_chip.y}",
                              [ChipAndCoreConstraint(boot_chip.x, boot_chip.y)])
 front_end.add_vertex_instance(boot_vertex)
-front_end.add_application_edge_instance(
+front_end.add_edge_instance(
     ApplicationEdge(boot_vertex, boot_vertex), SEND_PARTITION)
 
 for chip in machine.ethernet_connected_chips:
@@ -37,7 +37,7 @@ for chip in machine.ethernet_connected_chips:
         sync_vertex = SyncTestVertex(False, f"{chip.x},{chip.y}",
                                      [ChipAndCoreConstraint(chip.x, chip.y)])
         front_end.add_vertex_instance(sync_vertex)
-        front_end.add_application_edge_instance(
+        front_end.add_edge_instance(
             ApplicationEdge(boot_vertex, sync_vertex), SEND_PARTITION)
 
 front_end.run(10000)
