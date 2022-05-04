@@ -12,8 +12,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from pacman.model.graphs.application.abstract.abstract_one_app_one_machine_vertex import AbstractOneAppOneMachineVertex
-
+from pacman.model.graphs.application.application_edge import ApplicationEdge
 """
 The API for running SpiNNaker simulations based on a basic (non-neural) graph.
 
@@ -55,13 +54,12 @@ import logging
 import sys
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.socket_address import SocketAddress
-from pacman.model.graphs.application import ApplicationEdge, ApplicationVertex
+from pacman.model.graphs.application.abstract import (
+    AbstractOneAppOneMachineVertex)
 from spinn_front_end_common.utilities.utility_objs import ExecutableFinder
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utility_models import (
-    LivePacketGather as
-    _LPG, ReverseIpTagMultiCastSource as
-    _RIPTMCS)
+    ReverseIpTagMultiCastSource as _RIPTMCS)
 from spinnaker_graph_front_end._version import (
     __version__, __version_name__, __version_month__, __version_year__)
 from spinnaker_graph_front_end.spinnaker import SpiNNaker
@@ -70,7 +68,7 @@ from spinnaker_graph_front_end import spinnaker as gfe_file
 logger = FormatAdapter(logging.getLogger(__name__))
 
 
-__all__ = ['LivePacketGather', 'ReverseIpTagMultiCastSource',
+__all__ = ['ReverseIpTagMultiCastSource',
            'setup', 'run', 'stop', 'read_xml_file', 'add_vertex_instance',
            'add_vertex', 'add_edge', 'add_edge_instance',
            'add_socket_address', 'get_txrx',
@@ -228,8 +226,24 @@ def add_machine_vertex_instance(machine_vertex):
     :param ~pacman.model.graphs.machine.MachineVertex machine_vertex:
         The vertex to add
     """
-    _sim().add_application_vertex(AbstractOneAppOneMachineVertex(
-        machine_vertex, machine_vertex.label, constraints=()))
+    app_vertex = AbstractOneAppOneMachineVertex(
+        machine_vertex, machine_vertex.label, constraints=())
+    _sim().add_application_vertex(app_vertex)
+    machine_vertex._app_vertex = app_vertex
+
+
+def add_machine_edge_instance(edge, partition_id):
+    """ Add a machine edge instance to the graph.
+
+    :param ~pacman.model.graphs.machine.MachineEdge edge:
+        The edge to add
+    :param str partition_id:
+        The ID of the partition that the edge belongs to.
+    """
+    _sim().add_application_edge(
+        ApplicationEdge(
+            edge.pre_vertex.app_vertex, edge.post_vertex.app_vertex),
+        partition_id)
 
 
 def add_socket_address(
@@ -364,14 +378,6 @@ def use_virtual_machine():
     :rtype: bool
     """
     return _sim().use_virtual_board
-
-
-class LivePacketGather(_LPG):
-    """
-    For full documentation see
-    :py:class:`~spinn_front_end_common.utility_models.LivePacketGather`.
-    """
-    __slots__ = ()
 
 
 class ReverseIpTagMultiCastSource(_RIPTMCS):

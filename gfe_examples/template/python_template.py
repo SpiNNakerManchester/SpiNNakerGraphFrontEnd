@@ -35,10 +35,8 @@ total_number_of_cores = \
 
 # fill all cores with a Vertex each
 for x in range(0, total_number_of_cores):
-    front_end.add_machine_vertex(
-        TemplateVertex,
-        {},
-        label="Template program at x {}".format(x))
+    front_end.add_machine_vertex_instance(
+        TemplateVertex(label="Template program at x {}".format(x)))
 
 # run for a specified length of time
 front_end.run(10)

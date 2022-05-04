@@ -18,7 +18,6 @@ from spinn_utilities.overrides import overrides
 from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, VariableSDRAM
-from pacman.utilities.utility_calls import is_single
 from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
@@ -63,20 +62,28 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
 
         # app specific data items
         self._state = bool(state)
+        self._neighbours = set()
+
+    def add_neighbour(self, neighbour):
+        if neighbour == self:
+            raise Exception("Cannot add self as neighbour!")
+        self._neighbours.add(neighbour)
 
     @inject_items({"data_n_time_steps": "DataNTimeSteps"})
     @overrides(
         MachineDataSpecableVertex.generate_machine_data_specification,
         additional_arguments={"data_n_time_steps"})
     def generate_machine_data_specification(
-            self, spec, placement, machine_graph, routing_info, iptags,
+            self, spec, placement, graph, routing_info, iptags,
             reverse_iptags, data_n_time_steps):
         """
         :param ~.DataSpecificationGenerator spec:
-        :param ~.MachineGraph machine_graph:
+        :param ~.ApplicationGraph machine_graph:
         :param ~.RoutingInfo routing_info:
         """
         # pylint: disable=arguments-differ
+        if len(self._neighbours) != 8:
+            raise Exception(f"Only {len(self._neighbours)} neighbours, not 8")
 
         # Generate the system data region for simulation .c requirements
         generate_system_data_region(spec, DataRegions.SYSTEM, self)
@@ -97,27 +104,6 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
                   (data_n_time_steps * self.RECORDING_ELEMENT_SIZE)),
             label="results")
 
-        # check got right number of keys and edges going into me
-        partitions = machine_graph.\
-            get_multicast_edge_partitions_starting_at_vertex(self)
-        if not is_single(partitions):
-            raise ConfigurationException(
-                "Can only handle one type of partition.")
-
-        # check for duplicates
-        edges = list(machine_graph.get_edges_ending_at_vertex(self))
-        if len(edges) != 8:
-            raise ConfigurationException(
-                "I've not got the right number of connections. I have {} "
-                "instead of 8".format(
-                    len(machine_graph.get_edges_ending_at_vertex(self))))
-
-        for edge in edges:
-            if edge.pre_vertex == self:
-                raise ConfigurationException(
-                    "I'm connected to myself, this is deemed an error "
-                    "please fix.")
-
         # write key needed to transmit with
         key = routing_info.get_first_key_from_pre_vertex(
             self, self.PARTITION_ID)
@@ -132,8 +118,8 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
 
         # write neighbours data state
         spec.switch_write_focus(DataRegions.NEIGHBOUR_INITIAL_STATES)
-        alive = sum(edge.pre_vertex.state for edge in edges)
-        dead = sum(not edge.pre_vertex.state for edge in edges)
+        alive = sum(n.state for n in self._neighbours)
+        dead = sum(not n.state for n in self._neighbours)
         spec.write_value(alive)
         spec.write_value(dead)
 
