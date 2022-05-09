@@ -12,6 +12,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from .test_sdram_internal_edges import TestConstantSDRAMEdgeInsideOneAppVert
+from .sdram_splitter_internal import SDRAMSplitterInternal
 
-__all__ = ["TestConstantSDRAMEdgeInsideOneAppVert"]
+__all__ = ["SDRAMSplitterInternal"]

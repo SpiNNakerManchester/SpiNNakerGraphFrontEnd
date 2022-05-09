@@ -13,10 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from pacman.model.graphs.common import Slice
-from pacman.model.graphs.machine import (
-    SDRAMMachineEdge, SourceSegmentedSDRAMMachinePartition)
+from pacman.model.graphs.machine import SDRAMMachineEdge
 from pacman.model.partitioner_splitters.abstract_splitters import (
     AbstractSplitterCommon)
+from pacman.model.graphs.machine import ConstantSDRAMMachinePartition
 from spinn_utilities.overrides import overrides
 from gfe_integration_tests.sdram_edge_tests.common.\
     sdram_machine_vertex import SDRAMMachineVertex
@@ -35,17 +35,14 @@ class SDRAMSplitterInternal(AbstractSplitterCommon):
         "_app_edge",
         "_sdram_part"]
 
-    def __init__(self, partition_type):
+    def __init__(self):
         super().__init__()
-        self._partition_type = partition_type
         self._pre_vertex = None
         self._post_vertex = None
         self._pre_slice = None
         self._post_slice = None
         self._app_edge = None
         self._sdram_part = None
-        if self._partition_type == SourceSegmentedSDRAMMachinePartition:
-            raise Exception("this splitter not for this")
 
     @overrides(AbstractSplitterCommon.get_out_going_vertices)
     def get_out_going_vertices(self, partition_id):
@@ -67,16 +64,23 @@ class SDRAMSplitterInternal(AbstractSplitterCommon):
             SDRAMMachineVertex(
                 vertex_slice=self._pre_slice, label=None,
                 constraints=None, app_vertex=self._governed_app_vertex,
-                sdram_cost=self._governed_app_vertex.fixed_sdram_value))
+                sdram_cost=20))
         self._governed_app_vertex.remember_machine_vertex(self._pre_vertex)
-        chip_counter.add_core(self._pre_vertex.resources_required)
         self._post_vertex = (
             SDRAMMachineVertex(
                 vertex_slice=self._post_slice, label=None,
-                constraints=None, app_vertex=self._governed_app_vertex,
-                sdram_cost=self._governed_app_vertex.fixed_sdram_value))
+                constraints=None, app_vertex=self._governed_app_vertex))
         self._governed_app_vertex.remember_machine_vertex(self._post_vertex)
+
+        self._sdram_part = ConstantSDRAMMachinePartition(
+            identifier="sdram", pre_vertex=self._pre_vertex)
+        self._sdram_part.add_edge(SDRAMMachineEdge(
+            self._pre_vertex, self._post_vertex, label="sdram"))
+        self._pre_vertex.add_outgoing_sdram_partition(self._sdram_part)
+        self._post_vertex.add_incoming_sdram_partition(self._sdram_part)
+
         chip_counter.add_core(self._pre_vertex.resources_required)
+        chip_counter.add_core(self._post_vertex.resources_required)
 
     @overrides(AbstractSplitterCommon.get_out_going_slices)
     def get_out_going_slices(self):
@@ -96,9 +100,4 @@ class SDRAMSplitterInternal(AbstractSplitterCommon):
 
     @overrides(AbstractSplitterCommon.get_internal_sdram_partitions)
     def get_internal_sdram_partitions(self):
-        sdram_part = self._partition_type(
-            identifier="sdram", pre_vertex=self._pre_vertex,
-            label="sdram")
-        sdram_part.add_edge(SDRAMMachineEdge(
-            self._pre_vertex, self._post_vertex, label="sdram"))
-        return sdram_part
+        return [self._sdram_part]

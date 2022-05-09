@@ -18,6 +18,7 @@ from pacman.model.graphs.machine import SDRAMMachineEdge
 from pacman.model.partitioner_splitters.abstract_splitters import (
     AbstractSplitterCommon)
 from spinn_utilities.overrides import overrides
+from pacman.model.graphs.machine import SourceSegmentedSDRAMMachinePartition
 
 
 class SDRAMSplitter(AbstractSplitterCommon):
@@ -27,21 +28,18 @@ class SDRAMSplitter(AbstractSplitterCommon):
     N_VERTS = 3
 
     __slots__ = [
-        "_partition_type",
         "_pre_vertices",
         "_pre_slices",
         "_post_slice",
         "_post_vertex",
-        "_app_edge"]
+        "_partition"]
 
-    def __init__(self, partition_type):
+    def __init__(self):
         super().__init__()
-        self._partition_type = partition_type
         self._pre_vertices = list()
         self._post_vertex = None
         self._pre_slices = list()
         self._post_slice = None
-        self._app_edge = None
 
     @overrides(AbstractSplitterCommon.get_out_going_vertices)
     def get_out_going_vertices(self, partition_id):
@@ -66,19 +64,27 @@ class SDRAMSplitter(AbstractSplitterCommon):
         self._post_vertex = (
             SDRAMMachineVertex(
                 vertex_slice=self._post_slice, label=None,
-                constraints=None, app_vertex=self._governed_app_vertex,
-                sdram_cost=self._governed_app_vertex.fixed_sdram_value))
+                constraints=None, app_vertex=self._governed_app_vertex))
         self._governed_app_vertex.remember_machine_vertex(self._post_vertex)
-        chip_counter.add_core(self._post_vertex.resources_required)
 
         for vertex_slice in self._pre_slices:
             pre_vertex = (
                 SDRAMMachineVertex(
                     vertex_slice=vertex_slice, label=None,
                     constraints=None, app_vertex=self._governed_app_vertex,
-                    sdram_cost=self._governed_app_vertex.fixed_sdram_value))
+                    sdram_cost=20))
             self._governed_app_vertex.remember_machine_vertex(pre_vertex)
             self._pre_vertices.append(pre_vertex)
+
+        self._partition = SourceSegmentedSDRAMMachinePartition(
+            identifier="sdram", pre_vertices=self._pre_vertices)
+        self._post_vertex.add_incoming_sdram_partition(self._partition)
+        chip_counter.add_core(self._post_vertex.resources_required)
+        for pre_vertex in self._pre_vertices:
+            edge = SDRAMMachineEdge(
+                pre_vertex, self._post_vertex, label="sdram")
+            self._partition.add_edge(edge)
+            pre_vertex.add_outgoing_sdram_partition(self._partition)
             chip_counter.add_core(pre_vertex.resources_required)
 
     @overrides(AbstractSplitterCommon.get_out_going_slices)
@@ -99,12 +105,4 @@ class SDRAMSplitter(AbstractSplitterCommon):
 
     @overrides(AbstractSplitterCommon.get_internal_sdram_partitions)
     def get_internal_sdram_partitions(self):
-        partition = self._partition_type(
-            identifier="sdram", pre_vertices=self._pre_vertices,
-            label="sdram")
-        for pre_vertex in self._pre_vertices:
-            edge = SDRAMMachineEdge(
-                pre_vertex, self._post_vertex, label="sdram",
-                app_edge=self._app_edge)
-            partition.add_edge(edge)
-        return [partition]
+        return [self._partition]

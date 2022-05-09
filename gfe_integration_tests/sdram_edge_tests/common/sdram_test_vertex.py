@@ -15,27 +15,18 @@
 
 """ test vertex used in many unit tests
 """
-from spinn_utilities.overrides import overrides
-from pacman_test_objects import SimpleTestVertex, MockMachineVertex
+from pacman.model.graphs.application import ApplicationVertex
 
 
-class SdramTestVertex(SimpleTestVertex):
+class SdramTestVertex(ApplicationVertex):
     """
     test vertex with fixed_sdram_value
     """
 
-    def __init__(self, n_atoms, fixed_sdram_value=None):
-        super().__init__(n_atoms=n_atoms)
-        self._fixed_sdram_value = fixed_sdram_value
+    def __init__(self, n_atoms):
+        super().__init__()
+        self.__n_atoms = n_atoms
 
     @property
-    def fixed_sdram_value(self):
-        return self._fixed_sdram_value
-
-    @overrides(SimpleTestVertex.create_machine_vertex)
-    def create_machine_vertex(
-            self, vertex_slice, resources_required, label=None,
-            constraints=None):
-        return MockMachineVertex(
-            resources_required, label, constraints, self, vertex_slice,
-            sdram_requirement=self._fixed_sdram_value)
+    def n_atoms(self):
+        return self.__n_atoms
