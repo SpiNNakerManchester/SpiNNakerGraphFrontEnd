@@ -13,13 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from gfe_integration_tests.sdram_edge_tests.common import SDRAMMachineVertex
-from pacman.executor.injection_decorator import inject_items
-from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.common import Slice
 from pacman.model.graphs.machine import SDRAMMachineEdge
 from pacman.model.partitioner_splitters.abstract_splitters import (
     AbstractSplitterCommon)
 from spinn_utilities.overrides import overrides
+from pacman.model.graphs.machine import SourceSegmentedSDRAMMachinePartition
 
 
 class SDRAMSplitter(AbstractSplitterCommon):
@@ -29,41 +28,28 @@ class SDRAMSplitter(AbstractSplitterCommon):
     N_VERTS = 3
 
     __slots__ = [
-        "_partition_type",
         "_pre_vertices",
         "_pre_slices",
         "_post_slice",
         "_post_vertex",
-        "_app_edge"]
+        "_partition"]
 
-    def __init__(self, partition_type):
+    def __init__(self):
         super().__init__()
-        self._partition_type = partition_type
         self._pre_vertices = list()
         self._post_vertex = None
         self._pre_slices = list()
         self._post_slice = None
-        self._app_edge = None
 
     @overrides(AbstractSplitterCommon.get_out_going_vertices)
-    def get_out_going_vertices(self, edge, outgoing_edge_partition):
-        if edge == self._app_edge:
-            return {}
-        return {self._pre_vertices: [SDRAMMachineEdge]}
+    def get_out_going_vertices(self, partition_id):
+        return [self._post_vertex]
 
     @overrides(AbstractSplitterCommon.get_in_coming_vertices)
-    def get_in_coming_vertices(
-            self, edge, outgoing_edge_partition, src_machine_vertex):
-        if edge == self._app_edge:
-            return {}
-        return {self._post_vertex: [SDRAMMachineEdge]}
+    def get_in_coming_vertices(self, partition_id):
+        return self._pre_vertices
 
-    @inject_items({"app_graph": "ApplicationGraph"})
-    @overrides(
-        AbstractSplitterCommon.create_machine_vertices,
-        additional_arguments=["app_graph"])
-    def create_machine_vertices(
-            self, resource_tracker, machine_graph, app_graph):
+    def create_machine_vertices(self, chip_counter):
 
         # slices
         self._post_slice = Slice(
@@ -78,55 +64,36 @@ class SDRAMSplitter(AbstractSplitterCommon):
         self._post_vertex = (
             SDRAMMachineVertex(
                 vertex_slice=self._post_slice, label=None,
-                constraints=None, app_vertex=self._governed_app_vertex,
-                sdram_cost=self._governed_app_vertex.fixed_sdram_value))
-        resource_tracker.allocate_constrained_resources(
-            self._post_vertex.resources_required,
-            self._governed_app_vertex.constraints)
-        machine_graph.add_vertex(self._post_vertex)
+                constraints=None, app_vertex=self._governed_app_vertex))
+        self._governed_app_vertex.remember_machine_vertex(self._post_vertex)
 
         for vertex_slice in self._pre_slices:
             pre_vertex = (
                 SDRAMMachineVertex(
                     vertex_slice=vertex_slice, label=None,
                     constraints=None, app_vertex=self._governed_app_vertex,
-                    sdram_cost=self._governed_app_vertex.fixed_sdram_value))
+                    sdram_cost=20))
+            self._governed_app_vertex.remember_machine_vertex(pre_vertex)
             self._pre_vertices.append(pre_vertex)
 
-            # allocate res
-            resource_tracker.allocate_constrained_resources(
-                pre_vertex.resources_required,
-                self._governed_app_vertex.constraints)
-
-            # add to mac graph
-            machine_graph.add_vertex(pre_vertex)
-
-        # add outgoing edge partition to mac graph
-        machine_graph.add_outgoing_edge_partition(self._partition_type(
-            identifier="sdram", pre_vertices=self._pre_vertices,
-            label="sdram"))
-
-        # add edge between the two verts app and mac
-        self._app_edge = ApplicationEdge(
-            self._governed_app_vertex, self._governed_app_vertex)
-        app_graph.add_edge(self._app_edge, "sdram_app")
-
-        # mac add
+        self._partition = SourceSegmentedSDRAMMachinePartition(
+            identifier="sdram", pre_vertices=self._pre_vertices)
+        self._post_vertex.add_incoming_sdram_partition(self._partition)
+        chip_counter.add_core(self._post_vertex.resources_required)
         for pre_vertex in self._pre_vertices:
             edge = SDRAMMachineEdge(
-                pre_vertex, self._post_vertex, label="sdram",
-                app_edge=self._app_edge)
-            machine_graph.add_edge(edge, "sdram")
-
-        return [self._post_vertex].extend(self._pre_vertices)
+                pre_vertex, self._post_vertex, label="sdram")
+            self._partition.add_edge(edge)
+            pre_vertex.add_outgoing_sdram_partition(self._partition)
+            chip_counter.add_core(pre_vertex.resources_required)
 
     @overrides(AbstractSplitterCommon.get_out_going_slices)
     def get_out_going_slices(self):
-        return self._post_vertex, True
+        return [self._post_vertex.vertex_slice]
 
     @overrides(AbstractSplitterCommon.get_in_coming_slices)
     def get_in_coming_slices(self):
-        return self._pre_vertices, True
+        return [v.vertex_slice for v in self._pre_vertices]
 
     @overrides(AbstractSplitterCommon.machine_vertices_for_recording)
     def machine_vertices_for_recording(self, variable_to_record):
@@ -135,3 +102,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
     @overrides(AbstractSplitterCommon.reset_called)
     def reset_called(self):
         pass
+
+    @overrides(AbstractSplitterCommon.get_internal_sdram_partitions)
+    def get_internal_sdram_partitions(self):
+        return [self._partition]

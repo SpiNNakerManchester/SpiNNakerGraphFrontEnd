@@ -80,6 +80,7 @@ for x in range(0, MAX_X_SIZE_OF_FABRIC):
                 MachineEdge(
                     vertices[x, y], vertices[dest_x, dest_y],
                     label=compass), ConwayBasicCell.PARTITION_ID)
+            vertices[dest_x, dest_y].add_neighbour(vertices[x, y])
 
 # run the simulation
 front_end.run(runtime)

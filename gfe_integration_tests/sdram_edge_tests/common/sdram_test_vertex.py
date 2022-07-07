@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021 The University of Manchester
+# Copyright (c) 2017-2019 The University of Manchester
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,6 +12,21 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from .test_sdram_constant_edges import TestConstantSDRAMEdgeBetweenTwoAppVerts
 
-__all__ = ["TestConstantSDRAMEdgeBetweenTwoAppVerts"]
+""" test vertex used in many unit tests
+"""
+from pacman.model.graphs.application import ApplicationVertex
+
+
+class SdramTestVertex(ApplicationVertex):
+    """
+    test vertex with fixed_sdram_value
+    """
+
+    def __init__(self, n_atoms):
+        super().__init__()
+        self.__n_atoms = n_atoms
+
+    @property
+    def n_atoms(self):
+        return self.__n_atoms

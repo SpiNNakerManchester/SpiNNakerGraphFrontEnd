@@ -64,7 +64,7 @@ class HelloWorldVertex(
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
-            self, spec, placement, machine_graph, routing_info, iptags,
+            self, spec, placement, graph, routing_info, iptags,
             reverse_iptags):
         # Generate the system data region for simulation .c requirements
         self.generate_system_region(spec)
