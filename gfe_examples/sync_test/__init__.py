@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021 The University of Manchester
+# Copyright (c) 2017-2019 The University of Manchester
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,9 +12,5 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from .sdram_splitter_external import SDRAMSplitterExternal
-from .sdram_machine_recorded_vertex import SDRAMMachineRecordedVertex
-from .test_sdram_recording import TestSDRAMEdgeWithRecording
 
-__all__ = ["SDRAMMachineRecordedVertex", "SDRAMSplitterExternal",
-           "TestSDRAMEdgeWithRecording"]
+__author__ = 'Arthur Ceccotti'

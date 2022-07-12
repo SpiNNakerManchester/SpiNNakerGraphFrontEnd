@@ -21,7 +21,6 @@ from pacman.utilities.utility_calls import is_single
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
-from spinn_front_end_common.utilities.exceptions import ConfigurationException
 from spinn_front_end_common.utilities.helpful_functions import (
     locate_memory_region_for_placement, n_word_struct)
 from spinn_front_end_common.abstract_models.impl import (
@@ -32,6 +31,8 @@ from spinn_front_end_common.interface.buffer_management.recording_utilities\
     import (
         get_recording_data_constant_size, get_recording_header_size)
 from spinnaker_graph_front_end.utilities import SimulatorVertex
+from spinnaker_graph_front_end.utilities.data_utils import (
+    generate_system_data_region)
 
 
 # Regions for populations
@@ -71,23 +72,22 @@ class ConwayBasicCell(
 
         # app specific data items
         self._state = bool(state)
+        self._neighbours = set()
+
+    def add_neighbour(self, neighbour):
+        if neighbour == self:
+            raise Exception("Cannot add self as neighbour!")
+        self._neighbours.add(neighbour)
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec, placement, iptags, reverse_iptags):
-        """
-
-        :param ~.DataSpecificationGenerator spec:
-        :param placement:
-        :param iptags:
-        :param reverse_iptags:
-        :return:
-        """
-
-        machine_graph = FecDataView.get_runtime_machine_graph()
         # pylint: disable=arguments-differ
+        if len(self._neighbours) != 8:
+            raise Exception(f"Only {len(self._neighbours)} neighbours, not 8")
+
         # Generate the system data region for simulation .c requirements
-        self.generate_system_region(spec)
+        generate_system_data_region(spec, DataRegions.SYSTEM, self)
 
         # reserve memory regions
         spec.reserve_memory_region(
@@ -106,27 +106,6 @@ class ConwayBasicCell(
             [self.RECORDING_ELEMENT_SIZE *
              FecDataView.get_max_run_time_steps()])
 
-        # check got right number of keys and edges going into me
-        partitions = machine_graph.\
-            get_multicast_edge_partitions_starting_at_vertex(self)
-        if not is_single(partitions):
-            raise ConfigurationException(
-                "Can only handle one type of partition.")
-
-        # check for duplicates
-        edges = list(machine_graph.get_edges_ending_at_vertex(self))
-        if len(edges) != 8:
-            raise ConfigurationException(
-                "I've not got the right number of connections. I have {} "
-                "instead of 8".format(
-                    len(machine_graph.get_edges_ending_at_vertex(self))))
-
-        for edge in edges:
-            if edge.pre_vertex == self:
-                raise ConfigurationException(
-                    "I'm connected to myself, this is deemed an error"
-                    " please fix.")
-
         # write key needed to transmit with
         key = FecDataView.get_routing_infos().get_first_key_from_pre_vertex(
             self, self.PARTITION_ID)
@@ -137,12 +116,12 @@ class ConwayBasicCell(
 
         # write state value
         spec.switch_write_focus(DataRegions.STATE)
-        spec.write_value(int(self._state))
+        spec.write_value(int(bool(self._state)))
 
         # write neighbours data state
         spec.switch_write_focus(DataRegions.NEIGHBOUR_INITIAL_STATES)
-        alive = sum(edge.pre_vertex.state for edge in edges)
-        dead = sum(not edge.pre_vertex.state for edge in edges)
+        alive = sum(n.state for n in self._neighbours)
+        dead = sum(not n.state for n in self._neighbours)
         spec.write_value(alive)
         spec.write_value(dead)
 

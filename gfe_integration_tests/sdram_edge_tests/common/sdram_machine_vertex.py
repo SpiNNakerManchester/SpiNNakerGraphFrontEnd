@@ -15,7 +15,7 @@
 from enum import IntEnum
 
 from pacman.model.graphs import AbstractSupportsSDRAMEdges
-from pacman.model.graphs.machine import (AbstractSDRAMPartition, MachineVertex)
+from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, ConstantSDRAM
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models.impl import (
@@ -44,27 +44,48 @@ class SDRAMMachineVertex(
     SDRAM_PARTITION_COUNTERS = 1 * BYTES_PER_WORD
 
     def __init__(self, label=None, constraints=None,
-                 app_vertex=None, vertex_slice=None, sdram_cost=0):
+                 app_vertex=None, vertex_slice=None, sdram_cost=None):
         super().__init__(
             label=label, constraints=constraints, app_vertex=app_vertex,
             vertex_slice=vertex_slice)
-        self._sdram_cost = sdram_cost
+        self.__sdram_cost = sdram_cost
+        self.__incoming_sdram_partitions = list()
+        self.__outgoing_sdram_partitions = list()
+
+    def add_incoming_sdram_partition(self, partition):
+        self.__incoming_sdram_partitions.append(partition)
+
+    def add_outgoing_sdram_partition(self, partition):
+        self.__outgoing_sdram_partitions.append(partition)
 
     @property
+
+
     @overrides(MachineVertex.resources_required)
     def resources_required(self):
-        app_graph = FecDataView.get_runtime_graph()
-        out_edges = app_graph.get_edges_starting_at_vertex(self.app_vertex)
-        in_edges = app_graph.get_edges_starting_at_vertex(self.app_vertex)
+        if (len(self.__incoming_sdram_partitions) +
+                len(self.__outgoing_sdram_partitions) == 0):
+            raise Exception("Isolated SDRAM vertex!")
+        # Account for only the outgoing requirements here; other end will
+        # account for incoming
+        outgoing_sdram_requirements = sum(
+            part.total_sdram_requirements()
+            for part in self.__outgoing_sdram_partitions)
         return ResourceContainer(sdram=ConstantSDRAM(
-            SIMULATION_N_BYTES + (
-                len(out_edges) * self.SDRAM_PARTITION_BASE_DSG_SIZE) +
-            (len(in_edges) * self.SDRAM_PARTITION_BASE_DSG_SIZE) +
-            (self.SDRAM_PARTITION_COUNTERS * 2) + SARK_PER_MALLOC_SDRAM_USAGE))
+            SIMULATION_N_BYTES +
+            (len(self.__outgoing_sdram_partitions) *
+             self.SDRAM_PARTITION_BASE_DSG_SIZE) +
+            (len(self.__incoming_sdram_partitions) *
+             self.SDRAM_PARTITION_BASE_DSG_SIZE) +
+            (self.SDRAM_PARTITION_COUNTERS * 2) + SARK_PER_MALLOC_SDRAM_USAGE +
+            outgoing_sdram_requirements))
 
     @overrides(AbstractSupportsSDRAMEdges.sdram_requirement)
     def sdram_requirement(self, sdram_machine_edge):
-        return self._sdram_cost
+        if self.__sdram_cost is None:
+            raise Exception("This vertex has no cost so is not expected to"
+                            " appear as the pre-vertex to an SDRAM edge!")
+        return self.__sdram_cost
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
     def get_binary_file_name(self):
@@ -77,8 +98,6 @@ class SDRAMMachineVertex(
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec, placement, iptags, reverse_iptags):
-
-        machine_graph = FecDataView.get_runtime_machine_graph()
         # reserve memory regions
         spec.reserve_memory_region(
             region=DataRegions.SYSTEM, size=SIMULATION_N_BYTES,
@@ -90,14 +109,8 @@ class SDRAMMachineVertex(
             self.get_binary_file_name()))
 
         # get counters
-        outgoing_partitions = list(
-            machine_graph.get_sdram_edge_partitions_starting_at_vertex(
-                self))
-        n_out_sdrams = len(outgoing_partitions)
-
-        incoming_partitions = list(
-            machine_graph.get_sdram_edge_partitions_ending_at_vertex(self))
-        n_in_sdrams = len(incoming_partitions)
+        n_out_sdrams = len(self.__outgoing_sdram_partitions)
+        n_in_sdrams = len(self.__incoming_sdram_partitions)
 
         # reserve memory regions
         spec.reserve_memory_region(
@@ -114,7 +127,7 @@ class SDRAMMachineVertex(
         # add outs
         spec.switch_write_focus(DataRegions.SDRAM_OUT)
         spec.write_value(n_out_sdrams)
-        for outgoing_partition in outgoing_partitions:
+        for outgoing_partition in self.__outgoing_sdram_partitions:
             spec.write_value(
                 outgoing_partition.get_sdram_base_address_for(self))
             spec.write_value(
@@ -123,10 +136,9 @@ class SDRAMMachineVertex(
         # add ins
         spec.switch_write_focus(DataRegions.SDRAM_IN)
         spec.write_value(n_in_sdrams)
-        for incoming_partition in incoming_partitions:
-            if isinstance(incoming_partition, AbstractSDRAMPartition):
-                spec.write_value(
-                    incoming_partition.get_sdram_base_address_for(self))
-                spec.write_value(
-                    incoming_partition.get_sdram_size_of_region_for(self))
+        for incoming_partition in self.__incoming_sdram_partitions:
+            spec.write_value(
+                incoming_partition.get_sdram_base_address_for(self))
+            spec.write_value(
+                incoming_partition.get_sdram_size_of_region_for(self))
         spec.end_specification()
