@@ -56,7 +56,7 @@ from spinn_utilities.socket_address import SocketAddress
 from pacman.model.graphs.application.abstract import (
     AbstractOneAppOneMachineVertex)
 from pacman.model.graphs.application.application_edge import ApplicationEdge
-from spinn_front_end_common.utilities.utility_objs import ExecutableFinder
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utility_models import (
     ReverseIpTagMultiCastSource as _RIPTMCS)
@@ -68,14 +68,11 @@ from spinnaker_graph_front_end import spinnaker as gfe_file
 logger = FormatAdapter(logging.getLogger(__name__))
 
 
-__all__ = ['ReverseIpTagMultiCastSource',
-           'setup', 'run', 'stop', 'add_vertex_instance',
-           'add_edge_instance',
-           'add_socket_address', 'get_txrx',
-           'has_ran', 'get_number_of_available_cores_on_machine',
-           'no_machine_time_steps', 'application_graph',
-           'routing_infos', 'placements', 'transceiver',
-           'buffer_manager', 'machine', 'is_allocated_machine']
+__all__ = ['add_edge_instance', 'add_socket_address', 'add_vertex_instance',
+           'buffer_manager', 'get_number_of_available_cores_on_machine',
+           'has_ran', 'is_allocated_machine', 'machine', 'placements',
+           'ReverseIpTagMultiCastSource', 'routing_infos', 'run', 'setup',
+           'stop']
 
 
 def setup(graph_label=None, model_binary_module=None,
@@ -128,25 +125,23 @@ def setup(graph_label=None, model_binary_module=None,
         parent_dir)
 
     # add the directories where the binaries are located
-    executable_finder = ExecutableFinder()
     if model_binary_module is not None:
-        executable_finder.add_path(
+        FecDataView.register_binary_search_path(
             os.path.dirname(model_binary_module.__file__))
     elif model_binary_folder is not None:
-        executable_finder.add_path(model_binary_folder)
+        FecDataView.register_binary_search_path(model_binary_folder)
     else:
         file_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-        executable_finder.add_path(file_dir)
+        FecDataView.register_binary_search_path(file_dir)
 
     # set up the spinnaker object; after this, _sim() returns this object
     SpiNNaker(
         graph_label=graph_label,
-        executable_finder=executable_finder,
-        database_socket_addresses=database_socket_addresses,
         n_chips_required=n_chips_required,
         n_boards_required=n_boards_required,
         machine_time_step=machine_time_step,
         time_scale_factor=time_scale_factor)
+    FecDataView.add_database_socket_addresses(database_socket_addresses)
 
 
 def _sim():
@@ -199,13 +194,11 @@ def add_vertex_instance(vertex_to_add):
     :param ~pacman.model.graphs.application.ApplicationVertex vertex_to_add:
         vertex instance to add to the graph
     """
-    _sim().add_application_vertex(vertex_to_add)
+    FecDataView.add_vertex(vertex_to_add)
 
 
 def _new_edge_label():
-    sim = _sim()
-    label = f"Edge {sim.none_labelled_edge_count}"
-    sim.increment_none_labelled_edge_count()
+    label = f"Edge {FecDataView.get_next_none_labelled_edge_number()}"
     return label
 
 
@@ -217,7 +210,7 @@ def add_edge_instance(edge, partition_id):
     :param str partition_id:
         The ID of the partition that the edge belongs to.
     """
-    _sim().add_application_edge(edge, partition_id)
+    FecDataView.add_edge(edge, partition_id)
 
 
 def add_machine_vertex_instance(machine_vertex):
@@ -228,7 +221,7 @@ def add_machine_vertex_instance(machine_vertex):
     """
     app_vertex = AbstractOneAppOneMachineVertex(
         machine_vertex, machine_vertex.label, constraints=())
-    _sim().add_application_vertex(app_vertex)
+    FecDataView.add_vertex(app_vertex)
     machine_vertex._app_vertex = app_vertex
 
 
@@ -240,7 +233,7 @@ def add_machine_edge_instance(edge, partition_id):
     :param str partition_id:
         The ID of the partition that the edge belongs to.
     """
-    _sim().add_application_edge(
+    FecDataView.add_edge(
         ApplicationEdge(
             edge.pre_vertex.app_vertex, edge.post_vertex.app_vertex),
         partition_id)
@@ -262,15 +255,7 @@ def add_socket_address(
         notify_host_name=database_notify_host,
         notify_port_no=database_notify_port_num)
 
-    _sim().add_socket_address(database_socket)
-
-
-def get_txrx():
-    """ Get the transceiver used by the tool chain.
-
-    :rtype: ~spinnman.transceiver.Transceiver
-    """
-    return _sim().transceiver
+    FecDataView.add_database_socket_address(database_socket)
 
 
 def get_number_of_available_cores_on_machine():
@@ -287,23 +272,7 @@ def has_ran():
 
     :rtype: bool
     """
-    return _sim().has_ran
-
-
-def no_machine_time_steps():
-    """ Get the number of time/simulation steps executed.
-
-    :rtype: int
-    """
-    return _sim().no_machine_time_steps
-
-
-def application_graph():
-    """ Get the unpartitioned graph.
-
-    :rtype: ~pacman.model.graphs.application.ApplicationGraph
-    """
-    return _sim().application_graph
+    return FecDataView.is_ran_ever()
 
 
 def routing_infos():
@@ -311,7 +280,7 @@ def routing_infos():
 
     :rtype: ~pacman.model.routing_info.RoutingInfo
     """
-    return _sim().routing_infos
+    return FecDataView.get_routing_infos()
 
 
 def placements():
@@ -319,15 +288,7 @@ def placements():
 
     :rtype: ~pacman.model.placements.Placements
     """
-    return _sim().placements
-
-
-def transceiver():
-    """ Get the transceiver, for talking directly to the SpiNNaker system.
-
-    :rtype: ~spinnman.transceiver.Transceiver
-    """
-    return _sim().transceiver
+    return FecDataView.get_placements()
 
 
 def tags():
@@ -335,7 +296,7 @@ def tags():
 
     :rtype: ~pacman.model.tags.Tags
     """
-    return _sim().tags
+    return FecDataView.get_tags()
 
 
 def buffer_manager():
@@ -343,7 +304,7 @@ def buffer_manager():
 
     :rtype: ~spinn_front_end_common.interface.buffer_management.BufferManager
     """
-    return _sim().buffer_manager
+    return FecDataView.get_buffer_manager()
 
 
 def machine():
@@ -357,7 +318,7 @@ def machine():
         "please use the following function call, as it is more reliable and "
         "takes into account software resources as well:\n\n"
         "get_number_of_available_cores_on_machine()")
-    return _sim().machine
+    return FecDataView.get_machine()
 
 
 def is_allocated_machine():
@@ -365,19 +326,7 @@ def is_allocated_machine():
 
     :rtype: bool
     """
-    return _sim().is_allocated_machine
-
-
-def use_virtual_machine():
-    """ Get whether a virtual machine is being used.
-
-    .. note::
-        Virtual machines cannot execute any programs.
-        However, they can be used to check whether code can be deployed.
-
-    :rtype: bool
-    """
-    return _sim().use_virtual_board
+    return FecDataView.has_machine()
 
 
 class ReverseIpTagMultiCastSource(_RIPTMCS):

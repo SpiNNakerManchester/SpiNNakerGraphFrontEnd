@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2019 The University of Manchester
+# Copyright (c) 2017-2022 The University of Manchester
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,9 +15,9 @@
 
 import time
 import os
-from spinn_front_end_common.utilities.utility_calls import (
-    get_region_base_address_offset)
-from spinn_front_end_common.utilities.helpful_functions import n_word_struct
+from spinn_front_end_common.data import FecDataView
+from spinn_front_end_common.utilities.helpful_functions import (
+    get_region_base_address_offset, n_word_struct)
 from spinn_front_end_common.utility_models import StreamingContextManager
 import spinnaker_graph_front_end as sim
 from gfe_integration_tests.test_extra_monitor.sdram_writer import (
@@ -28,8 +28,9 @@ _GATHERER_MAP = 'VertexToEthernetConnectedChipMapping'
 _TRANSFER_SIZE_MEGABYTES = 20
 
 
-def get_data_region_address(transceiver, placement, region):
+def get_data_region_address(placement, region):
     # Get the App Data for the core
+    transceiver = FecDataView.get_transceiver()
     app_data_base_address = transceiver.get_cpu_information_from_core(
         placement.x, placement.y, placement.p).user[0]
 
@@ -52,48 +53,29 @@ def check_data(data):
             start_value += 1
 
 
-def _get_monitor_placement(monitor_vertices, placement):
-    """ Get the receiver placement on the same chip as a given placement
-    """
-    for vertex in monitor_vertices.values():
-        vtx_plt = sim.placements().get_placement_of_vertex(vertex)
-        if vtx_plt.x == placement.x and vtx_plt.y == placement.y:
-            return vtx_plt
-    raise Exception("no extra monitor on same chip as {}".format(placement))
-
-
-def _do_transfer(gatherer, gatherers, monitor_vertices, receiver_placement,
-                 writer_placement, writer_vertex):
+def _do_transfer(gatherer, receiver_placement, writer_placement, writer_vertex):
     """
     :param .DataSpeedUpPacketGatherMachineVertex gatherer:
-    :param dict(tuple(int,int),.DataSpeedUpPacketGatherMachineVertex) \
-            gatherers:
-    :param list(.ExtraMonitorSupportMachineVertex) monitor_vertices:
     :param .Placement receiver_placement:
     :param .Placement writer_placement:
     :param SDRAMWriter writer_vertex:
     :rtype: bytearray
     """
-    with StreamingContextManager(
-            gatherers.values(), sim.transceiver(), monitor_vertices,
-            sim.placements()):
+    with StreamingContextManager(FecDataView.iterate_gathers()):
         return gatherer.get_data(
             extra_monitor=receiver_placement.vertex,
             placement=receiver_placement,
             memory_address=get_data_region_address(
-                sim.transceiver(), writer_placement, DataRegions.DATA),
-            length_in_bytes=writer_vertex.mbs_in_bytes,
-            fixed_routes=None)
+                writer_placement, DataRegions.DATA),
+            length_in_bytes=writer_vertex.mbs_in_bytes)
 
 
 def _get_gatherer_for_monitor(monitor):
-    placement = sim.placements().get_placement_of_vertex(monitor)
-    chip = sim.machine().get_chip_at(placement.x, placement.y)
-    the_sim = sim.globals_variables.get_simulator()
+    placement = FecDataView.get_placement_of_vertex(monitor)
+    chip = FecDataView.get_chip_at(placement.x, placement.y)
     # pylint: disable=protected-access
-    gatherers = the_sim._vertex_to_ethernet_connected_chip_mapping
-    return (
-        gatherers, gatherers[chip.nearest_ethernet_x, chip.nearest_ethernet_y])
+    return FecDataView.get_gatherer_by_xy(
+        chip.nearest_ethernet_x, chip.nearest_ethernet_y)
 
 
 class TestExtraMonitors(BaseTestCase):
@@ -112,21 +94,20 @@ class TestExtraMonitors(BaseTestCase):
         sim.add_machine_vertex_instance(writer_vertex)
         sim.run(12)
 
-        writer_placement = sim.placements().get_placement_of_vertex(
+        writer_placement = FecDataView.get_placement_of_vertex(
             writer_vertex)
 
         # pylint: disable=protected-access
-        monitor_vertices = sim.globals_variables.get_simulator().\
-            _extra_monitor_to_chip_mapping
 
-        receiver_plt = _get_monitor_placement(
-            monitor_vertices, writer_placement)
-        gatherers, gatherer = _get_gatherer_for_monitor(writer_vertex)
+        receiver_monitor = FecDataView.get_monitor_by_xy(
+            writer_placement.x, writer_placement.y)
+        receiver_plt = FecDataView.get_placement_of_vertex(receiver_monitor)
+        gatherer = _get_gatherer_for_monitor(writer_vertex)
 
         start = float(time.time())
 
-        data = _do_transfer(gatherer, gatherers, monitor_vertices, receiver_plt,
-                            writer_placement, writer_vertex)
+        data = _do_transfer(
+            gatherer, receiver_plt, writer_placement, writer_vertex)
 
         end = float(time.time())
 

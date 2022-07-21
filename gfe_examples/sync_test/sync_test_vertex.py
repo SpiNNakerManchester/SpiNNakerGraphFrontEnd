@@ -18,8 +18,8 @@ import logging
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
-from pacman.executor.injection_decorator import inject_items
 from pacman.model.resources import ResourceContainer, ConstantSDRAM
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
 from spinn_front_end_common.abstract_models import (
@@ -72,11 +72,9 @@ class SyncTestMachineVertex(MachineVertex, AbstractHasAssociatedBinary,
 
         return resources
 
-    @inject_items({"routing_info": "RoutingInfos"})
     @overrides(
-        AbstractGeneratesDataSpecification.generate_data_specification,
-        additional_arguments={"routing_info"})
-    def generate_data_specification(self, spec, placement, routing_info):
+        AbstractGeneratesDataSpecification.generate_data_specification)
+    def generate_data_specification(self, spec, placement):
         # Generate the system data region for simulation .c requirements
         generate_system_data_region(spec, DataRegions.SYSTEM.value, self)
 
@@ -86,6 +84,7 @@ class SyncTestMachineVertex(MachineVertex, AbstractHasAssociatedBinary,
         if not self._lead:
             spec.write_value(0)
         else:
+            routing_info = FecDataView.get_routing_infos()
             spec.write_value(routing_info.get_first_key_from_pre_vertex(
                 self, SEND_PARTITION))
 

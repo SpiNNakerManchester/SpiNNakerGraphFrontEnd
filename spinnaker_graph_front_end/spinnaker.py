@@ -16,6 +16,7 @@
 import logging
 from spinn_utilities.config_holder import get_config_str
 from spinn_utilities.log import FormatAdapter
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
 from spinn_front_end_common.interface.provenance import ProvenanceWriter
@@ -37,25 +38,14 @@ class SpiNNaker(AbstractSpinnakerBase):
         You should not normally instantiate this directly from user code.
         Call :py:func:`~spinnaker_graph_front_end.setup` instead.
     """
-    __slots__ = ()
 
     def __init__(
-            self, executable_finder, graph_label=None,
-            database_socket_addresses=(),
+            self, graph_label=None,
             n_chips_required=None, n_boards_required=None,
             time_scale_factor=None, machine_time_step=None):
         """
-        :param executable_finder:
-            How to find the executables
-        :type executable_finder:
-            ~spinn_front_end_common.utilities.utility_objs.ExecutableFinder
         :param str graph_label:
             A label for the graph
-        :param database_socket_addresses:
-            Extra sockets that will want to be notified about the location of
-            the runtime database.
-        :type database_socket_addresses:
-            ~collections.abc.Iterable(~spinn_utilities.socket_address.SocketAddress)
         :param int n_chips_required:
             How many chips are required.
             *Prefer ``n_boards_required`` if possible.*
@@ -71,28 +61,19 @@ class SpiNNaker(AbstractSpinnakerBase):
         # At import time change the default FailedState
         setup_configs()
 
-        super().__init__(
-            executable_finder=executable_finder,
-            graph_label=graph_label,
-            database_socket_addresses=database_socket_addresses,
-            n_chips_required=n_chips_required,
-            n_boards_required=n_boards_required)
+        super().__init__(graph_label=graph_label)
 
         with ProvenanceWriter() as db:
             db.insert_version("SpiNNakerGraphFrontEnd", version)
 
-        self.set_up_timings(machine_time_step, time_scale_factor)
-        self.check_machine_specifics()
+        self._data_writer.set_n_required(n_boards_required, n_chips_required)
 
-        # if not set at all, set to 1 for real time execution.
-        if self.time_scale_factor is None:
-            self.time_scale_factor = 1
-        logger.info(f'Setting time scale factor to '
-                    f'{self.time_scale_factor}.')
-        logger.info(f'Setting machine time step to '
-                    f'{self.machine_time_step} '
-                    f'micro-seconds.')
+        self._data_writer.set_up_timings(
+            machine_time_step, time_scale_factor, 1)
 
     def __repr__(self):
-        return f"SpiNNaker Graph Front End object " \
-               f"for machine {self._ipaddress}"
+        if FecDataView.has_ipaddress():
+            return f"SpiNNaker Graph Front End object " \
+                   f"for machine {FecDataView.get_ipaddress()}"
+        else:
+            return "SpiNNaker Graph Front End object no machine set"

@@ -64,8 +64,7 @@ class HelloWorldVertex(
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
-            self, spec, placement, graph, routing_info, iptags,
-            reverse_iptags):
+            self, spec, placement, iptags, reverse_iptags):
         # Generate the system data region for simulation .c requirements
         self.generate_system_region(spec)
 
@@ -91,6 +90,6 @@ class HelloWorldVertex(
         return [Channels.HELLO]
 
     @overrides(AbstractReceiveBuffersToHost.get_recording_region_base_address)
-    def get_recording_region_base_address(self, txrx, placement):
+    def get_recording_region_base_address(self, placement):
         return locate_memory_region_for_placement(
-            placement, DataRegions.STRING_DATA, txrx)
+            placement, DataRegions.STRING_DATA)

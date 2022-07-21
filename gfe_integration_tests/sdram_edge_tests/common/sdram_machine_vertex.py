@@ -20,6 +20,7 @@ from pacman.model.resources import ResourceContainer, ConstantSDRAM
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models.impl import (
     MachineDataSpecableVertex)
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utilities.constants import (
     SIMULATION_N_BYTES, BYTES_PER_WORD, SARK_PER_MALLOC_SDRAM_USAGE)
@@ -58,6 +59,9 @@ class SDRAMMachineVertex(
         self.__outgoing_sdram_partitions.append(partition)
 
     @property
+
+
+    @overrides(MachineVertex.resources_required)
     def resources_required(self):
         if (len(self.__incoming_sdram_partitions) +
                 len(self.__outgoing_sdram_partitions) == 0):
@@ -93,9 +97,7 @@ class SDRAMMachineVertex(
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
-            self, spec, placement, graph, routing_info, iptags,
-            reverse_iptags):
-
+            self, spec, placement, iptags, reverse_iptags):
         # reserve memory regions
         spec.reserve_memory_region(
             region=DataRegions.SYSTEM, size=SIMULATION_N_BYTES,

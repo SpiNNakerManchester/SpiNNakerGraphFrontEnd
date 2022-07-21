@@ -15,9 +15,9 @@
 
 from enum import IntEnum
 from spinn_utilities.overrides import overrides
-from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, VariableSDRAM
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
@@ -69,19 +69,10 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
             raise Exception("Cannot add self as neighbour!")
         self._neighbours.add(neighbour)
 
-    @inject_items({"data_n_time_steps": "DataNTimeSteps"})
     @overrides(
-        MachineDataSpecableVertex.generate_machine_data_specification,
-        additional_arguments={"data_n_time_steps"})
+        MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
-            self, spec, placement, graph, routing_info, iptags,
-            reverse_iptags, data_n_time_steps):
-        """
-        :param ~.DataSpecificationGenerator spec:
-        :param ~.ApplicationGraph machine_graph:
-        :param ~.RoutingInfo routing_info:
-        """
-        # pylint: disable=arguments-differ
+            self, spec, placement, iptags, reverse_iptags):
         if len(self._neighbours) != 8:
             raise Exception(f"Only {len(self._neighbours)} neighbours, not 8")
 
@@ -101,11 +92,12 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         spec.reserve_memory_region(
             region=DataRegions.RESULTS,
             size=(self.RECORDING_HEADER_SIZE +
-                  (data_n_time_steps * self.RECORDING_ELEMENT_SIZE)),
+                  (FecDataView.get_max_run_time_steps() *
+                   self.RECORDING_ELEMENT_SIZE)),
             label="results")
 
         # write key needed to transmit with
-        key = routing_info.get_first_key_from_pre_vertex(
+        key = FecDataView.get_routing_infos().get_first_key_from_pre_vertex(
             self, self.PARTITION_ID)
 
         spec.switch_write_focus(DataRegions.TRANSMISSIONS)
@@ -127,13 +119,13 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         spec.end_specification()
 
     def get_data(self):
-        txrx = self.front_end.transceiver()
+        txrx = FecDataView.get_transceiver()
         placement = self.placement
-        n_steps = self.front_end.no_machine_time_steps()
+        n_steps = FecDataView.get_current_run_timesteps()
         # Get the data region base address where results are stored for the
         # core
         record_region_base_address = locate_memory_region_for_placement(
-            placement, DataRegions.RESULTS, txrx)
+            placement, DataRegions.RESULTS)
 
         # find how many bytes are needed to be read
         number_of_bytes_to_read = txrx.read_word(

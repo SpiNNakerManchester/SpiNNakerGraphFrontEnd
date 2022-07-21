@@ -15,9 +15,9 @@
 
 from enum import IntEnum
 from spinn_utilities.overrides import overrides
-from pacman.executor.injection_decorator import inject_items
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, VariableSDRAM
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
 from spinn_front_end_common.utilities.helpful_functions import (
@@ -78,18 +78,9 @@ class ConwayBasicCell(
             raise Exception("Cannot add self as neighbour!")
         self._neighbours.add(neighbour)
 
-    @inject_items({"data_n_time_steps": "DataNTimeSteps"})
-    @overrides(
-        MachineDataSpecableVertex.generate_machine_data_specification,
-        additional_arguments={"data_n_time_steps"})
+    @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
-            self, spec, placement, graph, routing_info, iptags,
-            reverse_iptags, data_n_time_steps):
-        """
-        :param ~.DataSpecificationGenerator spec:
-        :param ~.ApplicationGraph machine_graph:
-        :param ~.RoutingInfo routing_info:
-        """
+            self, spec, placement, iptags, reverse_iptags):
         # pylint: disable=arguments-differ
         if len(self._neighbours) != 8:
             raise Exception(f"Only {len(self._neighbours)} neighbours, not 8")
@@ -111,10 +102,11 @@ class ConwayBasicCell(
         # get recorded buffered regions sorted
         self.generate_recording_region(
             spec, DataRegions.RESULTS,
-            [self.RECORDING_ELEMENT_SIZE * data_n_time_steps])
+            [self.RECORDING_ELEMENT_SIZE *
+             FecDataView.get_max_run_time_steps()])
 
         # write key needed to transmit with
-        key = routing_info.get_first_key_from_pre_vertex(
+        key = FecDataView.get_routing_infos().get_first_key_from_pre_vertex(
             self, self.PARTITION_ID)
 
         spec.switch_write_focus(DataRegions.TRANSMISSIONS)
@@ -178,6 +170,6 @@ class ConwayBasicCell(
         return [Channels.STATE_LOG]
 
     @overrides(AbstractReceiveBuffersToHost.get_recording_region_base_address)
-    def get_recording_region_base_address(self, txrx, placement):
+    def get_recording_region_base_address(self, placement):
         return locate_memory_region_for_placement(
-            placement, DataRegions.RESULTS, txrx)
+            placement, DataRegions.RESULTS)

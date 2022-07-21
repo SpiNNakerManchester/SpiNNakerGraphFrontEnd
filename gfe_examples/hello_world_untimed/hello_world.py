@@ -23,6 +23,7 @@ We then fetch the written data and print it on the python console.
 
 import logging
 import os
+from spinn_utilities.config_holder import get_config_bool
 from spinn_utilities.log import FormatAdapter
 import spinnaker_graph_front_end as front_end
 from gfe_examples.hello_world_untimed.hello_world_vertex import (
@@ -44,7 +45,7 @@ for x in range(total_number_of_cores):
 for _ in range(runs):
     front_end.run_until_complete(prints_per_run)
 
-if not front_end.use_virtual_machine():
+if not get_config_bool("Machine", "virtual_board"):
     for placement in sorted(front_end.placements().placements,
                             key=lambda p: (p.x, p.y, p.p)):
 

@@ -19,6 +19,7 @@ from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, VariableSDRAM
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
 from spinn_front_end_common.utilities.helpful_functions import (
@@ -33,7 +34,6 @@ from spinnaker_graph_front_end.utilities import SimulatorVertex
 from spinnaker_graph_front_end.utilities.data_utils import (
     generate_steps_system_data_region)
 import numpy
-from pacman.executor.injection_decorator import inject_items
 
 logger = FormatAdapter(logging.getLogger(__name__))
 
@@ -85,12 +85,8 @@ class HelloWorldVertex(
         variable = len(self._text)
         return ResourceContainer(sdram=VariableSDRAM(fixed, variable))
 
-    @inject_items({
-        "data_n_steps": "DataNSteps"
-    })
-    @overrides(AbstractGeneratesDataSpecification.generate_data_specification,
-               additional_arguments=["data_n_steps"])
-    def generate_data_specification(self, spec, placement, data_n_steps):
+    @overrides(AbstractGeneratesDataSpecification.generate_data_specification)
+    def generate_data_specification(self, spec, placement):
         # pylint: disable=arguments-differ
 
         # Generate the system data region for simulation .c requirements
@@ -104,7 +100,8 @@ class HelloWorldVertex(
 
         # write data for the recording
         self.generate_recording_region(
-            spec, DataRegions.STRING_DATA, [data_n_steps * len(self._text)])
+            spec, DataRegions.STRING_DATA,
+            [FecDataView.get_max_run_time_steps() * len(self._text)])
 
         # write the data
         spec.switch_write_focus(DataRegions.PARAMS)
@@ -131,6 +128,6 @@ class HelloWorldVertex(
         return [Channels.HELLO]
 
     @overrides(AbstractReceiveBuffersToHost.get_recording_region_base_address)
-    def get_recording_region_base_address(self, txrx, placement):
+    def get_recording_region_base_address(self, placement):
         return locate_memory_region_for_placement(
-            placement, DataRegions.STRING_DATA, txrx)
+            placement, DataRegions.STRING_DATA)

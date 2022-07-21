@@ -18,6 +18,7 @@ from pacman.model.partitioner_splitters.abstract_splitters import (
     AbstractSplitterCommon)
 from pacman.model.graphs.machine import ConstantSDRAMMachinePartition
 from spinn_utilities.overrides import overrides
+from spinn_front_end_common.data import FecDataView
 from gfe_integration_tests.sdram_edge_tests.common.\
     sdram_machine_vertex import SDRAMMachineVertex
 

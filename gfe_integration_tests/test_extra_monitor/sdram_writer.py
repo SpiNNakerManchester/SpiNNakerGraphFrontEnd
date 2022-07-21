@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from enum import IntEnum
+from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ResourceContainer, ConstantSDRAM
 from spinn_front_end_common.abstract_models import (
@@ -53,9 +54,9 @@ class SDRAMWriter(
     def get_binary_start_type(self):
         return ExecutableType.USES_SIMULATION_INTERFACE
 
+    @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
-            self, spec, placement, machine_graph, routing_info, iptags,
-            reverse_iptags):
+            self, spec, placement, iptags, reverse_iptags):
         # Reserve SDRAM space for memory areas:
         self._reserve_memory_regions(spec)
 

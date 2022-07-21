@@ -14,12 +14,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from gfe_integration_tests.sdram_edge_tests.common import (
     SDRAMMachineVertex)
+from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.common import Slice
 from pacman.model.graphs.machine import (
     SDRAMMachineEdge, DestinationSegmentedSDRAMMachinePartition)
 from pacman.model.partitioner_splitters.abstract_splitters import (
     AbstractSplitterCommon)
 from spinn_utilities.overrides import overrides
+from spinn_front_end_common.data import FecDataView
 
 
 class SDRAMSplitter(AbstractSplitterCommon):

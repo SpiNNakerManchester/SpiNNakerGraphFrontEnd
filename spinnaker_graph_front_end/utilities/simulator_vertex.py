@@ -18,6 +18,7 @@ from spinn_utilities.overrides import overrides
 from spinn_utilities.log import FormatAdapter
 from pacman.model.graphs.machine import MachineVertex
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinnaker_graph_front_end.utilities.data_utils import (
     generate_system_data_region)
@@ -79,7 +80,7 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
 
         :rtype: ~pacman.model.placements.Placement
         """
-        return self.__front_end.placements().get_placement_of_vertex(self)
+        return FecDataView.get_placement_of_vertex(self)
 
     def get_recording_channel_data(self, recording_id):
         """
@@ -92,7 +93,7 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
         :return: the data, and whether any data was lost
         :rtype: tuple(bytes, bool)
         """
-        buffer_manager = self.front_end.buffer_manager()
+        buffer_manager = FecDataView.get_buffer_manager()
         return buffer_manager.get_data_by_placement(
             self.placement, recording_id)
 
