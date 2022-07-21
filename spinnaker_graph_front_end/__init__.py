@@ -68,11 +68,11 @@ from spinnaker_graph_front_end import spinnaker as gfe_file
 logger = FormatAdapter(logging.getLogger(__name__))
 
 
-__all__ = [ 'add_edge_instance', 'add_socket_address', 'add_vertex_instance',
-            'buffer_manager','get_number_of_available_cores_on_machine',
-            'has_ran', 'is_allocated_machine', 'machine', 'placements',
-            'ReverseIpTagMultiCastSource', 'routing_infos', 'run', 'setup',
-            'stop']
+__all__ = ['add_edge_instance', 'add_socket_address', 'add_vertex_instance',
+           'buffer_manager', 'get_number_of_available_cores_on_machine',
+           'has_ran', 'is_allocated_machine', 'machine', 'placements',
+           'ReverseIpTagMultiCastSource', 'routing_infos', 'run', 'setup',
+           'stop']
 
 
 def setup(graph_label=None, model_binary_module=None,
