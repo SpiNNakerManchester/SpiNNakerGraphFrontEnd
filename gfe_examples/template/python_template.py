@@ -25,8 +25,15 @@ from gfe_examples.template.template_vertex import TemplateVertex
 
 logger = FormatAdapter(logging.getLogger(__name__))
 
+# Set n_chips_required to enough to get three boards
+# Note this value is only used if spalloc_server or remote_spinnaker_url
+# are set in the cfg.
+# Otherwise the machine specified is used even if smaller
+n_chips_required = 49
+
 front_end.setup(
-    n_chips_required=None, model_binary_folder=os.path.dirname(__file__))
+    n_chips_required=n_chips_required,
+    model_binary_folder=os.path.dirname(__file__))
 
 # calculate total number of 'free' cores for the given board
 # (i.e. does not include those busy with SARK or reinjection)
