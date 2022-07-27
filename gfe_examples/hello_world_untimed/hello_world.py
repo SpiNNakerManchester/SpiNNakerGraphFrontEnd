@@ -25,6 +25,7 @@ import logging
 import os
 from spinn_utilities.config_holder import get_config_bool
 from spinn_utilities.log import FormatAdapter
+from spinn_front_end_common.data import FecDataView
 import spinnaker_graph_front_end as front_end
 from gfe_examples.hello_world_untimed.hello_world_vertex import (
     HelloWorldVertex)
@@ -46,7 +47,7 @@ for _ in range(runs):
     front_end.run_until_complete(prints_per_run)
 
 if not get_config_bool("Machine", "virtual_board"):
-    for placement in sorted(front_end.placements().placements,
+    for placement in sorted(FecDataView.iterate_placemements(),
                             key=lambda p: (p.x, p.y, p.p)):
 
         if isinstance(placement.vertex, HelloWorldVertex):
