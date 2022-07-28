@@ -75,7 +75,7 @@ __all__ = ['add_edge_instance', 'add_socket_address', 'add_vertex_instance',
            'stop']
 
 
-def setup(graph_label=None, model_binary_module=None,
+def setup(model_binary_module=None,
           model_binary_folder=None, database_socket_addresses=(),
           n_chips_required=None, n_boards_required=None,
           time_scale_factor=None, machine_time_step=None):
@@ -85,8 +85,6 @@ def setup(graph_label=None, model_binary_module=None,
     .. note::
         This must be called *before* the other functions in this API.
 
-    :param str graph_label:
-        a human readable label for the graph (used mainly in reports)
     :param ~types.ModuleType model_binary_module:
         the Python module where the binary files (``.aplx``) can be found for
         the compiled C code that is being used in this application; mutually
@@ -136,7 +134,6 @@ def setup(graph_label=None, model_binary_module=None,
 
     # set up the spinnaker object; after this, _sim() returns this object
     SpiNNaker(
-        graph_label=graph_label,
         n_chips_required=n_chips_required,
         n_boards_required=n_boards_required,
         machine_time_step=machine_time_step,

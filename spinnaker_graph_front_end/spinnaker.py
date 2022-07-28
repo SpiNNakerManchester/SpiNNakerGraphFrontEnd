@@ -40,12 +40,9 @@ class SpiNNaker(AbstractSpinnakerBase):
     """
 
     def __init__(
-            self, graph_label=None,
-            n_chips_required=None, n_boards_required=None,
+            self, n_chips_required=None, n_boards_required=None,
             time_scale_factor=None, machine_time_step=None):
         """
-        :param str graph_label:
-            A label for the graph
         :param int n_chips_required:
             How many chips are required.
             *Prefer ``n_boards_required`` if possible.*
@@ -61,7 +58,7 @@ class SpiNNaker(AbstractSpinnakerBase):
         # At import time change the default FailedState
         setup_configs()
 
-        super().__init__(graph_label=graph_label)
+        super().__init__()
 
         with ProvenanceWriter() as db:
             db.insert_version("SpiNNakerGraphFrontEnd", version)
