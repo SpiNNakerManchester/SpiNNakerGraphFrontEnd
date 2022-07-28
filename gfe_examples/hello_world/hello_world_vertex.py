@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2019 The University of Manchester
+# Copyright (c) 2017-2022 The University of Manchester
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ import logging
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, ConstantSDRAM
+from pacman.model.resources import ConstantSDRAM
 from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT
 from spinn_front_end_common.utilities.helpful_functions import (
     locate_memory_region_for_placement)
@@ -53,14 +53,12 @@ class HelloWorldVertex(
         self._string_data_size = n_hellos * 13
 
     @property
-    @overrides(MachineVertex.resources_required)
-    def resources_required(self):
-        resources = ResourceContainer(sdram=ConstantSDRAM(
+    @overrides(MachineVertex.sdram_required)
+    def sdram_required(self):
+        return ConstantSDRAM(
             SYSTEM_BYTES_REQUIREMENT +
             get_recording_header_size(len(Channels)) +
-            self._string_data_size))
-
-        return resources
+            self._string_data_size)
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(

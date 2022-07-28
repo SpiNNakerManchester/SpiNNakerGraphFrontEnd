@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2019 The University of Manchester
+# Copyright (c) 2017-2022 The University of Manchester
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 from enum import IntEnum
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, VariableSDRAM
+from pacman.model.resources import VariableSDRAM
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
@@ -147,15 +147,14 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
                 n_word_struct(n_steps).unpack(raw_data)]
 
     @property
-    @overrides(MachineVertex.resources_required)
-    def resources_required(self):
+    @overrides(MachineVertex.sdram_required)
+    def sdram_required(self):
         fixed_sdram = (SYSTEM_BYTES_REQUIREMENT + self.TRANSMISSION_DATA_SIZE +
                        self.STATE_DATA_SIZE +
                        self.NEIGHBOUR_INITIAL_STATES_SIZE +
                        self.RECORDING_HEADER_SIZE)
         per_timestep_sdram = self.RECORDING_ELEMENT_SIZE
-        return ResourceContainer(
-            sdram=VariableSDRAM(fixed_sdram, per_timestep_sdram))
+        return VariableSDRAM(fixed_sdram, per_timestep_sdram)
 
     @property
     def state(self):
