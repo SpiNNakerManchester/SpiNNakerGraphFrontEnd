@@ -16,7 +16,7 @@
 from enum import IntEnum
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, ConstantSDRAM
+from pacman.model.resources import ConstantSDRAM
 from spinn_front_end_common.abstract_models import (
     AbstractHasAssociatedBinary)
 from spinn_front_end_common.abstract_models.impl import (
@@ -47,9 +47,9 @@ class SDRAMWriter(
         return self._size
 
     @property
-    def resources_required(self):
-        return ResourceContainer(sdram=ConstantSDRAM(
-            self._size + SYSTEM_BYTES_REQUIREMENT + _CONFIG_REGION_SIZE))
+    def sdram_required(self):
+        return ConstantSDRAM(
+            self._size + SYSTEM_BYTES_REQUIREMENT + _CONFIG_REGION_SIZE)
 
     def get_binary_start_type(self):
         return ExecutableType.USES_SIMULATION_INTERFACE
