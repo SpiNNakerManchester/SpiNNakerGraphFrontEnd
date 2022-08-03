@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2019 The University of Manchester
+# Copyright (c) 2017-2022 The University of Manchester
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -57,7 +57,6 @@ from pacman.model.graphs.application.abstract import (
     AbstractOneAppOneMachineVertex)
 from pacman.model.graphs.application.application_edge import ApplicationEdge
 from spinn_front_end_common.data import FecDataView
-from spinn_front_end_common.utilities import globals_variables
 from spinn_front_end_common.utility_models import (
     ReverseIpTagMultiCastSource as _RIPTMCS)
 from spinnaker_graph_front_end._version import (
@@ -73,6 +72,8 @@ __all__ = ['add_edge_instance', 'add_socket_address', 'add_vertex_instance',
            'has_ran', 'is_allocated_machine', 'machine', 'placements',
            'ReverseIpTagMultiCastSource', 'routing_infos', 'run', 'setup',
            'stop']
+# Cache of the simulator created by setup
+__simulator = None
 
 
 def setup(model_binary_module=None,
@@ -141,21 +142,14 @@ def setup(model_binary_module=None,
     FecDataView.add_database_socket_addresses(database_socket_addresses)
 
 
-def _sim():
-    """ Get the current SpiNNaker simulator object.
-
-    :rtype: ~spinn_front_end_common.utilities.SimulatorInterface
-    """
-    return globals_variables.get_simulator()
-
-
 def run(duration=None):
     """ Run a simulation for a number of microseconds.
 
     :param int duration:
         the number of microseconds the application code should run for
     """
-    _sim().run(duration)
+    FecDataView.check_valid_simulator()
+    __simulator.run(duration)
 
 
 def run_until_complete(n_steps=None):
@@ -166,7 +160,8 @@ def run_until_complete(n_steps=None):
         requested to run for the given number of steps.  The host will
         still wait until the simulation itself says it has completed
     """
-    _sim().run_until_complete(n_steps)
+    FecDataView.check_valid_simulator()
+    __simulator.run_until_complete(n_steps)
 
 
 def stop():
@@ -175,14 +170,16 @@ def stop():
     # pylint: disable=global-variable-undefined
     global _executable_finder
 
-    _sim().stop()
+    FecDataView.check_valid_simulator()
+    __simulator.stop()
     _executable_finder = None
 
 
 def stop_run():
     """ Stop a request to run forever
     """
-    _sim().stop_run()
+    FecDataView.check_valid_simulator()
+    __simulator.stop_run()
 
 
 def add_vertex_instance(vertex_to_add):
@@ -261,7 +258,8 @@ def get_number_of_available_cores_on_machine():
 
     :rtype: int
     """
-    return _sim().get_number_of_available_cores_on_machine
+    FecDataView.check_valid_simulator()
+    return __simulator.get_number_of_available_cores_on_machine
 
 
 def has_ran():
