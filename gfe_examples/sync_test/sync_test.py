@@ -17,7 +17,7 @@ import os
 import spinnaker_graph_front_end as front_end
 from gfe_examples.sync_test.sync_test_vertex import (
     SyncTestVertex, SEND_PARTITION)
-from pacman.model.constraints.placer_constraints import ChipAndCoreConstraint
+from pacman.model.constraints import ChipAndCoreConstraint
 from pacman.model.graphs.application import ApplicationEdge
 
 front_end.setup(
