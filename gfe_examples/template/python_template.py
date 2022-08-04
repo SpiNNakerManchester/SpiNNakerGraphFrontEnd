@@ -20,6 +20,7 @@ Template for a Graph Front End program on SpiNNaker
 import logging
 import os
 from spinn_utilities.log import FormatAdapter
+from spinn_front_end_common.data import FecDataView
 import spinnaker_graph_front_end as front_end
 from gfe_examples.template.template_vertex import TemplateVertex
 
@@ -50,7 +51,7 @@ front_end.run(10)
 
 # set up placements (this is a simple example based on hello_world example
 # that should be edited to suit the application)
-for placement in sorted(front_end.placements().placements,
+for placement in sorted(FecDataView.iterate_placemements(),
                         key=lambda p: (p.x, p.y, p.p)):
 
     if isinstance(placement.vertex, TemplateVertex):
