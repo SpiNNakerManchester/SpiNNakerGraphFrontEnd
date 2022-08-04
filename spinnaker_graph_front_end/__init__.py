@@ -281,11 +281,20 @@ def routing_infos():
 
 
 def placements():
-    """ Get the planned locations of machine vertices on the machine.
+    """ No Longer supported use View iterate_placements instead
 
-    :rtype: ~pacman.model.placements.Placements
+    Instead of
+    front_end.placements().placements
+
+    Use
+    FecDataView.iterate_placemements()
+
+    FecDataView can be imported from spinn_front_end_common.data
     """
-    return FecDataView.get_placements()
+    raise NotImplementedError(
+        "This method has been replaced with View methods such as "
+        "iterate_placements. See "
+        "http://spinnakermanchester.github.io/common_pages/GlobalData.html")
 
 
 def tags():
