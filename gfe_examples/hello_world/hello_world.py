@@ -24,6 +24,7 @@ We then fetch the written data and print it on the python console.
 
 import os
 from spinn_utilities.config_holder import get_config_bool
+from spinn_front_end_common.data import FecDataView
 import spinnaker_graph_front_end as front_end
 from gfe_examples.hello_world.hello_world_vertex import HelloWorldVertex
 
@@ -40,7 +41,7 @@ front_end.run(10)
 front_end.run(10)
 
 if not get_config_bool("Machine", "virtual_board"):
-    for placement in sorted(front_end.placements().placements,
+    for placement in sorted(FecDataView.iterate_placemements(),
                             key=lambda p: (p.x, p.y, p.p)):
         if isinstance(placement.vertex, HelloWorldVertex):
             hello_world = placement.vertex.read()
