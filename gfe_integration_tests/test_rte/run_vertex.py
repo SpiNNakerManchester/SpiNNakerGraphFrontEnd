@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2019 The University of Manchester
+# Copyright (c) 2017-2022 The University of Manchester
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pacman.model.graphs.machine import SimpleMachineVertex
-from pacman.model.resources import ResourceContainer
+from pacman.model.resources import ConstantSDRAM
 from spinn_front_end_common.abstract_models import (
     AbstractHasAssociatedBinary, AbstractGeneratesDataSpecification)
 from spinn_front_end_common.interface.simulation import (
@@ -28,7 +28,7 @@ class RunVertex(
         AbstractGeneratesDataSpecification):
 
     def __init__(self, aplx_file, executable_type):
-        super().__init__(ResourceContainer())
+        super().__init__(ConstantSDRAM(0))
         self._aplx_file = aplx_file
         self._executable_type = executable_type
 

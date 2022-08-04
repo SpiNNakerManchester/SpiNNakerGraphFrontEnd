@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021 The University of Manchester
+# Copyright (c) 2020-2022 The University of Manchester
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,13 +13,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from gfe_integration_tests.sdram_edge_tests.common import SDRAMMachineVertex
-from pacman.model.graphs.application import ApplicationEdge
 from pacman.model.graphs.common import Slice
 from pacman.model.graphs.machine import SDRAMMachineEdge
 from pacman.model.partitioner_splitters.abstract_splitters import (
     AbstractSplitterCommon)
 from spinn_utilities.overrides import overrides
-from spinn_front_end_common.data import FecDataView
 from pacman.model.graphs.machine import SourceSegmentedSDRAMMachinePartition
 
 
@@ -80,13 +78,13 @@ class SDRAMSplitter(AbstractSplitterCommon):
         self._partition = SourceSegmentedSDRAMMachinePartition(
             identifier="sdram", pre_vertices=self._pre_vertices)
         self._post_vertex.add_incoming_sdram_partition(self._partition)
-        chip_counter.add_core(self._post_vertex.resources_required)
+        chip_counter.add_core(self._post_vertex.sdram_required)
         for pre_vertex in self._pre_vertices:
             edge = SDRAMMachineEdge(
                 pre_vertex, self._post_vertex, label="sdram")
             self._partition.add_edge(edge)
             pre_vertex.add_outgoing_sdram_partition(self._partition)
-            chip_counter.add_core(pre_vertex.resources_required)
+            chip_counter.add_core(pre_vertex.sdram_required)
 
     @overrides(AbstractSplitterCommon.get_out_going_slices)
     def get_out_going_slices(self):

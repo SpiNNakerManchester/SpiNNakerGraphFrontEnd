@@ -80,8 +80,8 @@ class SDRAMSplitterInternal(AbstractSplitterCommon):
         self._pre_vertex.add_outgoing_sdram_partition(self._sdram_part)
         self._post_vertex.add_incoming_sdram_partition(self._sdram_part)
 
-        chip_counter.add_core(self._pre_vertex.resources_required)
-        chip_counter.add_core(self._post_vertex.resources_required)
+        chip_counter.add_core(self._pre_vertex.sdram_required)
+        chip_counter.add_core(self._post_vertex.sdram_required)
 
     @overrides(AbstractSplitterCommon.get_out_going_slices)
     def get_out_going_slices(self):

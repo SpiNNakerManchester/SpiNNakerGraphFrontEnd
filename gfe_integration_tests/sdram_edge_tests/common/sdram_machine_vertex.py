@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021 The University of Manchester
+# Copyright (c) 2020-2022 The University of Manchester
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,11 +16,10 @@ from enum import IntEnum
 
 from pacman.model.graphs import AbstractSupportsSDRAMEdges
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, ConstantSDRAM
+from pacman.model.resources import ConstantSDRAM
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models.impl import (
     MachineDataSpecableVertex)
-from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utilities.constants import (
     SIMULATION_N_BYTES, BYTES_PER_WORD, SARK_PER_MALLOC_SDRAM_USAGE)
@@ -61,8 +60,8 @@ class SDRAMMachineVertex(
     @property
 
 
-    @overrides(MachineVertex.resources_required)
-    def resources_required(self):
+    @overrides(MachineVertex.sdram_required)
+    def sdram_required(self):
         if (len(self.__incoming_sdram_partitions) +
                 len(self.__outgoing_sdram_partitions) == 0):
             raise Exception("Isolated SDRAM vertex!")
@@ -71,14 +70,14 @@ class SDRAMMachineVertex(
         outgoing_sdram_requirements = sum(
             part.total_sdram_requirements()
             for part in self.__outgoing_sdram_partitions)
-        return ResourceContainer(sdram=ConstantSDRAM(
+        return ConstantSDRAM(
             SIMULATION_N_BYTES +
             (len(self.__outgoing_sdram_partitions) *
              self.SDRAM_PARTITION_BASE_DSG_SIZE) +
             (len(self.__incoming_sdram_partitions) *
              self.SDRAM_PARTITION_BASE_DSG_SIZE) +
             (self.SDRAM_PARTITION_COUNTERS * 2) + SARK_PER_MALLOC_SDRAM_USAGE +
-            outgoing_sdram_requirements))
+            outgoing_sdram_requirements)
 
     @overrides(AbstractSupportsSDRAMEdges.sdram_requirement)
     def sdram_requirement(self, sdram_machine_edge):
