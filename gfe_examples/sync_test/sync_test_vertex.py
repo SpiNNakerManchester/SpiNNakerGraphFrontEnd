@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2019 The University of Manchester
+# Copyright (c) 2017-2022 The University of Manchester
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ import logging
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer, ConstantSDRAM
+from pacman.model.resources import ConstantSDRAM
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
@@ -65,12 +65,9 @@ class SyncTestMachineVertex(MachineVertex, AbstractHasAssociatedBinary,
         return ExecutableType.USES_SIMULATION_INTERFACE
 
     @property
-    @overrides(MachineVertex.resources_required)
-    def resources_required(self):
-        resources = ResourceContainer(sdram=ConstantSDRAM(
-            SYSTEM_BYTES_REQUIREMENT + BYTES_PER_WORD * 2))
-
-        return resources
+    @overrides(MachineVertex.sdram_required)
+    def sdram_required(self):
+        return ConstantSDRAM(SYSTEM_BYTES_REQUIREMENT + BYTES_PER_WORD * 2)
 
     @overrides(
         AbstractGeneratesDataSpecification.generate_data_specification)

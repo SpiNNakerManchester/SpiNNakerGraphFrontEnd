@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from pacman.model.graphs.machine import MachineVertex
-from pacman.model.resources import ResourceContainer
+from pacman.model.resources import ConstantSDRAM
 
 
 class ConwayBasicCell(MachineVertex):
@@ -22,5 +22,5 @@ class ConwayBasicCell(MachineVertex):
     """
 
     @property
-    def resources_required(self):
-        return ResourceContainer()
+    def sdram_required(self):
+        return ConstantSDRAM(0)

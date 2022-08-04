@@ -86,9 +86,9 @@ class SDRAMSplitter(AbstractSplitterCommon):
                 self._pre_vertex, post_vertex, label="sdram")
             self._partition.add_edge(edge)
             post_vertex.add_incoming_sdram_partition(self._partition)
-            chip_counter.add_core(post_vertex.resources_required)
+            chip_counter.add_core(post_vertex.sdram_required)
 
-        chip_counter.add_core(self._pre_vertex.resources_required)
+        chip_counter.add_core(self._pre_vertex.sdram_required)
         return 1
 
     @overrides(AbstractSplitterCommon.get_out_going_slices)
