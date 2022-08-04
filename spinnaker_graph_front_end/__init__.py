@@ -113,6 +113,7 @@ def setup(model_binary_module=None,
     :raise ~spinn_front_end_common.utilities.exceptions.ConfigurationException:
         if mutually exclusive options are given.
     """
+    global __simulator
     # pylint: disable=redefined-outer-name
     logger.info(
         "SpiNNaker graph front end (c) {}, University of Manchester",
@@ -134,7 +135,7 @@ def setup(model_binary_module=None,
         FecDataView.register_binary_search_path(file_dir)
 
     # set up the spinnaker object; after this, _sim() returns this object
-    SpiNNaker(
+    __simulator = SpiNNaker(
         n_chips_required=n_chips_required,
         n_boards_required=n_boards_required,
         machine_time_step=machine_time_step,
