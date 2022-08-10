@@ -55,7 +55,7 @@ jobs:
     - name: Create a configuration file
       uses: ./support/actions/configure-spynnaker
       with:
-        board-address: spinn-4.cs.man.ac.uk
+        virtual: true
     - run: mv ~/.spynnaker.cfg ~/.spiNNakerGraphFrontEnd.cfg
     - name: Test with pytest
       uses: ./support/actions/pytest
