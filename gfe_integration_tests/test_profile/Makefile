@@ -13,9 +13,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-BUILD_DIRS = test_rte test_extra_monitor sdram_edge_tests test_profile
-all: $(BUILD_DIRS)
-	for d in $(BUILD_DIRS); do (cd $$d; "$(MAKE)") || exit $$?; done
+MY_MAKEFILES = test_profile.mk
 
-clean: $(BUILD_DIRS)
-	for d in $(BUILD_DIRS); do (cd $$d; "$(MAKE)" clean) || exit $$?; done
+all: $(MY_MAKEFILES)
+	for f in $(MY_MAKEFILES); do \
+		$(MAKE) -f $$f || exit $$?; \
+	done
+
+clean: $(MAKEFILES)
+	for f in $(MY_MAKEFILES); do \
+		$(MAKE) -f $$f clean || exit $$?; \
+	done

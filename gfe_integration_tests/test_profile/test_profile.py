@@ -13,9 +13,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-BUILD_DIRS = test_rte test_extra_monitor sdram_edge_tests test_profile
-all: $(BUILD_DIRS)
-	for d in $(BUILD_DIRS); do (cd $$d; "$(MAKE)") || exit $$?; done
+import os
+import spinnaker_graph_front_end as s
+from gfe_integration_tests.test_profile.profiled_vertex import ProfiledVertex
 
-clean: $(BUILD_DIRS)
-	for d in $(BUILD_DIRS); do (cd $$d; "$(MAKE)" clean) || exit $$?; done
+
+def test_profile():
+    s.setup(model_binary_folder=os.path.dirname(__file__))
+    s.add_machine_vertex_instance(ProfiledVertex())
+    s.run(50)
+    s.stop()
+
+
+if __name__ == "__main__":
+    test_profile()
