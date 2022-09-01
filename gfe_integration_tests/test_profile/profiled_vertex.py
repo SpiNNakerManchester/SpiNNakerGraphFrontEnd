@@ -37,8 +37,8 @@ class DataRegions(IntEnum):
 
 
 PROFILE_TAGS = {
-    1: "SDRAM Write",
-    2: "DTCM Write"
+    1: "SDRAMWrite",
+    2: "DTCMWrite"
 }
 
 N_SAMPLES = 100
