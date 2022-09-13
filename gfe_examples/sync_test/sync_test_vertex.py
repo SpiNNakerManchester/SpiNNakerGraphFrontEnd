@@ -46,7 +46,7 @@ class SyncTestVertex(AbstractOneAppOneMachineVertex):
     def __init__(self, lead, label=None):
         AbstractOneAppOneMachineVertex.__init__(
             self, SyncTestMachineVertex(lead, self, label),
-            label, None, n_atoms=1)
+            label, n_atoms=1)
 
 
 class SyncTestMachineVertex(MachineVertex, AbstractHasAssociatedBinary,
