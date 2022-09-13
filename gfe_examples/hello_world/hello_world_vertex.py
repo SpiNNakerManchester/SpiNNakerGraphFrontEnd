@@ -47,8 +47,8 @@ class HelloWorldVertex(
         SimulatorVertex, MachineDataSpecableVertex,
         AbstractReceiveBuffersToHost):
 
-    def __init__(self, n_hellos, label=None, constraints=None):
-        super().__init__(label, "hello_world.aplx", constraints=constraints)
+    def __init__(self, n_hellos, label=None):
+        super().__init__(label, "hello_world.aplx")
 
         self._string_data_size = n_hellos * 13
 

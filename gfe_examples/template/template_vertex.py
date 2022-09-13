@@ -60,10 +60,9 @@ class TemplateVertex(
     # The number of bytes recorded per timestep - currently 0 in C code
     N_RECORDED_PER_TIMESTEP = 0
 
-    def __init__(self, label, constraints=None):
+    def __init__(self, label):
         super().__init__(
-            label=label, binary_name="c_template_vertex.aplx",
-            constraints=constraints)
+            label=label, binary_name="c_template_vertex.aplx")
 
         # Set the recording size here
         self._recording_size = BYTES_PER_WORD

@@ -34,18 +34,14 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
 
     __slots__ = ["_binary_name", "__front_end"]
 
-    def __init__(self, label, binary_name, constraints=()):
+    def __init__(self, label, binary_name):
         """
         :param str label:
             The label for the vertex.
         :param str binary_name:
             The name of the APLX implementing the vertex.
-        :param constraints:
-            Any placement or key-allocation constraints on the vertex.
-        :type constraints:
-            ~collections.abc.Iterable(~pacman.model.constraints.AbstractConstraint)
         """
-        super().__init__(label, constraints)
+        super().__init__(label)
         self._binary_name = binary_name
         if not binary_name.lower().endswith(".aplx"):
             log.warning("APLX protocol used but name not matching; "

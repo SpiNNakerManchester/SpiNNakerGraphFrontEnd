@@ -66,15 +66,14 @@ class SDRAMSplitter(AbstractSplitterCommon):
         self._pre_vertex = (
             SDRAMMachineVertex(
                 vertex_slice=self._pre_slice, label=None,
-                constraints=None, app_vertex=self._governed_app_vertex,
-                sdram_cost=20))
+                app_vertex=self._governed_app_vertex, sdram_cost=20))
         self._governed_app_vertex.remember_machine_vertex(self._pre_vertex)
 
         for vertex_slice in self._post_slices:
             post_vertex = (
                 SDRAMMachineVertex(
                     vertex_slice=vertex_slice, label=None,
-                    constraints=None, app_vertex=self._governed_app_vertex))
+                    app_vertex=self._governed_app_vertex))
             self._post_vertices.append(post_vertex)
             self._governed_app_vertex.remember_machine_vertex(post_vertex)
 
