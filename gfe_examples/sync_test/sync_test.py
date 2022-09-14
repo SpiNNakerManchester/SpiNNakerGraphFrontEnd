@@ -27,7 +27,7 @@ front_end.setup(
 machine = front_end.machine()
 boot_chip = machine.boot_chip
 boot_vertex = SyncTestVertex(True, f"Lead-{boot_chip.x},{boot_chip.y}")
-boot_vertex.fixed_location = ChipAndCore(boot_chip.x, boot_chip.y)
+boot_vertex.set_fixed_location(ChipAndCore(boot_chip.x, boot_chip.y))
 front_end.add_vertex_instance(boot_vertex)
 front_end.add_edge_instance(
     ApplicationEdge(boot_vertex, boot_vertex), SEND_PARTITION)
@@ -35,7 +35,7 @@ front_end.add_edge_instance(
 for chip in machine.ethernet_connected_chips:
     if chip != boot_chip:
         sync_vertex = SyncTestVertex(False, f"{chip.x},{chip.y}")
-        sync_vertex.fixed_location = ChipAndCore(chip.x, chip.y)
+        sync_vertex.set_fixed_location(ChipAndCore(chip.x, chip.y))
         front_end.add_vertex_instance(sync_vertex)
         front_end.add_edge_instance(
             ApplicationEdge(boot_vertex, sync_vertex), SEND_PARTITION)
