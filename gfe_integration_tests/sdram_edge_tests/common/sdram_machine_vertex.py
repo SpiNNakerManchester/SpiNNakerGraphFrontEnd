@@ -42,11 +42,10 @@ class SDRAMMachineVertex(
     SDRAM_PARTITION_BASE_DSG_SIZE = 2 * BYTES_PER_WORD
     SDRAM_PARTITION_COUNTERS = 1 * BYTES_PER_WORD
 
-    def __init__(self, label=None, constraints=None,
+    def __init__(self, label=None,
                  app_vertex=None, vertex_slice=None, sdram_cost=None):
         super().__init__(
-            label=label, constraints=constraints, app_vertex=app_vertex,
-            vertex_slice=vertex_slice)
+            label=label, app_vertex=app_vertex, vertex_slice=vertex_slice)
         self.__sdram_cost = sdram_cost
         self.__incoming_sdram_partitions = list()
         self.__outgoing_sdram_partitions = list()

@@ -43,17 +43,17 @@ class DataRegions(IntEnum):
 
 class SyncTestVertex(AbstractOneAppOneMachineVertex):
 
-    def __init__(self, lead, label=None, constraints=None):
+    def __init__(self, lead, label=None):
         AbstractOneAppOneMachineVertex.__init__(
-            self, SyncTestMachineVertex(lead, self, label, constraints),
-            label, None, n_atoms=1)
+            self, SyncTestMachineVertex(lead, self, label),
+            label, n_atoms=1)
 
 
 class SyncTestMachineVertex(MachineVertex, AbstractHasAssociatedBinary,
                             AbstractGeneratesDataSpecification):
 
-    def __init__(self, lead, app_vertex, label=None, constraints=None):
-        super().__init__(label, constraints, app_vertex)
+    def __init__(self, lead, app_vertex, label=None):
+        super().__init__(label, app_vertex)
         self._lead = lead
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)

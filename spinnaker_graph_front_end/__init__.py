@@ -215,7 +215,7 @@ def add_machine_vertex_instance(machine_vertex):
         The vertex to add
     """
     app_vertex = AbstractOneAppOneMachineVertex(
-        machine_vertex, machine_vertex.label, constraints=())
+        machine_vertex, machine_vertex.label)
     FecDataView.add_vertex(app_vertex)
     machine_vertex._app_vertex = app_vertex
 

@@ -48,8 +48,8 @@ class ProfiledVertex(
         SimulatorVertex, MachineDataSpecableVertex,
         AbstractHasProfileData):
 
-    def __init__(self, label=None, constraints=None):
-        super().__init__(label, "test_profile.aplx", constraints=constraints)
+    def __init__(self, label=None):
+        super().__init__(label, "test_profile.aplx")
 
     @property
     @overrides(MachineVertex.sdram_required)

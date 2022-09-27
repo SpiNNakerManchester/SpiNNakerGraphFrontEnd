@@ -59,14 +59,13 @@ class HelloWorldVertex(
 
     _ENCODING = "ascii"
 
-    def __init__(self, label, constraints=None):
+    def __init__(self, label):
         """
 
         :param int n_repeats: The number of times to repeat the label in total
         :param str label: The label, which will be printed
-        :param constraints: The constraints of the vertex
         """
-        super().__init__(label, "hello_world.aplx", constraints=constraints)
+        super().__init__(label, "hello_world.aplx")
 
         # Make the text fit at a word boundary
         self._text = label
