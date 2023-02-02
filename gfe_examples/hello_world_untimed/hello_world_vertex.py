@@ -119,7 +119,7 @@ class HelloWorldVertex(
         raw_data, missing_data = self.get_recording_channel_data(
             Channels.HELLO)
         if missing_data:
-            raise Exception("missing data!")
+            raise ValueError("missing data!")
         return str(raw_data, self._ENCODING)
 
     @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)

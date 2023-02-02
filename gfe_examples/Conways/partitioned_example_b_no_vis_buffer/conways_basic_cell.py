@@ -75,7 +75,7 @@ class ConwayBasicCell(
 
     def add_neighbour(self, neighbour):
         if neighbour == self:
-            raise Exception("Cannot add self as neighbour!")
+            raise ValueError("Cannot add self as neighbour!")
         self._neighbours.add(neighbour)
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
@@ -83,7 +83,8 @@ class ConwayBasicCell(
             self, spec, placement, iptags, reverse_iptags):
         # pylint: disable=arguments-differ
         if len(self._neighbours) != 8:
-            raise Exception(f"Only {len(self._neighbours)} neighbours, not 8")
+            raise ValueError(
+                f"Only {len(self._neighbours)} neighbours, not 8")
 
         # Generate the system data region for simulation .c requirements
         generate_system_data_region(spec, DataRegions.SYSTEM, self)

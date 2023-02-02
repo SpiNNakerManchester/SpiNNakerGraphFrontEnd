@@ -63,7 +63,7 @@ class SDRAMMachineVertex(
     def sdram_required(self):
         if (len(self.__incoming_sdram_partitions) +
                 len(self.__outgoing_sdram_partitions) == 0):
-            raise Exception("Isolated SDRAM vertex!")
+            raise ValueError("Isolated SDRAM vertex!")
         # Account for only the outgoing requirements here; other end will
         # account for incoming
         outgoing_sdram_requirements = sum(
@@ -81,8 +81,9 @@ class SDRAMMachineVertex(
     @overrides(AbstractSupportsSDRAMEdges.sdram_requirement)
     def sdram_requirement(self, sdram_machine_edge):
         if self.__sdram_cost is None:
-            raise Exception("This vertex has no cost so is not expected to"
-                            " appear as the pre-vertex to an SDRAM edge!")
+            raise NotImplementedError(
+                "This vertex has no cost so is not expected to appear "
+                "as the pre-vertex to an SDRAM edge!")
         return self.__sdram_cost
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
