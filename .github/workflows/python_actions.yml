@@ -76,6 +76,8 @@ jobs:
     - name: Run rat copyright enforcement
       if: matrix.python-version == 3.8
       uses: ./support/actions/check-copyrights
+      with:
+        config_file: asl20.xml
 
     - name: Build documentation with sphinx
       if: matrix.python-version == 3.8
