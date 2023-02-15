@@ -9,4 +9,5 @@ Documentation
 =============
 [SpiNNakerGraphFrontEnd Python documentation](http://spinnakergraphfrontend.readthedocs.io)
 <br>
-[Combined python documentation](https://spinnaker-graphfrontend-combined.readthedocs.io/)
+[Combined python documentation](http://spinnakermanchester.readthedocs.io)
+
