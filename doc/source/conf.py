@@ -425,3 +425,13 @@ os.chdir("../..")  # WARNING! RELATIVE FILENAMES CHANGE MEANING HERE!
 apidoc.main([
     '-o', _output_dir, _package_base,
     *excluded_because_in_init(_package_base)])
+
+# See Note at bottom of global doc conf.py
+
+semantic_sugar_files = [
+    os.path.join("doc", "source", "spinnaker_graph_front_end.rst"),
+]
+
+for semantic_sugar_file in semantic_sugar_files:
+    with open(semantic_sugar_file, "a",  encoding="utf-8") as f:
+        f.write("   :noindex:\n")
