@@ -1,20 +1,18 @@
 /*
- * Copyright (c) 2017-2019 The University of Manchester
+ * Copyright (c) 2023 The University of Manchester
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
-
 //! imports
 #include "spin1_api.h"
 #include "common-typedefs.h"
@@ -56,6 +54,9 @@ typedef struct {
 
     // Flags for links which are available from SCAMP
     uint32_t known_links;
+
+    // Count of unknown keys
+    uint32_t unknown_keys;
 } provenance_data_t;
 
 //! human readable definitions of each region in SDRAM
@@ -106,20 +107,28 @@ static uint32_t fails_received[N_LINKS];
 // Expected data from adjacent chips, based on sv data for this chip
 static uint32_t expected_data[N_LINKS];
 
+// The number of unknown keys received
+static uint32_t unknown_keys = 0;
+
 // The data to send to adjacent chips
 static p2p_data_t data_to_send;
 
 // -------------------------------------------------------------------
 
 static void receive_data(uint key, uint payload) {
+    uint32_t key_found = 0;
     for (uint32_t i = 0; i < N_LINKS; i++) {
         if (key == config.receive_keys[i]) {
             packets_received[i]++;
             if (payload != expected_data[i]) {
                 fails_received[i]++;
             }
+            key_found = 1;
             break;
         }
+    }
+    if (!key_found) {
+        unknown_keys++;
     }
 }
 
@@ -145,6 +154,7 @@ static void store_provenance_data(address_t provenance_region) {
     prov->known_links = sv->link_en;
     prov->links_count_ok = links_ok;
     prov->links_fails_ok = fails_ok;
+    prov->unknown_keys = unknown_keys;
 }
 
 /****f*

@@ -1,17 +1,16 @@
-# Copyright (c) 2017-2019 The University of Manchester
+# Copyright (c) 2023 The University of Manchester
 #
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 from time import sleep
 import os
@@ -19,45 +18,17 @@ import tempfile
 import sys
 import traceback
 import pytest
-from pacman.model.graphs.machine.machine_edge import MachineEdge
 from spalloc.job import Job
 from spalloc.states import JobState
 import spinnaker_graph_front_end as front_end
-from link_test.link_test_vertex import LinkTestVertex, PARTITION_NAME
 from _pytest.outcomes import Skipped
+from link_test.link_tester import run
 
 
 class LinkTest(object):
 
     def do_run(self):
-        front_end.setup(model_binary_folder=os.path.dirname(__file__))
-
-        machine = front_end.machine()
-
-        run_time = 10000
-
-        # Put link test on all chips
-        chips = dict()
-        for c_x, c_y in machine.chip_coordinates:
-            chips[c_x, c_y] = LinkTestVertex(c_x, c_y, 100, 1, run_time)
-            front_end.add_machine_vertex_instance(chips[c_x, c_y])
-
-        # Connect links together
-        for chip in machine.chips:
-            for link in chip.router.links:
-                opposite_link = (link.source_link_id + 3) % 6
-                target = chips[link.destination_x, link.destination_y]
-                source = chips[chip.x, chip.y]
-                target.set_neighbour(opposite_link, source)
-                front_end.add_machine_edge_instance(
-                    MachineEdge(source, target), PARTITION_NAME)
-
-        front_end.run(run_time)
-        front_end.stop()
-
-        # Check the vertices for failure
-        for vertex in chips.values():
-            vertex.check_failure()
+        run()
 
 
 boards = [(x, y, b) for x in range(20) for y in range(20) for b in range(3)]

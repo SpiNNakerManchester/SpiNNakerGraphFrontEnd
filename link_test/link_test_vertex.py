@@ -44,6 +44,7 @@ class EXTRA_PROVENANCE_DATA_ENTRIES(IntEnum):
     LINK_COUNT_OK = 0
     LINK_FAILS_OK = 1
     LINKS_FROM_SCAMP = 2
+    UNKNOWN_KEYS = 3
 
 
 #: Number of links on the machine
@@ -94,11 +95,19 @@ class LinkTestVertex(
         self.__drops_per_ts_allowed = drops_per_ts_allowed
         self.__run_time = run_time
         self.__neighbours = [None] * 6
+        self.__sources = set()
+        self.__repeat_sources = set()
 
         self.__failed = False
 
     def set_neighbour(self, link, neighbour):
-        self.__neighbours[link] = neighbour
+        if neighbour in self.__sources:
+            print(f"Warning: {self.__x}, {self.__y} won't receive over link"
+                  f" {link} as already receiving from elsewhere")
+            self.__repeat_sources.add(link)
+        else:
+            self.__sources.add(neighbour)
+            self.__neighbours[link] = neighbour
 
     @overrides(SimulatorVertex.get_fixed_location)
     def get_fixed_location(self):
@@ -154,27 +163,39 @@ class LinkTestVertex(
     @overrides(ProvidesProvenanceDataFromMachineImpl.
                parse_extra_provenance_items)
     def parse_extra_provenance_items(self, label, x, y, p, provenance_data):
-        link_count_ok, link_fail_ok, links_from_scamp = provenance_data
+        link_count_ok, link_fail_ok, links_from_scamp, unknown_keys = (
+            provenance_data)
 
         with ProvenanceWriter() as db:
             for i in range(N_LINKS):
                 this_link_count_ok = bool(link_count_ok & (1 << i))
                 this_link_fail_ok = bool(link_fail_ok & (1 << i))
                 this_link_enabled = bool(links_from_scamp & (1 << i))
+                this_link_used = i not in self.__repeat_sources
                 db.insert_core(
                     x, y, p, f"Link {i} count ok", this_link_count_ok)
                 db.insert_core(
                     x, y, p, f"Link {i} fail ok", this_link_fail_ok)
                 db.insert_core(
                     x, y, p, f"Link {i} enabled", this_link_enabled)
-                if this_link_enabled and not this_link_count_ok:
+                db.insert_core(
+                    x, y, p, f"Link {i} used", this_link_used)
+                if (this_link_used and this_link_enabled and
+                        not this_link_count_ok):
                     db.insert_report(f"Link {i} on {x}, {y} failed to receive"
                                      " enough packets")
                     self.__failed = True
-                if this_link_enabled and not this_link_fail_ok:
+                if (this_link_used and this_link_enabled and
+                        not this_link_fail_ok):
                     db.insert_report(f"Link {i} on {x}, {y} received"
                                      " unexpected data at least once")
                     self.__failed = True
+            db.insert_core(
+                x, y, p, "Unknown keys", unknown_keys)
+            if unknown_keys:
+                db.insert_report(
+                    f"Chip {x}, {y} received {unknown_keys} unknown keys")
+                self.__failed = True
 
     @property
     @overrides(ProvidesProvenanceDataFromMachineImpl._n_additional_data_items)
