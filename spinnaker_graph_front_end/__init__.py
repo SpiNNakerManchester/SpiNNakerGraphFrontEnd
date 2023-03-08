@@ -292,7 +292,7 @@ def placements():
     raise NotImplementedError(
         "This method has been replaced with View methods such as "
         "iterate_placements. See "
-        "http://spinnakermanchester.github.io/common_pages/GlobalData.html")
+        "https://spinnakermanchester.github.io/common_pages/GlobalData.html")
 
 
 def tags():
