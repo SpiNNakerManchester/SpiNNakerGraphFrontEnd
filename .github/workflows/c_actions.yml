@@ -37,11 +37,14 @@ jobs:
       uses: ./support/actions/install-spinn-deps
       with:
         # Note: SpiNNUtils needed for spinn_utilities.make_tools
-        repositories: spinnaker_tools spinn_common SpiNNFrontEndCommon SpiNNUtils
-    - name: Install SpiNNUtils
-      # Must be separate install; don't want to install FEC
-      run: python setup.py install
-      working-directory: SpiNNUtils
+        repositories: spinnaker_tools spinn_common SpiNNFrontEndCommon
+
+    - name: "Prepare: Install SpiNNUtils"
+      uses: ./support/actions/install-spinn-deps
+      with:
+        # Note: SpiNNUtils needed for spinn_utilities.make_tools
+        repositories: SpiNNUtils
+        install: true
 
     # Note: run these before building to avoid linting modified_src directories
     - name: Lint C code using Vera++
