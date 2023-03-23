@@ -27,8 +27,9 @@ log = FormatAdapter(logging.getLogger(__file__))
 
 
 class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
-    """ A machine vertex that is implemented by a binary APLX that supports\
-        the spin1_api simulation control protocol.
+    """
+    A machine vertex that is implemented by a binary APLX that supports
+    the spin1_api simulation control protocol.
     """
 
     __slots__ = ["_binary_name", "__front_end"]

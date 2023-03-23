@@ -31,7 +31,8 @@ def _is_allocated_machine():
 
 
 class SpiNNaker(AbstractSpinnakerBase):
-    """ The implementation of the SpiNNaker simulation interface.
+    """
+    The implementation of the SpiNNaker simulation interface.
 
     .. note::
         You should not normally instantiate this directly from user code.
