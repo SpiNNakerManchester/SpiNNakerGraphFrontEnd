@@ -37,8 +37,7 @@ front_end.setup(
 
 # calculate total number of 'free' cores for the given board
 # (i.e. does not include those busy with SARK or reinjection)
-total_number_of_cores = \
-    front_end.get_number_of_available_cores_on_machine()
+total_number_of_cores = front_end.get_number_of_available_cores_on_machine()
 
 # fill all cores with a Vertex each
 for x in range(0, total_number_of_cores):

@@ -70,7 +70,7 @@ class SpiNNaker(AbstractSpinnakerBase):
 
     def __repr__(self):
         if FecDataView.has_ipaddress():
-            return f"SpiNNaker Graph Front End object " \
-                   f"for machine {FecDataView.get_ipaddress()}"
+            return (f"SpiNNaker Graph Front End object "
+                    f"for machine {FecDataView.get_ipaddress()}")
         else:
             return "SpiNNaker Graph Front End object no machine set"
