@@ -45,7 +45,7 @@ class SpiNNaker(AbstractSpinnakerBase):
         """
         :param int n_chips_required:
             How many chips are required.
-            *Prefer ``n_boards_required`` if possible.*
+            *Prefer* `n_boards_required` *if possible.*
         :param int n_boards_required:
             How many boards are required. Unnecessary with a local board.
         :param int time_scale_factor:
