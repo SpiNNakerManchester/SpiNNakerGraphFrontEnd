@@ -29,16 +29,15 @@ def test_rte_during_run_forever():
         sleep(3.0)
         s.stop_run()
 
-    conn = DatabaseConnection(start, local_port=None)
-    s.setup(model_binary_folder=os.path.dirname(__file__))
-    s.add_machine_vertex_instance(RunVertex(
-        "test_rte_during_run.aplx",
-        ExecutableType.USES_SIMULATION_INTERFACE))
-    s.add_socket_address(None, "localhost", conn.local_port)
-    s.run(None)
-    with pytest.raises(ExecutableFailedToStopException):
-        s.stop()
-    conn.close()
+    with DatabaseConnection(start, local_port=None) as conn:
+        s.setup(model_binary_folder=os.path.dirname(__file__))
+        s.add_machine_vertex_instance(RunVertex(
+            "test_rte_during_run.aplx",
+            ExecutableType.USES_SIMULATION_INTERFACE))
+        s.add_socket_address(None, "localhost", conn.local_port)
+        s.run(None)
+        with pytest.raises(ExecutableFailedToStopException):
+            s.stop()
 
 
 if __name__ == "__main__":

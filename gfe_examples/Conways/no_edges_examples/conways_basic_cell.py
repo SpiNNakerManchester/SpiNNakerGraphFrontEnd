@@ -17,7 +17,8 @@ from pacman.model.resources import ConstantSDRAM
 
 
 class ConwayBasicCell(MachineVertex):
-    """ Cell which represents a cell within the 2d fabric
+    """
+    Cell which represents a cell within the 2d fabric.
     """
 
     @property

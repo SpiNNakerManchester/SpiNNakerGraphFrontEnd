@@ -113,7 +113,8 @@ class TemplateVertex(
         spec.write_value(0 if key is None else key)
 
     def read(self):
-        """ Get the recorded data
+        """
+        Get the recorded data.
 
         :return: The data read, as bytes
         """

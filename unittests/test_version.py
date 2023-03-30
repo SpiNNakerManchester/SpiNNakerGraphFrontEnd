@@ -23,7 +23,8 @@ import spinnaker_graph_front_end
 
 
 class Test(unittest.TestCase):
-    """ Tests for the component version comparison
+    """
+    Tests for the component version comparison
     """
 
     # no unittest_setup to check version without it
