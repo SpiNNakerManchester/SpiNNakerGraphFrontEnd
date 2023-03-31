@@ -35,7 +35,8 @@ class DataRegions(IntEnum):
 class SDRAMMachineVertex(
         MachineVertex, AbstractSupportsSDRAMEdges,
         AbstractHasAssociatedBinary, MachineDataSpecableVertex):
-    """ A MachineVertex that stores its own resources.
+    """
+    A MachineVertex that stores its own resources.
     """
 
     SDRAM_PARTITION_BASE_DSG_SIZE = 2 * BYTES_PER_WORD
