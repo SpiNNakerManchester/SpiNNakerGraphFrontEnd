@@ -18,7 +18,8 @@ from spinn_front_end_common.interface.simulation.simulation_utilities import (
 
 
 def generate_system_data_region(spec, region_id, machine_vertex):
-    """ Generate a system data region for time-based simulations.
+    """
+    Generate a system data region for time-based simulations.
 
     :param ~data_specification.DataSpecificationGenerator spec:
         The data specification to write to
@@ -27,7 +28,6 @@ def generate_system_data_region(spec, region_id, machine_vertex):
     :param ~pacman.model.graphs.machine.MachineVertex machine_vertex:
         The machine vertex to write for
     """
-
     # reserve memory regions
     spec.reserve_memory_region(
         region=region_id, size=SIMULATION_N_BYTES, label='systemInfo')
@@ -39,7 +39,8 @@ def generate_system_data_region(spec, region_id, machine_vertex):
 
 
 def generate_steps_system_data_region(spec, region_id, machine_vertex):
-    """ Generate a system data region for step-based simulations.
+    """
+    Generate a system data region for step-based simulations.
 
     :param data_specification.DataSpecificationGenerator spec:
         The data specification to write to

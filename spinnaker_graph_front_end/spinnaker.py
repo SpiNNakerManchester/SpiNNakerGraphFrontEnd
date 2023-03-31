@@ -31,7 +31,8 @@ def _is_allocated_machine():
 
 
 class SpiNNaker(AbstractSpinnakerBase):
-    """ The implementation of the SpiNNaker simulation interface.
+    """
+    The implementation of the SpiNNaker simulation interface.
 
     .. note::
         You should not normally instantiate this directly from user code.
@@ -44,7 +45,7 @@ class SpiNNaker(AbstractSpinnakerBase):
         """
         :param int n_chips_required:
             How many chips are required.
-            *Prefer ``n_boards_required`` if possible.*
+            *Prefer* `n_boards_required` *if possible.*
         :param int n_boards_required:
             How many boards are required. Unnecessary with a local board.
         :param int time_scale_factor:
@@ -69,7 +70,7 @@ class SpiNNaker(AbstractSpinnakerBase):
 
     def __repr__(self):
         if FecDataView.has_ipaddress():
-            return f"SpiNNaker Graph Front End object " \
-                   f"for machine {FecDataView.get_ipaddress()}"
+            return (f"SpiNNaker Graph Front End object "
+                    f"for machine {FecDataView.get_ipaddress()}")
         else:
             return "SpiNNaker Graph Front End object no machine set"

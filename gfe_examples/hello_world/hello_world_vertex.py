@@ -73,7 +73,8 @@ class HelloWorldVertex(
         spec.end_specification()
 
     def read(self):
-        """ Get the data written into SDRAM
+        """
+        Get the data written into SDRAM.
 
         :return: string output
         """

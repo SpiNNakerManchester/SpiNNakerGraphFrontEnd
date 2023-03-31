@@ -41,7 +41,6 @@ class DataRegions(IntEnum):
 
 
 class SyncTestVertex(AbstractOneAppOneMachineVertex):
-
     def __init__(self, lead, label=None):
         AbstractOneAppOneMachineVertex.__init__(
             self, SyncTestMachineVertex(lead, self, label),
@@ -50,7 +49,6 @@ class SyncTestVertex(AbstractOneAppOneMachineVertex):
 
 class SyncTestMachineVertex(MachineVertex, AbstractHasAssociatedBinary,
                             AbstractGeneratesDataSpecification):
-
     def __init__(self, lead, app_vertex, label=None):
         super().__init__(label, app_vertex)
         self._lead = lead
