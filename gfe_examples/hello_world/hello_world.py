@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Hello World program on SpiNNaker
+Hello World program on SpiNNaker.
 
 Each core stores into its region in SDRAM the string:
 "Hello World from $chip.x, $chip.y, $core"
