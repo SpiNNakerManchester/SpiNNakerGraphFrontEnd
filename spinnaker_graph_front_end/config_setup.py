@@ -17,6 +17,7 @@ from spinn_utilities.config_holder import (
     clear_cfg_files, set_cfg_files)
 from spinn_front_end_common.interface.config_setup import (
     add_default_cfg, add_spinnaker_cfg)
+from spinn_front_end_common.data.fec_data_writer import FecDataWriter
 
 #: The name of the configuration file
 CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
@@ -34,6 +35,7 @@ def setup_configs():
     set_cfg_files(
         configfile=CONFIG_FILE_NAME,
         default=os.path.join(os.path.dirname(__file__), CONFIG_FILE_NAME))
+    FecDataWriter.mock()
 
 
 def unittest_setup():
