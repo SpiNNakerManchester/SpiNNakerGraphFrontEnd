@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-BUILD_DIRS = hello_world hello_world_untimed Conways template sync_test
+BUILD_DIRS = hello_world hello_world_untimed Conways template sync_test live_io
 all: $(BUILD_DIRS)
 	for d in $(BUILD_DIRS); do (cd $$d; "$(MAKE)") || exit $$?; done
 
