@@ -36,6 +36,7 @@ running = True
 
 
 def start_sending(label, c):
+    # pylint: disable=unused-argument
     sleep(0.5)
     while running:
         for _ in range(sends_per_cycle):
@@ -46,6 +47,7 @@ def start_sending(label, c):
 
 
 def end_sim(label, c):
+    # pylint: disable=unused-argument
     global running
     running = False
 
