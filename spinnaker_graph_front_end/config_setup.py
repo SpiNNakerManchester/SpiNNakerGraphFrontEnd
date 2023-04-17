@@ -25,10 +25,11 @@ CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
 
 def setup_configs():
     """
-    Sets up the configs including the user's cfg file.
+    Sets up the configurations including the user's configuration file.
 
-    Clears out any previous read configs but does not load the new configs
-    so a warning is generated if a config is used before setup is called.
+    Clears out any previous read configurations but does not load the new
+    configurations so a warning is generated if a configuration is used before
+    :py:func:`~spinnaker_graph_front_end.setup` is called.
     """
     clear_cfg_files(False)
     add_spinnaker_cfg()  # This add its dependencies too
@@ -40,16 +41,17 @@ def setup_configs():
 
 def unittest_setup():
     """
-    Does all the steps that may be required before a unittest.
+    Does all the steps that may be required before a unit test.
 
-    Resets the configs so only the local default configs are included.
-    The user cfg is *not* included!
+    Resets the configurations so only the local default configurations are
+    included.
+    The user configuration is *not* included!
 
-    Unsets any previous simulators and tempdirs
+    Unsets any previous simulators and temporary directories.
 
     .. note::
-         This file should only be called from sPyNNaker tests
-         that do not call sim.setup
+         This file should only be called from spinnaker_graph_front_end tests
+         that do not call :py:func:`~spinnaker_graph_front_end.setup`.
     """
     clear_cfg_files(True)
     add_spinnaker_cfg()  # This add its dependencies too

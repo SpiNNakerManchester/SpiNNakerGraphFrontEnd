@@ -12,9 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Our abbreviations
+GFE
+gfe
+aplx
+
+# Our special words
+unpartitioned
+unregisters
+
 # Python packages
 pacman
+spalloc
 
 # Python types
+ApplicationVertex
+MachineVertex
 MachineEdge
 ModuleType
