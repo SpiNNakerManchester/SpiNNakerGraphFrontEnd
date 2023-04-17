@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Utilities for setting up the global configuration.
+"""
+
 import os
 from spinn_utilities.config_holder import (
     clear_cfg_files, set_cfg_files)

@@ -13,13 +13,16 @@
 # limitations under the License.
 
 # Our abbreviations
+DSG
 GFE
 gfe
 aplx
 
 # Our special words
+timestep
 unpartitioned
 unregisters
+unsets
 
 # Python packages
 pacman
@@ -28,5 +31,6 @@ spalloc
 # Python types
 ApplicationVertex
 MachineVertex
+ApplicationEdge
 MachineEdge
 ModuleType

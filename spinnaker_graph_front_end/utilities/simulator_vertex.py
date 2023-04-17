@@ -19,17 +19,17 @@ from pacman.model.graphs.machine import MachineVertex
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utilities.utility_objs import ExecutableType
-from spinnaker_graph_front_end.utilities.data_utils import (
-    generate_system_data_region)
 from spinn_front_end_common.interface.buffer_management import (
     recording_utilities)
+from spinnaker_graph_front_end.utilities.data_utils import (
+    generate_system_data_region)
 log = FormatAdapter(logging.getLogger(__file__))
 
 
 class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
     """
     A machine vertex that is implemented by a binary APLX that supports
-    the spin1_api simulation control protocol.
+    the `spin1_api` simulation control protocol.
     """
 
     __slots__ = ["_binary_name", "__front_end"]
