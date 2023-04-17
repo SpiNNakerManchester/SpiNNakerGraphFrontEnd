@@ -15,6 +15,7 @@
 import os
 import unittest
 from spinn_utilities.config_holder import run_config_checks
+import spinnaker_graph_front_end
 from spinnaker_graph_front_end.config_setup import unittest_setup
 
 
@@ -28,7 +29,7 @@ class TestCfgChecker(unittest.TestCase):
         parent = os.path.dirname(unittests)
         gfe_examples = os.path.join(parent, "gfe_examples")
         gfe_integration_tests = os.path.join(parent, "gfe_integration_tests")
-        gfe = os.path.join(parent, "spinnaker_graph_front_end")
+        gfe = spinnaker_graph_front_end.__path__[0]
         repeaters = [
             "placer", "router", "info_allocator", "compressor"]
         run_config_checks(
