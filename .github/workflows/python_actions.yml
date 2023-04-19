@@ -24,6 +24,8 @@ jobs:
       matrix:
         python-version: [3.7, 3.8, 3.9, "3.10", "3.11"]
 
+    env:
+      BASE_PKG: spinnaker_graph_front_end
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -32,7 +34,6 @@ jobs:
       with:
         repository: SpiNNakerManchester/SupportScripts
         path: support
-        ref: spell-chucking
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -62,17 +63,15 @@ jobs:
       with:
         tests: unittests
         coverage: ${{ matrix.python-version == 3.8 }}
-        cover-packages: spinnaker_graph_front_end
+        cover-packages: ${{ env.BASE_PKG }}
         coveralls-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Lint with flake8
-      run: flake8 spinnaker_graph_front_end unittests gfe_examples
+      run: flake8 ${{ env.BASE_PKG }} unittests gfe_examples
     - name: Lint with pylint
       uses: ./support/actions/pylint
       with:
-        package: spinnaker_graph_front_end gfe_examples
-        exitcheck: 39
-        # Enable spell checking
+        package: ${{ env.BASE_PKG }} gfe_examples
         language: en_GB
 
   validate:
@@ -80,8 +79,6 @@ jobs:
     strategy:
       matrix:
         python-version: [3.8]
-    env:
-      ROOT_PKG: spinn_utilities
 
     steps:
     - name: Checkout
@@ -91,7 +88,6 @@ jobs:
       with:
         repository: SpiNNakerManchester/SupportScripts
         path: support
-        ref: spell-chucking
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
