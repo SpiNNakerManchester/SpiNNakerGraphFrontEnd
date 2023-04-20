@@ -13,6 +13,7 @@
 # limitations under the License.
 from enum import IntEnum
 
+from spinnman.model.enums import ExecutableType
 from pacman.model.graphs import AbstractSupportsSDRAMEdges
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ConstantSDRAM
@@ -22,7 +23,6 @@ from spinn_front_end_common.abstract_models.impl import (
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utilities.constants import (
     SIMULATION_N_BYTES, BYTES_PER_WORD, SARK_PER_MALLOC_SDRAM_USAGE)
-from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_utilities.overrides import overrides
 
 
