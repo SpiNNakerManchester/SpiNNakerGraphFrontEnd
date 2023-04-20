@@ -12,6 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-[build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
+# Our abbreviations
+GFE
+gfe
+aplx
+
+# Python packages
+pacman
+spalloc
+
+# Python types
+ApplicationVertex
+MachineVertex
+ApplicationEdge
+MachineEdge
+ModuleType

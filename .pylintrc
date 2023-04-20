@@ -140,13 +140,14 @@ disable=print-statement,
         global-statement,
         fixme,
         protected-access,
-        attribute-defined-outside-init
+        attribute-defined-outside-init,
+        missing-module-docstring
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
 # multiple time (only on the command line, not in the configuration file where
 # it should appear only once). See also the "--disable" option for examples.
-enable=c-extension-no-member
+enable=c-extension-no-member,C0402,C0403
 
 
 [REPORTS]
@@ -538,4 +539,4 @@ known-third-party=enchant
 
 # Exceptions that will emit a warning when being caught. Defaults to
 # "Exception"
-overgeneral-exceptions=Exception
+overgeneral-exceptions=builtin.Exception
