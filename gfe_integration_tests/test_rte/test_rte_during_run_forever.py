@@ -14,7 +14,7 @@
 
 import os
 from time import sleep
-from spinn_front_end_common.utilities.utility_objs import ExecutableType
+from spinnman.model.enums import ExecutableType
 from spinn_front_end_common.utilities.exceptions import (
     ExecutableFailedToStopException)
 from spinn_front_end_common.utilities.database import DatabaseConnection

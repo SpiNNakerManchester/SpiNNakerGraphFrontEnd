@@ -15,10 +15,10 @@ import logging
 import sys
 from spinn_utilities.overrides import overrides
 from spinn_utilities.log import FormatAdapter
+from spinnman.model.enums import ExecutableType
 from pacman.model.graphs.machine import MachineVertex
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.data import FecDataView
-from spinn_front_end_common.utilities.utility_objs import ExecutableType
 from spinn_front_end_common.interface.buffer_management import (
     recording_utilities)
 from spinnaker_graph_front_end.utilities.data_utils import (
