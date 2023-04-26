@@ -11,16 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from gfe_integration_tests.sdram_edge_tests.common import (
-    SDRAMMachineVertex)
-from pacman.model.graphs.application import ApplicationEdge
+from spinn_utilities.overrides import overrides
 from pacman.model.graphs.common import Slice
 from pacman.model.graphs.machine import (
     SDRAMMachineEdge, DestinationSegmentedSDRAMMachinePartition)
-from pacman.model.partitioner_splitters.abstract_splitters import (
-    AbstractSplitterCommon)
-from spinn_utilities.overrides import overrides
-from spinn_front_end_common.data import FecDataView
+from pacman.model.partitioner_splitters import AbstractSplitterCommon
+from gfe_integration_tests.sdram_edge_tests.common import SDRAMMachineVertex
 
 
 class SDRAMSplitter(AbstractSplitterCommon):
@@ -54,7 +50,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
     def create_machine_vertices(self, chip_counter):
         # slices
         self._pre_slice = Slice(
-            0, int(self._governed_app_vertex.n_atoms / self.N_VERTS))
+            0, int(self.governed_app_vertex.n_atoms / self.N_VERTS))
 
         for count in range(1, self.N_VERTS):
             self._post_slices.append(Slice(
@@ -62,19 +58,17 @@ class SDRAMSplitter(AbstractSplitterCommon):
                 self._pre_slice.n_atoms * count + self._pre_slice.n_atoms))
 
         # mac verts
-        self._pre_vertex = (
-            SDRAMMachineVertex(
-                vertex_slice=self._pre_slice, label=None,
-                app_vertex=self._governed_app_vertex, sdram_cost=20))
-        self._governed_app_vertex.remember_machine_vertex(self._pre_vertex)
+        self._pre_vertex = SDRAMMachineVertex(
+            vertex_slice=self._pre_slice, label=None,
+            app_vertex=self.governed_app_vertex, sdram_cost=20)
+        self.governed_app_vertex.remember_machine_vertex(self._pre_vertex)
 
         for vertex_slice in self._post_slices:
-            post_vertex = (
-                SDRAMMachineVertex(
-                    vertex_slice=vertex_slice, label=None,
-                    app_vertex=self._governed_app_vertex))
+            post_vertex = SDRAMMachineVertex(
+                vertex_slice=vertex_slice, label=None,
+                app_vertex=self.governed_app_vertex)
             self._post_vertices.append(post_vertex)
-            self._governed_app_vertex.remember_machine_vertex(post_vertex)
+            self.governed_app_vertex.remember_machine_vertex(post_vertex)
 
         self._partition = DestinationSegmentedSDRAMMachinePartition(
             identifier="sdram", pre_vertex=self._pre_vertex)
