@@ -120,7 +120,6 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         spec.end_specification()
 
     def get_data(self):
-        txrx = FecDataView.get_transceiver()
         placement = self.placement
         n_steps = FecDataView.get_current_run_timesteps()
         # Get the data region base address where results are stored for the
@@ -129,7 +128,7 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
             placement, DataRegions.RESULTS)
 
         # find how many bytes are needed to be read
-        number_of_bytes_to_read = txrx.read_word(
+        number_of_bytes_to_read = FecDataView.read_word(
             placement.x, placement.y, record_region_base_address)
         expected_bytes = n_steps * self.RECORDING_ELEMENT_SIZE
         if number_of_bytes_to_read != expected_bytes:
@@ -138,7 +137,7 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
                 f"but expected {expected_bytes}")
 
         # read the bytes
-        raw_data = txrx.read_memory(
+        raw_data = FecDataView.read_memory(
             placement.x, placement.y,
             record_region_base_address + self.RECORDING_HEADER_SIZE,
             number_of_bytes_to_read)
