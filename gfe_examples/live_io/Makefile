@@ -1,4 +1,4 @@
-# Copyright (c) 2015 The University of Manchester
+# Copyright (c) 2023 The University of Manchester
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,9 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-BUILD_DIRS = hello_world hello_world_untimed Conways template sync_test live_io
-all: $(BUILD_DIRS)
-	for d in $(BUILD_DIRS); do (cd $$d; "$(MAKE)") || exit $$?; done
+# If SPINN_DIRS is not defined, this is an error!
+ifndef SPINN_DIRS
+    $(error SPINN_DIRS is not set.  Please define SPINN_DIRS (possibly by running "source setup" in the spinnaker package folder))
+endif
 
-clean: $(BUILD_DIRS)
-	for d in $(BUILD_DIRS); do (cd $$d; "$(MAKE)" clean) || exit $$?; done
+APP = live_io
+SOURCES = live_io.c
+
+APP_OUTPUT_DIR := $(abspath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))/
+
+include $(SPINN_DIRS)/make/local.mk
