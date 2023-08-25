@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import logging
-from spinn_utilities.config_holder import get_config_str
+from spinn_utilities.config_holder import is_config_none
 from spinn_utilities.log import FormatAdapter
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
@@ -26,8 +26,10 @@ logger = FormatAdapter(logging.getLogger(__name__))
 
 
 def _is_allocated_machine():
-    return (get_config_str("Machine", "spalloc_server") or
-            get_config_str("Machine", "remote_spinnaker_url"))
+    if is_config_none("Machine", "spalloc_server"):
+        return not is_config_none(("Machine", "remote_spinnaker_url"))
+    else:
+        return True
 
 
 class SpiNNaker(AbstractSpinnakerBase):
