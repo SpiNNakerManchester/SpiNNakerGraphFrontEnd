@@ -27,7 +27,7 @@ logger = FormatAdapter(logging.getLogger(__name__))
 
 def _is_allocated_machine():
     if is_config_none("Machine", "spalloc_server"):
-        return not is_config_none(("Machine", "remote_spinnaker_url"))
+        return not is_config_none("Machine", "remote_spinnaker_url")
     else:
         return True
 
