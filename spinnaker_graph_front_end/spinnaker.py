@@ -18,7 +18,6 @@ from spinn_utilities.log import FormatAdapter
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
-from spinn_front_end_common.interface.provenance import GlobalProvenance
 from spinnaker_graph_front_end.config_setup import setup_configs
 from ._version import __version__ as version
 
@@ -62,7 +61,7 @@ class SpiNNaker(AbstractSpinnakerBase):
 
         super().__init__()
 
-        with GlobalProvenance() as db:
+        with FecDataView.get_global_database() as db:
             db.insert_version("SpiNNakerGraphFrontEnd", version)
 
         self._data_writer.set_n_required(n_boards_required, n_chips_required)
