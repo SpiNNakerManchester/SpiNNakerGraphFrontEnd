@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -79,8 +79,9 @@ def setup(model_binary_module=None,
           model_binary_folder=None, database_socket_addresses=(),
           n_chips_required=None, n_boards_required=None,
           time_scale_factor=None, machine_time_step=None):
-    """ Set up a graph, ready to have vertices and edges added to it, and the\
-        simulator engine that will execute the graph.
+    """
+    Set up a graph, ready to have vertices and edges added to it, and the
+    simulator engine that will execute the graph.
 
     .. note::
         This must be called *before* the other functions in this API.
@@ -143,7 +144,8 @@ def setup(model_binary_module=None,
 
 
 def run(duration=None):
-    """ Run a simulation for a number of microseconds.
+    """
+    Run a simulation for a number of microseconds.
 
     :param int duration:
         the number of microseconds the application code should run for
@@ -153,7 +155,8 @@ def run(duration=None):
 
 
 def run_until_complete(n_steps=None):
-    """ Run until the simulation is complete.
+    """
+    Run until the simulation is complete.
 
     :param int n_steps:
         If not ``None``, this specifies that the simulation should be
@@ -165,7 +168,8 @@ def run_until_complete(n_steps=None):
 
 
 def stop():
-    """ Do any necessary cleaning up before exiting. Unregisters the controller
+    """
+    Do any necessary cleaning up before exiting. Unregisters the controller.
     """
     # pylint: disable=global-variable-undefined
     global _executable_finder
@@ -176,14 +180,16 @@ def stop():
 
 
 def stop_run():
-    """ Stop a request to run forever
+    """
+    Stop a request to run forever.
     """
     FecDataView.check_valid_simulator()
     __simulator.stop_run()
 
 
 def add_vertex_instance(vertex_to_add):
-    """ Add an existing application vertex to the unpartitioned graph.
+    """
+    Add an existing application vertex to the unpartitioned graph.
 
     :param ~pacman.model.graphs.application.ApplicationVertex vertex_to_add:
         vertex instance to add to the graph
@@ -192,12 +198,12 @@ def add_vertex_instance(vertex_to_add):
 
 
 def _new_edge_label():
-    label = f"Edge {FecDataView.get_next_none_labelled_edge_number()}"
-    return label
+    return f"Edge {FecDataView.get_next_none_labelled_edge_number()}"
 
 
 def add_edge_instance(edge, partition_id):
-    """ Add an edge to the unpartitioned graph.
+    """
+    Add an edge to the unpartitioned graph.
 
     :param ~pacman.model.graphs.application.ApplicationEdge edge:
         The edge to add.
@@ -208,7 +214,8 @@ def add_edge_instance(edge, partition_id):
 
 
 def add_machine_vertex_instance(machine_vertex):
-    """ Add a machine vertex instance to the graph.
+    """
+    Add a machine vertex instance to the graph.
 
     :param ~pacman.model.graphs.machine.MachineVertex machine_vertex:
         The vertex to add
@@ -220,7 +227,8 @@ def add_machine_vertex_instance(machine_vertex):
 
 
 def add_machine_edge_instance(edge, partition_id):
-    """ Add a machine edge instance to the graph.
+    """
+    Add a machine edge instance to the graph.
 
     :param ~pacman.model.graphs.machine.MachineEdge edge:
         The edge to add
@@ -235,7 +243,8 @@ def add_machine_edge_instance(edge, partition_id):
 
 def add_socket_address(
         database_ack_port_num, database_notify_host, database_notify_port_num):
-    """ Add a socket address for the notification protocol.
+    """
+    Add a socket address for the notification protocol.
 
     :param int database_ack_port_num:
         port number to send acknowledgement to
@@ -253,8 +262,9 @@ def add_socket_address(
 
 
 def get_number_of_available_cores_on_machine():
-    """ Get the number of cores on this machine that are available to the\
-        simulation.
+    """
+    Get the number of cores on this machine that are available to the
+    simulation.
 
     :rtype: int
     """
@@ -263,7 +273,8 @@ def get_number_of_available_cores_on_machine():
 
 
 def has_ran():
-    """ Get whether the simulation has already run.
+    """
+    Get whether the simulation has already run.
 
     :rtype: bool
     """
@@ -271,7 +282,8 @@ def has_ran():
 
 
 def routing_infos():
-    """ Get information about how messages are routed on the machine.
+    """
+    Get information about how messages are routed on the machine.
 
     :rtype: ~pacman.model.routing_info.RoutingInfo
     """
@@ -279,24 +291,32 @@ def routing_infos():
 
 
 def placements():
-    """ No Longer supported use View iterate_placements instead
+    """
+    Get the placements.
 
-    Instead of
-    front_end.placements().placements
+    .. deprecated:: 7.0
+        No Longer supported! Use View iterate_placements instead
 
-    Use
-    FecDataView.iterate_placemements()
+    Instead of::
 
-    FecDataView can be imported from spinn_front_end_common.data
+        front_end.placements().placements
+
+    Use::
+
+        FecDataView.iterate_placemements()
+
+    :py:class:`~spinn_front_end_common.data.FecDataView` can be imported from
+    `spinn_front_end_common.data`
     """
     raise NotImplementedError(
         "This method has been replaced with View methods such as "
         "iterate_placements. See "
-        "http://spinnakermanchester.github.io/common_pages/GlobalData.html")
+        "https://spinnakermanchester.github.io/common_pages/GlobalData.html")
 
 
 def tags():
-    """ Get the IPTAGs allocated on the machine.
+    """
+    Get the IPTAGs allocated on the machine.
 
     :rtype: ~pacman.model.tags.Tags
     """
@@ -304,7 +324,8 @@ def tags():
 
 
 def buffer_manager():
-    """ Get the buffer manager being used for loading/extracting buffers
+    """
+    Get the buffer manager being used for loading/extracting buffers.
 
     :rtype: ~spinn_front_end_common.interface.buffer_management.BufferManager
     """
@@ -312,7 +333,8 @@ def buffer_manager():
 
 
 def machine():
-    """ Get the model of the attached/allocated machine.
+    """
+    Get the model of the attached/allocated machine.
 
     :rtype: ~spinn_machine.Machine
     """
@@ -326,7 +348,8 @@ def machine():
 
 
 def is_allocated_machine():
-    """ Get whether a machine is allocated.
+    """
+    Get whether a machine is allocated.
 
     :rtype: bool
     """

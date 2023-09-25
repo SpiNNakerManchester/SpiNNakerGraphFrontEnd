@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import logging
-from spinn_utilities.config_holder import get_config_str
+from spinn_utilities.config_holder import is_config_none
 from spinn_utilities.log import FormatAdapter
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
@@ -26,12 +26,15 @@ logger = FormatAdapter(logging.getLogger(__name__))
 
 
 def _is_allocated_machine():
-    return (get_config_str("Machine", "spalloc_server") or
-            get_config_str("Machine", "remote_spinnaker_url"))
+    if is_config_none("Machine", "spalloc_server"):
+        return not is_config_none("Machine", "remote_spinnaker_url")
+    else:
+        return True
 
 
 class SpiNNaker(AbstractSpinnakerBase):
-    """ The implementation of the SpiNNaker simulation interface.
+    """
+    The implementation of the SpiNNaker simulation interface.
 
     .. note::
         You should not normally instantiate this directly from user code.
@@ -44,7 +47,7 @@ class SpiNNaker(AbstractSpinnakerBase):
         """
         :param int n_chips_required:
             How many chips are required.
-            *Prefer ``n_boards_required`` if possible.*
+            *Prefer* `n_boards_required` *if possible.*
         :param int n_boards_required:
             How many boards are required. Unnecessary with a local board.
         :param int time_scale_factor:
@@ -69,7 +72,7 @@ class SpiNNaker(AbstractSpinnakerBase):
 
     def __repr__(self):
         if FecDataView.has_ipaddress():
-            return f"SpiNNaker Graph Front End object " \
-                   f"for machine {FecDataView.get_ipaddress()}"
+            return (f"SpiNNaker Graph Front End object "
+                    f"for machine {FecDataView.get_ipaddress()}")
         else:
             return "SpiNNaker Graph Front End object no machine set"

@@ -4,20 +4,18 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from spinn_utilities.overrides import overrides
 from pacman.model.graphs.common import Slice
 from pacman.model.graphs.machine import SDRAMMachineEdge
-from pacman.model.partitioner_splitters.abstract_splitters import (
-    AbstractSplitterCommon)
+from pacman.model.partitioner_splitters import AbstractSplitterCommon
 from pacman.model.graphs.machine import ConstantSDRAMMachinePartition
-from spinn_utilities.overrides import overrides
-from spinn_front_end_common.data import FecDataView
 from gfe_integration_tests.sdram_edge_tests.common.\
     sdram_machine_vertex import SDRAMMachineVertex
 
@@ -54,22 +52,20 @@ class SDRAMSplitterInternal(AbstractSplitterCommon):
 
     def create_machine_vertices(self, chip_counter):
         # slices
-        self._pre_slice = Slice(0, int(self._governed_app_vertex.n_atoms / 2))
+        self._pre_slice = Slice(0, int(self.governed_app_vertex.n_atoms / 2))
         self._post_slice = Slice(
-            int(self._governed_app_vertex.n_atoms / 2) + 1,
-            int(self._governed_app_vertex.n_atoms - 1))
+            int(self.governed_app_vertex.n_atoms / 2) + 1,
+            int(self.governed_app_vertex.n_atoms - 1))
 
         # mac verts
-        self._pre_vertex = (
-            SDRAMMachineVertex(
-                vertex_slice=self._pre_slice, label=None,
-                app_vertex=self._governed_app_vertex, sdram_cost=20))
-        self._governed_app_vertex.remember_machine_vertex(self._pre_vertex)
-        self._post_vertex = (
-            SDRAMMachineVertex(
-                vertex_slice=self._post_slice, label=None,
-                app_vertex=self._governed_app_vertex))
-        self._governed_app_vertex.remember_machine_vertex(self._post_vertex)
+        self._pre_vertex = SDRAMMachineVertex(
+            vertex_slice=self._pre_slice, label=None,
+            app_vertex=self.governed_app_vertex, sdram_cost=20)
+        self.governed_app_vertex.remember_machine_vertex(self._pre_vertex)
+        self._post_vertex = SDRAMMachineVertex(
+            vertex_slice=self._post_slice, label=None,
+            app_vertex=self.governed_app_vertex)
+        self.governed_app_vertex.remember_machine_vertex(self._post_vertex)
 
         self._sdram_part = ConstantSDRAMMachinePartition(
             identifier="sdram", pre_vertex=self._pre_vertex)

@@ -6,7 +6,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -55,21 +55,25 @@ extensions = [
     'sphinx.ext.intersphinx'
 ]
 
+# Which version of other SpiNNaker docs do we refer to?
+spinnaker_doc_version = "latest"
+
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3.8', None),
     'numpy': ("https://numpy.org/doc/1.20/", None),
     'spinn_utilities': (
-        'https://spinnutils.readthedocs.io/en/latest/', None),
+        f'https://spinnutils.readthedocs.io/en/{spinnaker_doc_version}/',
+        None),
     'spinn_machine': (
-        'https://spinnmachine.readthedocs.io/en/latest/', None),
+        f'https://spinnmachine.readthedocs.io/en/{spinnaker_doc_version}/',
+        None),
     'spinnman': (
-        'https://spinnman.readthedocs.io/en/latest/', None),
+        f'https://spinnman.readthedocs.io/en/{spinnaker_doc_version}/', None),
     'pacman': (
-        'https://pacman.readthedocs.io/en/latest/', None),
-    'data_specification': (
-        'https://dataspecification.readthedocs.io/en/latest/', None),
+        f'https://pacman.readthedocs.io/en/{spinnaker_doc_version}/', None),
     'spinn_front_end_common': (
-        'https://spinnfrontendcommon.readthedocs.io/en/latest/', None)
+        'https://spinnfrontendcommon.readthedocs.io/en/'
+        f'{spinnaker_doc_version}/', None)
     }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -86,7 +90,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'SpiNNakerGraphFrontEnd'
-copyright = u'2014-2021'
+copyright = u'2014'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -307,7 +311,7 @@ texinfo_documents = [
 epub_title = u'SpiNNakerGraphFrontEnd'
 epub_author = u''
 epub_publisher = u''
-epub_copyright = u'2014-2017'
+epub_copyright = u'2014'
 
 # The basename for the epub file. It defaults to the project name.
 # epub_basename = u'data_allocation'

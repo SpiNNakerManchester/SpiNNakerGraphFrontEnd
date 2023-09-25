@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,11 +17,12 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Checkout SupportScripts
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: SpiNNakerManchester/SupportScripts
         path: support
@@ -34,14 +35,17 @@ jobs:
       with:
         python-version: 3.8
     - name: Checkout SpiNNaker Dependencies
-      uses: ./support/actions/checkout-spinn-deps
+      uses: ./support/actions/install-spinn-deps
       with:
         # Note: SpiNNUtils needed for spinn_utilities.make_tools
-        repositories: spinnaker_tools spinn_common SpiNNFrontEndCommon SpiNNUtils
-    - name: Install SpiNNUtils
-      # Must be separate install; don't want to install FEC
-      run: python setup.py install
-      working-directory: SpiNNUtils
+        repositories: spinnaker_tools spinn_common SpiNNFrontEndCommon
+
+    - name: "Prepare: Install SpiNNUtils"
+      uses: ./support/actions/install-spinn-deps
+      with:
+        # Note: SpiNNUtils needed for spinn_utilities.make_tools
+        repositories: SpiNNUtils
+        install: true
 
     # Note: run these before building to avoid linting modified_src directories
     - name: Lint C code using Vera++

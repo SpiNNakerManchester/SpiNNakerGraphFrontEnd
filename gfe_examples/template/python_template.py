@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,13 +37,12 @@ front_end.setup(
 
 # calculate total number of 'free' cores for the given board
 # (i.e. does not include those busy with SARK or reinjection)
-total_number_of_cores = \
-    front_end.get_number_of_available_cores_on_machine()
+total_number_of_cores = front_end.get_number_of_available_cores_on_machine()
 
 # fill all cores with a Vertex each
 for x in range(0, total_number_of_cores):
     front_end.add_machine_vertex_instance(
-        TemplateVertex(label="Template program at x {}".format(x)))
+        TemplateVertex(label=f"Template program at x {x}"))
 
 # run for a specified length of time
 front_end.run(10)

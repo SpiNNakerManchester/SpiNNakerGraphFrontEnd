@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -39,7 +39,8 @@ class DataRegions(IntEnum):
 
 
 class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
-    """ Cell which represents a cell within the 2d fabric
+    """
+    Cell which represents a cell within the 2d fabric.
     """
 
     PARTITION_ID = "STATE"
@@ -133,8 +134,8 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         expected_bytes = n_steps * self.RECORDING_ELEMENT_SIZE
         if number_of_bytes_to_read != expected_bytes:
             raise ConfigurationException(
-                "number of bytes seems wrong; have {} but expected {}".format(
-                    number_of_bytes_to_read, expected_bytes))
+                f"number of bytes seems wrong; have {number_of_bytes_to_read} "
+                f"but expected {expected_bytes}")
 
         # read the bytes
         raw_data = txrx.read_memory(

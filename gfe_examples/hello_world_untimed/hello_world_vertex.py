@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,7 +38,8 @@ logger = FormatAdapter(logging.getLogger(__name__))
 
 
 class DataRegions(IntEnum):
-    """ The data regions that the C code uses
+    """
+    The data regions that the C code uses.
     """
     SYSTEM = 0
     PARAMS = 1
@@ -46,7 +47,8 @@ class DataRegions(IntEnum):
 
 
 class Channels(IntEnum):
-    """ The recording channel IDs that the C code uses
+    """
+    The recording channel IDs that the C code uses.
     """
     HELLO = 0
 
@@ -60,7 +62,6 @@ class HelloWorldVertex(
 
     def __init__(self, label):
         """
-
         :param int n_repeats: The number of times to repeat the label in total
         :param str label: The label, which will be printed
         """
@@ -111,7 +112,8 @@ class HelloWorldVertex(
         spec.end_specification()
 
     def read(self):
-        """ Get the data written into SDRAM
+        """
+        Get the data written into SDRAM.
 
         :return: string output
         """

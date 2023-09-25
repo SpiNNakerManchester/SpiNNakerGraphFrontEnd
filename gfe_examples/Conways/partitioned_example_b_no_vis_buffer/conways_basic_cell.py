@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -50,7 +50,8 @@ class Channels(IntEnum):
 class ConwayBasicCell(
         SimulatorVertex, MachineDataSpecableVertex,
         AbstractReceiveBuffersToHost):
-    """ Cell which represents a cell within the 2d fabric
+    """
+    Cell which represents a cell within the 2d fabric.
     """
 
     PARTITION_ID = "STATE"
@@ -136,8 +137,8 @@ class ConwayBasicCell(
         # do check for missing data
         if data_missing:
             placement = self.placement
-            print("missing_data from ({}, {}, {}); ".format(
-                placement.x, placement.y, placement.p))
+            print("missing_data from "
+                  f"({placement.x}, {placement.y}, {placement.p}); ")
 
         # return the data, converted to list of booleans
         return [

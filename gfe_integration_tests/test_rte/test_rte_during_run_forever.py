@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,7 +14,7 @@
 
 import os
 from time import sleep
-from spinn_front_end_common.utilities.utility_objs import ExecutableType
+from spinnman.model.enums import ExecutableType
 from spinn_front_end_common.utilities.exceptions import (
     ExecutableFailedToStopException)
 from spinn_front_end_common.utilities.database import DatabaseConnection
@@ -29,16 +29,15 @@ def test_rte_during_run_forever():
         sleep(3.0)
         s.stop_run()
 
-    conn = DatabaseConnection(start, local_port=None)
-    s.setup(model_binary_folder=os.path.dirname(__file__))
-    s.add_machine_vertex_instance(RunVertex(
-        "test_rte_during_run.aplx",
-        ExecutableType.USES_SIMULATION_INTERFACE))
-    s.add_socket_address(None, "localhost", conn.local_port)
-    s.run(None)
-    with pytest.raises(ExecutableFailedToStopException):
-        s.stop()
-    conn.close()
+    with DatabaseConnection(start, local_port=None) as conn:
+        s.setup(model_binary_folder=os.path.dirname(__file__))
+        s.add_machine_vertex_instance(RunVertex(
+            "test_rte_during_run.aplx",
+            ExecutableType.USES_SIMULATION_INTERFACE))
+        s.add_socket_address(None, "localhost", conn.local_port)
+        s.run(None)
+        with pytest.raises(ExecutableFailedToStopException):
+            s.stop()
 
 
 if __name__ == "__main__":

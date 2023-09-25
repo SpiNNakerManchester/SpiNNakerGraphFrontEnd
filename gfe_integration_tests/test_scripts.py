@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,38 +27,17 @@ class TestScripts(ScriptChecker):
     """
 # flake8: noqa
 
-    def test_gfe_examples_sync_test_sync_test(self):
-        self.check_script("gfe_examples/sync_test/sync_test.py")
+    def test_gfe_examples_live_io_live_io(self):
+        self.check_script("gfe_examples/live_io/live_io.py")
 
-    def test_gfe_examples_sync_test_sync_test_vertex(self):
-        self.check_script("gfe_examples/sync_test/sync_test_vertex.py")
+    def test_gfe_examples_live_io_live_io_vertex(self):
+        self.check_script("gfe_examples/live_io/live_io_vertex.py")
 
-    def test_gfe_examples_Conways_one_no_graph_example_conways_no_graph(self):
-        self.check_script("gfe_examples/Conways/one_no_graph_example/conways_no_graph.py")
+    def test_gfe_examples_template_template_vertex(self):
+        self.check_script("gfe_examples/template/template_vertex.py")
 
-    def test_gfe_examples_Conways_partitioned_example_a_no_vis_no_buffer_conways_basic_cell(self):
-        self.check_script("gfe_examples/Conways/partitioned_example_a_no_vis_no_buffer/conways_basic_cell.py")
-
-    def test_gfe_examples_Conways_partitioned_example_a_no_vis_no_buffer_conways_partitioned(self):
-        self.check_script("gfe_examples/Conways/partitioned_example_a_no_vis_no_buffer/conways_partitioned.py")
-
-    def test_gfe_examples_Conways_partitioned_example_b_no_vis_buffer_conways_basic_cell(self):
-        self.check_script("gfe_examples/Conways/partitioned_example_b_no_vis_buffer/conways_basic_cell.py")
-
-    def test_gfe_examples_Conways_partitioned_example_b_no_vis_buffer_conways_partitioned(self):
-        self.check_script("gfe_examples/Conways/partitioned_example_b_no_vis_buffer/conways_partitioned.py")
-
-    def test_gfe_examples_Conways_no_edges_examples_conways_basic_cell(self):
-        self.check_script("gfe_examples/Conways/no_edges_examples/conways_basic_cell.py")
-
-    def test_gfe_examples_Conways_no_edges_examples_conways_no_edges(self):
-        self.check_script("gfe_examples/Conways/no_edges_examples/conways_no_edges.py")
-
-    def test_gfe_examples_hello_world_hello_world(self):
-        self.check_script("gfe_examples/hello_world/hello_world.py")
-
-    def test_gfe_examples_hello_world_hello_world_vertex(self):
-        self.check_script("gfe_examples/hello_world/hello_world_vertex.py")
+    def test_gfe_examples_template_python_template(self):
+        self.check_script("gfe_examples/template/python_template.py")
 
     def test_gfe_examples_hello_world_untimed_hello_world(self):
         self.check_script("gfe_examples/hello_world_untimed/hello_world.py")
@@ -66,8 +45,35 @@ class TestScripts(ScriptChecker):
     def test_gfe_examples_hello_world_untimed_hello_world_vertex(self):
         self.check_script("gfe_examples/hello_world_untimed/hello_world_vertex.py")
 
-    def test_gfe_examples_template_python_template(self):
-        self.check_script("gfe_examples/template/python_template.py")
+    def test_gfe_examples_Conways_partitioned_example_b_no_vis_buffer_conways_partitioned(self):
+        self.check_script("gfe_examples/Conways/partitioned_example_b_no_vis_buffer/conways_partitioned.py")
 
-    def test_gfe_examples_template_template_vertex(self):
-        self.check_script("gfe_examples/template/template_vertex.py")
+    def test_gfe_examples_Conways_partitioned_example_b_no_vis_buffer_conways_basic_cell(self):
+        self.check_script("gfe_examples/Conways/partitioned_example_b_no_vis_buffer/conways_basic_cell.py")
+
+    def test_gfe_examples_Conways_partitioned_example_a_no_vis_no_buffer_conways_partitioned(self):
+        self.check_script("gfe_examples/Conways/partitioned_example_a_no_vis_no_buffer/conways_partitioned.py")
+
+    def test_gfe_examples_Conways_partitioned_example_a_no_vis_no_buffer_conways_basic_cell(self):
+        self.check_script("gfe_examples/Conways/partitioned_example_a_no_vis_no_buffer/conways_basic_cell.py")
+
+    def test_gfe_examples_Conways_one_no_graph_example_conways_no_graph(self):
+        self.check_script("gfe_examples/Conways/one_no_graph_example/conways_no_graph.py")
+
+    def test_gfe_examples_Conways_no_edges_examples_conways_no_edges(self):
+        self.check_script("gfe_examples/Conways/no_edges_examples/conways_no_edges.py")
+
+    def test_gfe_examples_Conways_no_edges_examples_conways_basic_cell(self):
+        self.check_script("gfe_examples/Conways/no_edges_examples/conways_basic_cell.py")
+
+    def test_gfe_examples_sync_test_sync_test_vertex(self):
+        self.check_script("gfe_examples/sync_test/sync_test_vertex.py")
+
+    def test_gfe_examples_sync_test_sync_test(self):
+        self.check_script("gfe_examples/sync_test/sync_test.py")
+
+    def test_gfe_examples_hello_world_hello_world(self):
+        self.check_script("gfe_examples/hello_world/hello_world.py")
+
+    def test_gfe_examples_hello_world_hello_world_vertex(self):
+        self.check_script("gfe_examples/hello_world/hello_world_vertex.py")

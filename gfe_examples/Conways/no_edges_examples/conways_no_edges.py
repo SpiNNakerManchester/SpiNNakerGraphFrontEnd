@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,8 +21,7 @@ from gfe_examples.Conways.no_edges_examples.conways_basic_cell import (
 front_end.setup()
 
 for count in range(0, 60):
-    front_end.add_machine_vertex_instance(
-        ConwayBasicCell("cell{}".format(count)))
+    front_end.add_machine_vertex_instance(ConwayBasicCell(f"cell{count}"))
 
 front_end.run(1)
 front_end.stop()

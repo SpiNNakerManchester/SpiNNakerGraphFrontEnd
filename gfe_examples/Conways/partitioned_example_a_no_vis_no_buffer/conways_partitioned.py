@@ -4,7 +4,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#     https://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -43,7 +43,7 @@ active_states = [(2, 2), (3, 2), (3, 3), (4, 3), (2, 4)]
 for x in range(0, MAX_X_SIZE_OF_FABRIC):
     for y in range(0, MAX_Y_SIZE_OF_FABRIC):
         vert = ConwayBasicCell(
-            "cell{}".format((x * MAX_X_SIZE_OF_FABRIC) + y),
+            f"cell{(x * MAX_X_SIZE_OF_FABRIC) + y}",
             (x, y) in active_states)
         vertices[x, y] = vert
         front_end.add_machine_vertex_instance(vert)
@@ -96,7 +96,7 @@ if not get_config_bool("Machine", "virtual_board"):
 
     # visualise it in text form (bad but no vis this time)
     for time in range(0, runtime):
-        print("at time {}".format(time))
+        print(f"at time {time}")
         output = ""
         for y in range(MAX_X_SIZE_OF_FABRIC - 1, 0, -1):
             for x in range(0, MAX_Y_SIZE_OF_FABRIC):
