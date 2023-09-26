@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import sys
 from pacman.model.graphs.machine.machine_edge import MachineEdge
 import spinnaker_graph_front_end as front_end
 from link_test.link_test_vertex import LinkTestVertex, PARTITION_NAME
 
 
-def run():
-    front_end.setup(model_binary_folder=os.path.dirname(__file__))
+def run(n_chips=None):
+    front_end.setup(model_binary_folder=os.path.dirname(__file__),
+                    n_chips_required=n_chips)
 
     machine = front_end.machine()
 
@@ -49,4 +51,7 @@ def run():
 
 
 if __name__ == "__main__":
-    run()
+    n_chips = None
+    if len(sys.argv) > 0:
+        n_chips = int(sys.argv[0])
+    run(n_chips)

@@ -14,6 +14,7 @@
 
 import time
 import os
+import sys
 import tempfile
 from shutil import rmtree
 import pytest
@@ -31,8 +32,8 @@ HEIGHT = 2
 
 class LinkTest(object):
 
-    def do_run(self):
-        run()
+    def do_run(self, n_chips=None):
+        run(n_chips)
 
 
 boards = [(b_x, b_y) for b_x in range(0, 20, 2) for b_y in range(0, 20, 2)]
@@ -87,7 +88,7 @@ def test_run(x, y):
             f.write("read_profile_data = False\n")
 
         test = LinkTest()
-        test.do_run()
+        test.do_run(12)
 
         # If no errors we will get here and we can remove the tree;
         # then only error folders will be left
@@ -95,5 +96,8 @@ def test_run(x, y):
 
 
 if __name__ == "__main__":
+    n_chips = None
+    if len(sys.argv) > 0:
+        n_chips = int(sys.argv[0])
     link_test = LinkTest()
-    link_test.do_run()
+    link_test.do_run(n_chips)
