@@ -32,8 +32,8 @@ HEIGHT = 2
 
 class LinkTest(object):
 
-    def do_run(self, n_chips=None):
-        run(n_chips)
+    def do_run(self, n_boards=None):
+        run(n_boards)
 
 
 boards = [(b_x, b_y) for b_x in range(0, 20, 2) for b_y in range(0, 20, 2)]
@@ -88,7 +88,7 @@ def test_run(x, y):
             f.write("read_profile_data = False\n")
 
         test = LinkTest()
-        test.do_run(12)
+        test.do_run(WIDTH * HEIGHT * 3)
 
         # If no errors we will get here and we can remove the tree;
         # then only error folders will be left
@@ -96,8 +96,8 @@ def test_run(x, y):
 
 
 if __name__ == "__main__":
-    n_chips = None
+    n_boards_req = None
     if len(sys.argv) > 1:
-        n_chips = int(sys.argv[1])
+        n_boards_req = int(sys.argv[1])
     link_test = LinkTest()
-    link_test.do_run(n_chips)
+    link_test.do_run(n_boards_req)

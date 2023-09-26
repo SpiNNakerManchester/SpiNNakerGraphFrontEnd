@@ -18,9 +18,9 @@ import spinnaker_graph_front_end as front_end
 from link_test.link_test_vertex import LinkTestVertex, PARTITION_NAME
 
 
-def run(n_chips=None):
+def run(n_boards=None):
     front_end.setup(model_binary_folder=os.path.dirname(__file__),
-                    n_chips_required=n_chips)
+                    n_boards_required=n_boards)
 
     machine = front_end.machine()
 
@@ -51,7 +51,7 @@ def run(n_chips=None):
 
 
 if __name__ == "__main__":
-    n_chips = None
+    n_boards_req = None
     if len(sys.argv) > 1:
-        n_chips = int(sys.argv[1])
-    run(n_chips)
+        n_boards_req = int(sys.argv[1])
+    run(n_boards_req)
