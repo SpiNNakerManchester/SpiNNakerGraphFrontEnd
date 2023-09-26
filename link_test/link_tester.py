@@ -52,6 +52,6 @@ def run(n_chips=None):
 
 if __name__ == "__main__":
     n_chips = None
-    if len(sys.argv) > 0:
-        n_chips = int(sys.argv[0])
+    if len(sys.argv) > 1:
+        n_chips = int(sys.argv[1])
     run(n_chips)

@@ -97,7 +97,7 @@ def test_run(x, y):
 
 if __name__ == "__main__":
     n_chips = None
-    if len(sys.argv) > 0:
-        n_chips = int(sys.argv[0])
+    if len(sys.argv) > 1:
+        n_chips = int(sys.argv[1])
     link_test = LinkTest()
     link_test.do_run(n_chips)
