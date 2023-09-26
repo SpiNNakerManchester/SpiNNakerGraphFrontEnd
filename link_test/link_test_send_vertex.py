@@ -107,10 +107,11 @@ class LinkTestSendVertex(SimulatorVertex, MachineDataSpecableVertex):
             config[0].key = self.__key
             config[0].mask = self.__mask
         else:
-            ts = FecDataView.get_simulation_time_step_us()
             info = r_info.get_routing_info_from_pre_vertex(self, PARTITION_NAME)
             config[0].key = info.key
             config[0].mask = info.mask
+
+        ts = FecDataView.get_simulation_time_step_us()
         config[0].sends_per_timestep = self.__sends_per_ts
         config[0].time_between_sends_us = int((ts / 2) / self.__sends_per_ts)
         config[0].write_route = self.__write_route
