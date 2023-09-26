@@ -36,8 +36,9 @@ class LinkTest(object):
         run(n_boards)
 
 
-boards = [(b_x, b_y) for b_x in range(0, 20, 2) for b_y in range(0, 20, 2)]
-boards += [(b_x, b_y) for b_x in range(1, 20, 2) for b_y in range(1, 20, 2)]
+boards = [(b_x, b_y)
+          for a in range(2) for b in range(2)
+          for b_x in range(a, 20, 2) for b_y in range(b, 20, 2)]
 
 
 @pytest.mark.parametrize("x,y", boards)
