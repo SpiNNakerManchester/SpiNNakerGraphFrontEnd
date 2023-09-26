@@ -12,17 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from time import sleep
+import time
 import os
 import tempfile
-import sys
-import traceback
+from shutil import rmtree
 import pytest
-from spalloc.job import Job
-from spalloc.states import JobState
-import spinnaker_graph_front_end as front_end
-from _pytest.outcomes import Skipped
+from spinnman.spalloc.spalloc_client import SpallocClient
+from spinnman.spalloc.spalloc_state import SpallocState
 from link_test.link_tester import run
+
+SPALLOC_URL = "https://spinnaker.cs.man.ac.uk/spalloc"
+SPALLOC_USERNAME = "jenkins"
+SPALLOC_PASSWORD = os.getenv("SPALLOC_PASSWORD")
+SPALLOC_MACHINE = "SpiNNaker1M"
+WIDTH = 2
+HEIGHT = 2
 
 
 class LinkTest(object):
@@ -31,41 +35,65 @@ class LinkTest(object):
         run()
 
 
-boards = [(x, y, b) for x in range(20) for y in range(20) for b in range(3)]
+boards = [(b_x, b_y) for b_x in range(0, 20, 2) for b_y in range(0, 20, 2)]
+boards += [(b_x, b_y) for b_x in range(1, 20, 2) for b_y in range(1, 20, 2)]
 
 
-@pytest.mark.parametrize("b_x,b_y,b_b", boards)
-def test_run(b_x, b_y, b_b):
-    tmp_dir = os.path.abspath(os.path.join(
-        front_end.__path__[0], os.path.pardir, "link_test"))
-    job = Job(b_x, b_y, b_b, hostname="spinnaker.cs.man.ac.uk",
-              owner="Jenkins Link Test")
-    # Sleep before checking for queued in case of multiple jobs running
-    sleep(2.0)
-    if job.state == JobState.queued:
-        job.destroy("Queued")
-        pytest.skip(f"Board {b_x}, {b_y}, {b_b} is in use")
-    elif job.state == JobState.destroyed:
-        pytest.skip(f"Board {b_x}, {b_y}, {b_b} could not be allocated")
+@pytest.mark.parametrize("x,y", boards)
+def test_run(x, y):
+    test_dir = os.path.dirname(__file__)
+    client = SpallocClient(SPALLOC_URL, SPALLOC_USERNAME, SPALLOC_PASSWORD)
+    job = client.create_job_rect_at_board(
+        WIDTH, HEIGHT, triad=(x, y, 0), machine_name=SPALLOC_MACHINE)
     with job:
-        with tempfile.TemporaryDirectory(
-                prefix=f"{b_x}_{b_y}_{b_b}", dir=tmp_dir) as tmpdir:
-            os.chdir(tmpdir)
-            with open("spiNNakerGraphFrontEnd.cfg", "w", encoding="utf-8") as f:
-                f.write("[Machine]\n")
-                f.write("spalloc_server = None\n")
-                f.write(f"machine_name = {job.hostname}\n")
-                f.write("version = 5\n")
-            test = LinkTest()
-            test.do_run()
+        job.launch_keepalive_task()
+        # Wait for not queued for up to 30 seconds
+        time.sleep(1.0)
+        state = job.get_state(wait_for_change=True)
+        # If queued or destroyed skip test
+        if state == SpallocState.QUEUED:
+            job.destroy("Queued")
+            pytest.skip(f"Some boards starting at {x}, {y}, 0 are in use"
+                        f" on job {job}")
+        elif state == SpallocState.DESTROYED:
+            pytest.skip(
+                f"Boards {x}, {y}, 0 could not be allocated on job {job}")
+        # Actually wait for ready now (as might be powering on)
+        job.wait_until_ready()
+        tmpdir = tempfile.mkdtemp(prefix=f"{x}_{y}_0", dir=test_dir)
+        os.chdir(tmpdir)
+        with open("spynnaker.cfg", "w", encoding="utf-8") as f:
+            f.write("[Machine]\n")
+            f.write("spalloc_server = None\n")
+            f.write(f"machine_name = {job.get_root_host()}\n")
+            f.write("version = 5\n")
+            f.write("\n")
+            f.write("[Reports]\n")
+            f.write("reports_enabled = False\n")
+            f.write("write_routing_table_reports = False\n")
+            f.write("write_routing_tables_from_machine_reports = False\n")
+            f.write("write_tag_allocation_reports = False\n")
+            f.write("write_algorithm_timings = False\n")
+            f.write("write_sdram_usage_report_per_chip = False\n")
+            f.write("write_partitioner_reports = False\n")
+            f.write("write_application_graph_placer_report = False\n")
+            f.write("write_redundant_packet_count_report = False\n")
+            f.write("write_data_speed_up_reports = False\n")
+            f.write("write_router_info_report = False\n")
+            f.write("write_network_specification_report = False\n")
+            f.write("write_provenance = False\n")
+            f.write("read_graph_provenance_data = False\n")
+            f.write("read_placements_provenance_data = False\n")
+            f.write("read_profile_data = False\n")
+
+        test = LinkTest()
+        test.do_run()
+
+        # If no errors we will get here and we can remove the tree;
+        # then only error folders will be left
+        rmtree(tmpdir)
 
 
 if __name__ == "__main__":
-    for x, y, b in boards:
-        print("", file=sys.stderr,)
-        print(f"*************** Testing {x}, {y}, {b} *******************",
-              file=sys.stderr)
-        try:
-            test_run(x, y, b)
-        except Skipped:
-            traceback.print_exc()
+    link_test = LinkTest()
+    link_test.do_run()

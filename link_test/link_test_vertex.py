@@ -65,6 +65,10 @@ class ConfigData(LittleEndianStructure):
         # uint32_t receive_keys[N_LINKS];
         ("receive_keys", c_uint32 * N_LINKS),
 
+        #: Masks to expect from neighbours
+        # uint32_t receive_masks[N_LINKS];
+        ("receive_masks", c_uint32 * N_LINKS),
+
         #: How many times to send per time step
         # uint32_t sends_per_timestep;
         ("sends_per_timestep", c_uint32),
@@ -135,10 +139,12 @@ class LinkTestVertex(
         for i in range(N_LINKS):
             if self.__neighbours[i] is None:
                 config[0].receive_keys[i] = 0xFFFFFFFF
+                config[0].receive_masks[i] = 0
             else:
-                config[0].receive_keys[i] = \
-                    r_info.get_first_key_from_pre_vertex(
-                        self.__neighbours[i], PARTITION_NAME)
+                info = r_info.get_routing_info_from_pre_vertex(
+                    self.__neighbours[i], PARTITION_NAME)
+                config[0].receive_keys[i] = info.key
+                config[0].receive_masks[i] = info.mask
         config[0].sends_per_timestep = self.__sends_per_ts
         config[0].time_between_sends_us = int((ts / 2) / self.__sends_per_ts)
         config[0].packet_count_ok = (
@@ -203,3 +209,6 @@ class LinkTestVertex(
 
     def check_failure(self):
         assert not self.__failed
+
+    def get_n_keys_for_partition(self, partition_id):
+        return self.__sends_per_ts

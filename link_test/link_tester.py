@@ -27,7 +27,7 @@ def run():
     # Put link test on all chips
     chips = dict()
     for c_x, c_y in machine.chip_coordinates:
-        chips[c_x, c_y] = LinkTestVertex(c_x, c_y, 100, 1, run_time)
+        chips[c_x, c_y] = LinkTestVertex(c_x, c_y, 256, 0, run_time)
         front_end.add_machine_vertex_instance(chips[c_x, c_y])
 
     # Connect links together

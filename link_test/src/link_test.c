@@ -35,6 +35,9 @@ typedef struct {
     // Keys to expect from neighbours
     uint32_t receive_keys[N_LINKS];
 
+    // Masks to expect from neighbours
+    uint32_t receive_masks[N_LINKS];
+
     // How many times to send per time step
     uint32_t sends_per_timestep;
 
@@ -118,7 +121,7 @@ static p2p_data_t data_to_send;
 static void receive_data(uint key, uint payload) {
     uint32_t key_found = 0;
     for (uint32_t i = 0; i < N_LINKS; i++) {
-        if (key == config.receive_keys[i]) {
+        if ((key & config.receive_masks[i]) == config.receive_keys[i]) {
             packets_received[i]++;
             if (payload != expected_data[i]) {
                 fails_received[i]++;
@@ -184,7 +187,7 @@ static void send_data(UNUSED uint a, UNUSED uint b) {
     }
 
     for (uint32_t i = 0; i < config.sends_per_timestep; i++) {
-        spin1_send_mc_packet(config.send_key, data_to_send.data, 1);
+        spin1_send_mc_packet(config.send_key + i, data_to_send.data, 1);
         spin1_delay_us(config.time_between_sends_us);
     }
 }
