@@ -12,14 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# If SPINN_DIRS is not defined, this is an error!
-ifndef SPINN_DIRS
-    $(error SPINN_DIRS is not set.  Please define SPINN_DIRS (possibly by running "source setup" in the spinnaker package folder))
-endif
+BUILDS = link_test_sender.mk link_test_receiver.mk link_test.mk
+all: $(BUILDS)
+	for f in $(BUILDS); do ("$(MAKE)" -f $$f) || exit $$?; done
 
-APP = link_test
-SOURCES = link_test.c
-
-APP_OUTPUT_DIR := $(abspath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))/
-
-include $(SPINN_DIRS)/make/local.mk
+clean: $(BUILDS)
+	for f in $(BUILDS); do ("$(MAKE)" -f $$f clean) || exit $$?; done

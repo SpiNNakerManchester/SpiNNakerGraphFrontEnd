@@ -84,7 +84,6 @@ def test_run(x, y):
             f.write("write_network_specification_report = False\n")
             f.write("write_provenance = False\n")
             f.write("read_graph_provenance_data = False\n")
-            f.write("read_placements_provenance_data = False\n")
             f.write("read_profile_data = False\n")
 
         test = LinkTest()

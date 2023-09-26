@@ -15,7 +15,12 @@ import os
 import sys
 from pacman.model.graphs.machine.machine_edge import MachineEdge
 import spinnaker_graph_front_end as front_end
-from link_test.link_test_vertex import LinkTestVertex, PARTITION_NAME
+from link_test.link_test_send_vertex import LinkTestSendVertex, PARTITION_NAME
+from link_test.link_test_receive_vertex import LinkTestReceiveVertex
+
+WRITE_ROUTES = True
+SENDS_PER_TS = 256
+DROPS_PER_TS = 0
 
 
 def run(n_boards=None):
@@ -27,26 +32,31 @@ def run(n_boards=None):
     run_time = 10000
 
     # Put link test on all chips
-    chips = dict()
+    senders = dict()
+    receivers = dict()
     for c_x, c_y in machine.chip_coordinates:
-        chips[c_x, c_y] = LinkTestVertex(c_x, c_y, 256, 0, run_time)
-        front_end.add_machine_vertex_instance(chips[c_x, c_y])
+        receivers[c_x, c_y] = LinkTestReceiveVertex(
+            c_x, c_y, SENDS_PER_TS, DROPS_PER_TS, run_time, WRITE_ROUTES)
+        front_end.add_machine_vertex_instance(receivers[c_x, c_y])
+        senders[c_x, c_y] = LinkTestSendVertex(
+            c_x, c_y, SENDS_PER_TS, WRITE_ROUTES)
 
     # Connect links together
     for chip in machine.chips:
         for link in chip.router.links:
             opposite_link = (link.source_link_id + 3) % 6
-            target = chips[link.destination_x, link.destination_y]
-            source = chips[chip.x, chip.y]
+            target = receivers[link.destination_x, link.destination_y]
+            source = senders[chip.x, chip.y]
             target.set_neighbour(opposite_link, source)
-            front_end.add_machine_edge_instance(
-                MachineEdge(source, target), PARTITION_NAME)
+            if not WRITE_ROUTES:
+                front_end.add_machine_edge_instance(
+                    MachineEdge(source, target), PARTITION_NAME)
 
     front_end.run(run_time)
     front_end.stop()
 
     # Check the vertices for failure
-    for vertex in chips.values():
+    for vertex in receivers.values():
         vertex.check_failure()
 
 
