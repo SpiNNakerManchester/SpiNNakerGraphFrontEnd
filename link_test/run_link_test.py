@@ -63,7 +63,7 @@ def test_run(x, y):
         job.wait_until_ready()
         tmpdir = tempfile.mkdtemp(prefix=f"{x}_{y}_0", dir=test_dir)
         os.chdir(tmpdir)
-        with open("spynnaker.cfg", "w", encoding="utf-8") as f:
+        with open("spiNNakerGraphFrontEnd.cfg", "w", encoding="utf-8") as f:
             f.write("[Machine]\n")
             f.write("spalloc_server = None\n")
             f.write(f"machine_name = {job.get_root_host()}\n")
