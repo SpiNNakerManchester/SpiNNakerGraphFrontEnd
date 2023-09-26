@@ -165,6 +165,13 @@ class LinkTestReceiveVertex(
         link_count_ok, link_fail_ok, links_from_scamp, unknown_keys = (
             provenance_data)
 
+        machine = FecDataView.get_machine()
+        chip = machine.get_chip_at(x, y)
+        ip = machine.get_chip_at(
+            chip.nearest_ethernet_x, chip.nearest_ethernet_y).ip_address
+        (lx, ly) = machine.get_local_xy(chip)
+        loc = f"{x}, {y} ({lx}, {ly} on {ip})"
+
         with ProvenanceWriter() as db:
             for i in range(N_LINKS):
                 this_link_count_ok = bool(link_count_ok & (1 << i))
@@ -181,19 +188,20 @@ class LinkTestReceiveVertex(
                     x, y, p, f"Link {i} used", this_link_used)
                 if (this_link_used and this_link_enabled and
                         not this_link_count_ok):
-                    db.insert_report(f"Link {i} on {x}, {y} failed to receive"
+
+                    db.insert_report(f"Link {i} on {loc} failed to receive"
                                      " enough packets")
                     self.__failed = True
                 if (this_link_used and this_link_enabled and
                         not this_link_fail_ok):
-                    db.insert_report(f"Link {i} on {x}, {y} received"
+                    db.insert_report(f"Link {i} on {loc} received"
                                      " unexpected data at least once")
                     self.__failed = True
             db.insert_core(
                 x, y, p, "Unknown keys", unknown_keys)
             if unknown_keys:
                 db.insert_report(
-                    f"Chip {x}, {y} received {unknown_keys} unknown keys")
+                    f"Chip {loc} received {unknown_keys} unknown keys")
                 self.__failed = True
 
     @property

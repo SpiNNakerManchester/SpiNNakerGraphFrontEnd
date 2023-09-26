@@ -19,7 +19,7 @@ from link_test.link_test_send_vertex import LinkTestSendVertex, PARTITION_NAME
 from link_test.link_test_receive_vertex import LinkTestReceiveVertex
 
 WRITE_ROUTES = True
-SENDS_PER_TS = 256
+SENDS_PER_TS = 200
 DROPS_PER_TS = 0
 
 
