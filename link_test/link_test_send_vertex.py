@@ -27,6 +27,7 @@ from spinn_front_end_common.abstract_models.impl import (
     MachineDataSpecableVertex)
 from spinn_front_end_common.data.fec_data_view import FecDataView
 from spinnaker_graph_front_end.utilities import SimulatorVertex
+from pacman.utilities.utility_calls import get_n_bits
 
 logger = FormatAdapter(logging.getLogger(__name__))
 
@@ -77,6 +78,11 @@ class LinkTestSendVertex(SimulatorVertex, MachineDataSpecableVertex):
         self.__y = y
         self.__sends_per_ts = sends_per_ts
         self.__write_route = write_route
+        self.__key = None
+        self.__mask = None
+        if not self.__write_route:
+            self.__key = (self.__x << 24) | (self.__y << 16)
+            self.__mask = 0xFFFF0000
 
     @overrides(SimulatorVertex.get_fixed_location)
     def get_fixed_location(self):
@@ -95,12 +101,16 @@ class LinkTestSendVertex(SimulatorVertex, MachineDataSpecableVertex):
         self.generate_system_region(spec, DataRegions.SYSTEM)
 
         # Make a config
-        r_info = FecDataView.get_routing_infos()
-        ts = FecDataView.get_simulation_time_step_us()
         config = (ConfigData * 1)()
-        info = r_info.get_routing_info_from_pre_vertex(self, PARTITION_NAME)
-        config[0].key = info.key
-        config[0].mask = info.mask
+        r_info = FecDataView.get_routing_infos()
+        if self.__write_route:
+            config[0].key = self.__key
+            config[0].mask = self.__mask
+        else:
+            ts = FecDataView.get_simulation_time_step_us()
+            info = r_info.get_routing_info_from_pre_vertex(self, PARTITION_NAME)
+            config[0].key = info.key
+            config[0].mask = info.mask
         config[0].sends_per_timestep = self.__sends_per_ts
         config[0].time_between_sends_us = int((ts / 2) / self.__sends_per_ts)
         config[0].write_route = self.__write_route
@@ -116,3 +126,12 @@ class LinkTestSendVertex(SimulatorVertex, MachineDataSpecableVertex):
 
     def get_n_keys_for_partition(self, partition_id):
         return self.__sends_per_ts
+
+    @property
+    def base_key(self):
+        return self.__key
+
+    @property
+    def mask(self):
+        return self.__mask
+

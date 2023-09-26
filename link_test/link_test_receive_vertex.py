@@ -132,10 +132,14 @@ class LinkTestReceiveVertex(
                 config[0].receive_keys[i] = 0xFFFFFFFF
                 config[0].receive_masks[i] = 0
             else:
-                info = r_info.get_routing_info_from_pre_vertex(
-                    self.__neighbours[i], PARTITION_NAME)
-                config[0].receive_keys[i] = info.key
-                config[0].receive_masks[i] = info.mask
+                if self.__write_routes:
+                    config[0].receive_keys[i] = self.__neighbours[i].base_key
+                    config[0].receive_masks[i] = self.__neighbours[i].mask
+                else:
+                    info = r_info.get_routing_info_from_pre_vertex(
+                        self.__neighbours[i], PARTITION_NAME)
+                    config[0].receive_keys[i] = info.key
+                    config[0].receive_masks[i] = info.mask
         config[0].packet_count_ok = (
             (self.__sends_per_ts - self.__drops_per_ts_allowed) *
             self.__run_time)
