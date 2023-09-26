@@ -147,7 +147,7 @@ static bool initialize(uint32_t *timer_period) {
  * SOURCEy_size
  */
 void c_main(void) {
-    log_info("starting heat_demo\n");
+    log_info("starting link sender\n");
 
     // Load DTCM datan_links
     uint32_t timer_period;

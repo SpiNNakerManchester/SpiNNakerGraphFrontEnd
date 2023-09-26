@@ -40,6 +40,7 @@ def run(n_boards=None):
         front_end.add_machine_vertex_instance(receivers[c_x, c_y])
         senders[c_x, c_y] = LinkTestSendVertex(
             c_x, c_y, SENDS_PER_TS, WRITE_ROUTES)
+        front_end.add_machine_vertex_instance(senders[c_x, c_y])
 
     # Connect links together
     for chip in machine.chips:
