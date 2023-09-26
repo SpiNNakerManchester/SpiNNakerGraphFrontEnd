@@ -80,7 +80,7 @@ class LinkTestSendVertex(SimulatorVertex, MachineDataSpecableVertex):
         self.__write_route = write_route
         self.__key = None
         self.__mask = None
-        if not self.__write_route:
+        if self.__write_route:
             self.__key = (self.__x << 24) | (self.__y << 16)
             self.__mask = 0xFFFF0000
 
