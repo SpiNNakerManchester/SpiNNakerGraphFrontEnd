@@ -64,7 +64,7 @@ conn = LiveEventConnection(
 conn.add_start_resume_callback(sender_label, start_sending)
 conn.add_pause_stop_callback(sender_label, end_sim)
 for x in range(n_receivers):
-    conn.add_receive_callback(receiver_label + f" {x}", receive)
+    conn.add_receive_time_callback(receiver_label + f" {x}", receive)
 
 front_end.setup(
     n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
