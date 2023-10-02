@@ -46,7 +46,8 @@ def test_run(x, y):
     test_dir = os.path.dirname(__file__)
     client = SpallocClient(SPALLOC_URL, SPALLOC_USERNAME, SPALLOC_PASSWORD)
     job = client.create_job_rect_at_board(
-        WIDTH, HEIGHT, triad=(x, y, 0), machine_name=SPALLOC_MACHINE)
+        WIDTH, HEIGHT, triad=(x, y, 0), machine_name=SPALLOC_MACHINE,
+        max_dead_boards=WIDTH * HEIGHT * 3)
     with job:
         job.launch_keepalive_task()
         # Wait for not queued for up to 30 seconds
@@ -61,7 +62,10 @@ def test_run(x, y):
             pytest.skip(
                 f"Boards {x}, {y}, 0 could not be allocated on job {job}")
         # Actually wait for ready now (as might be powering on)
-        job.wait_until_ready()
+        job.wait_until_ready(n_retries=3)
+        print(job.get_connections())
+        while job.get_root_host() is None:
+            time.sleep(0.5)
         tmpdir = tempfile.mkdtemp(prefix=f"{x}_{y}_0", dir=test_dir)
         os.chdir(tmpdir)
         with open("spiNNakerGraphFrontEnd.cfg", "w", encoding="utf-8") as f:
