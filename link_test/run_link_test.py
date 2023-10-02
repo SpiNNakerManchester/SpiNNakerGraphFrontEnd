@@ -63,6 +63,7 @@ def test_run(x, y):
                 f"Boards {x}, {y}, 0 could not be allocated on job {job}")
         # Actually wait for ready now (as might be powering on)
         job.wait_until_ready()
+        print(job.get_connections())
         tmpdir = tempfile.mkdtemp(prefix=f"{x}_{y}_0", dir=test_dir)
         os.chdir(tmpdir)
         with open("spiNNakerGraphFrontEnd.cfg", "w", encoding="utf-8") as f:
