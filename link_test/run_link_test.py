@@ -47,7 +47,7 @@ def test_run(x, y):
     client = SpallocClient(SPALLOC_URL, SPALLOC_USERNAME, SPALLOC_PASSWORD)
     job = client.create_job_rect_at_board(
         WIDTH, HEIGHT, triad=(x, y, 0), machine_name=SPALLOC_MACHINE,
-        max_dead_boards=WIDTH * HEIGHT * 3)
+        max_dead_boards=1)
     with job:
         job.launch_keepalive_task()
         # Wait for not queued for up to 30 seconds
