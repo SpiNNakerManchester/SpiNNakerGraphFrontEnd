@@ -30,8 +30,8 @@ _TRANSFER_SIZE_MEGABYTES = 20
 def get_data_region_address(placement, region):
     # Get the App Data for the core
     transceiver = FecDataView.get_transceiver()
-    app_data_base_address = transceiver.get_cpu_information_from_core(
-        placement.x, placement.y, placement.p).user[0]
+    app_data_base_address = transceiver.get_region_base_address(
+        placement.x, placement.y, placement.p)
 
     # Get the provenance region base address
     address_location = get_region_base_address_offset(
