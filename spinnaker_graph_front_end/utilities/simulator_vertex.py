@@ -13,10 +13,12 @@
 # limitations under the License.
 import logging
 import sys
+from spinn_utilities.abstract_base import abstractmethod
 from spinn_utilities.overrides import overrides
 from spinn_utilities.log import FormatAdapter
 from spinnman.model.enums import ExecutableType
 from pacman.model.graphs.machine import MachineVertex
+from pacman.model.resources import AbstractSDRAM
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.buffer_management import (
@@ -60,6 +62,12 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):
         return ExecutableType.USES_SIMULATION_INTERFACE
+
+    @property
+    @abstractmethod
+    @overrides(MachineVertex.sdram_required)
+    def sdram_required(self) -> AbstractSDRAM:
+        raise NotImplementedError
 
     @property
     def front_end(self):
