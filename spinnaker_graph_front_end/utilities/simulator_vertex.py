@@ -34,13 +34,17 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
 
     __slots__ = ["_binary_name", "__front_end"]
 
-    def __init__(self, label, binary_name):
+    def __init__(self, label, binary_name, vertex_slice=None):
         """
         :param str label:
             The label for the vertex.
         :param str binary_name:
             The name of the APLX implementing the vertex.
-        """
+         :param vertex_slice:
+            The slice of the application vertex that this machine vertex
+            implements.
+        :type vertex_slice: ~pacman.model.graphs.common.Slice or None
+       """
         super().__init__(label)
         self._binary_name = binary_name
         if not binary_name.lower().endswith(".aplx"):
