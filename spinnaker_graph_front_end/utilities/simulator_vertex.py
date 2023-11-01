@@ -13,10 +13,12 @@
 # limitations under the License.
 import logging
 import sys
+from spinn_utilities.abstract_base import abstractmethod
 from spinn_utilities.overrides import overrides
 from spinn_utilities.log import FormatAdapter
 from spinnman.model.enums import ExecutableType
 from pacman.model.graphs.machine import MachineVertex
+from pacman.model.resources import AbstractSDRAM
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.buffer_management import (
@@ -34,12 +36,16 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
 
     __slots__ = ["_binary_name", "__front_end"]
 
-    def __init__(self, label, binary_name):
+    def __init__(self, label, binary_name, vertex_slice=None):
         """
         :param str label:
             The label for the vertex.
         :param str binary_name:
             The name of the APLX implementing the vertex.
+        :param vertex_slice:
+            The slice of the application vertex that this machine vertex
+            implements.
+        :type vertex_slice: ~pacman.model.graphs.common.Slice or None
         """
         super().__init__(label)
         self._binary_name = binary_name
@@ -56,6 +62,12 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
     def get_binary_start_type(self):
         return ExecutableType.USES_SIMULATION_INTERFACE
+
+    @property
+    @abstractmethod
+    @overrides(MachineVertex.sdram_required)
+    def sdram_required(self) -> AbstractSDRAM:
+        raise NotImplementedError
 
     @property
     def front_end(self):

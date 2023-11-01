@@ -39,10 +39,10 @@ class LiveIOVertex(
         SimulatorVertex, MachineDataSpecableVertex):
 
     def __init__(self, n_keys, send_partition="LiveOut", label=None):
-        super().__init__(label, "live_io.aplx")
+        super().__init__(
+            label, "live_io.aplx", vertex_slice=Slice(0, n_keys - 1))
         self.__n_keys = n_keys
         self.__send_partition = send_partition
-        self._vertex_slice = Slice(0, n_keys - 1)
 
     @property
     @overrides(MachineVertex.sdram_required)
