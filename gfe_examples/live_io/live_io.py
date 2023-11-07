@@ -19,7 +19,7 @@ from pacman.model.graphs.machine.machine_edge import MachineEdge
 from spinn_front_end_common.data.fec_data_view import FecDataView
 from spinn_front_end_common.utilities.connections import LiveEventConnection
 from spinn_front_end_common.utility_models import (
-    LivePacketGatherMachineVertex, ReverseIPTagMulticastSourceMachineVertex)
+    EIEIOParameters, LivePacketGatherMachineVertex, ReverseIPTagMulticastSourceMachineVertex)
 from spinn_front_end_common.utilities.utility_objs import (
     LivePacketGatherParameters)
 import spinnaker_graph_front_end as front_end
@@ -71,9 +71,10 @@ front_end.setup(
 front_end.add_socket_address(None, None, conn.local_port)
 
 # Add a sender
+eieio_params = EIEIOParameters(injection_partition_id=sender_partition)
 sender = ReverseIPTagMulticastSourceMachineVertex(
     n_keys=n_sender_keys, label="Sender",
-    injection_partition_id=sender_partition)
+    eieio_params=eieio_params)
 front_end.add_machine_vertex_instance(sender)
 
 live_out = LivePacketGatherMachineVertex(
