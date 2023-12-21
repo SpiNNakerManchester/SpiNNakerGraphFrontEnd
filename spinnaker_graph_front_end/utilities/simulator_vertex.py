@@ -36,7 +36,7 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
 
     __slots__ = ["_binary_name", "__front_end"]
 
-    def __init__(self, label, binary_name, vertex_slice=None):
+    def __init__(self, label, binary_name: str, vertex_slice=None):
         """
         :param str label:
             The label for the vertex.

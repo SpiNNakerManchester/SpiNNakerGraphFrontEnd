@@ -14,11 +14,15 @@
 
 from enum import IntEnum
 import logging
+from typing import Iterable, Optional
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
+from spinn_machine.tags import IPTag, ReverseIPTag
 from pacman.model.graphs.common import Slice
 from pacman.model.graphs.machine import MachineVertex
+from pacman.model.placements import Placement
 from pacman.model.resources import ConstantSDRAM
+from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
 from spinn_front_end_common.abstract_models.impl import (
@@ -46,7 +50,7 @@ class LiveIOVertex(
 
     @property
     @overrides(MachineVertex.sdram_required)
-    def sdram_required(self):
+    def sdram_required(self) -> ConstantSDRAM:
         return ConstantSDRAM(
             SYSTEM_BYTES_REQUIREMENT + N_KEY_DATA_BYTES)
 
@@ -55,7 +59,9 @@ class LiveIOVertex(
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
-            self, spec, placement, iptags, reverse_iptags):
+            self, spec: DataSpecificationGenerator, placement: Placement,
+            iptags: Optional[Iterable[IPTag]],
+            reverse_iptags: Optional[Iterable[ReverseIPTag]]):
         # Generate the system data region for simulation .c requirements
         self.generate_system_region(spec)
 

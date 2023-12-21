@@ -12,14 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from enum import IntEnum
-
+from typing import Iterable, Optional
 from spinnman.model.enums import ExecutableType
+from spinn_machine.tags import IPTag, ReverseIPTag
 from pacman.model.graphs import AbstractSupportsSDRAMEdges
-from pacman.model.graphs.machine import MachineVertex
+from pacman.model.graphs.machine import MachineVertex, SDRAMMachineEdge
+from pacman.model.placements import Placement
 from pacman.model.resources import ConstantSDRAM
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.abstract_models.impl import (
     MachineDataSpecableVertex)
+from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utilities.constants import (
     SIMULATION_N_BYTES, BYTES_PER_WORD, SARK_PER_MALLOC_SDRAM_USAGE)
@@ -60,7 +63,7 @@ class SDRAMMachineVertex(
 
 
     @overrides(MachineVertex.sdram_required)
-    def sdram_required(self):
+    def sdram_required(self) -> ConstantSDRAM:
         if (len(self.__incoming_sdram_partitions) +
                 len(self.__outgoing_sdram_partitions) == 0):
             raise ValueError("Isolated SDRAM vertex!")
@@ -79,7 +82,7 @@ class SDRAMMachineVertex(
             outgoing_sdram_requirements)
 
     @overrides(AbstractSupportsSDRAMEdges.sdram_requirement)
-    def sdram_requirement(self, sdram_machine_edge):
+    def sdram_requirement(self, sdram_machine_edge: SDRAMMachineEdge) -> int:
         if self.__sdram_cost is None:
             raise NotImplementedError(
                 "This vertex has no cost so is not expected to appear "
@@ -87,16 +90,18 @@ class SDRAMMachineVertex(
         return self.__sdram_cost
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
-    def get_binary_file_name(self):
+    def get_binary_file_name(self) -> str:
         return "sdram.aplx"
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
-    def get_binary_start_type(self):
+    def get_binary_start_type(self) -> ExecutableType:
         return ExecutableType.USES_SIMULATION_INTERFACE
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
-            self, spec, placement, iptags, reverse_iptags):
+            self, spec: DataSpecificationGenerator, placement: Placement,
+            iptags: Optional[Iterable[IPTag]],
+            reverse_iptags: Optional[Iterable[ReverseIPTag]]):
         # reserve memory regions
         spec.reserve_memory_region(
             region=DataRegions.SYSTEM, size=SIMULATION_N_BYTES,
