@@ -94,6 +94,6 @@ class HelloWorldVertex(
         return [Channels.HELLO]
 
     @overrides(AbstractReceiveBuffersToHost.get_recording_region_base_address)
-    def get_recording_region_base_address(self, placement) -> int:
+    def get_recording_region_base_address(self, placement: Placement) -> int:
         return locate_memory_region_for_placement(
             placement, DataRegions.STRING_DATA)
