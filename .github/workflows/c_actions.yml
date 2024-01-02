@@ -30,10 +30,10 @@ jobs:
       uses: ./support/actions/apt-get-install
       with:
         packages: doxygen gcc-arm-none-eabi
-    - name: Set up Python 3.8
+    - name: Set up Python 3.12
       uses: actions/setup-python@v4
       with:
-        python-version: 3.8
+        python-version: 3.12
     - name: Checkout SpiNNaker Dependencies
       uses: ./support/actions/install-spinn-deps
       with:
