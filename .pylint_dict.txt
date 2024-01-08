@@ -12,18 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Our abbreviations
+# Our abbreviations/names
+aplx
 GFE
 gfe
-aplx
+
+# Our "special" words
+iptags
+
+# Our Python types
 
 # Python packages
 pacman
 spalloc
 
 # Python types
-ApplicationVertex
-MachineVertex
 ApplicationEdge
+ApplicationVertex
 MachineEdge
+MachineVertex
 ModuleType
