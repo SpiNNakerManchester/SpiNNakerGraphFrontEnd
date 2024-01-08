@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
 def generate_system_data_region(
         spec: DataSpecificationGenerator, region_id: int,
-        machine_vertex: SimulatorVertex):
+        machine_vertex: 'SimulatorVertex'):
     """
     Generate a system data region for time-based simulations.
 
@@ -46,7 +46,7 @@ def generate_system_data_region(
 
 def generate_steps_system_data_region(
         spec: DataSpecificationGenerator, region_id: int,
-        machine_vertex: SimulatorVertex):
+        machine_vertex: 'SimulatorVertex'):
     """
     Generate a system data region for step-based simulations.
 
