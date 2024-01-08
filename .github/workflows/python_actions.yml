@@ -75,6 +75,9 @@ jobs:
         package: ${{ env.BASE_PKG }} gfe_examples
         language: en_GB
 
+    - name: Lint with mypy
+      run: mypy $BASE_PKG
+
   validate:
     runs-on: ubuntu-latest
     strategy:
