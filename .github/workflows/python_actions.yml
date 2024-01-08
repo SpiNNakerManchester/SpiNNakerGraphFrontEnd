@@ -73,6 +73,7 @@ jobs:
       uses: ./support/actions/pylint
       with:
         package: ${{ env.BASE_PKG }} gfe_examples
+        exitcheck: 31 # Action fails on any message
         language: en_GB
 
   validate:
