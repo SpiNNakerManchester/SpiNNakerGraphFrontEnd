@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from typing import TYPE_CHECKING
 from spinn_front_end_common.utilities.constants import SIMULATION_N_BYTES
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 from spinn_front_end_common.interface.simulation.simulation_utilities import (
     get_simulation_header_array, get_simulation_header_array_no_timestep)
-from .simulator_vertex import SimulatorVertex
+if TYPE_CHECKING:
+    from .simulator_vertex import SimulatorVertex
 
 
 def generate_system_data_region(
