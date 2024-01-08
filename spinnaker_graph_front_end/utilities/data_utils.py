@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from pacman.model.graphs.machine import MachineVertex
 from spinn_front_end_common.utilities.constants import SIMULATION_N_BYTES
+from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 from spinn_front_end_common.interface.simulation.simulation_utilities import (
     get_simulation_header_array, get_simulation_header_array_no_timestep)
 
 
-def generate_system_data_region(spec, region_id, machine_vertex):
+def generate_system_data_region(spec: DataSpecificationGenerator,
+                                region_id: int, machine_vertex: MachineVertex):
     """
     Generate a system data region for time-based simulations.
 
@@ -38,7 +41,9 @@ def generate_system_data_region(spec, region_id, machine_vertex):
         machine_vertex.get_binary_file_name()))
 
 
-def generate_steps_system_data_region(spec, region_id, machine_vertex):
+def generate_steps_system_data_region(
+        spec: DataSpecificationGenerator, region_id: int,
+        machine_vertex: MachineVertex):
     """
     Generate a system data region for step-based simulations.
 
