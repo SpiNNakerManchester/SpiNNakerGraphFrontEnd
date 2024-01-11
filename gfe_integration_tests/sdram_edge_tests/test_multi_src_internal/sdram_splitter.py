@@ -43,12 +43,12 @@ class SDRAMSplitter(AbstractSplitterCommon):
 
     @overrides(AbstractSplitterCommon.get_out_going_vertices)
     def get_out_going_vertices(
-            self, partition_id) -> SourceSegmentedSDRAMMachinePartition:
+            self, partition_id: str) -> SourceSegmentedSDRAMMachinePartition:
         return [self._post_vertex]
 
     @overrides(AbstractSplitterCommon.get_in_coming_vertices)
     def get_in_coming_vertices(
-            self, partition_id) -> List[SourceSegmentedSDRAMMachinePartition]:
+            self, partition_id: str) -> List[SourceSegmentedSDRAMMachinePartition]:
         return self._pre_vertices
 
     def create_machine_vertices(self, chip_counter):
