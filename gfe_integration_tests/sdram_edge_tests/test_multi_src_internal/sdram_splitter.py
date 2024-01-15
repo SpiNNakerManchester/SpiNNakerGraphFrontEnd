@@ -96,7 +96,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
 
     @overrides(AbstractSplitterCommon.machine_vertices_for_recording)
     def machine_vertices_for_recording(
-            self, variable_to_record) -> List[SourceSegmentedSDRAMMachinePartition]:
+            self, variable_to_record: str) -> List[SourceSegmentedSDRAMMachinePartition]:
         return [self._post_vertex].extend(self._pre_vertices)
 
     @overrides(AbstractSplitterCommon.reset_called)

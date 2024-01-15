@@ -101,7 +101,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
 
     @overrides(AbstractSplitterCommon.machine_vertices_for_recording)
     def machine_vertices_for_recording(
-            self, variable_to_record) -> List[SDRAMMachineVertex]:
+            self, variable_to_record: str) -> List[SDRAMMachineVertex]:
         return [self._pre_vertex].extend(self._post_vertices)
 
     @overrides(AbstractSplitterCommon.reset_called)
