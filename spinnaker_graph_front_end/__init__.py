@@ -113,6 +113,7 @@ def setup(model_binary_module=None,
     :raise ~spinn_front_end_common.utilities.exceptions.ConfigurationException:
         if mutually exclusive options are given.
     """
+    # pylint: disable=global-statement
     global __simulator
     # pylint: disable=redefined-outer-name
     logger.info(
@@ -223,6 +224,7 @@ def add_machine_vertex_instance(machine_vertex):
     app_vertex = AbstractOneAppOneMachineVertex(
         machine_vertex, machine_vertex.label)
     FecDataView.add_vertex(app_vertex)
+    # pylint: disable=protected-access
     machine_vertex._app_vertex = app_vertex
 
 

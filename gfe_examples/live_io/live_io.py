@@ -48,7 +48,7 @@ def start_sending(label, c):
 
 
 def end_sim(label, c):
-    # pylint: disable=unused-argument
+    # pylint: disable=unused-argument,global-statement
     global running
     running = False
 
