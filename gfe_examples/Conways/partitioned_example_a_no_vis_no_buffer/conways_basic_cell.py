@@ -13,10 +13,14 @@
 # limitations under the License.
 
 from enum import IntEnum
+from typing import Iterable, Optional
 from spinn_utilities.overrides import overrides
+from spinn_machine.tags import IPTag, ReverseIPTag
 from pacman.model.graphs.machine import MachineVertex
+from pacman.model.placements import Placement
 from pacman.model.resources import VariableSDRAM
 from spinn_front_end_common.data import FecDataView
+from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
@@ -72,7 +76,9 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
     @overrides(
         MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
-            self, spec, placement, iptags, reverse_iptags):
+            self, spec: DataSpecificationGenerator, placement: Placement,
+            iptags: Optional[Iterable[IPTag]],
+            reverse_iptags: Optional[Iterable[ReverseIPTag]]):
         if len(self._neighbours) != 8:
             raise ValueError(
                 f"Only {len(self._neighbours)} neighbours, not 8")
@@ -149,7 +155,7 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
 
     @property
     @overrides(MachineVertex.sdram_required)
-    def sdram_required(self):
+    def sdram_required(self) -> VariableSDRAM:
         fixed_sdram = (SYSTEM_BYTES_REQUIREMENT + self.TRANSMISSION_DATA_SIZE +
                        self.STATE_DATA_SIZE +
                        self.NEIGHBOUR_INITIAL_STATES_SIZE +

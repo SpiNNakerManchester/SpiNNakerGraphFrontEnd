@@ -13,10 +13,14 @@
 # limitations under the License.
 
 from enum import IntEnum
+from typing import Iterable, List, Optional
 from spinn_utilities.overrides import overrides
+from spinn_machine.tags import IPTag, ReverseIPTag
 from pacman.model.graphs.machine import MachineVertex
+from pacman.model.placements import Placement
 from pacman.model.resources import VariableSDRAM
 from spinn_front_end_common.data import FecDataView
+from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
 from spinn_front_end_common.utilities.helpful_functions import (
@@ -80,7 +84,9 @@ class ConwayBasicCell(
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
-            self, spec, placement, iptags, reverse_iptags):
+            self, spec: DataSpecificationGenerator, placement: Placement,
+            iptags: Optional[Iterable[IPTag]],
+            reverse_iptags: Optional[Iterable[ReverseIPTag]]):
         # pylint: disable=arguments-differ
         if len(self._neighbours) != 8:
             raise ValueError(
@@ -147,7 +153,7 @@ class ConwayBasicCell(
 
     @property
     @overrides(MachineVertex.sdram_required)
-    def sdram_required(self):
+    def sdram_required(self) -> VariableSDRAM:
         fixed_sdram = (
             SYSTEM_BYTES_REQUIREMENT +
             self.TRANSMISSION_DATA_SIZE +
@@ -166,10 +172,10 @@ class ConwayBasicCell(
         return self.label
 
     @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)
-    def get_recorded_region_ids(self):
+    def get_recorded_region_ids(self) -> List[int]:
         return [Channels.STATE_LOG]
 
     @overrides(AbstractReceiveBuffersToHost.get_recording_region_base_address)
-    def get_recording_region_base_address(self, placement):
+    def get_recording_region_base_address(self, placement: Placement) -> int:
         return locate_memory_region_for_placement(
             placement, DataRegions.RESULTS)

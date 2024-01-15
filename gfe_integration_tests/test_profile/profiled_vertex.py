@@ -13,15 +13,20 @@
 # limitations under the License.
 
 from enum import IntEnum
+from typing import Iterable, Optional
 import logging
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
+from spinn_machine.tags import IPTag, ReverseIPTag
 from pacman.model.graphs.machine import MachineVertex
+from pacman.model.placements import Placement
 from pacman.model.resources import ConstantSDRAM
 from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT
 from spinn_front_end_common.abstract_models.impl import (
     MachineDataSpecableVertex)
-from spinn_front_end_common.interface.profiling import AbstractHasProfileData
+from spinn_front_end_common.interface.ds import DataSpecificationGenerator
+from spinn_front_end_common.interface.profiling import (
+    AbstractHasProfileData, ProfileData)
 from spinn_front_end_common.interface.profiling.profile_utils import (
     get_profile_region_size, reserve_profile_region, write_profile_region_data,
     get_profiling_data)
@@ -52,14 +57,16 @@ class ProfiledVertex(
 
     @property
     @overrides(MachineVertex.sdram_required)
-    def sdram_required(self):
+    def sdram_required(self) -> ConstantSDRAM:
         return ConstantSDRAM(
             SYSTEM_BYTES_REQUIREMENT +
             get_profile_region_size(N_SAMPLES))
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
-            self, spec, placement, iptags, reverse_iptags):
+            self, spec: DataSpecificationGenerator, placement: Placement,
+            iptags: Optional[Iterable[IPTag]],
+            reverse_iptags: Optional[Iterable[ReverseIPTag]]):
         # Generate the system data region for simulation .c requirements
         self.generate_system_region(spec)
 
@@ -71,6 +78,6 @@ class ProfiledVertex(
         spec.end_specification()
 
     @overrides(AbstractHasProfileData.get_profile_data)
-    def get_profile_data(self, placement):
+    def get_profile_data(self, placement: Placement) -> ProfileData:
         return get_profiling_data(
             DataRegions.PROFILE.value, PROFILE_TAGS, placement)
