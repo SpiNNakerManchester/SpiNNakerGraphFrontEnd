@@ -47,7 +47,7 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
             implements.
         :type vertex_slice: ~pacman.model.graphs.common.Slice or None
         """
-        super().__init__(label)
+        super().__init__(label, vertex_slice=vertex_slice)
         self._binary_name = binary_name
         if not binary_name.lower().endswith(".aplx"):
             log.warning("APLX protocol used but name not matching; "
