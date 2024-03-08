@@ -17,3 +17,4 @@ __pycache__
 **/modified_src/
 **/Debug/
 *.dict
+/.mypy_cache/
