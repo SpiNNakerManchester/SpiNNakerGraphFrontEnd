@@ -95,7 +95,6 @@ for x in range(n_receivers):
     front_end.add_machine_edge_instance(
         MachineEdge(vertex, live_out), sender_partition)
     live_out.add_incoming_source(vertex, sender_partition)
-    FecDataView.add_live_output_vertex(vertex, sender_partition)
 
 front_end.run(10000)
 
