@@ -16,7 +16,6 @@ import os
 from time import sleep
 from random import randint
 from pacman.model.graphs.machine.machine_edge import MachineEdge
-from spinn_front_end_common.data.fec_data_view import FecDataView
 from spinn_front_end_common.utilities.connections import LiveEventConnection
 from spinn_front_end_common.utility_models import (
     EIEIOParameters, LivePacketGatherMachineVertex,
