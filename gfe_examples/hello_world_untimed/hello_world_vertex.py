@@ -14,9 +14,11 @@
 
 from enum import IntEnum
 import logging
+from typing import List
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
+from pacman.model.placements import Placement
 from pacman.model.resources import VariableSDRAM
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utilities.constants import (
@@ -29,6 +31,7 @@ from spinn_front_end_common.interface.buffer_management.buffer_models import (
     AbstractReceiveBuffersToHost)
 from spinn_front_end_common.interface.buffer_management import (
     recording_utilities)
+from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 from spinnaker_graph_front_end.utilities import SimulatorVertex
 from spinnaker_graph_front_end.utilities.data_utils import (
     generate_steps_system_data_region)
@@ -76,7 +79,7 @@ class HelloWorldVertex(
 
     @property
     @overrides(MachineVertex.sdram_required)
-    def sdram_required(self):
+    def sdram_required(self) -> VariableSDRAM:
         fixed = (
             SYSTEM_BYTES_REQUIREMENT +
             recording_utilities.get_recording_header_size(len(Channels)) +
@@ -85,7 +88,8 @@ class HelloWorldVertex(
         return VariableSDRAM(fixed, variable)
 
     @overrides(AbstractGeneratesDataSpecification.generate_data_specification)
-    def generate_data_specification(self, spec, placement):
+    def generate_data_specification(
+            self, spec: DataSpecificationGenerator, placement: Placement):
         # pylint: disable=arguments-differ
 
         # Generate the system data region for simulation .c requirements
@@ -124,10 +128,10 @@ class HelloWorldVertex(
         return str(raw_data, self._ENCODING)
 
     @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)
-    def get_recorded_region_ids(self):
+    def get_recorded_region_ids(self) -> List[int]:
         return [Channels.HELLO]
 
     @overrides(AbstractReceiveBuffersToHost.get_recording_region_base_address)
-    def get_recording_region_base_address(self, placement):
+    def get_recording_region_base_address(self, placement: Placement) -> int:
         return locate_memory_region_for_placement(
             placement, DataRegions.STRING_DATA)

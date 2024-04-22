@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import List
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.common import Slice
 from pacman.model.graphs.machine import SDRAMMachineEdge
@@ -27,43 +28,47 @@ class SDRAMSplitter(AbstractSplitterCommon):
 
     __slots__ = [
         "_pre_vertices",
-        "_pre_slices",
-        "_post_slice",
-        "_post_vertex",
+        "__post_vertex",
         "_partition"]
 
     def __init__(self):
         super().__init__()
-        self._pre_vertices = list()
-        self._post_vertex = None
-        self._pre_slices = list()
-        self._post_slice = None
+        self._pre_vertices: List[SourceSegmentedSDRAMMachinePartition] = list()
+        self.__post_vertex = None
+
+    @property
+    def _post_vertex(self):
+        assert isinstance(self.__post_vertex, SDRAMMachineVertex)
+        return self.__post_vertex
 
     @overrides(AbstractSplitterCommon.get_out_going_vertices)
-    def get_out_going_vertices(self, partition_id):
+    def get_out_going_vertices(
+            self, partition_id: str) -> SourceSegmentedSDRAMMachinePartition:
         return [self._post_vertex]
 
     @overrides(AbstractSplitterCommon.get_in_coming_vertices)
-    def get_in_coming_vertices(self, partition_id):
+    def get_in_coming_vertices(
+            self, partition_id: str) -> List[SourceSegmentedSDRAMMachinePartition]:
         return self._pre_vertices
 
     def create_machine_vertices(self, chip_counter):
         # slices
-        self._post_slice = Slice(
+        post_slice = Slice(
             0, int(self.governed_app_vertex.n_atoms / self.N_VERTS))
 
+        pre_slices = list()
         for count in range(1, self.N_VERTS):
-            self._pre_slices.append(Slice(
-                self._post_slice.n_atoms * count,
-                self._post_slice.n_atoms * count + self._post_slice.n_atoms))
+            pre_slices.append(Slice(
+                post_slice.n_atoms * count,
+                post_slice.n_atoms * count + post_slice.n_atoms))
 
         # mac verts
-        self._post_vertex = SDRAMMachineVertex(
-            vertex_slice=self._post_slice, label=None,
+        self.__post_vertex = SDRAMMachineVertex(
+            vertex_slice=post_slice, label=None,
             app_vertex=self.governed_app_vertex)
         self.governed_app_vertex.remember_machine_vertex(self._post_vertex)
 
-        for vertex_slice in self._pre_slices:
+        for vertex_slice in pre_slices:
             pre_vertex = SDRAMMachineVertex(
                 vertex_slice=vertex_slice, label=None,
                 app_vertex=self.governed_app_vertex, sdram_cost=20)
@@ -82,21 +87,25 @@ class SDRAMSplitter(AbstractSplitterCommon):
             chip_counter.add_core(pre_vertex.sdram_required)
 
     @overrides(AbstractSplitterCommon.get_out_going_slices)
-    def get_out_going_slices(self):
+    def get_out_going_slices(self) -> Slice:
         return [self._post_vertex.vertex_slice]
 
     @overrides(AbstractSplitterCommon.get_in_coming_slices)
-    def get_in_coming_slices(self):
+    def get_in_coming_slices(self) -> List[Slice]:
         return [v.vertex_slice for v in self._pre_vertices]
 
     @overrides(AbstractSplitterCommon.machine_vertices_for_recording)
-    def machine_vertices_for_recording(self, variable_to_record):
+    def machine_vertices_for_recording(
+            self, variable_to_record: str) -> List[SourceSegmentedSDRAMMachinePartition]:
         return [self._post_vertex].extend(self._pre_vertices)
 
     @overrides(AbstractSplitterCommon.reset_called)
-    def reset_called(self):
+    def reset_called(self) -> None:
         pass
 
     @overrides(AbstractSplitterCommon.get_internal_sdram_partitions)
-    def get_internal_sdram_partitions(self):
+    def get_internal_sdram_partitions(
+            self) -> SourceSegmentedSDRAMMachinePartition:
+        assert isinstance(
+            self._partition, SourceSegmentedSDRAMMachinePartition)
         return [self._partition]

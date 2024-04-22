@@ -16,7 +16,6 @@ import os
 from time import sleep
 from random import randint
 from pacman.model.graphs.machine.machine_edge import MachineEdge
-from spinn_front_end_common.data.fec_data_view import FecDataView
 from spinn_front_end_common.utilities.connections import LiveEventConnection
 from spinn_front_end_common.utility_models import (
     EIEIOParameters, LivePacketGatherMachineVertex,
@@ -48,7 +47,7 @@ def start_sending(label, c):
 
 
 def end_sim(label, c):
-    # pylint: disable=unused-argument
+    # pylint: disable=unused-argument,global-statement
     global running
     running = False
 
@@ -95,7 +94,6 @@ for x in range(n_receivers):
     front_end.add_machine_edge_instance(
         MachineEdge(vertex, live_out), sender_partition)
     live_out.add_incoming_source(vertex, sender_partition)
-    FecDataView.add_live_output_vertex(vertex, sender_partition)
 
 front_end.run(10000)
 

@@ -36,7 +36,7 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
 
     __slots__ = ["_binary_name", "__front_end"]
 
-    def __init__(self, label, binary_name, vertex_slice=None):
+    def __init__(self, label, binary_name: str, vertex_slice=None):
         """
         :param str label:
             The label for the vertex.
@@ -47,7 +47,7 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
             implements.
         :type vertex_slice: ~pacman.model.graphs.common.Slice or None
         """
-        super().__init__(label)
+        super().__init__(label, vertex_slice=vertex_slice)
         self._binary_name = binary_name
         if not binary_name.lower().endswith(".aplx"):
             log.warning("APLX protocol used but name not matching; "
@@ -56,11 +56,11 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
         self.__front_end = sys.modules["spinnaker_graph_front_end"]
 
     @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
-    def get_binary_file_name(self):
+    def get_binary_file_name(self) -> str:
         return self._binary_name
 
     @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
-    def get_binary_start_type(self):
+    def get_binary_start_type(self) -> ExecutableType:
         return ExecutableType.USES_SIMULATION_INTERFACE
 
     @property

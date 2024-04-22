@@ -13,14 +13,18 @@
 # limitations under the License.
 
 from enum import IntEnum
+from typing import Iterable, Optional
 from spinn_utilities.overrides import overrides
+from spinn_machine.tags import IPTag, ReverseIPTag
 from spinnman.model.enums import ExecutableType
 from pacman.model.graphs.machine import MachineVertex
+from pacman.model.placements import Placement
 from pacman.model.resources import ConstantSDRAM
 from spinn_front_end_common.abstract_models import (
     AbstractHasAssociatedBinary)
 from spinn_front_end_common.abstract_models.impl import (
     MachineDataSpecableVertex)
+from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 from spinn_front_end_common.interface.simulation import simulation_utilities
 from spinn_front_end_common.utilities.constants import (
     SIMULATION_N_BYTES, SYSTEM_BYTES_REQUIREMENT, BYTES_PER_KB)
@@ -55,7 +59,9 @@ class SDRAMWriter(
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
-            self, spec, placement, iptags, reverse_iptags):
+            self, spec: DataSpecificationGenerator, placement: Placement,
+            iptags: Optional[Iterable[IPTag]],
+            reverse_iptags: Optional[Iterable[ReverseIPTag]]):
         # Reserve SDRAM space for memory areas:
         self._reserve_memory_regions(spec)
 
