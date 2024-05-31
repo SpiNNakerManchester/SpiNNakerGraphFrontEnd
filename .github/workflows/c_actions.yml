@@ -133,6 +133,13 @@ jobs:
         name: logs.sqlite3
         path: external_binaries
 
+    - name: Append cfg
+      # Doing this in the prepare action ended with a different path
+      run: | 
+        echo '[Mapping]' >> ~/.spiNNakerGraphFrontEnd.cfg
+        echo "external_binaries=$PWD/external_binaries" >> ~/.spiNNakerGraphFrontEnd.cfg
+        cat ~/.spiNNakerGraphFrontEnd.cfg
+
     - name: Test with pytest and proxy
       env:
         SPALLOC_USER: ${{ secrets.SPALLOC_USER }}
