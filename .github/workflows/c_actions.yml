@@ -19,33 +19,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Checkout SupportScripts
-      uses: actions/checkout@v4
+    - name: Prepare
+      uses: SpiNNakerManchester/SupportScripts/actions/prepare@main
       with:
-        repository: SpiNNakerManchester/SupportScripts
-        path: support
-    - name: Install Ubuntu packages
-      uses: ./support/actions/apt-get-install
-      with:
-        packages: doxygen gcc-arm-none-eabi
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v5
-      with:
-        python-version: 3.12
-    - name: Checkout SpiNNaker Dependencies
-      uses: ./support/actions/install-spinn-deps
-      with:
-        # Note: SpiNNUtils needed for spinn_utilities.make_tools
-        repositories: spinnaker_tools spinn_common SpiNNFrontEndCommon
-
-    - name: "Prepare: Install SpiNNUtils"
-      uses: ./support/actions/install-spinn-deps
-      with:
-        # Note: SpiNNUtils needed for spinn_utilities.make_tools
-        repositories: SpiNNUtils
-        install: true
+        python-version: "3.12"
+        checkout_dependencies: spinnaker_tools spinn_common SpiNNFrontEndCommon
+        install_dependencies: SpiNNUtils
+        install_module: false
+        install_check_tools: false
+        ubuntu_packages: doxygen gcc-arm-none-eabi
 
     # Note: run these before building to avoid linting modified_src directories
     - name: Lint C code using Vera++
@@ -54,7 +36,7 @@ jobs:
         base-dir: spinnaker_graph_front_end
         options: -P max-dirname-length=40
     - name: Lint C code using Vera++
-      uses: ./support/actions/vera
+      uses: SpiNNakerManchester/SupportScripts/actions/vera@main
       with:
         base-dir: gfe_integration_tests
 
@@ -62,6 +44,7 @@ jobs:
       run: |
         export SPINN_DIRS=$PWD/spinnaker_tools
         echo "SPINN_DIRS=$PWD/spinnaker_tools" >> $GITHUB_ENV
+        echo "C_LOGS_DICT=$PWD/logs.sqlite3" >> $GITHUB_ENV
         make -C spinnaker_tools
         make -C spinn_common install
         make -C SpiNNFrontEndCommon/c_common install
@@ -79,3 +62,25 @@ jobs:
         CFLAGS: -fdiagnostics-color=always
         GCC_COLORS: error=01;31:warning=01;35:note=01;36:range1=32:range2=34:locus=01:quote=01:fixit-insert=32:fixit-delete=31:diff-filename=01:diff-hunk=32:diff-delete=31:diff-insert=32
       working-directory: gfe_integration_tests
+
+    - name: Upload Fec binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: fec_binaries
+        path: SpiNNFrontEndCommon/spinn_front_end_common/common_model_binaries/*.aplx
+        retention-days: 5
+
+    - name: Upload test_extra_monitor binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: test_extra_monitor_binary
+        path: gfe_integration_tests/test_extra_monitor/*.aplx
+        retention-days: 5
+
+    - name: Upload log.sqlite3s
+      uses: actions/upload-artifact@v4
+      with:
+        name: logs.sqlite3
+        path: logs.sqlite3
+        retention-days: 5
+
