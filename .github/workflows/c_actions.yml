@@ -31,10 +31,11 @@ jobs:
 
     # Note: run these before building to avoid linting modified_src directories
     - name: Lint C code using Vera++
-      uses: ./support/actions/vera
+      uses: SpiNNakerManchester/SupportScripts/actions/vera@main
       with:
         base-dir: spinnaker_graph_front_end
         options: -P max-dirname-length=40
+
     - name: Lint C code using Vera++
       uses: SpiNNakerManchester/SupportScripts/actions/vera@main
       with:
