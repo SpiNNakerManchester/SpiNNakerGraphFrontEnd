@@ -41,11 +41,13 @@ jobs:
       with:
         base-dir: gfe_integration_tests
 
-    - name: Build C dependencies
+    - name: "Prepare: Set Environment variables"
       run: |
-        export SPINN_DIRS=$PWD/spinnaker_tools
         echo "SPINN_DIRS=$PWD/spinnaker_tools" >> $GITHUB_ENV
         echo "C_LOGS_DICT=$PWD/logs.sqlite3" >> $GITHUB_ENV
+
+    - name: Build C dependencies
+      run: |
         make -C spinnaker_tools
         make -C spinn_common install
         make -C SpiNNFrontEndCommon/c_common install
