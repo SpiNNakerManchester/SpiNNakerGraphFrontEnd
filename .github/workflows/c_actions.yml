@@ -52,6 +52,12 @@ jobs:
         make -C spinn_common install
         make -C SpiNNFrontEndCommon/c_common install
 
+    - name: Build FEC C code
+      run: make
+      working-directory: SpiNNFrontEndCommon/c_common
+      env:
+        CFLAGS: -fdiagnostics-color=always
+
     - name: Build Example code
       run: make
       env:
@@ -87,3 +93,48 @@ jobs:
         path: logs.sqlite3
         retention-days: 5
 
+  test:
+    needs: build
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        runner: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - name: Prepare
+      uses: SpiNNakerManchester/SupportScripts/actions/prepare@main
+      with:
+        python-version: "3.12"
+        install_dependencies: > 
+          SpiNNUtils SpiNNMachine SpiNNMan PACMAN spalloc
+          SpiNNFrontEndCommon TestBase
+        install_module: false
+        install_check_tools: false
+        ubuntu_packages: graphviz
+        cfg_file: spiNNakerGraphFrontEnd
+
+    - name: Download Fec binaries
+      uses: actions/download-artifact@v4
+      with:
+        name: fec_binaries
+        # Need to go into spynnaker as FEC will have been moved by install
+        path: external_binaries
+
+    - name: Download test_extra_monitor_binary Binaries
+      uses: actions/download-artifact@v4
+      with:
+        name: test_extra_monitor_binary
+        path: external_binaries
+
+    - name: Download logs.sqlite3
+      uses: actions/download-artifact@v4
+      with:
+        name: logs.sqlite3
+        path: external_binaries
+
+    - name: Test with pytest and proxy
+      env:
+        SPALLOC_USER: ${{ secrets.SPALLOC_USER }}
+        SPALLOC_PASSWORD: ${{ secrets.SPALLOC_PASSWORD }}
+      run: pytest gfe_integration_tests/test_extra_monitor
