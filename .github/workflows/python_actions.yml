@@ -27,5 +27,4 @@ jobs:
       ubuntu_packages: graphviz
       test_directories: unittests
       flake8-packages: spinnaker_graph_front_end unittests gfe_examples
-      check_prereleases: false
       cfg_file: spiNNakerGraphFrontEnd
