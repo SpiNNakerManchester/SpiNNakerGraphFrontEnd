@@ -47,11 +47,13 @@ class SDRAMSplitterInternal(AbstractSplitterCommon):
         return self.__post_vertex
 
     @overrides(AbstractSplitterCommon.get_out_going_vertices)
-    def get_out_going_vertices(self, partition_id: str) -> List[SDRAMMachineVertex]:
+    def get_out_going_vertices(self, partition_id: str) -> List[
+            SDRAMMachineVertex]:
         return [self._pre_vertex]
 
     @overrides(AbstractSplitterCommon.get_in_coming_vertices)
-    def get_in_coming_vertices(self, partition_id: str) -> list[SDRAMMachineVertex]:
+    def get_in_coming_vertices(self, partition_id: str) -> List[
+            SDRAMMachineVertex]:
         return [self._post_vertex]
 
     def create_machine_vertices(self, chip_counter):
