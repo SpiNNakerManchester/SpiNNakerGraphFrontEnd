@@ -31,7 +31,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
         "_post_vertices",
         "_partition"]
 
-    def __init__(self):
+    def __init__(self) -> 'SDRAMSplitter':
         super().__init__()
         self.__pre_vertex = None
         self._post_vertices: list[SDRAMMachineVertex] = list()
@@ -51,7 +51,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
         return self._post_vertices
 
     @overrides(AbstractSplitterCommon.get_in_coming_vertices)
-    def get_in_coming_vertices(self, partition_id: str) -> SDRAMMachineVertex:
+    def get_in_coming_vertices(self, partition_id: str) -> List[SDRAMMachineVertex]:
         return [self._pre_vertex]
 
     def create_machine_vertices(self, chip_counter):
@@ -102,7 +102,9 @@ class SDRAMSplitter(AbstractSplitterCommon):
     @overrides(AbstractSplitterCommon.machine_vertices_for_recording)
     def machine_vertices_for_recording(
             self, variable_to_record: str) -> List[SDRAMMachineVertex]:
-        return [self._pre_vertex].extend(self._post_vertices)
+        mv = [self._pre_vertex]
+        mv.extend(self._post_vertices)
+        return mv
 
     @overrides(AbstractSplitterCommon.reset_called)
     def reset_called(self) -> None:

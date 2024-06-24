@@ -28,13 +28,11 @@ class SDRAMSplitter(AbstractSplitterCommon):
 
     __slots__ = [
         "_pre_vertices",
-        "__post_vertex",
         "_partition"]
 
-    def __init__(self):
+    def __init__(self) -> 'SDRAMSplitter':
         super().__init__()
         self._pre_vertices: List[SourceSegmentedSDRAMMachinePartition] = list()
-        self.__post_vertex = None
 
     @property
     def _post_vertex(self):
@@ -43,13 +41,14 @@ class SDRAMSplitter(AbstractSplitterCommon):
 
     @overrides(AbstractSplitterCommon.get_out_going_vertices)
     def get_out_going_vertices(
-            self, partition_id: str) -> SourceSegmentedSDRAMMachinePartition:
-        return [self._post_vertex]
+            self, partition_id: str) -> List[SourceSegmentedSDRAMMachinePartition]:
+        return []
 
     @overrides(AbstractSplitterCommon.get_in_coming_vertices)
     def get_in_coming_vertices(
             self, partition_id: str) -> List[SourceSegmentedSDRAMMachinePartition]:
         return self._pre_vertices
+
 
     def create_machine_vertices(self, chip_counter):
         # slices
@@ -97,7 +96,10 @@ class SDRAMSplitter(AbstractSplitterCommon):
     @overrides(AbstractSplitterCommon.machine_vertices_for_recording)
     def machine_vertices_for_recording(
             self, variable_to_record: str) -> List[SourceSegmentedSDRAMMachinePartition]:
-        return [self._post_vertex].extend(self._pre_vertices)
+        mv = [self._post_vertex]
+        mv.extend(self._pre_vertices)
+        return mv
+
 
     @overrides(AbstractSplitterCommon.reset_called)
     def reset_called(self) -> None:
@@ -105,7 +107,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
 
     @overrides(AbstractSplitterCommon.get_internal_sdram_partitions)
     def get_internal_sdram_partitions(
-            self) -> SourceSegmentedSDRAMMachinePartition:
+            self) -> List[SourceSegmentedSDRAMMachinePartition]:
         assert isinstance(
             self._partition, SourceSegmentedSDRAMMachinePartition)
         return [self._partition]
