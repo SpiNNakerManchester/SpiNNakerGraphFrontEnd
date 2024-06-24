@@ -34,7 +34,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
     def __init__(self) -> None:
         super().__init__()
         self.__pre_vertex = None
-        self._post_vertices: list[SDRAMMachineVertex] = list()
+        self._post_vertices: List[SDRAMMachineVertex] = list()
 
     @property
     def _pre_vertex(self) -> SDRAMMachineVertex:
