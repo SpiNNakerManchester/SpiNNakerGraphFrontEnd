@@ -49,7 +49,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
 
     @overrides(AbstractSplitterCommon.get_in_coming_vertices)
     def get_in_coming_vertices(
-            self, partition_id: str) -> List[SourceSegmentedSDRAMMachinePartition]:
+            self, partition_id: str) -> List[SDRAMMachineVertex]:
         return self._pre_vertices
 
 
