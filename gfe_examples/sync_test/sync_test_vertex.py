@@ -14,22 +14,27 @@
 
 from enum import IntEnum
 import logging
+
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
+
 from spinnman.model.enums import ExecutableType
+
+from pacman.model.graphs.application.abstract import (
+    AbstractOneAppOneMachineVertex)
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.placements import Placement
 from pacman.model.resources import ConstantSDRAM
+
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
 from spinn_front_end_common.abstract_models import (
     AbstractGeneratesDataSpecification, AbstractHasAssociatedBinary)
+
 from spinnaker_graph_front_end.utilities.data_utils import (
-    generate_system_data_region)
-from pacman.model.graphs.application.abstract import (
-    AbstractOneAppOneMachineVertex)
+    generate_system_data_region, SimulatorVertex)
 
 logger = FormatAdapter(logging.getLogger(__name__))
 
@@ -49,7 +54,7 @@ class SyncTestVertex(AbstractOneAppOneMachineVertex):
             label, n_atoms=1)
 
 
-class SyncTestMachineVertex(MachineVertex, AbstractHasAssociatedBinary,
+class SyncTestMachineVertex(SimulatorVertex,
                             AbstractGeneratesDataSpecification):
     def __init__(self, lead, app_vertex, label=None):
         super().__init__(label, app_vertex)
@@ -82,8 +87,10 @@ class SyncTestMachineVertex(MachineVertex, AbstractHasAssociatedBinary,
             spec.write_value(0)
         else:
             routing_info = FecDataView.get_routing_infos()
-            spec.write_value(routing_info.get_first_key_from_pre_vertex(
-                self, SEND_PARTITION))
+            key = routing_info.get_first_key_from_pre_vertex(
+                self, SEND_PARTITION)
+            assert(key is not None)
+            spec.write_value(key)
 
         # End-of-Spec:
         spec.end_specification()
