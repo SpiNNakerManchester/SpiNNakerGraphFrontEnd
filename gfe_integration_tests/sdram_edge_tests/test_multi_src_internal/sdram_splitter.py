@@ -34,7 +34,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
     def __init__(self) -> None:
         super().__init__()
         self.__post_vertex = None
-        self._pre_vertices: List[SourceSegmentedSDRAMMachinePartition] = list()
+        self._pre_vertices: List[SDRAMMachineVertex] = list()
 
     @property
     def _post_vertex(self):
@@ -44,6 +44,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
     @overrides(AbstractSplitterCommon.get_out_going_vertices)
     def get_out_going_vertices(
             self, partition_id: str) -> List[MachineVertex]:
+        assert isinstance(self.__post_vertex, SDRAMMachineVertex)
         return [self.__post_vertex]
 
     @overrides(AbstractSplitterCommon.get_in_coming_vertices)
@@ -88,7 +89,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
             chip_counter.add_core(pre_vertex.sdram_required)
 
     @overrides(AbstractSplitterCommon.get_out_going_slices)
-    def get_out_going_slices(self) -> Slice:
+    def get_out_going_slices(self) -> List[Slice]:
         return [self._post_vertex.vertex_slice]
 
     @overrides(AbstractSplitterCommon.get_in_coming_slices)
