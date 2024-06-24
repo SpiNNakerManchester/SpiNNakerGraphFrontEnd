@@ -89,7 +89,7 @@ class SyncTestMachineVertex(SimulatorVertex,
             routing_info = FecDataView.get_routing_infos()
             key = routing_info.get_first_key_from_pre_vertex(
                 self, SEND_PARTITION)
-            assert(key is not None)
+            assert (key is not None)
             spec.write_value(key)
 
         # End-of-Spec:
