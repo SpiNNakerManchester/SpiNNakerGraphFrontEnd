@@ -30,8 +30,5 @@ class TestCfgChecker(unittest.TestCase):
         gfe_examples = os.path.join(parent, "gfe_examples")
         gfe_integration_tests = os.path.join(parent, "gfe_integration_tests")
         gfe = spinnaker_graph_front_end.__path__[0]
-        repeaters = [
-            "placer", "router", "info_allocator", "compressor"]
         run_config_checks(
-            directories=[gfe_examples, gfe_integration_tests, gfe, unittests],
-            repeaters=repeaters)
+            directories=[gfe_examples, gfe_integration_tests, gfe, unittests])
