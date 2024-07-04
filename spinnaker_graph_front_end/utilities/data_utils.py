@@ -13,6 +13,8 @@
 # limitations under the License.
 
 from typing import TYPE_CHECKING
+from spinn_front_end_common.abstract_models import (
+    AbstractHasAssociatedBinary)
 from spinn_front_end_common.utilities.constants import SIMULATION_N_BYTES
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 from spinn_front_end_common.interface.simulation.simulation_utilities import (
@@ -23,7 +25,7 @@ if TYPE_CHECKING:
 
 def generate_system_data_region(
         spec: DataSpecificationGenerator, region_id: int,
-        machine_vertex: 'SimulatorVertex'):
+        machine_vertex: AbstractHasAssociatedBinary):
     """
     Generate a system data region for time-based simulations.
 
