@@ -14,7 +14,7 @@
 from typing import List
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.common import Slice
-from pacman.model.graphs.machine import SDRAMMachineEdge
+from pacman.model.graphs.machine import MachineVertex, SDRAMMachineEdge
 from pacman.model.partitioner_splitters import AbstractSplitterCommon
 from pacman.model.graphs.machine import SourceSegmentedSDRAMMachinePartition
 from gfe_integration_tests.sdram_edge_tests.common import SDRAMMachineVertex
@@ -31,10 +31,10 @@ class SDRAMSplitter(AbstractSplitterCommon):
         "__post_vertex",
         "_partition"]
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
-        self._pre_vertices: List[SourceSegmentedSDRAMMachinePartition] = list()
         self.__post_vertex = None
+        self._pre_vertices: List[SDRAMMachineVertex] = list()
 
     @property
     def _post_vertex(self):
@@ -43,13 +43,15 @@ class SDRAMSplitter(AbstractSplitterCommon):
 
     @overrides(AbstractSplitterCommon.get_out_going_vertices)
     def get_out_going_vertices(
-            self, partition_id: str) -> SourceSegmentedSDRAMMachinePartition:
-        return [self._post_vertex]
+            self, partition_id: str) -> List[MachineVertex]:
+        assert isinstance(self.__post_vertex, SDRAMMachineVertex)
+        return [self.__post_vertex]
 
     @overrides(AbstractSplitterCommon.get_in_coming_vertices)
     def get_in_coming_vertices(
-            self, partition_id: str) -> List[SourceSegmentedSDRAMMachinePartition]:
+            self, partition_id: str) -> List[SDRAMMachineVertex]:
         return self._pre_vertices
+
 
     def create_machine_vertices(self, chip_counter):
         # slices
@@ -87,7 +89,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
             chip_counter.add_core(pre_vertex.sdram_required)
 
     @overrides(AbstractSplitterCommon.get_out_going_slices)
-    def get_out_going_slices(self) -> Slice:
+    def get_out_going_slices(self) -> List[Slice]:
         return [self._post_vertex.vertex_slice]
 
     @overrides(AbstractSplitterCommon.get_in_coming_slices)
@@ -96,8 +98,11 @@ class SDRAMSplitter(AbstractSplitterCommon):
 
     @overrides(AbstractSplitterCommon.machine_vertices_for_recording)
     def machine_vertices_for_recording(
-            self, variable_to_record: str) -> List[SourceSegmentedSDRAMMachinePartition]:
-        return [self._post_vertex].extend(self._pre_vertices)
+            self, variable_to_record: str) -> List[MachineVertex]:
+        mv = [self._post_vertex]
+        mv.extend(self._pre_vertices)
+        return mv
+
 
     @overrides(AbstractSplitterCommon.reset_called)
     def reset_called(self) -> None:
@@ -105,7 +110,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
 
     @overrides(AbstractSplitterCommon.get_internal_sdram_partitions)
     def get_internal_sdram_partitions(
-            self) -> SourceSegmentedSDRAMMachinePartition:
+            self) -> List[SourceSegmentedSDRAMMachinePartition]:
         assert isinstance(
             self._partition, SourceSegmentedSDRAMMachinePartition)
         return [self._partition]
