@@ -102,8 +102,7 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
         :rtype: tuple(bytes, bool)
         """
         buffer_manager = FecDataView.get_buffer_manager()
-        return buffer_manager.get_data_by_placement(
-            self.placement, recording_id)
+        return buffer_manager.get_recording(self.placement, recording_id)
 
     def generate_system_region(self, spec, region_id=0):
         """
