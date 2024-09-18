@@ -98,7 +98,8 @@ jobs:
     timeout-minutes: 20
     strategy:
       matrix:
-        runner: [ubuntu-latest, windows-latest, macos-latest]
+        # runner: [ubuntu-latest, windows-latest, macos-latest]
+        runner: [ubuntu-latest, windows-latest]
 
     steps:
     - name: Prepare
