@@ -14,16 +14,24 @@
 
 import os
 import pytest
+
 from spinnman.exceptions import SpinnmanTimeoutException
 from spinnman.model.enums import ExecutableType
+from spinnaker_testbase import BaseTestCase
+
 import spinnaker_graph_front_end as s
 from gfe_integration_tests.test_rte.run_vertex import RunVertex
 
 
-def test_run_too_long():
-    s.setup(model_binary_folder=os.path.dirname(__file__))
-    s.add_machine_vertex_instance(RunVertex(
-        "test_run_too_long.aplx",
-        ExecutableType.USES_SIMULATION_INTERFACE))
-    with pytest.raises(SpinnmanTimeoutException):
-        s.run(1000)
+class TestRunTooLong(BaseTestCase):
+
+    def check_run_too_long(slef):
+        s.setup(model_binary_folder=os.path.dirname(__file__))
+        s.add_machine_vertex_instance(RunVertex(
+            "test_run_too_long.aplx",
+            ExecutableType.USES_SIMULATION_INTERFACE))
+        with pytest.raises(SpinnmanTimeoutException):
+            s.run(1000)
+
+    def test_run_too_long(self):
+        self.runsafe(self.check_run_too_long)
