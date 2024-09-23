@@ -14,17 +14,25 @@
 
 import os
 import pytest
+
 from spinnman.exceptions import SpinnmanException
 from spinnman.model.enums import ExecutableType
+from spinnaker_testbase import BaseTestCase
+
 import spinnaker_graph_front_end as s
 from gfe_integration_tests.test_rte.run_vertex import RunVertex
 
 
-def test_rte_at_start():
-    s.setup(model_binary_folder=os.path.dirname(__file__))
-    s.add_machine_vertex_instance(
-        RunVertex(
-            "test_rte_start.aplx",
-            ExecutableType.USES_SIMULATION_INTERFACE))
-    with pytest.raises(SpinnmanException):
-        s.run(1000)
+class TestRteStart(BaseTestCase):
+
+    def check_rte_at_start(self):
+        s.setup(model_binary_folder=os.path.dirname(__file__))
+        s.add_machine_vertex_instance(
+            RunVertex(
+                "test_rte_start.aplx",
+                ExecutableType.USES_SIMULATION_INTERFACE))
+        with pytest.raises(SpinnmanException):
+            s.run(1000)
+
+    def test_rte_at_start(self):
+        self.runsafe(self.check_rte_at_start)

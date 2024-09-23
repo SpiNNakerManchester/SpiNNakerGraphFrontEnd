@@ -15,20 +15,28 @@
 import os
 import traceback
 import pytest
+
 from spinnman.exceptions import SpinnmanException
 from spinnman.model.enums import ExecutableType
+from spinnaker_testbase import BaseTestCase
+
 import spinnaker_graph_front_end as s
 from gfe_integration_tests.test_rte.run_vertex import RunVertex
 
 
-def test_rte_during_run():
-    s.setup(model_binary_folder=os.path.dirname(__file__))
-    s.add_machine_vertex_instance(RunVertex(
-        "test_rte_during_run.aplx",
-        ExecutableType.USES_SIMULATION_INTERFACE))
-    with pytest.raises(SpinnmanException):
-        try:
-            s.run(1000)
-        except Exception:
-            traceback.print_exc()
-            raise
+class TestRteDuringRun(BaseTestCase):
+
+    def check_rte_during_run(self):
+        s.setup(model_binary_folder=os.path.dirname(__file__))
+        s.add_machine_vertex_instance(RunVertex(
+            "test_rte_during_run.aplx",
+            ExecutableType.USES_SIMULATION_INTERFACE))
+        with pytest.raises(SpinnmanException):
+            try:
+                s.run(1000)
+            except Exception:
+                traceback.print_exc()
+                raise
+
+    def test_rte_during_run(self):
+        self.runsafe(self.check_rte_during_run)
