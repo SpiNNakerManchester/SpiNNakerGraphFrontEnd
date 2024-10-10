@@ -104,8 +104,8 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
             label="results")
 
         # write key needed to transmit with
-        key = FecDataView.get_routing_infos().get_first_key_from_pre_vertex(
-            self, self.PARTITION_ID)
+        r_infos = FecDataView.get_routing_infos()
+        key = r_infos.get_single_first_key_from_pre_vertex(self)
 
         spec.switch_write_focus(DataRegions.TRANSMISSIONS)
         spec.write_value(int(key is not None))

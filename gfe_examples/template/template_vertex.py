@@ -111,7 +111,7 @@ class TemplateVertex(
     def _write_app_memory_regions(self, spec, iptags):
         # Get the key, assuming all outgoing edges use the same key
         routing_info = FecDataView.get_routing_infos()
-        key = routing_info.get_first_key_from_pre_vertex(self, PARTITION_ID)
+        key = routing_info.get_single_first_key_from_pre_vertex(self)
 
         # Write the transmission region
         spec.switch_write_focus(DataRegions.TRANSMISSION)
