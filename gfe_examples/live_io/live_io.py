@@ -71,7 +71,7 @@ front_end.setup(
 front_end.add_socket_address(None, None, conn.local_port)
 
 # Add a sender
-eieio_params = EIEIOParameters(injection_partition_id=sender_partition)
+eieio_params = EIEIOParameters()
 sender = ReverseIPTagMulticastSourceMachineVertex(
     n_keys=n_sender_keys, label="Sender",
     eieio_params=eieio_params)
