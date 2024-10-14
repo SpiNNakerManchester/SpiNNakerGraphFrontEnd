@@ -27,7 +27,7 @@ class RunVertex(
         AbstractGeneratesDataSpecification):
 
     def __init__(self, aplx_file, executable_type):
-        super().__init__(ConstantSDRAM(0))
+        super().__init__(ConstantSDRAM(SIMULATION_N_BYTES))
         self._aplx_file = aplx_file
         self._executable_type = executable_type
 
