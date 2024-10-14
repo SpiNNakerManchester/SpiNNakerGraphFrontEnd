@@ -82,7 +82,7 @@ class SyncTestMachineVertex(MachineVertex, AbstractHasAssociatedBinary,
             spec.write_value(0)
         else:
             routing_info = FecDataView.get_routing_infos()
-            key = routing_info.get_safe_first_key_from_pre_vertex(
+            key = routing_info.get_key_from(
                 self, SEND_PARTITION)
             spec.write_value(key)
 
