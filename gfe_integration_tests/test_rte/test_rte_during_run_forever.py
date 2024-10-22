@@ -40,9 +40,9 @@ class TestRteDuringRunForever(BaseTestCase):
                 "test_rte_during_run.aplx",
                 ExecutableType.USES_SIMULATION_INTERFACE))
             s.add_socket_address(None, "localhost", conn.local_port)
-            s.run(None)
             with pytest.raises(ExecutableFailedToStopException):
-                s.stop()
+                s.run(None)
+            s.stop()
 
     def test_rte_during_run_forever(self):
         self.runsafe(self.check_rte_during_run_forever)
