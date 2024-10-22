@@ -42,7 +42,6 @@ class TestRteDuringRunForever(BaseTestCase):
             s.add_socket_address(None, "localhost", conn.local_port)
             with pytest.raises(ExecutableFailedToStopException):
                 s.run(None)
-            s.stop()
 
     def test_rte_during_run_forever(self):
         self.runsafe(self.check_rte_during_run_forever)
