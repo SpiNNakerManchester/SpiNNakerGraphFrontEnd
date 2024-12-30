@@ -70,8 +70,8 @@ class SyncTestMachineVertex(MachineVertex, AbstractHasAssociatedBinary,
 
     @overrides(
         AbstractGeneratesDataSpecification.generate_data_specification)
-    def generate_data_specification(
-            self, spec: DataSpecificationGenerator, placement: Placement):
+    def generate_data_specification(self, spec: DataSpecificationGenerator,
+                                    placement: Placement) -> None:
         # Generate the system data region for simulation .c requirements
         generate_system_data_region(spec, DataRegions.SYSTEM.value, self)
 
