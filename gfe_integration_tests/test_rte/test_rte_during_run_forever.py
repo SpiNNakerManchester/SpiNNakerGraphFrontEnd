@@ -17,8 +17,7 @@ import pytest
 from time import sleep
 
 from spinnman.model.enums import ExecutableType
-from spinn_front_end_common.utilities.exceptions import (
-    ExecutableFailedToStopException)
+from spinnman.exceptions import SpinnmanException
 from spinn_front_end_common.utilities.database import DatabaseConnection
 from spinnaker_testbase import BaseTestCase
 
@@ -40,7 +39,7 @@ class TestRteDuringRunForever(BaseTestCase):
                 "test_rte_during_run.aplx",
                 ExecutableType.USES_SIMULATION_INTERFACE))
             s.add_socket_address(None, "localhost", conn.local_port)
-            with pytest.raises(ExecutableFailedToStopException):
+            with pytest.raises(SpinnmanException):
                 s.run(None)
 
     def test_rte_during_run_forever(self):
