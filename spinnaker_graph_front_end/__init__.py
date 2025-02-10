@@ -60,10 +60,10 @@ from spinn_utilities.socket_address import SocketAddress
 
 from spinn_machine import Machine
 
+from pacman.model.graphs.application import (
+    ApplicationEdge, ApplicationVertex)
 from pacman.model.graphs.application.abstract import (
     AbstractOneAppOneMachineVertex)
-from pacman.model.graphs.application.application_edge import (
-    ApplicationEdge, ApplicationVertex)
 from pacman.model.graphs.machine import MachineEdge, MachineVertex
 from pacman.model.routing_info import RoutingInfo
 from pacman.model.tags import Tags
