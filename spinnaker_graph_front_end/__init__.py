@@ -50,14 +50,29 @@ the external world). Talk to the SpiNNaker team for more details.
 import os
 import logging
 import sys
+from types import ModuleType
+from typing import Iterable, Optional
+
+from typing_extensions import Never
+
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.socket_address import SocketAddress
+
+from spinn_machine import Machine
+
 from pacman.model.graphs.application.abstract import (
     AbstractOneAppOneMachineVertex)
-from pacman.model.graphs.application.application_edge import ApplicationEdge
+from pacman.model.graphs.application.application_edge import (
+    ApplicationEdge, ApplicationVertex)
+from pacman.model.graphs.machine import MachineEdge, MachineVertex
+from pacman.model.routing_info import RoutingInfo
+from pacman.model.tags import Tags
+
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utility_models import (
     ReverseIpTagMultiCastSource as _RIPTMCS)
+from spinn_front_end_common.interface.buffer_management import BufferManager
+
 from spinnaker_graph_front_end._version import (
     __version__, __version_name__, __version_month__, __version_year__)
 from spinnaker_graph_front_end.spinnaker import SpiNNaker
@@ -72,13 +87,16 @@ __all__ = ['add_edge_instance', 'add_socket_address', 'add_vertex_instance',
            'ReverseIpTagMultiCastSource', 'routing_infos', 'run', 'setup',
            'stop']
 # Cache of the simulator created by setup
-__simulator = None
+__simulator: Optional[SpiNNaker] = None
 
 
-def setup(model_binary_module=None,
-          model_binary_folder=None, database_socket_addresses=(),
-          n_chips_required=None, n_boards_required=None,
-          time_scale_factor=None, machine_time_step=None):
+def setup(model_binary_module: Optional[ModuleType] = None,
+          model_binary_folder: Optional[str] = None,
+          database_socket_addresses: Optional[Iterable[SocketAddress]] = (),
+          n_chips_required: Optional[int] = None,
+          n_boards_required: Optional[int] = None,
+          time_scale_factor: Optional[int] = None,
+          machine_time_step: Optional[int] = None) -> None:
     """
     Set up a graph, ready to have vertices and edges added to it, and the
     simulator engine that will execute the graph.
@@ -127,8 +145,10 @@ def setup(model_binary_module=None,
 
     # add the directories where the binaries are located
     if model_binary_module is not None:
+        _file = model_binary_module.__file__
+        assert _file is not None
         FecDataView.register_binary_search_path(
-            os.path.dirname(model_binary_module.__file__))
+            os.path.dirname(_file))
     elif model_binary_folder is not None:
         FecDataView.register_binary_search_path(model_binary_folder)
     else:
@@ -143,19 +163,22 @@ def setup(model_binary_module=None,
         time_scale_factor=time_scale_factor)
     FecDataView.add_database_socket_addresses(database_socket_addresses)
 
+def __get_simulator() -> SpiNNaker:
+    FecDataView.check_valid_simulator()
+    assert __simulator is not None
+    return __simulator
 
-def run(duration=None):
+def run(duration: Optional[int] = None) -> None:
     """
     Run a simulation for a number of microseconds.
 
     :param int duration:
         the number of microseconds the application code should run for
     """
-    FecDataView.check_valid_simulator()
-    __simulator.run(duration)
+    __get_simulator().run(duration)
 
 
-def run_until_complete(n_steps=None):
+def run_until_complete(n_steps: Optional[int] = None) -> None:
     """
     Run until the simulation is complete.
 
@@ -164,31 +187,25 @@ def run_until_complete(n_steps=None):
         requested to run for the given number of steps.  The host will
         still wait until the simulation itself says it has completed
     """
-    FecDataView.check_valid_simulator()
-    __simulator.run_until_complete(n_steps)
+    __get_simulator().run_until_complete(n_steps)
 
 
-def stop():
+def stop() -> None:
     """
     Do any necessary cleaning up before exiting. Unregisters the controller.
     """
     # pylint: disable=global-variable-undefined
-    global _executable_finder
-
-    FecDataView.check_valid_simulator()
-    __simulator.stop()
-    _executable_finder = None
+    __get_simulator().stop()
 
 
-def stop_run():
+def stop_run() -> None:
     """
     Stop a request to run forever.
     """
-    FecDataView.check_valid_simulator()
-    __simulator.stop_run()
+    __get_simulator().stop_run()
 
 
-def add_vertex_instance(vertex_to_add):
+def add_vertex_instance(vertex_to_add: ApplicationVertex) -> None:
     """
     Add an existing application vertex to the unpartitioned graph.
 
@@ -198,11 +215,11 @@ def add_vertex_instance(vertex_to_add):
     FecDataView.add_vertex(vertex_to_add)
 
 
-def _new_edge_label():
+def _new_edge_label() -> str:
     return f"Edge {FecDataView.get_next_none_labelled_edge_number()}"
 
 
-def add_edge_instance(edge, partition_id):
+def add_edge_instance(edge: ApplicationEdge, partition_id: str) -> None:
     """
     Add an edge to the unpartitioned graph.
 
@@ -214,7 +231,7 @@ def add_edge_instance(edge, partition_id):
     FecDataView.add_edge(edge, partition_id)
 
 
-def add_machine_vertex_instance(machine_vertex):
+def add_machine_vertex_instance(machine_vertex: MachineVertex) -> None:
     """
     Add a machine vertex instance to the graph.
 
@@ -228,7 +245,7 @@ def add_machine_vertex_instance(machine_vertex):
     machine_vertex._app_vertex = app_vertex
 
 
-def add_machine_edge_instance(edge, partition_id):
+def add_machine_edge_instance(edge: MachineEdge, partition_id: str) -> None:
     """
     Add a machine edge instance to the graph.
 
@@ -237,14 +254,15 @@ def add_machine_edge_instance(edge, partition_id):
     :param str partition_id:
         The ID of the partition that the edge belongs to.
     """
-    FecDataView.add_edge(
-        ApplicationEdge(
-            edge.pre_vertex.app_vertex, edge.post_vertex.app_vertex),
-        partition_id)
+    pre_app = edge.pre_vertex.app_vertex
+    assert pre_app is not None
+    post_app = edge.post_vertex.app_vertex
+    assert post_app is not None
+    FecDataView.add_edge(ApplicationEdge(pre_app, post_app), partition_id)
 
 
-def add_socket_address(
-        database_ack_port_num, database_notify_host, database_notify_port_num):
+def add_socket_address(database_ack_port_num: int, database_notify_host: str,
+                       database_notify_port_num: int) -> None:
     """
     Add a socket address for the notification protocol.
 
@@ -263,18 +281,17 @@ def add_socket_address(
     FecDataView.add_database_socket_address(database_socket)
 
 
-def get_number_of_available_cores_on_machine():
+def get_number_of_available_cores_on_machine() -> int:
     """
     Get the number of cores on this machine that are available to the
     simulation.
 
     :rtype: int
     """
-    FecDataView.check_valid_simulator()
-    return __simulator.get_number_of_available_cores_on_machine
+    return __get_simulator().get_number_of_available_cores_on_machine
 
 
-def has_ran():
+def has_ran() -> bool:
     """
     Get whether the simulation has already run.
 
@@ -283,7 +300,7 @@ def has_ran():
     return FecDataView.is_ran_ever()
 
 
-def routing_infos():
+def routing_infos() -> RoutingInfo:
     """
     Get information about how messages are routed on the machine.
 
@@ -292,7 +309,7 @@ def routing_infos():
     return FecDataView.get_routing_infos()
 
 
-def placements():
+def placements() -> Never:
     """
     Get the placements.
 
@@ -316,7 +333,7 @@ def placements():
         "https://spinnakermanchester.github.io/common_pages/GlobalData.html")
 
 
-def tags():
+def tags() -> Tags:
     """
     Get the IPTAGs allocated on the machine.
 
@@ -325,7 +342,7 @@ def tags():
     return FecDataView.get_tags()
 
 
-def buffer_manager():
+def buffer_manager() -> BufferManager:
     """
     Get the buffer manager being used for loading/extracting buffers.
 
@@ -334,7 +351,7 @@ def buffer_manager():
     return FecDataView.get_buffer_manager()
 
 
-def machine():
+def machine() -> Machine:
     """
     Get the model of the attached/allocated machine.
 
@@ -349,7 +366,7 @@ def machine():
     return FecDataView.get_machine()
 
 
-def is_allocated_machine():
+def is_allocated_machine() -> bool:
     """
     Get whether a machine is allocated.
 
