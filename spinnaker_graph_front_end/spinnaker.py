@@ -13,19 +13,23 @@
 # limitations under the License.
 
 import logging
+from typing import Optional
+
 from spinn_utilities.config_holder import is_config_none
 from spinn_utilities.log import FormatAdapter
+
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
 from spinn_front_end_common.interface.provenance import GlobalProvenance
+
 from spinnaker_graph_front_end.config_setup import setup_configs
 from ._version import __version__ as version
 
 logger = FormatAdapter(logging.getLogger(__name__))
 
 
-def _is_allocated_machine():
+def _is_allocated_machine() -> bool:
     if is_config_none("Machine", "spalloc_server"):
         return not is_config_none("Machine", "remote_spinnaker_url")
     else:
@@ -42,8 +46,10 @@ class SpiNNaker(AbstractSpinnakerBase):
     """
 
     def __init__(
-            self, n_chips_required=None, n_boards_required=None,
-            time_scale_factor=None, machine_time_step=None):
+            self, n_chips_required: Optional[int] = None,
+            n_boards_required: Optional[int] = None,
+            time_scale_factor: Optional[int] = None,
+            machine_time_step: Optional[int] = None):
         """
         :param int n_chips_required:
             How many chips are required.
@@ -70,7 +76,7 @@ class SpiNNaker(AbstractSpinnakerBase):
         self._data_writer.set_up_timings(
             machine_time_step, time_scale_factor, 1)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         if FecDataView.has_ipaddress():
             return (f"SpiNNaker Graph Front End object "
                     f"for machine {FecDataView.get_ipaddress()}")
