@@ -163,10 +163,12 @@ def setup(model_binary_module: Optional[ModuleType] = None,
         time_scale_factor=time_scale_factor)
     FecDataView.add_database_socket_addresses(database_socket_addresses)
 
+
 def __get_simulator() -> SpiNNaker:
     FecDataView.check_valid_simulator()
     assert __simulator is not None
     return __simulator
+
 
 def run(duration: Optional[int] = None) -> None:
     """
