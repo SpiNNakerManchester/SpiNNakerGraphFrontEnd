@@ -263,16 +263,17 @@ def add_machine_edge_instance(edge: MachineEdge, partition_id: str) -> None:
     FecDataView.add_edge(ApplicationEdge(pre_app, post_app), partition_id)
 
 
-def add_socket_address(database_ack_port_num: int, database_notify_host: str,
-                       database_notify_port_num: int) -> None:
+def add_socket_address(database_ack_port_num: Optional[int],
+                       database_notify_host: Optional[str],
+                       database_notify_port_num: Optional[int]) -> None:
     """
     Add a socket address for the notification protocol.
 
-    :param int database_ack_port_num:
+    :param database_ack_port_num:
         port number to send acknowledgement to
-    :param str database_notify_host:
+    :param database_notify_host:
         host IP to send notification to
-    :param int database_notify_port_num:
+    :param database_notify_port_num:
         port that the external device will be notified on.
     """
     database_socket = SocketAddress(
