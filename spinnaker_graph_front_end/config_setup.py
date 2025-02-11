@@ -27,7 +27,7 @@ from spinn_front_end_common.data.fec_data_writer import FecDataWriter
 CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
 
 
-def setup_configs():
+def setup_configs() -> None:
     """
     Sets up the configurations including the user's configuration file.
 
@@ -43,7 +43,7 @@ def setup_configs():
     FecDataWriter.mock()
 
 
-def unittest_setup():
+def unittest_setup() -> None:
     """
     Does all the steps that may be required before a unit test.
 

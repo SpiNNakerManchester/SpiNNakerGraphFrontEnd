@@ -12,17 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
+from types import ModuleType
+from typing import List, Optional, Tuple
 import sys
+
 from spinn_utilities.abstract_base import abstractmethod
 from spinn_utilities.overrides import overrides
 from spinn_utilities.log import FormatAdapter
+
 from spinnman.model.enums import ExecutableType
+
+from pacman.model.graphs.common import Slice
 from pacman.model.graphs.machine import MachineVertex
+from pacman.model.placements import Placement
 from pacman.model.resources import AbstractSDRAM
+
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.buffer_management import (
     recording_utilities)
+from spinn_front_end_common.interface.ds import DataSpecificationGenerator
+
 from spinnaker_graph_front_end.utilities.data_utils import (
     generate_system_data_region)
 log = FormatAdapter(logging.getLogger(__file__))
@@ -36,7 +46,8 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
 
     __slots__ = ["_binary_name", "__front_end"]
 
-    def __init__(self, label, binary_name: str, vertex_slice=None):
+    def __init__(self, label: str, binary_name: str,
+                 vertex_slice: Optional[Slice] = None):
         """
         :param str label:
             The label for the vertex.
@@ -70,7 +81,7 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
         raise NotImplementedError
 
     @property
-    def front_end(self):
+    def front_end(self) -> ModuleType:
         """
         The main front end that is handling this simulator vertex.
 
@@ -79,7 +90,7 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
         return self.__front_end
 
     @property
-    def placement(self):
+    def placement(self) -> Placement:
         """
         Get the placement of this vertex.
 
@@ -90,7 +101,8 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
         """
         return FecDataView.get_placement_of_vertex(self)
 
-    def get_recording_channel_data(self, recording_id):
+    def get_recording_channel_data(
+            self, recording_id: int) -> Tuple[bytes, bool]:
         """
         Get the data from a recording channel. The simulation must have
         :py:func:`spinnaker_graph_front_end.run` before this will work,
@@ -104,7 +116,8 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
         buffer_manager = FecDataView.get_buffer_manager()
         return buffer_manager.get_recording(self.placement, recording_id)
 
-    def generate_system_region(self, spec, region_id=0):
+    def generate_system_region(self, spec: DataSpecificationGenerator,
+                               region_id: int = 0) -> None:
         """
         Generate the system region for the data specification. Assumes that
         the vertex uses the system timestep and time scale factor.
@@ -120,7 +133,9 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
         """
         generate_system_data_region(spec, region_id, self)
 
-    def generate_recording_region(self, spec, region_id, channel_sizes):
+    def generate_recording_region(
+            self, spec: DataSpecificationGenerator, region_id: int,
+            channel_sizes: List[int]) -> None:
         """
         Generate the recording region for the data specification.
 
