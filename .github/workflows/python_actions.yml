@@ -24,7 +24,7 @@ jobs:
     with:
       dependencies: SpiNNUtils SpiNNMachine SpiNNMan PACMAN spalloc SpiNNFrontEndCommon TestBase
       ubuntu-packages: graphviz
-      test_directories: unittests
+      test-directories: unittests
       coverage-package: spinnaker_graph_front_end
       flake8-packages: spinnaker_graph_front_end unittests gfe_examples
       pylint-packages: spinnaker_graph_front_end
