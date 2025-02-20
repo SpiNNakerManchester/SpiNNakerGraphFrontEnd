@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 15
     steps:
     - name: Prepare
-      uses: SpiNNakerManchester/SupportScripts/actions/prepare@action-dash
+      uses: SpiNNakerManchester/SupportScripts/actions/prepare@main
       with:
         checkout-dependencies: spinnaker_tools spinn_common SpiNNFrontEndCommon
         install-dependencies: SpiNNUtils
@@ -103,7 +103,7 @@ jobs:
 
     steps:
     - name: Prepare
-      uses: SpiNNakerManchester/SupportScripts/actions/prepare@action-dash
+      uses: SpiNNakerManchester/SupportScripts/actions/prepare@main
       with:
         install-dependencies: > 
           SpiNNUtils SpiNNMachine SpiNNMan PACMAN spalloc
