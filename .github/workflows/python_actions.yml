@@ -23,11 +23,11 @@ jobs:
     uses: SpiNNakerManchester/SupportScripts/.github/workflows/python_checks.yml@main
     with:
       dependencies: SpiNNUtils SpiNNMachine SpiNNMan PACMAN spalloc SpiNNFrontEndCommon TestBase
-      ubuntu_packages: graphviz
-      test_directories: unittests
+      ubuntu-packages: graphviz
+      test-directories: unittests
       coverage-package: spinnaker_graph_front_end
       flake8-packages: spinnaker_graph_front_end unittests gfe_examples
       pylint-packages: spinnaker_graph_front_end
       mypy-packages: spinnaker_graph_front_end gfe_examples gfe_integration_tests
-      mypy-full_packages: spinnaker_graph_front_end
-      cfg_file: spiNNakerGraphFrontEnd
+      mypy-full-packages: spinnaker_graph_front_end
+      cfg-file: spiNNakerGraphFrontEnd
