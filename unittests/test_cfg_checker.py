@@ -14,7 +14,7 @@
 
 import os
 import unittest
-from spinn_utilities.config_holder import run_config_checks
+from spinn_utilities.configs.config_checker import ConfigChecker
 import spinnaker_graph_front_end
 from spinnaker_graph_front_end.config_setup import unittest_setup
 
@@ -30,5 +30,6 @@ class TestCfgChecker(unittest.TestCase):
         gfe_examples = os.path.join(parent, "gfe_examples")
         gfe_integration_tests = os.path.join(parent, "gfe_integration_tests")
         gfe = spinnaker_graph_front_end.__path__[0]
-        run_config_checks(
-            directories=[gfe_examples, gfe_integration_tests, gfe, unittests])
+        checker = ConfigChecker(
+            [gfe_examples, gfe_integration_tests, gfe, unittests])
+        checker.check(local_defaults=True)
