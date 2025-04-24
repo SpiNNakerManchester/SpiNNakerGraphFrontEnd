@@ -13,8 +13,12 @@
 # limitations under the License.
 
 import os
+import sys
 import unittest
+
 from spinn_utilities.configs.config_checker import ConfigChecker
+from spinn_utilities.configs.config_documentor import ConfigDocumentor
+
 import spinnaker_graph_front_end
 from spinnaker_graph_front_end.config_setup import unittest_setup
 
@@ -33,3 +37,15 @@ class TestCfgChecker(unittest.TestCase):
         checker = ConfigChecker(
             [gfe_examples, gfe_integration_tests, gfe, unittests])
         checker.check(local_defaults=True)
+
+    def test_cfg_documentor(self):
+        class_file = sys.modules[self.__module__].__file__
+        assert class_file is not None
+        abs_class_file = os.path.abspath(class_file)
+        class_dir = os.path.dirname(abs_class_file)
+        test_file = os.path.join(class_dir, 'test.md')
+
+        documentor = ConfigDocumentor()
+        documentor.print_section("Logging")
+        documentor.print_configs()
+        documentor.md_configs(test_file)
