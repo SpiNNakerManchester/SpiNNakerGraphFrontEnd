@@ -38,7 +38,7 @@ class TestCfgChecker(unittest.TestCase):
             [gfe_examples, gfe_integration_tests, gfe, unittests])
         checker.check(local_defaults=True)
 
-    def test_cfg_documentor(self):
+    def test_cfg_documentor(self) -> None:
         class_file = sys.modules[self.__module__].__file__
         assert class_file is not None
         abs_class_file = os.path.abspath(class_file)
