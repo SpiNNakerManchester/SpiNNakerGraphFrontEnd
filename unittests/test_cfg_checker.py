@@ -13,8 +13,12 @@
 # limitations under the License.
 
 import os
+import sys
 import unittest
-from spinn_utilities.config_holder import run_config_checks
+
+from spinn_utilities.configs.config_checker import ConfigChecker
+from spinn_utilities.configs.config_documentor import ConfigDocumentor
+
 import spinnaker_graph_front_end
 from spinnaker_graph_front_end.config_setup import unittest_setup
 
@@ -30,5 +34,16 @@ class TestCfgChecker(unittest.TestCase):
         gfe_examples = os.path.join(parent, "gfe_examples")
         gfe_integration_tests = os.path.join(parent, "gfe_integration_tests")
         gfe = spinnaker_graph_front_end.__path__[0]
-        run_config_checks(
-            directories=[gfe_examples, gfe_integration_tests, gfe, unittests])
+        checker = ConfigChecker(
+            [gfe_examples, gfe_integration_tests, gfe, unittests])
+        checker.check(local_defaults=True)
+
+    def test_cfg_documentor(self) -> None:
+        class_file = sys.modules[self.__module__].__file__
+        assert class_file is not None
+        abs_class_file = os.path.abspath(class_file)
+        class_dir = os.path.dirname(abs_class_file)
+        test_file = os.path.join(class_dir, 'test.md')
+
+        documentor = ConfigDocumentor()
+        documentor.md_configs(test_file)
