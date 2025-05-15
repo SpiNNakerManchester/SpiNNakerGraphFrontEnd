@@ -22,7 +22,7 @@ class ScriptBuilder(RootScriptBuilder):
     To skip the too_long scripts run this script with a parameter
     """
 
-    def build_scripts(self):
+    def build_scripts(self) -> None:
         # create_test_scripts supports test that are too long or exceptions
 
         # It does not matter if this picks up classes with no main

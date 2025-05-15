@@ -22,7 +22,7 @@ from gfe_integration_tests.test_profile.profiled_vertex import ProfiledVertex
 
 class  TestProfile(BaseTestCase):
 
-    def check_profile_data(self):
+    def check_profile_data(self) -> None:
         s.setup(model_binary_folder=os.path.dirname(__file__))
         vertex = ProfiledVertex()
         s.add_machine_vertex_instance(vertex)
@@ -52,5 +52,5 @@ class  TestProfile(BaseTestCase):
                 assert float(parts[3]) == 1.0
                 assert float(parts[2]) == float(parts[4])
 
-    def test_profile_data(self):
+    def test_profile_data(self) -> None:
         self.runsafe(self.check_profile_data)

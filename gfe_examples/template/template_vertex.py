@@ -118,7 +118,7 @@ class TemplateVertex(
         spec.write_value(int(key is not None))
         spec.write_value(0 if key is None else key)
 
-    def read(self):
+    def read(self) -> None:
         """
         Get the recorded data.
 

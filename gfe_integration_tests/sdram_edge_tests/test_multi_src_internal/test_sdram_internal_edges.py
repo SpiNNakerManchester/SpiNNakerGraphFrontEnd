@@ -21,7 +21,7 @@ from spinnaker_testbase import BaseTestCase
 
 class TestMultiSrcSDRAMEdgeInsideOneAppVert(BaseTestCase):
 
-    def setup(self):
+    def setup(self) -> None:
         sim.setup(model_binary_module=common, time_scale_factor=5)
         vertex_1 = SdramTestVertex(12)
         vertex_1.splitter = SDRAMSplitter()
@@ -29,5 +29,5 @@ class TestMultiSrcSDRAMEdgeInsideOneAppVert(BaseTestCase):
         sim.run(100)
         sim.stop()
 
-    def test_local_verts_go_to_local_lpgs(self):
+    def test_local_verts_go_to_local_lpgs(self) -> None:
         self.runsafe(self.setup)

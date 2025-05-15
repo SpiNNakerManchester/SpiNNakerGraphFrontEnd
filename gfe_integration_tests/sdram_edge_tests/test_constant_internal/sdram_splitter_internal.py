@@ -30,7 +30,7 @@ class SDRAMSplitterInternal(AbstractSplitterCommon):
         "__post_vertex",
         "_sdram_part"]
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.__pre_vertex = None
         self.__post_vertex = None
@@ -42,7 +42,7 @@ class SDRAMSplitterInternal(AbstractSplitterCommon):
         return self.__pre_vertex
 
     @property
-    def _post_vertex(self):
+    def _post_vertex(self) -> None:
         assert isinstance(self.__post_vertex, SDRAMMachineVertex)
         return self.__post_vertex
 

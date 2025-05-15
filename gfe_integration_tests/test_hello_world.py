@@ -18,7 +18,7 @@ from spinnaker_testbase import ScriptChecker
 
 class TestHelloWorld(ScriptChecker):
 
-    def test_hello_world(self):
+    def test_hello_world(self) -> None:
         with LogCapture("hello_world") as lc:
             self.check_script(
                 "gfe_examples/hello_world/hello_world.py")

@@ -33,5 +33,5 @@ class TestRunTooLong(BaseTestCase):
         with pytest.raises(SpinnmanTimeoutException):
             s.run(1000)
 
-    def test_run_too_long(self):
+    def test_run_too_long(self) -> None:
         self.runsafe(self.check_run_too_long)

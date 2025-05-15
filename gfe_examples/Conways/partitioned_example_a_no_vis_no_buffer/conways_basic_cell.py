@@ -125,7 +125,7 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         # End-of-Spec:
         spec.end_specification()
 
-    def get_data(self):
+    def get_data(self) -> None:
         txrx = FecDataView.get_transceiver()
         placement = self.placement
         n_steps = FecDataView.get_current_run_timesteps()
@@ -164,8 +164,8 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         return VariableSDRAM(fixed_sdram, per_timestep_sdram)
 
     @property
-    def state(self):
+    def state(self) -> None:
         return self._state
 
-    def __repr__(self):
+    def __repr__(self) -> None:
         return self.label

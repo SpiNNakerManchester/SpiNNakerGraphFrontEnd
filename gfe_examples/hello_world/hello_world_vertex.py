@@ -78,7 +78,7 @@ class HelloWorldVertex(
         # End-of-Spec:
         spec.end_specification()
 
-    def read(self):
+    def read(self) -> None:
         """
         Get the data written into SDRAM.
 

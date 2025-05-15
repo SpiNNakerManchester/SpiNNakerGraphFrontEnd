@@ -42,7 +42,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
         return self.__pre_vertex
 
     @property
-    def __post_vertex(self):
+    def __post_vertex(self) -> None:
         assert isinstance(self.__post_vertex, SDRAMMachineVertex)
         return self.__post_vertex
 

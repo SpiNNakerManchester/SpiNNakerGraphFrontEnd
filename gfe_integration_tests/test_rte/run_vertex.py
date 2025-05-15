@@ -31,10 +31,10 @@ class RunVertex(
         self._aplx_file = aplx_file
         self._executable_type = executable_type
 
-    def get_binary_file_name(self):
+    def get_binary_file_name(self) -> None:
         return self._aplx_file
 
-    def get_binary_start_type(self):
+    def get_binary_start_type(self) -> None:
         return self._executable_type
 
     def generate_data_specification(self, spec, placement):

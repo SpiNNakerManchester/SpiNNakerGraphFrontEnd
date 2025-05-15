@@ -21,7 +21,7 @@ from spinnaker_testbase import BaseTestCase
 
 class TestConstantSDRAMEdgeInsideOneAppVert(BaseTestCase):
 
-    def setup(self):
+    def setup(self) -> None:
         sim.setup(model_binary_module=common)
         vertex_1 = SdramTestVertex(10)
         vertex_1.splitter = SDRAMSplitterInternal()
@@ -29,5 +29,5 @@ class TestConstantSDRAMEdgeInsideOneAppVert(BaseTestCase):
         sim.run(100)
         sim.stop()
 
-    def test_constant(self):
+    def test_constant(self) -> None:
         self.runsafe(self.setup)

@@ -27,5 +27,5 @@ class SdramTestVertex(ApplicationVertex):
         self.__n_atoms = n_atoms
 
     @property
-    def n_atoms(self):
+    def n_atoms(self) -> None:
         return self.__n_atoms

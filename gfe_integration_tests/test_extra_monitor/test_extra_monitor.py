@@ -14,10 +14,13 @@
 
 import time
 import os
+from pacman.model.placements import Placement
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utilities.helpful_functions import (
     get_region_base_address_offset, n_word_struct)
-from spinn_front_end_common.utility_models import StreamingContextManager
+from spinn_front_end_common.utility_models import (
+    DataSpeedUpPacketGatherMachineVertex, StreamingContextManager,
+    ExtraMonitorSupportMachineVertex)
 import spinnaker_graph_front_end as sim
 from gfe_integration_tests.test_extra_monitor.sdram_writer import (
     SDRAMWriter, DataRegions)
@@ -27,7 +30,7 @@ _GATHERER_MAP = 'VertexToEthernetConnectedChipMapping'
 _TRANSFER_SIZE_MEGABYTES = 20
 
 
-def get_data_region_address(placement, region):
+def get_data_region_address(placement: Placement, region: DataRegions) -> int:
     # Get the App Data for the core
     transceiver = FecDataView.get_transceiver()
     app_data_base_address = transceiver.get_region_base_address(
@@ -39,7 +42,7 @@ def get_data_region_address(placement, region):
     return transceiver.read_word(placement.x, placement.y, address_location)
 
 
-def check_data(data):
+def check_data(data: bytes) -> None:
     # check data is correct here
     ints = n_word_struct(len(data) // 4).unpack(data)
     start_value = 0
@@ -52,7 +55,9 @@ def check_data(data):
             start_value += 1
 
 
-def _do_transfer(gatherer, receiver_placement, writer_placement, writer_vertex):
+def _do_transfer(gatherer: DataSpeedUpPacketGatherMachineVertex,
+                 receiver_placement: Placement, writer_placement: Placement,
+                 writer_vertex: SDRAMWriter) -> bytes:
     """
     :param .DataSpeedUpPacketGatherMachineVertex gatherer:
     :param .Placement receiver_placement:
@@ -61,15 +66,17 @@ def _do_transfer(gatherer, receiver_placement, writer_placement, writer_vertex):
     :rtype: bytearray
     """
     with StreamingContextManager(FecDataView.iterate_gathers()):
+        extra_monitor = receiver_placement.vertex
+        assert isinstance(extra_monitor, ExtraMonitorSupportMachineVertex)
         return gatherer.get_data(
-            extra_monitor=receiver_placement.vertex,
-            placement=receiver_placement,
+            extra_monitor=extra_monitor, placement=receiver_placement,
             memory_address=get_data_region_address(
                 writer_placement, DataRegions.DATA),
             length_in_bytes=writer_vertex.mbs_in_bytes)
 
 
-def _get_gatherer_for_monitor(monitor):
+def _get_gatherer_for_monitor(
+        monitor: SDRAMWriter) -> DataSpeedUpPacketGatherMachineVertex:
     placement = FecDataView.get_placement_of_vertex(monitor)
     chip = FecDataView.get_chip_at(placement.x, placement.y)
     # pylint: disable=protected-access
@@ -79,7 +86,7 @@ def _get_gatherer_for_monitor(monitor):
 
 class TestExtraMonitors(BaseTestCase):
 
-    def check_extra_monitor(self):
+    def check_extra_monitor(self) -> None:
         mbs = _TRANSFER_SIZE_MEGABYTES
 
         # setup system
@@ -117,5 +124,5 @@ class TestExtraMonitors(BaseTestCase):
 
         sim.stop()
 
-    def test_extra_monitors(self):
+    def test_extra_monitors(self) -> None:
         self.runsafe(self.check_extra_monitor)

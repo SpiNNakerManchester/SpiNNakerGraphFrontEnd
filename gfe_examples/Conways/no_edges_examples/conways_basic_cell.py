@@ -22,5 +22,5 @@ class ConwayBasicCell(MachineVertex):
     """
 
     @property
-    def sdram_required(self):
+    def sdram_required(self) -> None:
         return ConstantSDRAM(0)

@@ -134,7 +134,7 @@ class ConwayBasicCell(
         # End-of-Spec:
         spec.end_specification()
 
-    def get_data(self):
+    def get_data(self) -> None:
         # for buffering output info is taken form the buffer manager
         # get raw data, convert to list of booleans
         raw_data, data_missing = self.get_recording_channel_data(
@@ -165,10 +165,10 @@ class ConwayBasicCell(
         return VariableSDRAM(fixed_sdram, per_timestep_sdram)
 
     @property
-    def state(self):
+    def state(self) -> None:
         return self._state
 
-    def __repr__(self):
+    def __repr__(self) -> None:
         return self.label
 
     @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)
