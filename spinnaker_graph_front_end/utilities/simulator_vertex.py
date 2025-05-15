@@ -46,10 +46,10 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
 
     __slots__ = ["_binary_name", "__front_end"]
 
-    def __init__(self, label: str, binary_name: str,
+    def __init__(self, label: Optional[str], binary_name: str,
                  vertex_slice: Optional[Slice] = None):
         """
-        :param str label:
+        :param label:
             The label for the vertex.
         :param str binary_name:
             The name of the APLX implementing the vertex.

@@ -12,10 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from spinn_utilities.overrides import overrides
+
+from spinnman.model.enums import ExecutableType
+
 from pacman.model.graphs.machine import SimpleMachineVertex
+from pacman.model.placements import Placement
 from pacman.model.resources import ConstantSDRAM
+
 from spinn_front_end_common.abstract_models import (
     AbstractHasAssociatedBinary, AbstractGeneratesDataSpecification)
+from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 from spinn_front_end_common.interface.simulation import (
     simulation_utilities as
     utils)
@@ -26,18 +33,23 @@ class RunVertex(
         SimpleMachineVertex, AbstractHasAssociatedBinary,
         AbstractGeneratesDataSpecification):
 
-    def __init__(self, aplx_file, executable_type):
+    def __init__(self, aplx_file: str, executable_type: ExecutableType):
         super().__init__(ConstantSDRAM(SIMULATION_N_BYTES))
         self._aplx_file = aplx_file
         self._executable_type = executable_type
 
-    def get_binary_file_name(self) -> None:
+    @overrides(AbstractHasAssociatedBinary.get_binary_file_name)
+    def get_binary_file_name(self) -> str:
         return self._aplx_file
 
-    def get_binary_start_type(self) -> None:
+    @overrides(AbstractHasAssociatedBinary.get_binary_start_type)
+    def get_binary_start_type(self) -> ExecutableType:
         return self._executable_type
 
-    def generate_data_specification(self, spec, placement):
+    @overrides(AbstractGeneratesDataSpecification.generate_data_specification)
+    def generate_data_specification(self, spec: DataSpecificationGenerator,
+                                    placement: Placement) -> None:
+        _ = placement
         spec.reserve_memory_region(0, SIMULATION_N_BYTES)
         spec.switch_write_focus(0)
         spec.write_array(utils.get_simulation_header_array(self._aplx_file))

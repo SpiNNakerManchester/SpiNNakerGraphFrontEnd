@@ -11,12 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import List
+from typing import List, Optional
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.common import Slice
 from pacman.model.graphs.machine import (
     SDRAMMachineEdge, DestinationSegmentedSDRAMMachinePartition)
 from pacman.model.partitioner_splitters import AbstractSplitterCommon
+from pacman.utilities.utility_objs import ChipCounter
 from gfe_integration_tests.sdram_edge_tests.common import SDRAMMachineVertex
 
 
@@ -33,7 +34,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
 
     def __init__(self) -> None:
         super().__init__()
-        self.__pre_vertex = None
+        self.__pre_vertex: Optional[SDRAMMachineVertex] = None
         self._post_vertices: List[SDRAMMachineVertex] = list()
 
     @property
@@ -54,7 +55,8 @@ class SDRAMSplitter(AbstractSplitterCommon):
     def get_in_coming_vertices(self, partition_id: str) -> List[SDRAMMachineVertex]:
         return [self._pre_vertex]
 
-    def create_machine_vertices(self, chip_counter):
+    @overrides(AbstractSplitterCommon.create_machine_vertices)
+    def create_machine_vertices(self, chip_counter: ChipCounter) -> None:
         # slices
         pre_slice = Slice(
             0, int(self.governed_app_vertex.n_atoms / self.N_VERTS))
@@ -89,7 +91,6 @@ class SDRAMSplitter(AbstractSplitterCommon):
             chip_counter.add_core(post_vertex.sdram_required)
 
         chip_counter.add_core(self._pre_vertex.sdram_required)
-        return 1
 
     @overrides(AbstractSplitterCommon.get_out_going_slices)
     def get_out_going_slices(self) -> List[Slice]:

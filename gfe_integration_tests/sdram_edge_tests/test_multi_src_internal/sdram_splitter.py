@@ -11,12 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import List
+from typing import List, Optional
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.common import Slice
 from pacman.model.graphs.machine import MachineVertex, SDRAMMachineEdge
 from pacman.model.partitioner_splitters import AbstractSplitterCommon
 from pacman.model.graphs.machine import SourceSegmentedSDRAMMachinePartition
+from pacman.utilities.utility_objs import ChipCounter
+
 from gfe_integration_tests.sdram_edge_tests.common import SDRAMMachineVertex
 
 
@@ -33,11 +35,11 @@ class SDRAMSplitter(AbstractSplitterCommon):
 
     def __init__(self) -> None:
         super().__init__()
-        self.__post_vertex = None
+        self.__post_vertex: Optional[SDRAMMachineVertex] = None
         self._pre_vertices: List[SDRAMMachineVertex] = list()
 
     @property
-    def _post_vertex(self) -> None:
+    def _post_vertex(self) -> SDRAMMachineVertex:
         assert isinstance(self.__post_vertex, SDRAMMachineVertex)
         return self.__post_vertex
 
@@ -52,8 +54,8 @@ class SDRAMSplitter(AbstractSplitterCommon):
             self, partition_id: str) -> List[SDRAMMachineVertex]:
         return self._pre_vertices
 
-
-    def create_machine_vertices(self, chip_counter):
+    @overrides(AbstractSplitterCommon.create_machine_vertices)
+    def create_machine_vertices(self, chip_counter: ChipCounter) -> None:
         # slices
         post_slice = Slice(
             0, int(self.governed_app_vertex.n_atoms / self.N_VERTS))
@@ -99,7 +101,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
     @overrides(AbstractSplitterCommon.machine_vertices_for_recording)
     def machine_vertices_for_recording(
             self, variable_to_record: str) -> List[MachineVertex]:
-        mv = [self._post_vertex]
+        mv: List[MachineVertex] = [self._post_vertex]
         mv.extend(self._pre_vertices)
         return mv
 

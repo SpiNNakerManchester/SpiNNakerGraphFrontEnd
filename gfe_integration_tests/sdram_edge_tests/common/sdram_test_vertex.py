@@ -14,6 +14,7 @@
 
 """ test vertex used in many unit tests
 """
+from spinn_utilities.overrides import overrides
 from pacman.model.graphs.application import ApplicationVertex
 
 
@@ -22,10 +23,11 @@ class SdramTestVertex(ApplicationVertex):
     test vertex with fixed_sdram_value
     """
 
-    def __init__(self, n_atoms):
+    def __init__(self, n_atoms: int):
         super().__init__()
         self.__n_atoms = n_atoms
 
     @property
-    def n_atoms(self) -> None:
+    @overrides(ApplicationVertex.n_atoms)
+    def n_atoms(self) -> int:
         return self.__n_atoms

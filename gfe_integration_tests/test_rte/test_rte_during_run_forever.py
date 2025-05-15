@@ -29,7 +29,7 @@ class TestRteDuringRunForever(BaseTestCase):
 
     def check_rte_during_run_forever(self) -> None:
 
-        def start():
+        def start() -> None:
             sleep(3.0)
             s.stop_run()
 
