@@ -42,7 +42,8 @@ class DataRegions(IntEnum):
 class LiveIOVertex(
         SimulatorVertex, MachineDataSpecableVertex):
 
-    def __init__(self, n_keys, send_partition="LiveOut", label=None):
+    def __init__(self, n_keys: int, send_partition: str = "LiveOut",
+                 label: Optional[str] = None):
         super().__init__(
             label, "live_io.aplx", vertex_slice=Slice(0, n_keys - 1))
         self.__n_keys = n_keys
@@ -54,14 +55,15 @@ class LiveIOVertex(
         return ConstantSDRAM(
             SYSTEM_BYTES_REQUIREMENT + N_KEY_DATA_BYTES)
 
-    def get_n_keys_for_partition(self, partition_id):
+    @overrides(SimulatorVertex.get_n_keys_for_partition)
+    def get_n_keys_for_partition(self, partition_id: str) -> int:
         return self.__n_keys
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec: DataSpecificationGenerator, placement: Placement,
             iptags: Optional[Iterable[IPTag]],
-            reverse_iptags: Optional[Iterable[ReverseIPTag]]):
+            reverse_iptags: Optional[Iterable[ReverseIPTag]]) -> None:
         # Generate the system data region for simulation .c requirements
         self.generate_system_region(spec)
 

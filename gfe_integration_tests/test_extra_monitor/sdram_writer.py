@@ -41,27 +41,28 @@ class DataRegions(IntEnum):
 
 class SDRAMWriter(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
-    def __init__(self, mebibytes):
+    def __init__(self, mebibytes: int):
         self._size = mebibytes * _SDRAM_READING_SIZE_IN_BYTES_CONVERTER
         super().__init__(label="speed")
 
     @property
-    def mbs_in_bytes(self):
+    def mbs_in_bytes(self) -> int:
         return self._size
 
     @property
-    def sdram_required(self):
+    @overrides(MachineVertex.sdram_required)
+    def sdram_required(self) -> ConstantSDRAM:
         return ConstantSDRAM(
             self._size + SYSTEM_BYTES_REQUIREMENT + _CONFIG_REGION_SIZE)
 
-    def get_binary_start_type(self):
+    def get_binary_start_type(self) -> ExecutableType:
         return ExecutableType.USES_SIMULATION_INTERFACE
 
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec: DataSpecificationGenerator, placement: Placement,
             iptags: Optional[Iterable[IPTag]],
-            reverse_iptags: Optional[Iterable[ReverseIPTag]]):
+            reverse_iptags: Optional[Iterable[ReverseIPTag]]) -> None:
         # Reserve SDRAM space for memory areas:
         self._reserve_memory_regions(spec)
 
@@ -76,7 +77,8 @@ class SDRAMWriter(
         # End-of-Spec:
         spec.end_specification()
 
-    def _reserve_memory_regions(self, spec):
+    def _reserve_memory_regions(
+            self, spec: DataSpecificationGenerator) -> None:
         spec.reserve_memory_region(
             region=DataRegions.SYSTEM,
             size=SIMULATION_N_BYTES,
@@ -90,5 +92,5 @@ class SDRAMWriter(
             size=self._size,
             label="data region")
 
-    def get_binary_file_name(self):
+    def get_binary_file_name(self) -> str:
         return "sdram_writer.aplx"

@@ -25,7 +25,7 @@ from gfe_integration_tests.test_rte.run_vertex import RunVertex
 
 class TestRunTooLong(BaseTestCase):
 
-    def check_run_too_long(slef):
+    def check_run_too_long(self) -> None:
         s.setup(model_binary_folder=os.path.dirname(__file__))
         s.add_machine_vertex_instance(RunVertex(
             "test_run_too_long.aplx",
@@ -33,5 +33,5 @@ class TestRunTooLong(BaseTestCase):
         with pytest.raises(SpinnmanTimeoutException):
             s.run(1000)
 
-    def test_run_too_long(self):
+    def test_run_too_long(self) -> None:
         self.runsafe(self.check_run_too_long)

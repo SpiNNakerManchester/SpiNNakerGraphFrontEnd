@@ -52,7 +52,7 @@ class ProfiledVertex(
         SimulatorVertex, MachineDataSpecableVertex,
         AbstractHasProfileData):
 
-    def __init__(self, label=None):
+    def __init__(self, label: Optional[str] = None):
         super().__init__(label, "test_profile.aplx")
 
     @property
@@ -66,7 +66,7 @@ class ProfiledVertex(
     def generate_machine_data_specification(
             self, spec: DataSpecificationGenerator, placement: Placement,
             iptags: Optional[Iterable[IPTag]],
-            reverse_iptags: Optional[Iterable[ReverseIPTag]]):
+            reverse_iptags: Optional[Iterable[ReverseIPTag]]) -> None:
         # Generate the system data region for simulation .c requirements
         self.generate_system_region(spec)
 

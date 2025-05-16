@@ -28,6 +28,6 @@ jobs:
       coverage-package: spinnaker_graph_front_end
       flake8-packages: spinnaker_graph_front_end unittests gfe_examples
       pylint-packages: spinnaker_graph_front_end
-      mypy-packages: spinnaker_graph_front_end gfe_examples gfe_integration_tests
-      mypy-full-packages: spinnaker_graph_front_end
+      mypy-packages:
+      mypy-full-packages: spinnaker_graph_front_end gfe_examples gfe_integration_tests
       cfg-file: spiNNakerGraphFrontEnd

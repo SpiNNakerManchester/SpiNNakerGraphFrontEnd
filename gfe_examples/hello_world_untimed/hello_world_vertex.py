@@ -63,7 +63,7 @@ class HelloWorldVertex(
 
     _ENCODING = "ascii"
 
-    def __init__(self, label):
+    def __init__(self, label: str):
         """
         :param int n_repeats: The number of times to repeat the label in total
         :param str label: The label, which will be printed
@@ -115,7 +115,7 @@ class HelloWorldVertex(
         # End-of-Spec:
         spec.end_specification()
 
-    def read(self):
+    def read(self) -> str:
         """
         Get the data written into SDRAM.
 

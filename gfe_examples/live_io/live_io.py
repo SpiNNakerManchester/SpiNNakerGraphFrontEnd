@@ -13,15 +13,19 @@
 # limitations under the License.
 
 import os
-from time import sleep
 from random import randint
+from time import sleep
+from typing import List
+
 from pacman.model.graphs.machine.machine_edge import MachineEdge
+
 from spinn_front_end_common.utilities.connections import LiveEventConnection
 from spinn_front_end_common.utility_models import (
     EIEIOParameters, LivePacketGatherMachineVertex,
     ReverseIPTagMulticastSourceMachineVertex)
 from spinn_front_end_common.utilities.utility_objs import (
     LivePacketGatherParameters)
+
 import spinnaker_graph_front_end as front_end
 from gfe_examples.live_io.live_io_vertex import LiveIOVertex
 
@@ -35,7 +39,7 @@ lpg_label = "LPGReceiver"
 running = True
 
 
-def start_sending(label, c):
+def start_sending(label: str, c: LiveEventConnection) -> None:
     # pylint: disable=unused-argument
     sleep(0.5)
     while running:
@@ -46,13 +50,13 @@ def start_sending(label, c):
         sleep(0.1)
 
 
-def end_sim(label, c):
+def end_sim(label: str, c: LiveEventConnection) -> None:
     # pylint: disable=unused-argument,global-statement
     global running
     running = False
 
 
-def receive(label, time, keys):
+def receive(label: str, time: int, keys: List[int]) -> None:
     print(f"Received from {label} at time {time}: {keys}")
 
 

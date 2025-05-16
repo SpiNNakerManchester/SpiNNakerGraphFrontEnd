@@ -26,7 +26,7 @@ from gfe_integration_tests.test_rte.run_vertex import RunVertex
 
 class TestRteDuringRun(BaseTestCase):
 
-    def check_rte_during_run(self):
+    def check_rte_during_run(self) -> None:
         s.setup(model_binary_folder=os.path.dirname(__file__))
         s.add_machine_vertex_instance(RunVertex(
             "test_rte_during_run.aplx",
@@ -38,5 +38,5 @@ class TestRteDuringRun(BaseTestCase):
                 traceback.print_exc()
                 raise
 
-    def test_rte_during_run(self):
+    def test_rte_during_run(self) -> None:
         self.runsafe(self.check_rte_during_run)

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from enum import IntEnum
-from typing import Iterable, Optional
+from typing import Iterable, List, Optional, Set
 from spinn_utilities.overrides import overrides
 from spinn_machine.tags import IPTag, ReverseIPTag
 from pacman.model.graphs.machine import MachineVertex
@@ -57,7 +57,7 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
     RECORDING_HEADER_SIZE = BYTES_PER_WORD
     RECORDING_ELEMENT_SIZE = STATE_DATA_SIZE  # A recording of the state
 
-    def __init__(self, label, state):
+    def __init__(self, label: str, state: bool):
         """
         :param str label:
         :param bool state:
@@ -66,9 +66,9 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
 
         # app specific data items
         self._state = bool(state)
-        self._neighbours = set()
+        self._neighbours: Set[ConwayBasicCell] = set()
 
-    def add_neighbour(self, neighbour):
+    def add_neighbour(self, neighbour: "ConwayBasicCell") -> None:
         if neighbour == self:
             raise ValueError("Cannot add self as neighbour!")
         self._neighbours.add(neighbour)
@@ -78,7 +78,7 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
     def generate_machine_data_specification(
             self, spec: DataSpecificationGenerator, placement: Placement,
             iptags: Optional[Iterable[IPTag]],
-            reverse_iptags: Optional[Iterable[ReverseIPTag]]):
+            reverse_iptags: Optional[Iterable[ReverseIPTag]]) -> None:
         if len(self._neighbours) != 8:
             raise ValueError(
                 f"Only {len(self._neighbours)} neighbours, not 8")
@@ -125,10 +125,11 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         # End-of-Spec:
         spec.end_specification()
 
-    def get_data(self):
+    def get_data(self) -> List[bool]:
         txrx = FecDataView.get_transceiver()
         placement = self.placement
         n_steps = FecDataView.get_current_run_timesteps()
+        assert n_steps is not None
         # Get the data region base address where results are stored for the
         # core
         record_region_base_address = locate_memory_region_for_placement(
@@ -164,8 +165,8 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         return VariableSDRAM(fixed_sdram, per_timestep_sdram)
 
     @property
-    def state(self):
+    def state(self) -> bool:
         return self._state
 
-    def __repr__(self):
-        return self.label
+    def __repr__(self) -> str:
+        return str(self.label)

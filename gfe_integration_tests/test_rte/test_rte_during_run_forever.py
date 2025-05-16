@@ -27,9 +27,9 @@ from gfe_integration_tests.test_rte.run_vertex import RunVertex
 
 class TestRteDuringRunForever(BaseTestCase):
 
-    def check_rte_during_run_forever(self):
+    def check_rte_during_run_forever(self) -> None:
 
-        def start():
+        def start() -> None:
             sleep(3.0)
             s.stop_run()
 
@@ -42,5 +42,5 @@ class TestRteDuringRunForever(BaseTestCase):
             with pytest.raises(SpinnmanException):
                 s.run(None)
 
-    def test_rte_during_run_forever(self):
+    def test_rte_during_run_forever(self) -> None:
         self.runsafe(self.check_rte_during_run_forever)

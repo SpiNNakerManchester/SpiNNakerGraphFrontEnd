@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from enum import IntEnum
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, Set
 from spinn_utilities.overrides import overrides
 from spinn_machine.tags import IPTag, ReverseIPTag
 from pacman.model.graphs.machine import MachineVertex
@@ -66,7 +66,7 @@ class ConwayBasicCell(
     NEIGHBOUR_INITIAL_STATES_SIZE = 2 * BYTES_PER_WORD
     RECORDING_ELEMENT_SIZE = STATE_DATA_SIZE  # A recording of the state
 
-    def __init__(self, label, state):
+    def __init__(self, label: str, state: bool) -> None:
         """
         :param str label:
         :param bool state:
@@ -75,9 +75,9 @@ class ConwayBasicCell(
 
         # app specific data items
         self._state = bool(state)
-        self._neighbours = set()
+        self._neighbours: Set[ConwayBasicCell] = set()
 
-    def add_neighbour(self, neighbour):
+    def add_neighbour(self, neighbour: "ConwayBasicCell") -> None:
         if neighbour == self:
             raise ValueError("Cannot add self as neighbour!")
         self._neighbours.add(neighbour)
@@ -86,7 +86,7 @@ class ConwayBasicCell(
     def generate_machine_data_specification(
             self, spec: DataSpecificationGenerator, placement: Placement,
             iptags: Optional[Iterable[IPTag]],
-            reverse_iptags: Optional[Iterable[ReverseIPTag]]):
+            reverse_iptags: Optional[Iterable[ReverseIPTag]]) -> None:
         # pylint: disable=arguments-differ
         if len(self._neighbours) != 8:
             raise ValueError(
@@ -134,7 +134,7 @@ class ConwayBasicCell(
         # End-of-Spec:
         spec.end_specification()
 
-    def get_data(self):
+    def get_data(self) -> List[bool]:
         # for buffering output info is taken form the buffer manager
         # get raw data, convert to list of booleans
         raw_data, data_missing = self.get_recording_channel_data(
@@ -165,11 +165,11 @@ class ConwayBasicCell(
         return VariableSDRAM(fixed_sdram, per_timestep_sdram)
 
     @property
-    def state(self):
+    def state(self) -> bool:
         return self._state
 
-    def __repr__(self):
-        return self.label
+    def __repr__(self) -> str:
+        return str(self.label)
 
     @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)
     def get_recorded_region_ids(self) -> List[int]:

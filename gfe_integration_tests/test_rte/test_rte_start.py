@@ -25,7 +25,7 @@ from gfe_integration_tests.test_rte.run_vertex import RunVertex
 
 class TestRteStart(BaseTestCase):
 
-    def check_rte_at_start(self):
+    def check_rte_at_start(self) -> None:
         s.setup(model_binary_folder=os.path.dirname(__file__))
         s.add_machine_vertex_instance(
             RunVertex(
@@ -34,5 +34,5 @@ class TestRteStart(BaseTestCase):
         with pytest.raises(SpinnmanException):
             s.run(1000)
 
-    def test_rte_at_start(self):
+    def test_rte_at_start(self) -> None:
         self.runsafe(self.check_rte_at_start)
