@@ -13,8 +13,12 @@
 # limitations under the License.
 
 import os
+from typing import Dict, Tuple
+
 from spinn_utilities.config_holder import get_config_bool
+
 from pacman.model.graphs.machine import MachineEdge
+
 import spinnaker_graph_front_end as front_end
 from gfe_examples.Conways.partitioned_example_a_no_vis_no_buffer.\
     conways_basic_cell import (
@@ -35,7 +39,7 @@ if cores <= (MAX_X_SIZE_OF_FABRIC * MAX_Y_SIZE_OF_FABRIC):
     raise KeyError("Don't have enough cores to run simulation")
 
 # contain the vertices for the connection aspect
-vertices = dict()
+vertices: Dict[Tuple[int, int], ConwayBasicCell] = dict()
 
 active_states = [(2, 2), (3, 2), (3, 3), (4, 3), (2, 4)]
 

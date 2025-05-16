@@ -14,18 +14,24 @@
 
 from enum import IntEnum
 import logging
+from typing import Optional
+
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
+
 from spinnman.model.enums import ExecutableType
+
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.placements import Placement
 from pacman.model.resources import ConstantSDRAM
+
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 from spinn_front_end_common.utilities.constants import (
     SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
 from spinn_front_end_common.abstract_models import (
     AbstractGeneratesDataSpecification, AbstractHasAssociatedBinary)
+
 from spinnaker_graph_front_end.utilities.data_utils import (
     generate_system_data_region)
 from pacman.model.graphs.application.abstract import (
@@ -43,7 +49,7 @@ class DataRegions(IntEnum):
 
 
 class SyncTestVertex(AbstractOneAppOneMachineVertex):
-    def __init__(self, lead, label=None):
+    def __init__(self, lead: bool, label: Optional[str] =None):
         AbstractOneAppOneMachineVertex.__init__(
             self, SyncTestMachineVertex(lead, self, label),
             label, n_atoms=1)
@@ -51,7 +57,8 @@ class SyncTestVertex(AbstractOneAppOneMachineVertex):
 
 class SyncTestMachineVertex(MachineVertex, AbstractHasAssociatedBinary,
                             AbstractGeneratesDataSpecification):
-    def __init__(self, lead, app_vertex, label=None):
+    def __init__(self, lead: bool, app_vertex: SyncTestVertex,
+                 label: Optional[str] = None):
         super().__init__(label, app_vertex)
         self._lead = lead
 

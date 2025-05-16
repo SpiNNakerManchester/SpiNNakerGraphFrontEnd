@@ -50,7 +50,7 @@ class HelloWorldVertex(
         SimulatorVertex, MachineDataSpecableVertex,
         AbstractReceiveBuffersToHost):
 
-    def __init__(self, n_hellos, label=None):
+    def __init__(self, n_hellos: int, label: Optional[str] = None):
         super().__init__(label, "hello_world.aplx")
 
         self._string_data_size = n_hellos * 13
@@ -67,7 +67,7 @@ class HelloWorldVertex(
     def generate_machine_data_specification(
             self, spec: DataSpecificationGenerator, placement: Placement,
             iptags: Optional[Iterable[IPTag]],
-            reverse_iptags: Optional[Iterable[ReverseIPTag]]):
+            reverse_iptags: Optional[Iterable[ReverseIPTag]]) -> None:
         # Generate the system data region for simulation .c requirements
         self.generate_system_region(spec)
 
@@ -78,7 +78,7 @@ class HelloWorldVertex(
         # End-of-Spec:
         spec.end_specification()
 
-    def read(self) -> None:
+    def read(self) -> str:
         """
         Get the data written into SDRAM.
 

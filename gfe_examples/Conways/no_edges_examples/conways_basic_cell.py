@@ -14,6 +14,7 @@
 
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ConstantSDRAM
+from spinn_utilities.overrides import overrides
 
 
 class ConwayBasicCell(MachineVertex):
@@ -22,5 +23,6 @@ class ConwayBasicCell(MachineVertex):
     """
 
     @property
-    def sdram_required(self) -> None:
+    @overrides(MachineVertex.sdram_required)
+    def sdram_required(self) ->  ConstantSDRAM:
         return ConstantSDRAM(0)

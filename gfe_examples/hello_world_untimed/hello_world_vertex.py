@@ -14,7 +14,7 @@
 
 from enum import IntEnum
 import logging
-from typing import List
+from typing import List, Optional
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex
@@ -63,7 +63,7 @@ class HelloWorldVertex(
 
     _ENCODING = "ascii"
 
-    def __init__(self, label):
+    def __init__(self, label: str):
         """
         :param int n_repeats: The number of times to repeat the label in total
         :param str label: The label, which will be printed
@@ -115,7 +115,7 @@ class HelloWorldVertex(
         # End-of-Spec:
         spec.end_specification()
 
-    def read(self) -> None:
+    def read(self) -> str:
         """
         Get the data written into SDRAM.
 

@@ -63,7 +63,7 @@ class TemplateVertex(
     # The number of bytes recorded per timestep - currently 0 in C code
     N_RECORDED_PER_TIMESTEP = 0
 
-    def __init__(self, label):
+    def __init__(self, label: str):
         super().__init__(
             label=label, binary_name="c_template_vertex.aplx")
 
@@ -88,7 +88,7 @@ class TemplateVertex(
     def generate_machine_data_specification(
             self, spec: DataSpecificationGenerator, placement: Placement,
             iptags: Optional[Iterable[IPTag]],
-            reverse_iptags: Optional[Iterable[ReverseIPTag]]):
+            reverse_iptags: Optional[Iterable[ReverseIPTag]]) -> None:
         # Generate the system data region for simulation .c requirements
         self.generate_system_region(spec, DataRegions.SYSTEM)
 
@@ -103,12 +103,14 @@ class TemplateVertex(
         # End-of-Spec:
         spec.end_specification()
 
-    def _reserve_app_memory_regions(self, spec):
+    def _reserve_app_memory_regions(
+            self, spec: DataSpecificationGenerator) -> None:
         spec.reserve_memory_region(
             region=DataRegions.TRANSMISSION,
             size=self.TRANSMISSION_REGION_N_BYTES, label="transmission")
 
-    def _write_app_memory_regions(self, spec, iptags):
+    def _write_app_memory_regions(self, spec: DataSpecificationGenerator,
+                                  iptags: Optional[Iterable[IPTag]]) -> None:
         # Get the key, assuming all outgoing edges use the same key
         routing_info = FecDataView.get_routing_infos()
         key = routing_info.get_single_key_from(self)
@@ -118,7 +120,7 @@ class TemplateVertex(
         spec.write_value(int(key is not None))
         spec.write_value(0 if key is None else key)
 
-    def read(self) -> None:
+    def read(self) -> bytes:
         """
         Get the recorded data.
 
