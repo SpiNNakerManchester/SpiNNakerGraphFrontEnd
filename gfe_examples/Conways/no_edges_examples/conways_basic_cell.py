@@ -24,5 +24,5 @@ class ConwayBasicCell(MachineVertex):
 
     @property
     @overrides(MachineVertex.sdram_required)
-    def sdram_required(self) ->  ConstantSDRAM:
+    def sdram_required(self) -> ConstantSDRAM:
         return ConstantSDRAM(0)

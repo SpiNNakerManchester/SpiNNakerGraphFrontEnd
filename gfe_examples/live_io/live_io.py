@@ -38,6 +38,7 @@ sends_per_cycle = 10
 lpg_label = "LPGReceiver"
 running = True
 
+
 def start_sending(label: str, c: LiveEventConnection) -> None:
     # pylint: disable=unused-argument
     sleep(0.5)
@@ -53,6 +54,7 @@ def end_sim(label: str, c: LiveEventConnection) -> None:
     # pylint: disable=unused-argument,global-statement
     global running
     running = False
+
 
 def receive(label: str, time: int, keys: List[int]) -> None:
     print(f"Received from {label} at time {time}: {keys}")

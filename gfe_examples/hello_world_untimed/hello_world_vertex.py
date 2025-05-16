@@ -14,7 +14,7 @@
 
 from enum import IntEnum
 import logging
-from typing import List, Optional
+from typing import List
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
 from pacman.model.graphs.machine import MachineVertex

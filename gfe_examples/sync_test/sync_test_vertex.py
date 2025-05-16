@@ -49,7 +49,7 @@ class DataRegions(IntEnum):
 
 
 class SyncTestVertex(AbstractOneAppOneMachineVertex):
-    def __init__(self, lead: bool, label: Optional[str] =None):
+    def __init__(self, lead: bool, label: Optional[str] = None):
         AbstractOneAppOneMachineVertex.__init__(
             self, SyncTestMachineVertex(lead, self, label),
             label, n_atoms=1)
