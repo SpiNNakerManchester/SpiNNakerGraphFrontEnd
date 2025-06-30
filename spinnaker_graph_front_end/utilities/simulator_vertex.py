@@ -51,12 +51,11 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
         """
         :param label:
             The label for the vertex.
-        :param str binary_name:
+        :param binary_name:
             The name of the APLX implementing the vertex.
         :param vertex_slice:
             The slice of the application vertex that this machine vertex
             implements.
-        :type vertex_slice: ~pacman.model.graphs.common.Slice or None
         """
         super().__init__(label, vertex_slice=vertex_slice)
         self._binary_name = binary_name
@@ -84,8 +83,6 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
     def front_end(self) -> ModuleType:
         """
         The main front end that is handling this simulator vertex.
-
-        :rtype: ~typing.ModuleType
         """
         return self.__front_end
 
@@ -96,8 +93,6 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
 
         .. note::
             Only valid *after* the simulation has run!
-
-        :rtype: ~pacman.model.placements.Placement
         """
         return FecDataView.get_placement_of_vertex(self)
 
@@ -108,10 +103,9 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
         :py:func:`spinnaker_graph_front_end.run` before this will work,
         and the vertex must set up the recording region beforehand.
 
-        :param int recording_id:
+        :param recording_id:
             Which recording channel to fetch
         :return: the data, and whether any data was lost
-        :rtype: tuple(bytes, bool)
         """
         buffer_manager = FecDataView.get_buffer_manager()
         return buffer_manager.get_recording(self.placement, recording_id)
@@ -125,9 +119,8 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
         .. note::
             Do not use this with untimed vertices.
 
-        :param ~data_specification.DataSpecificationGenerator spec:
-            The data specification being built
-        :param int region_id:
+        :param spec: The data specification being built
+        :param region_id:
             Which region is the system region.
             Defaults to 0 because it is almost always the first one.
         """
@@ -139,13 +132,9 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
         """
         Generate the recording region for the data specification.
 
-        :param ~data_specification.DataSpecificationGenerator spec:
-            The data specification being built
-        :param int region_id:
+        :param spec: The data specification being built
+        :param region_id:
             Which region is the recording region.
-        :param list(int) sizes:
-            The sizes of each of the recording channels.
-            The length of the list is the number of recording channels.
         """
         spec.reserve_memory_region(
             region=region_id,
