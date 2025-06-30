@@ -65,8 +65,7 @@ class HelloWorldVertex(
 
     def __init__(self, label: str):
         """
-        :param int n_repeats: The number of times to repeat the label in total
-        :param str label: The label, which will be printed
+        :param label: The label, which will be printed
         """
         super().__init__(label, "hello_world.aplx")
 

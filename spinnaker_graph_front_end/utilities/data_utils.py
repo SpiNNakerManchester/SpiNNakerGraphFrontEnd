@@ -29,12 +29,9 @@ def generate_system_data_region(
     """
     Generate a system data region for time-based simulations.
 
-    :param ~data_specification.DataSpecificationGenerator spec:
-        The data specification to write to
-    :param int region_id:
-        The region to write to
-    :param ~pacman.model.graphs.machine.MachineVertex machine_vertex:
-        The machine vertex to write for
+    :param spec: The data specification to write to
+    :param region_id: The region to write to
+    :param machine_vertex: The machine vertex to write for
     """
     # reserve memory regions
     spec.reserve_memory_region(
@@ -52,12 +49,9 @@ def generate_steps_system_data_region(
     """
     Generate a system data region for step-based simulations.
 
-    :param data_specification.DataSpecificationGenerator spec:
-        The data specification to write to
-    :param int region_id:
-        The region to write to
-    :param ~pacman.model.graphs.machine.MachineVertex machine_vertex:
-        The machine vertex to write for
+    :param spec: The data specification to write to
+    :param region_id: The region to write to
+    :param machine_vertex: The machine vertex to write for
     """
     # reserve memory regions
     spec.reserve_memory_region(
