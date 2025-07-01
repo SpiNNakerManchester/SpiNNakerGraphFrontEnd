@@ -104,11 +104,11 @@ def setup(model_binary_module: Optional[ModuleType] = None,
     .. note::
         This must be called *before* the other functions in this API.
 
-    :param ~types.ModuleType model_binary_module:
+    :param model_binary_module:
         the Python module where the binary files (``.aplx``) can be found for
         the compiled C code that is being used in this application; mutually
         exclusive with the ``model_binary_folder``.
-    :param str model_binary_folder:
+    :param model_binary_folder:
         the folder where the binary files can be found for the c code that is
         being used in this application; mutually exclusive with the
         ``model_binary_module``.
@@ -116,18 +116,14 @@ def setup(model_binary_module: Optional[ModuleType] = None,
         set of SocketAddresses to be added for the database notification
         system. These are over and above the ones used by the
         :py:class:`~spinn_front_end_common.utilities.connections.LiveEventConnection`
-    :type database_socket_addresses:
-        ~collections.abc.Iterable(~spinn_utilities.socket_address.SocketAddress)
     :param n_chips_required:
         Deprecated! Use ``n_boards_required`` instead.
         Must be ``None`` if ``n_boards_required`` specified.
-    :type n_chips_required: int or None
     :param n_boards_required:
         if you need to be allocated a machine (for spalloc) before building
         your graph, then fill this in with a general idea of the number of
         boards you need so that the spalloc system can allocate you a machine
         big enough for your needs.
-    :type n_boards_required: int or None
     :raise ~spinn_front_end_common.utilities.exceptions.ConfigurationException:
         if mutually exclusive options are given.
     """
@@ -174,7 +170,7 @@ def run(duration: Optional[int] = None) -> None:
     """
     Run a simulation for a number of microseconds.
 
-    :param int duration:
+    :param duration:
         the number of microseconds the application code should run for
     """
     __get_simulator().run(duration)
@@ -184,7 +180,7 @@ def run_until_complete(n_steps: Optional[int] = None) -> None:
     """
     Run until the simulation is complete.
 
-    :param int n_steps:
+    :param n_steps:
         If not ``None``, this specifies that the simulation should be
         requested to run for the given number of steps.  The host will
         still wait until the simulation itself says it has completed
@@ -211,7 +207,7 @@ def add_vertex_instance(vertex_to_add: ApplicationVertex) -> None:
     """
     Add an existing application vertex to the unpartitioned graph.
 
-    :param ~pacman.model.graphs.application.ApplicationVertex vertex_to_add:
+    :param vertex_to_add:
         vertex instance to add to the graph
     """
     FecDataView.add_vertex(vertex_to_add)
@@ -225,9 +221,9 @@ def add_edge_instance(edge: ApplicationEdge, partition_id: str) -> None:
     """
     Add an edge to the unpartitioned graph.
 
-    :param ~pacman.model.graphs.application.ApplicationEdge edge:
+    :param edge:
         The edge to add.
-    :param str partition_id:
+    :param partition_id:
         The ID of the partition that the edge belongs to.
     """
     FecDataView.add_edge(edge, partition_id)
@@ -237,7 +233,7 @@ def add_machine_vertex_instance(machine_vertex: MachineVertex) -> None:
     """
     Add a machine vertex instance to the graph.
 
-    :param ~pacman.model.graphs.machine.MachineVertex machine_vertex:
+    :param machine_vertex:
         The vertex to add
     """
     app_vertex = AbstractOneAppOneMachineVertex(
@@ -251,9 +247,9 @@ def add_machine_edge_instance(edge: MachineEdge, partition_id: str) -> None:
     """
     Add a machine edge instance to the graph.
 
-    :param ~pacman.model.graphs.machine.MachineEdge edge:
+    :param edge:
         The edge to add
-    :param str partition_id:
+    :param partition_id:
         The ID of the partition that the edge belongs to.
     """
     pre_app = edge.pre_vertex.app_vertex
@@ -288,8 +284,6 @@ def get_number_of_available_cores_on_machine() -> int:
     """
     Get the number of cores on this machine that are available to the
     simulation.
-
-    :rtype: int
     """
     return __get_simulator().get_number_of_available_cores_on_machine
 
@@ -297,8 +291,6 @@ def get_number_of_available_cores_on_machine() -> int:
 def has_ran() -> bool:
     """
     Get whether the simulation has already run.
-
-    :rtype: bool
     """
     return FecDataView.is_ran_ever()
 
@@ -306,8 +298,6 @@ def has_ran() -> bool:
 def routing_infos() -> RoutingInfo:
     """
     Get information about how messages are routed on the machine.
-
-    :rtype: ~pacman.model.routing_info.RoutingInfo
     """
     return FecDataView.get_routing_infos()
 
@@ -339,8 +329,6 @@ def placements() -> Never:
 def tags() -> Tags:
     """
     Get the IPTAGs allocated on the machine.
-
-    :rtype: ~pacman.model.tags.Tags
     """
     return FecDataView.get_tags()
 
@@ -348,8 +336,6 @@ def tags() -> Tags:
 def buffer_manager() -> BufferManager:
     """
     Get the buffer manager being used for loading/extracting buffers.
-
-    :rtype: ~spinn_front_end_common.interface.buffer_management.BufferManager
     """
     return FecDataView.get_buffer_manager()
 
@@ -357,8 +343,6 @@ def buffer_manager() -> BufferManager:
 def machine() -> Machine:
     """
     Get the model of the attached/allocated machine.
-
-    :rtype: ~spinn_machine.Machine
     """
     logger.warning(
         "If you are getting the machine object to locate how many cores you "
@@ -372,8 +356,6 @@ def machine() -> Machine:
 def is_allocated_machine() -> bool:
     """
     Get whether a machine is allocated.
-
-    :rtype: bool
     """
     return FecDataView.has_machine()
 

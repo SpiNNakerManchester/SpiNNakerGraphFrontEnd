@@ -58,13 +58,6 @@ def check_data(data: bytes) -> None:
 def _do_transfer(gatherer: DataSpeedUpPacketGatherMachineVertex,
                  receiver_placement: Placement, writer_placement: Placement,
                  writer_vertex: SDRAMWriter) -> bytes:
-    """
-    :param .DataSpeedUpPacketGatherMachineVertex gatherer:
-    :param .Placement receiver_placement:
-    :param .Placement writer_placement:
-    :param SDRAMWriter writer_vertex:
-    :rtype: bytearray
-    """
     with StreamingContextManager(FecDataView.iterate_gathers()):
         extra_monitor = receiver_placement.vertex
         assert isinstance(extra_monitor, ExtraMonitorSupportMachineVertex)

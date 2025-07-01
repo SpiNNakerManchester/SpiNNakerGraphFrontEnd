@@ -59,8 +59,8 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
 
     def __init__(self, label: str, state: bool):
         """
-        :param str label:
-        :param bool state:
+        :param label:
+        :param state:
         """
         super().__init__(label, "conways_cell.aplx")
 

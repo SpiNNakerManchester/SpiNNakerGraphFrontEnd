@@ -68,8 +68,8 @@ class ConwayBasicCell(
 
     def __init__(self, label: str, state: bool) -> None:
         """
-        :param str label:
-        :param bool state:
+        :param label:
+        :param state:
         """
         super().__init__(label, "conways_cell.aplx")
 

@@ -51,14 +51,14 @@ class SpiNNaker(AbstractSpinnakerBase):
             time_scale_factor: Optional[int] = None,
             machine_time_step: Optional[int] = None):
         """
-        :param int n_chips_required:
+        :param n_chips_required:
             How many chips are required.
             *Prefer* `n_boards_required` *if possible.*
-        :param int n_boards_required:
+        :param n_boards_required:
             How many boards are required. Unnecessary with a local board.
-        :param int time_scale_factor:
+        :param time_scale_factor:
             The time slow-down factor
-        :param int machine_time_step:
+        :param machine_time_step:
             The size of the machine time step, in microseconds
         """
         # DSG algorithm store for user defined algorithms
