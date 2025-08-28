@@ -42,6 +42,9 @@ class DataRegions(IntEnum):
 class SDRAMWriter(
         MachineVertex, MachineDataSpecableVertex, AbstractHasAssociatedBinary):
     def __init__(self, mebibytes: int):
+        """
+        :param mebibytes:
+        """
         self._size = mebibytes * _SDRAM_READING_SIZE_IN_BYTES_CONVERTER
         super().__init__(label="speed")
 

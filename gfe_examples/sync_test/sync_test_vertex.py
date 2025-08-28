@@ -50,6 +50,10 @@ class DataRegions(IntEnum):
 
 class SyncTestVertex(AbstractOneAppOneMachineVertex):
     def __init__(self, lead: bool, label: Optional[str] = None):
+        """
+        :param lead: Flag to say this is the lead vertex
+        :param label: The optional name of the vertex
+        """
         AbstractOneAppOneMachineVertex.__init__(
             self, SyncTestMachineVertex(lead, self, label),
             label, n_atoms=1)
@@ -59,6 +63,13 @@ class SyncTestMachineVertex(MachineVertex, AbstractHasAssociatedBinary,
                             AbstractGeneratesDataSpecification):
     def __init__(self, lead: bool, app_vertex: SyncTestVertex,
                  label: Optional[str] = None):
+        """
+        :param lead: Flag to say this is the lead vertex
+        :param app_vertex:
+            The application vertex that caused this machine vertex to be
+            created. If `None`, there is no such application vertex.
+        :param label: The optional name of the vertex
+        """
         super().__init__(label, app_vertex)
         self._lead = lead
 

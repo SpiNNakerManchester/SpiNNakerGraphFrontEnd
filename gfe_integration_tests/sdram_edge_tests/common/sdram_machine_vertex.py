@@ -52,6 +52,14 @@ class SDRAMMachineVertex(
                  app_vertex: Optional[ApplicationVertex] = None,
                  vertex_slice: Optional[Slice] = None,
                  sdram_cost: Optional[int] = None):
+        """
+        :param label: The optional name of the vertex
+        :param app_vertex:
+            The application vertex that caused this machine vertex to be
+            created. If `None`, there is no such application vertex.
+        :param vertex_slice: Neurons covered by this vertex
+        :param sdram_cost: Memeory cost for this vertex
+        """
         super().__init__(
             label=label, app_vertex=app_vertex, vertex_slice=vertex_slice)
         self.__sdram_cost = sdram_cost

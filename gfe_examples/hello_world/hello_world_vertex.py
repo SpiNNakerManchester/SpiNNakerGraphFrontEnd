@@ -51,6 +51,10 @@ class HelloWorldVertex(
         AbstractReceiveBuffersToHost):
 
     def __init__(self, n_hellos: int, label: Optional[str] = None):
+        """
+        :param n_hellos: The number of hello worlds to output
+        :param label: The label for the vertex.
+        """
         super().__init__(label, "hello_world.aplx")
 
         self._string_data_size = n_hellos * 13

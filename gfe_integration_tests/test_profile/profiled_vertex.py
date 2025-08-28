@@ -53,6 +53,9 @@ class ProfiledVertex(
         AbstractHasProfileData):
 
     def __init__(self, label: Optional[str] = None):
+        """
+        :param label: The optional name of the vertex
+        """
         super().__init__(label, "test_profile.aplx")
 
     @property

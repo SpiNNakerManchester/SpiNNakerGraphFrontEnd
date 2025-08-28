@@ -44,6 +44,11 @@ class LiveIOVertex(
 
     def __init__(self, n_keys: int, send_partition: str = "LiveOut",
                  label: Optional[str] = None):
+        """
+        :param n_keys: Number of keys to use
+        :param send_partition: Type of/ label for partition to create
+        :param label: The label for the vertex.
+        """
         super().__init__(
             label, "live_io.aplx", vertex_slice=Slice(0, n_keys - 1))
         self.__n_keys = n_keys

@@ -124,6 +124,10 @@ def setup(model_binary_module: Optional[ModuleType] = None,
         your graph, then fill this in with a general idea of the number of
         boards you need so that the spalloc system can allocate you a machine
         big enough for your needs.
+    :param time_scale_factor:
+        The time slow-down factor
+    :param machine_time_step:
+        The size of the machine time step, in microseconds
     :raise ~spinn_front_end_common.utilities.exceptions.ConfigurationException:
         if mutually exclusive options are given.
     """
@@ -282,22 +286,22 @@ def add_socket_address(database_ack_port_num: Optional[int],
 
 def get_number_of_available_cores_on_machine() -> int:
     """
-    Get the number of cores on this machine that are available to the
-    simulation.
+    :returns: The number of cores on this machine that are available to the
+        simulation.
     """
     return __get_simulator().get_number_of_available_cores_on_machine
 
 
 def has_ran() -> bool:
     """
-    Get whether the simulation has already run.
+    :returns: Whether the simulation has already run.
     """
     return FecDataView.is_ran_ever()
 
 
 def routing_infos() -> RoutingInfo:
     """
-    Get information about how messages are routed on the machine.
+    :returns: Information about how messages are routed on the machine.
     """
     return FecDataView.get_routing_infos()
 
@@ -328,21 +332,21 @@ def placements() -> Never:
 
 def tags() -> Tags:
     """
-    Get the IPTAGs allocated on the machine.
+    :returns: The IPTAGs allocated on the machine.
     """
     return FecDataView.get_tags()
 
 
 def buffer_manager() -> BufferManager:
     """
-    Get the buffer manager being used for loading/extracting buffers.
+    :returns: The buffer manager being used for loading/extracting buffers.
     """
     return FecDataView.get_buffer_manager()
 
 
 def machine() -> Machine:
     """
-    Get the model of the attached/allocated machine.
+    :returns: The model of the attached/allocated machine.
     """
     logger.warning(
         "If you are getting the machine object to locate how many cores you "
@@ -355,7 +359,7 @@ def machine() -> Machine:
 
 def is_allocated_machine() -> bool:
     """
-    Get whether a machine is allocated.
+    :returns: whether a machine is allocated.
     """
     return FecDataView.has_machine()
 

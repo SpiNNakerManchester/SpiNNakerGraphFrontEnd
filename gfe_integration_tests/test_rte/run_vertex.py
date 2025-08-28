@@ -34,6 +34,10 @@ class RunVertex(
         AbstractGeneratesDataSpecification):
 
     def __init__(self, aplx_file: str, executable_type: ExecutableType):
+        """
+        :param aplx_file: Path to the aplx file
+        :param executable_type: Type of the aplx executable
+        """
         super().__init__(ConstantSDRAM(SIMULATION_N_BYTES))
         self._aplx_file = aplx_file
         self._executable_type = executable_type

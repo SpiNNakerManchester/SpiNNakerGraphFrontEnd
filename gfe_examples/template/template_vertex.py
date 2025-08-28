@@ -64,6 +64,9 @@ class TemplateVertex(
     N_RECORDED_PER_TIMESTEP = 0
 
     def __init__(self, label: str):
+        """
+        :param label: The optional name of the vertex
+        """
         super().__init__(
             label=label, binary_name="c_template_vertex.aplx")
 

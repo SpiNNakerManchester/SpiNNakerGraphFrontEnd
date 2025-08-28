@@ -24,6 +24,9 @@ class SdramTestVertex(ApplicationVertex):
     """
 
     def __init__(self, n_atoms: int):
+        """
+        :param n_atoms: number of atoms
+        """
         super().__init__()
         self.__n_atoms = n_atoms
 
