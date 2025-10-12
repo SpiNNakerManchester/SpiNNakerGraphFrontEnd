@@ -350,7 +350,7 @@ def machine() -> Machine:
         "please use the following function call, as it is more reliable and "
         "takes into account software resources as well:\n\n"
         "get_number_of_available_cores_on_machine()")
-    return FecDataView.get_machine()
+    return __get_simulator().get_machine()
 
 
 def is_allocated_machine() -> bool:
