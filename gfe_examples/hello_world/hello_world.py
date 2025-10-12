@@ -30,6 +30,9 @@ from gfe_examples.hello_world.hello_world_vertex import HelloWorldVertex
 front_end.setup(
     n_chips_required=1, model_binary_folder=os.path.dirname(__file__))
 
+# Not needed but shows machine can be obtained at this point
+machine = front_end.machine()
+
 # Put HelloWorldVertex onto 16 cores
 total_number_of_cores = 16
 for x in range(total_number_of_cores):
