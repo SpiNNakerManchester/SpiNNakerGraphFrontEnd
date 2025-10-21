@@ -236,7 +236,7 @@ def add_machine_vertex_instance(machine_vertex: MachineVertex) -> None:
     :param machine_vertex:
         The vertex to add
     """
-    FecDataView.add_vertex(machine_vertex)
+    FecDataView.add_machine_vertex(machine_vertex)
 
 
 def add_machine_edge_instance(edge: MachineEdge, partition_id: str) -> None:
@@ -248,7 +248,7 @@ def add_machine_edge_instance(edge: MachineEdge, partition_id: str) -> None:
     :param partition_id:
         The ID of the partition that the edge belongs to.
     """
-    FecDataView.add_edge(edge, partition_id)
+    FecDataView.add_machine_edge(edge, partition_id)
 
 
 def add_socket_address(database_ack_port_num: Optional[int],
