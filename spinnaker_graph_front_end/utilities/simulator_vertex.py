@@ -33,7 +33,7 @@ from spinn_front_end_common.interface.buffer_management import (
     recording_utilities)
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 
-from spinnaker_graph_front_end.utilities.data_utils import (
+from spinn_front_end_common.utilities.data_utils import (
     generate_system_data_region)
 log = FormatAdapter(logging.getLogger(__file__))
 
