@@ -18,9 +18,8 @@ Utilities for setting up the global configuration.
 
 import os
 from spinn_utilities.config_holder import (
-    clear_cfg_files, set_cfg_files)
-from spinn_front_end_common.interface.config_setup import (
-    add_default_cfg, add_spinnaker_cfg)
+    add_default_cfg, clear_cfg_files, load_config)
+from spinn_front_end_common.interface.config_setup import add_spinnaker_cfg
 from spinn_front_end_common.data.fec_data_writer import FecDataWriter
 
 #: The name of the configuration file
@@ -36,11 +35,16 @@ def setup_configs() -> None:
     :py:func:`~spinnaker_graph_front_end.setup` is called.
     """
     clear_cfg_files(False)
+    add_gfe_cfg()
+    load_config(CONFIG_FILE_NAME)
+
+
+def add_gfe_cfg() -> None:
+    """
+    Adds the Graph Front end cfg default file and all previous ones
+    """
     add_spinnaker_cfg()  # This add its dependencies too
-    set_cfg_files(
-        config_file=CONFIG_FILE_NAME,
-        default=os.path.join(os.path.dirname(__file__), CONFIG_FILE_NAME))
-    FecDataWriter.mock()
+    add_default_cfg(os.path.join(os.path.dirname(__file__), CONFIG_FILE_NAME))
 
 
 def unittest_setup() -> None:
@@ -51,12 +55,13 @@ def unittest_setup() -> None:
     included.
     The user configuration is *not* included!
 
-    Unsets any previous simulators and temporary directories.
+    Actual loading of the cfg file is done by config_holder
+    if and only if config values are needed.
 
     .. note::
-         This file should only be called from spinnaker_graph_front_end tests
+         This method should only be called from spinnaker_graph_front_end tests
          that do not call :py:func:`~spinnaker_graph_front_end.setup`.
     """
     clear_cfg_files(True)
-    add_spinnaker_cfg()  # This add its dependencies too
-    add_default_cfg(os.path.join(os.path.dirname(__file__), CONFIG_FILE_NAME))
+    add_gfe_cfg()
+    FecDataWriter.mock()
