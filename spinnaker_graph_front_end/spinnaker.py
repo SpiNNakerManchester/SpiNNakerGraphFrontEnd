@@ -13,17 +13,19 @@
 # limitations under the License.
 
 import logging
-from typing import Optional
+from typing import Optional, Type
 
 from spinn_utilities.config_holder import is_config_none
 from spinn_utilities.log import FormatAdapter
+from spinn_utilities.overrides import overrides
 
 from spinn_front_end_common.data import FecDataView
+from spinn_front_end_common.data.fec_data_writer import FecDataWriter
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
 from spinn_front_end_common.interface.provenance import GlobalProvenance
 
-from spinnaker_graph_front_end.config_setup import setup_configs
+from spinnaker_graph_front_end.config_setup import add_gfe_cfg, GFE_CFG
 from ._version import __version__ as version
 
 logger = FormatAdapter(logging.getLogger(__name__))
@@ -63,9 +65,6 @@ class SpiNNaker(AbstractSpinnakerBase):
         """
         # DSG algorithm store for user defined algorithms
 
-        # At import time change the default FailedState
-        setup_configs()
-
         super().__init__()
 
         with GlobalProvenance() as db:
@@ -75,6 +74,20 @@ class SpiNNaker(AbstractSpinnakerBase):
 
         self._data_writer.set_up_timings(
             machine_time_step, time_scale_factor, 1)
+
+    @overrides(AbstractSpinnakerBase.add_default_cfg)
+    def add_default_cfg(self) -> None:
+        add_gfe_cfg()
+
+    @property
+    @overrides(AbstractSpinnakerBase.user_cfg_file)
+    def user_cfg_file(self) -> str:
+        return GFE_CFG
+
+    @property
+    @overrides(AbstractSpinnakerBase.data_writer_cls)
+    def data_writer_cls(self) -> Type[FecDataWriter]:
+        return FecDataWriter
 
     def __repr__(self) -> str:
         if FecDataView.has_ipaddress():

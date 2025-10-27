@@ -18,25 +18,12 @@ Utilities for setting up the global configuration.
 
 import os
 from spinn_utilities.config_holder import (
-    add_default_cfg, clear_cfg_files, load_config)
+    add_default_cfg, clear_cfg_files)
 from spinn_front_end_common.interface.config_setup import add_spinnaker_cfg
 from spinn_front_end_common.data.fec_data_writer import FecDataWriter
 
 #: The name of the configuration file
-CONFIG_FILE_NAME = "spiNNakerGraphFrontEnd.cfg"
-
-
-def setup_configs() -> None:
-    """
-    Sets up the configurations including the user's configuration file.
-
-    Clears out any previous read configurations but does not load the new
-    configurations so a warning is generated if a configuration is used before
-    :py:func:`~spinnaker_graph_front_end.setup` is called.
-    """
-    clear_cfg_files(False)
-    add_gfe_cfg()
-    load_config(CONFIG_FILE_NAME)
+GFE_CFG = "spiNNakerGraphFrontEnd.cfg"
 
 
 def add_gfe_cfg() -> None:
@@ -44,7 +31,7 @@ def add_gfe_cfg() -> None:
     Adds the Graph Front end cfg default file and all previous ones
     """
     add_spinnaker_cfg()  # This add its dependencies too
-    add_default_cfg(os.path.join(os.path.dirname(__file__), CONFIG_FILE_NAME))
+    add_default_cfg(os.path.join(os.path.dirname(__file__), GFE_CFG))
 
 
 def unittest_setup() -> None:
