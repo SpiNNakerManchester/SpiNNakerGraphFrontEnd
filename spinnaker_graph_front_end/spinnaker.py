@@ -66,7 +66,8 @@ class SpiNNaker(AbstractSpinnakerBase):
         # At import time change the default FailedState
         setup_configs()
 
-        super().__init__(timestep, time_scale_factor)
+        super().__init__(n_boards_required, n_chips_required,
+                         timestep, time_scale_factor)
 
         with GlobalProvenance() as db:
             db.insert_version("SpiNNakerGraphFrontEnd", version)
