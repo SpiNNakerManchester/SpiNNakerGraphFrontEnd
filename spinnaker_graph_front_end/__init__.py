@@ -96,7 +96,7 @@ def setup(model_binary_module: Optional[ModuleType] = None,
           n_chips_required: Optional[int] = None,
           n_boards_required: Optional[int] = None,
           time_scale_factor: Optional[int] = None,
-          machine_time_step: Optional[int] = None) -> None:
+          *, timestep: Optional[int] = None) -> None:
     """
     Set up a graph, ready to have vertices and edges added to it, and the
     simulator engine that will execute the graph.
@@ -124,6 +124,11 @@ def setup(model_binary_module: Optional[ModuleType] = None,
         your graph, then fill this in with a general idea of the number of
         boards you need so that the spalloc system can allocate you a machine
         big enough for your needs.
+    :param time_scale_factor: multiplicative factor to the machine time step
+        (does not affect the models accuracy)
+    :param timestep:
+        the time step of the simulations in microseconds;
+        if `None`, the configuration value is used
     :raise ~spinn_front_end_common.utilities.exceptions.ConfigurationException:
         if mutually exclusive options are given.
     """
@@ -155,7 +160,7 @@ def setup(model_binary_module: Optional[ModuleType] = None,
     __simulator = SpiNNaker(
         n_chips_required=n_chips_required,
         n_boards_required=n_boards_required,
-        machine_time_step=machine_time_step,
+        timestep=timestep,
         time_scale_factor=time_scale_factor)
     FecDataView.add_database_socket_addresses(database_socket_addresses)
 

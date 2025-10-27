@@ -22,6 +22,8 @@ from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
 from spinn_front_end_common.interface.provenance import GlobalProvenance
+from spinn_front_end_common.utilities.constants import (
+    MICRO_TO_MILLISECOND_CONVERSION)
 
 from spinnaker_graph_front_end.config_setup import setup_configs
 from ._version import __version__ as version
@@ -49,7 +51,7 @@ class SpiNNaker(AbstractSpinnakerBase):
             self, n_chips_required: Optional[int] = None,
             n_boards_required: Optional[int] = None,
             time_scale_factor: Optional[int] = None,
-            machine_time_step: Optional[int] = None):
+            timestep: Optional[int] = None):
         """
         :param n_chips_required:
             How many chips are required.
@@ -58,7 +60,7 @@ class SpiNNaker(AbstractSpinnakerBase):
             How many boards are required. Unnecessary with a local board.
         :param time_scale_factor:
             The time slow-down factor
-        :param machine_time_step:
+        :param timestep:
             The size of the machine time step, in microseconds
         """
         # DSG algorithm store for user defined algorithms
@@ -73,8 +75,7 @@ class SpiNNaker(AbstractSpinnakerBase):
 
         self._data_writer.set_n_required(n_boards_required, n_chips_required)
 
-        self._data_writer.set_up_timings(
-            machine_time_step, time_scale_factor, 1)
+        self._data_writer.set_up_timings(timestep, time_scale_factor)
 
     def __repr__(self) -> str:
         if FecDataView.has_ipaddress():
