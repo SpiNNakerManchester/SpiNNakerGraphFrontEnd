@@ -20,7 +20,7 @@ from pacman.model.graphs.application import ApplicationEdge
 
 front_end.setup(
     n_boards_required=3, model_binary_folder=os.path.dirname(__file__),
-    machine_time_step=500000, time_scale_factor=1)
+    timestep=500, time_scale_factor=1)
 
 machine = front_end.machine()
 boot_chip = machine.boot_chip
