@@ -22,8 +22,6 @@ from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
 from spinn_front_end_common.interface.provenance import GlobalProvenance
-from spinn_front_end_common.utilities.constants import (
-    MICRO_TO_MILLISECOND_CONVERSION)
 
 from spinnaker_graph_front_end.config_setup import setup_configs
 from ._version import __version__ as version
