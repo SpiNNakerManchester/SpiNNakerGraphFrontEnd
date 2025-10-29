@@ -54,4 +54,3 @@ class TestCfgChecker(unittest.TestCase):
             )
         checker2.check_dir(code_dir)
         checker2.check_no_errors()
-
