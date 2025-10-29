@@ -124,6 +124,10 @@ def setup(model_binary_module: Optional[ModuleType] = None,
         your graph, then fill this in with a general idea of the number of
         boards you need so that the spalloc system can allocate you a machine
         big enough for your needs.
+    :param time_scale_factor:
+        The time slow-down factor
+    :param machine_time_step:
+        The size of the machine time step, in microseconds
     :raise ~spinn_front_end_common.utilities.exceptions.ConfigurationException:
         if mutually exclusive options are given.
     """

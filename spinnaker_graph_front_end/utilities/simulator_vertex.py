@@ -135,6 +135,8 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
         :param spec: The data specification being built
         :param region_id:
             Which region is the recording region.
+        :param channel_sizes: List of int being the number of regions
+            and then for each region its size then two zeros
         """
         spec.reserve_memory_region(
             region=region_id,
