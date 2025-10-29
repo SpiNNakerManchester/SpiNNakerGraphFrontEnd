@@ -286,7 +286,7 @@ def add_socket_address(database_ack_port_num: Optional[int],
 
 def get_number_of_available_cores_on_machine() -> int:
     """
-    Get the number of cores on this machine that are available to the
+    :returns: The number of cores on this machine that are available to the
     simulation.
     """
     return __get_simulator().get_number_of_available_cores_on_machine
@@ -294,14 +294,14 @@ def get_number_of_available_cores_on_machine() -> int:
 
 def has_ran() -> bool:
     """
-    Get whether the simulation has already run.
+    :returns: True if and only if the simulation has already run.
     """
     return FecDataView.is_ran_ever()
 
 
 def routing_infos() -> RoutingInfo:
     """
-    Get information about how messages are routed on the machine.
+    :returns: The information about how messages are routed on the machine.
     """
     return FecDataView.get_routing_infos()
 
@@ -332,21 +332,21 @@ def placements() -> Never:
 
 def tags() -> Tags:
     """
-    Get the IPTAGs allocated on the machine.
+    :returns: The IPTAGs allocated on the machine.
     """
     return FecDataView.get_tags()
 
 
 def buffer_manager() -> BufferManager:
     """
-    Get the buffer manager being used for loading/extracting buffers.
+    :returns: The buffer manager being used for loading/extracting buffers.
     """
     return FecDataView.get_buffer_manager()
 
 
 def machine() -> Machine:
     """
-    Get the model of the attached/allocated machine.
+    :returns: The model of the attached/allocated machine.
     """
     logger.warning(
         "If you are getting the machine object to locate how many cores you "
@@ -359,7 +359,7 @@ def machine() -> Machine:
 
 def is_allocated_machine() -> bool:
     """
-    Get whether a machine is allocated.
+    :return: True if and only if a machine is allocated.
     """
     return FecDataView.has_machine()
 
