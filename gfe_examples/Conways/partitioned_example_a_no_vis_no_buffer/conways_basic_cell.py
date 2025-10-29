@@ -29,7 +29,7 @@ from spinn_front_end_common.utilities.helpful_functions import (
 from spinn_front_end_common.abstract_models.impl import (
     MachineDataSpecableVertex)
 from spinnaker_graph_front_end.utilities import SimulatorVertex
-from spinnaker_graph_front_end.utilities.data_utils import (
+from spinn_front_end_common.utilities.data_utils import (
     generate_system_data_region)
 
 
