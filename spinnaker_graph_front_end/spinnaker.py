@@ -23,6 +23,8 @@ from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.data.fec_data_writer import FecDataWriter
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
+from spinn_front_end_common.interface.config_setup import (
+    add_spinnaker_template)
 from spinn_front_end_common.interface.provenance import GlobalProvenance
 
 from spinnaker_graph_front_end.config_setup import add_gfe_cfg, GFE_CFG
@@ -75,9 +77,10 @@ class SpiNNaker(AbstractSpinnakerBase):
         self._data_writer.set_up_timings(
             machine_time_step, time_scale_factor, 1)
 
-    @overrides(AbstractSpinnakerBase.add_default_cfg)
-    def add_default_cfg(self) -> None:
+    @overrides(AbstractSpinnakerBase.add_cfg_defaults_and_template)
+    def add_cfg_defaults_and_template(self) -> None:
         add_gfe_cfg()
+        add_spinnaker_template()
 
     @property
     @overrides(AbstractSpinnakerBase.user_cfg_file)
