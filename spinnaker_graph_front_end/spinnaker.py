@@ -77,19 +77,19 @@ class SpiNNaker(AbstractSpinnakerBase):
         self._data_writer.set_up_timings(
             machine_time_step, time_scale_factor, 1)
 
-    @overrides(AbstractSpinnakerBase.add_cfg_defaults_and_template)
-    def add_cfg_defaults_and_template(self) -> None:
+    @overrides(AbstractSpinnakerBase._add_cfg_defaults_and_template)
+    def _add_cfg_defaults_and_template(self) -> None:
         add_gfe_cfg()
         add_spinnaker_template()
 
     @property
-    @overrides(AbstractSpinnakerBase.user_cfg_file)
-    def user_cfg_file(self) -> str:
+    @overrides(AbstractSpinnakerBase._user_cfg_file)
+    def _user_cfg_file(self) -> str:
         return GFE_CFG
 
     @property
-    @overrides(AbstractSpinnakerBase.data_writer_cls)
-    def data_writer_cls(self) -> Type[FecDataWriter]:
+    @overrides(AbstractSpinnakerBase._data_writer_cls)
+    def _data_writer_cls(self) -> Type[FecDataWriter]:
         return FecDataWriter
 
     def __repr__(self) -> str:
