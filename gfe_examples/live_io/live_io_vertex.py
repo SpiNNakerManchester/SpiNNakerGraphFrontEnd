@@ -71,8 +71,7 @@ class LiveIOVertex(
         spec.switch_write_focus(DataRegions.KEY_DATA)
 
         routing_infos = FecDataView().get_routing_infos()
-        r_info = routing_infos.get_single_info_from(
-            placement.vertex)
+        r_info = routing_infos.get_single_machine_info(placement.vertex)
         if r_info is None:
             spec.write_value(0)
             spec.write_value(0)

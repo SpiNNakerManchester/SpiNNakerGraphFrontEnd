@@ -113,7 +113,7 @@ class TemplateVertex(
                                   iptags: Optional[Iterable[IPTag]]) -> None:
         # Get the key, assuming all outgoing edges use the same key
         routing_info = FecDataView.get_routing_infos()
-        key = routing_info.get_single_key_from(self)
+        key = routing_info.get_single_machine_key(self)
 
         # Write the transmission region
         spec.switch_write_focus(DataRegions.TRANSMISSION)

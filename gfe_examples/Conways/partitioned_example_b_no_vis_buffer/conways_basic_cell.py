@@ -114,7 +114,7 @@ class ConwayBasicCell(
 
         # write key needed to transmit with
         r_infos = FecDataView.get_routing_infos()
-        key = r_infos.get_single_key_from(self)
+        key = r_infos.get_single_machine_key(self)
 
         spec.switch_write_focus(DataRegions.TRANSMISSIONS)
         spec.write_value(int(key is not None))
