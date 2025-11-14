@@ -33,7 +33,7 @@ from spinn_front_end_common.interface.buffer_management import (
     recording_utilities)
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 
-from spinnaker_graph_front_end.utilities.data_utils import (
+from spinn_front_end_common.utilities.data_utils import (
     generate_system_data_region)
 log = FormatAdapter(logging.getLogger(__file__))
 
@@ -135,6 +135,8 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
         :param spec: The data specification being built
         :param region_id:
             Which region is the recording region.
+        :param channel_sizes: List of int being the number of regions
+            and then for each region its size then two zeros
         """
         spec.reserve_memory_region(
             region=region_id,

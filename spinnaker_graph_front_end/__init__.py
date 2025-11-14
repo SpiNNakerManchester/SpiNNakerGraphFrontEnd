@@ -62,8 +62,6 @@ from spinn_machine import Machine
 
 from pacman.model.graphs.application import (
     ApplicationEdge, ApplicationVertex)
-from pacman.model.graphs.application.abstract import (
-    AbstractOneAppOneMachineVertex)
 from pacman.model.graphs.machine import MachineEdge, MachineVertex
 from pacman.model.routing_info import RoutingInfo
 from pacman.model.tags import Tags
@@ -96,7 +94,7 @@ def setup(model_binary_module: Optional[ModuleType] = None,
           n_chips_required: Optional[int] = None,
           n_boards_required: Optional[int] = None,
           time_scale_factor: Optional[int] = None,
-          machine_time_step: Optional[int] = None) -> None:
+          *, timestep: Optional[int] = None) -> None:
     """
     Set up a graph, ready to have vertices and edges added to it, and the
     simulator engine that will execute the graph.
@@ -124,6 +122,11 @@ def setup(model_binary_module: Optional[ModuleType] = None,
         your graph, then fill this in with a general idea of the number of
         boards you need so that the spalloc system can allocate you a machine
         big enough for your needs.
+    :param time_scale_factor: multiplicative factor to the machine time step
+        (does not affect the models accuracy)
+    :param timestep:
+        the time step of the simulations in microseconds;
+        if `None`, the configuration value is used
     :raise ~spinn_front_end_common.utilities.exceptions.ConfigurationException:
         if mutually exclusive options are given.
     """
@@ -155,7 +158,7 @@ def setup(model_binary_module: Optional[ModuleType] = None,
     __simulator = SpiNNaker(
         n_chips_required=n_chips_required,
         n_boards_required=n_boards_required,
-        machine_time_step=machine_time_step,
+        timestep=timestep,
         time_scale_factor=time_scale_factor)
     FecDataView.add_database_socket_addresses(database_socket_addresses)
 
@@ -236,11 +239,7 @@ def add_machine_vertex_instance(machine_vertex: MachineVertex) -> None:
     :param machine_vertex:
         The vertex to add
     """
-    app_vertex = AbstractOneAppOneMachineVertex(
-        machine_vertex, machine_vertex.label)
-    FecDataView.add_vertex(app_vertex)
-    # pylint: disable=protected-access
-    machine_vertex._app_vertex = app_vertex
+    FecDataView.add_machine_vertex(machine_vertex)
 
 
 def add_machine_edge_instance(edge: MachineEdge, partition_id: str) -> None:
@@ -252,11 +251,7 @@ def add_machine_edge_instance(edge: MachineEdge, partition_id: str) -> None:
     :param partition_id:
         The ID of the partition that the edge belongs to.
     """
-    pre_app = edge.pre_vertex.app_vertex
-    assert pre_app is not None
-    post_app = edge.post_vertex.app_vertex
-    assert post_app is not None
-    FecDataView.add_edge(ApplicationEdge(pre_app, post_app), partition_id)
+    FecDataView.add_machine_edge(edge, partition_id)
 
 
 def add_socket_address(database_ack_port_num: Optional[int],
@@ -272,17 +267,13 @@ def add_socket_address(database_ack_port_num: Optional[int],
     :param database_notify_port_num:
         port that the external device will be notified on.
     """
-    database_socket = SocketAddress(
-        listen_port=database_ack_port_num,
-        notify_host_name=database_notify_host,
-        notify_port_no=database_notify_port_num)
-
-    FecDataView.add_database_socket_address(database_socket)
+    FecDataView.add_database_socket_port(
+        database_ack_port_num, database_notify_host, database_notify_port_num)
 
 
 def get_number_of_available_cores_on_machine() -> int:
     """
-    Get the number of cores on this machine that are available to the
+    :returns: The number of cores on this machine that are available to the
     simulation.
     """
     return __get_simulator().get_number_of_available_cores_on_machine
@@ -290,14 +281,14 @@ def get_number_of_available_cores_on_machine() -> int:
 
 def has_ran() -> bool:
     """
-    Get whether the simulation has already run.
+    :returns: True if and only if the simulation has already run.
     """
     return FecDataView.is_ran_ever()
 
 
 def routing_infos() -> RoutingInfo:
     """
-    Get information about how messages are routed on the machine.
+    :returns: The information about how messages are routed on the machine.
     """
     return FecDataView.get_routing_infos()
 
@@ -328,21 +319,21 @@ def placements() -> Never:
 
 def tags() -> Tags:
     """
-    Get the IPTAGs allocated on the machine.
+    :returns: The IPTAGs allocated on the machine.
     """
     return FecDataView.get_tags()
 
 
 def buffer_manager() -> BufferManager:
     """
-    Get the buffer manager being used for loading/extracting buffers.
+    :returns: The buffer manager being used for loading/extracting buffers.
     """
     return FecDataView.get_buffer_manager()
 
 
 def machine() -> Machine:
     """
-    Get the model of the attached/allocated machine.
+    :returns: The model of the attached/allocated machine.
     """
     logger.warning(
         "If you are getting the machine object to locate how many cores you "
@@ -355,7 +346,7 @@ def machine() -> Machine:
 
 def is_allocated_machine() -> bool:
     """
-    Get whether a machine is allocated.
+    :return: True if and only if a machine is allocated.
     """
     return FecDataView.has_machine()
 
