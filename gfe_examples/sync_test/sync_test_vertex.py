@@ -32,7 +32,7 @@ from spinn_front_end_common.utilities.constants import (
 from spinn_front_end_common.abstract_models import (
     AbstractGeneratesDataSpecification, AbstractHasAssociatedBinary)
 
-from spinnaker_graph_front_end.utilities.data_utils import (
+from spinn_front_end_common.utilities.data_utils import (
     generate_system_data_region)
 from pacman.model.graphs.application.abstract import (
     AbstractOneAppOneMachineVertex)

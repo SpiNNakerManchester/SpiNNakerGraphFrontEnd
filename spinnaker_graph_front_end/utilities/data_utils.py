@@ -15,10 +15,7 @@
 from typing import TYPE_CHECKING
 from spinn_front_end_common.abstract_models import (
     AbstractHasAssociatedBinary)
-from spinn_front_end_common.utilities.constants import SIMULATION_N_BYTES
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
-from spinn_front_end_common.interface.simulation.simulation_utilities import (
-    get_simulation_header_array, get_simulation_header_array_no_timestep)
 if TYPE_CHECKING:
     from .simulator_vertex import SimulatorVertex
 
@@ -33,14 +30,9 @@ def generate_system_data_region(
     :param region_id: The region to write to
     :param machine_vertex: The machine vertex to write for
     """
-    # reserve memory regions
-    spec.reserve_memory_region(
-        region=region_id, size=SIMULATION_N_BYTES, label='systemInfo')
-
-    # simulation .c requirements
-    spec.switch_write_focus(region_id)
-    spec.write_array(get_simulation_header_array(
-        machine_vertex.get_binary_file_name()))
+    _ = (spec, region_id, machine_vertex)
+    raise NotImplementedError(
+        "Moved to spinn_front_end_common.utilities.data_utils")
 
 
 def generate_steps_system_data_region(
@@ -53,11 +45,6 @@ def generate_steps_system_data_region(
     :param region_id: The region to write to
     :param machine_vertex: The machine vertex to write for
     """
-    # reserve memory regions
-    spec.reserve_memory_region(
-        region=region_id, size=SIMULATION_N_BYTES, label='systemInfo')
-
-    # simulation .c requirements
-    spec.switch_write_focus(region_id)
-    spec.write_array(get_simulation_header_array_no_timestep(
-        machine_vertex.get_binary_file_name()))
+    _ = (spec, region_id, machine_vertex)
+    raise NotImplementedError(
+        "Moved to spinn_front_end_common.utilities.data_utils")

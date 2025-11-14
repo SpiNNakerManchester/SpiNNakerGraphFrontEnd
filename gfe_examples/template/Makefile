@@ -24,5 +24,6 @@ APP = c_template_vertex
 SOURCES = c_template_vertex.c
 
 APP_OUTPUT_DIR := $(abspath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))/
+DATABASE_ID = 3
 
 include $(SPINN_DIRS)/make/local.mk
