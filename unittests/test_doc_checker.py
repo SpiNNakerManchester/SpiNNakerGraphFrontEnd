@@ -31,12 +31,26 @@ class TestCfgChecker(unittest.TestCase):
         abs_class_file = os.path.abspath(class_file)
         unittest_dir = os.path.dirname(abs_class_file)
         repo_dir = os.path.dirname(unittest_dir)
+
+        # Don't force examples to have docs in inits
         checker = DocsChecker(
-            check_init=False,  # 13 errors in 12 files
-            check_short=False,  # in dependencies
-            check_params=False,  # 4 errors in 2 files
-            check_returns=False,  # 8 errors in 1 files
-            check_properties=False  # in dependencies
+            check_init=False,
+            check_short=True,
+            check_params=True,
+            check_returns=True,
+            check_properties=True
             )
         checker.check_dir(repo_dir)
         checker.check_no_errors()
+
+        # strict tests for main code
+        code_dir = os.path.join(repo_dir, "spinnaker_graph_front_end")
+        checker2 = DocsChecker(
+            check_init=True,
+            check_short=True,
+            check_params=True,
+            check_returns=True,
+            check_properties=True
+            )
+        checker2.check_dir(code_dir)
+        checker2.check_no_errors()

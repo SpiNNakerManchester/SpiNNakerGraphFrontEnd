@@ -13,17 +13,21 @@
 # limitations under the License.
 
 import logging
-from typing import Optional
+from typing import Optional, Type
 
 from spinn_utilities.config_holder import is_config_none
 from spinn_utilities.log import FormatAdapter
+from spinn_utilities.overrides import overrides
 
 from spinn_front_end_common.data import FecDataView
+from spinn_front_end_common.data.fec_data_writer import FecDataWriter
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
     AbstractSpinnakerBase)
+from spinn_front_end_common.interface.config_setup import (
+    add_spinnaker_template)
 from spinn_front_end_common.interface.provenance import GlobalProvenance
 
-from spinnaker_graph_front_end.config_setup import setup_configs
+from spinnaker_graph_front_end.config_setup import add_gfe_cfg, GFE_CFG
 from ._version import __version__ as version
 
 logger = FormatAdapter(logging.getLogger(__name__))
@@ -49,7 +53,7 @@ class SpiNNaker(AbstractSpinnakerBase):
             self, n_chips_required: Optional[int] = None,
             n_boards_required: Optional[int] = None,
             time_scale_factor: Optional[int] = None,
-            machine_time_step: Optional[int] = None):
+            timestep: Optional[int] = None):
         """
         :param n_chips_required:
             How many chips are required.
@@ -58,23 +62,34 @@ class SpiNNaker(AbstractSpinnakerBase):
             How many boards are required. Unnecessary with a local board.
         :param time_scale_factor:
             The time slow-down factor
-        :param machine_time_step:
+        :param timestep:
             The size of the machine time step, in microseconds
         """
         # DSG algorithm store for user defined algorithms
 
         # At import time change the default FailedState
-        setup_configs()
-
-        super().__init__()
+        super().__init__(n_boards_required=n_boards_required,
+                         n_chips_required=n_chips_required,
+                         timestep=timestep,
+                         time_scale_factor=time_scale_factor)
 
         with GlobalProvenance() as db:
             db.insert_version("SpiNNakerGraphFrontEnd", version)
 
-        self._data_writer.set_n_required(n_boards_required, n_chips_required)
+    @overrides(AbstractSpinnakerBase._add_cfg_defaults_and_template)
+    def _add_cfg_defaults_and_template(self) -> None:
+        add_gfe_cfg()
+        add_spinnaker_template()
 
-        self._data_writer.set_up_timings(
-            machine_time_step, time_scale_factor, 1)
+    @property
+    @overrides(AbstractSpinnakerBase._user_cfg_file)
+    def _user_cfg_file(self) -> str:
+        return GFE_CFG
+
+    @property
+    @overrides(AbstractSpinnakerBase._data_writer_cls)
+    def _data_writer_cls(self) -> Type[FecDataWriter]:
+        return FecDataWriter
 
     def __repr__(self) -> str:
         if FecDataView.has_ipaddress():

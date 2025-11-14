@@ -33,7 +33,7 @@ from spinn_front_end_common.interface.buffer_management.recording_utilities\
     import (
         get_recording_data_constant_size, get_recording_header_size)
 from spinnaker_graph_front_end.utilities import SimulatorVertex
-from spinnaker_graph_front_end.utilities.data_utils import (
+from spinn_front_end_common.utilities.data_utils import (
     generate_system_data_region)
 
 
