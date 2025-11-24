@@ -21,5 +21,6 @@ APP = conways_cell
 SOURCES = conways_cell.c
 
 APP_OUTPUT_DIR := $(abspath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))/
+DATABASE_KEY = G
 
 include $(SPINN_DIRS)/make/local.mk
