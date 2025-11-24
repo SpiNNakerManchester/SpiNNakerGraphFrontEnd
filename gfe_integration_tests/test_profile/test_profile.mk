@@ -21,7 +21,7 @@ APP = test_profile
 SOURCES = test_profile.c
 
 APP_OUTPUT_DIR := $(abspath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))/
-DATABASE_ID = G
+DATABASE_KEY = G
 
 # The spinnaker_tools standard makefile
 include $(SPINN_DIRS)/make/local.mk
