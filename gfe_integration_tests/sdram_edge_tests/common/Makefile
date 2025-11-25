@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# If SPINN_DIRS is not defined, this is an error!
-ifndef SPINN_DIRS
-    $(error SPINN_DIRS is not set.  Please define SPINN_DIRS (possibly by running "source setup" in the spinnaker package folder))
+# If FEC_INSTALL_DIR is not defined, this is an error!
+ifndef FEC_INSTALL_DIR
+    $(error FEC_INSTALL_DIR is not set.  Please define FEC_INSTALL_DIR (possibly by running "source setup" in the spinnaker package folder))
 endif
 
 APP = sdram
@@ -22,4 +22,4 @@ SOURCES = sdram.c
 
 APP_OUTPUT_DIR := $(abspath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))/
 
-include $(SPINN_DIRS)/make/local.mk
+include $(FEC_INSTALL_DIR)/make/fec.mk
