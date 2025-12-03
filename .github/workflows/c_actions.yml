@@ -42,20 +42,16 @@ jobs:
 
     - name: "Prepare: Set Environment variables"
       run: |
-        echo "SPINN_DIRS=$PWD/spinnaker_tools" >> $GITHUB_ENV
+        echo "SPINN_INSTALL_DIR=${GITHUB_WORKSPACE}/spinnaker_tools_install" >> $GITHUB_ENV
+        echo "SPINN_COMMON_INSTALL_DIR=${GITHUB_WORKSPACE}/spinn_common_install" >> $GITHUB_ENV
+        echo "FEC_INSTALL_DIR=${GITHUB_WORKSPACE}/fec_install" >> $GITHUB_ENV
         echo "C_LOGS_DICT=$PWD/logs.sqlite3" >> $GITHUB_ENV
 
     - name: Build C dependencies
       run: |
-        make -C spinnaker_tools
+        make -C spinnaker_tools install
         make -C spinn_common install
-        make -C SpiNNFrontEndCommon/c_common install
-
-    - name: Build FEC C code
-      run: make
-      working-directory: SpiNNFrontEndCommon/c_common
-      env:
-        CFLAGS: -fdiagnostics-color=always
+        make -C SpiNNFrontEndCommon/c_common
 
     - name: Build Example code
       run: make
@@ -105,7 +101,7 @@ jobs:
     - name: Prepare
       uses: SpiNNakerManchester/SupportScripts/actions/prepare@main
       with:
-        install-dependencies: > 
+        install-dependencies: >
           SpiNNUtils SpiNNMachine SpiNNMan PACMAN spalloc
           SpiNNFrontEndCommon TestBase
         install-module: true
@@ -134,7 +130,7 @@ jobs:
 
     - name: Append cfg
       # Doing this in the prepare action ended with a different path
-      run: | 
+      run: |
         echo '[Mapping]' >> ~/.spiNNakerGraphFrontEnd.cfg
         echo "external_binaries=$PWD/external_binaries" >> ~/.spiNNakerGraphFrontEnd.cfg
         cat ~/.spiNNakerGraphFrontEnd.cfg
