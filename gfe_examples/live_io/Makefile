@@ -19,5 +19,7 @@ APP = live_io
 SOURCES = live_io.c
 
 APP_OUTPUT_DIR := $(abspath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))/
+# key for the database in this APP_OUTPUT_DIR
+DATABASE_KEY = G
 
 include $(FEC_INSTALL_DIR)/make/fec.mk
