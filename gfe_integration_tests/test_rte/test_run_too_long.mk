@@ -20,7 +20,7 @@ SOURCES = test_run_too_long.c
 
 APP_OUTPUT_DIR := $(abspath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))/
 # key for the database in this APP_OUTPUT_DIR
-DATABASE_KEY = G
+DATABASE_KEY = L
 
 # The spinnaker_tools standard makefile
 include $(FEC_INSTALL_DIR)/make/fec.mk
