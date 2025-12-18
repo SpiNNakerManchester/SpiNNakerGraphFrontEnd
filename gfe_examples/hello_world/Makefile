@@ -11,11 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-ifndef FEC_INSTALL_DIR:
-    CUR_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/)
-    # assume parallel clone
-    FEC_INSTALL_DIR := $(abspath $(CUR_DIR)/../../../SpiNNFrontEndCommon/c_common/front_end_common_lib)
-endif
+
+CUR_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/)
+FEC_INSTALL_DIR := $(strip $(if $(FEC_INSTALL_DIR), $(FEC_INSTALL_DIR), $(abspath $(CUR_DIR)/../../../SpiNNFrontEndCommon/c_common/front_end_common_lib)))
 
 APP = hello_world
 SOURCES = hello_world.c
