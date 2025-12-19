@@ -19,6 +19,10 @@ APP = test_profile
 SOURCES = test_profile.c
 
 APP_OUTPUT_DIR := $(abspath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))/
+# key for the database in this APP_OUTPUT_DIR
+DATABASE_KEY = O
+
+APP_CLEAN := $(APP_OUTPUT_DIR)logs.sqlite3 $(APP_OUTPUT_DIR)*.aplx
 
 # The spinnaker_tools standard makefile
 include $(FEC_INSTALL_DIR)/make/fec.mk

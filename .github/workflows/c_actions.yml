@@ -45,7 +45,6 @@ jobs:
         echo "SPINN_INSTALL_DIR=${GITHUB_WORKSPACE}/spinnaker_tools_install" >> $GITHUB_ENV
         echo "SPINN_COMMON_INSTALL_DIR=${GITHUB_WORKSPACE}/spinn_common_install" >> $GITHUB_ENV
         echo "FEC_INSTALL_DIR=${GITHUB_WORKSPACE}/fec_install" >> $GITHUB_ENV
-        echo "C_LOGS_DICT=$PWD/logs.sqlite3" >> $GITHUB_ENV
 
     - name: Build C dependencies
       run: |

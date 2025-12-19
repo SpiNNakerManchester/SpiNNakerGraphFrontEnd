@@ -19,6 +19,10 @@ APP = test_rte_during_run
 SOURCES = test_rte_during_run.c
 
 APP_OUTPUT_DIR := $(abspath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))/
+# key for the database in this APP_OUTPUT_DIR
+DATABASE_KEY = D
+
+APP_CLEAN := $(APP_OUTPUT_DIR)logs.sqlite3 $(APP_OUTPUT_DIR)*.aplx
 
 # The spinnaker_tools standard makefile
 include $(FEC_INSTALL_DIR)/make/fec.mk
