@@ -25,5 +25,5 @@ DATABASE_KEY = X
 include $(FEC_INSTALL_DIR)/make/fec.mk
 
 clean:
-	${RM} $(APP_OUTPUT_DIR)logs.sqlite3 $(APP_OUTPUT_DIR)*.aplx
+	${RM} $(APP_OUTPUT_DIR)logs*.sqlite3 $(APP_OUTPUT_DIR)*.aplx
 	$(RM) -r $(APP_OUTPUT_DIR)/build

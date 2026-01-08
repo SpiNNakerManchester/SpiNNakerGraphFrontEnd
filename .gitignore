@@ -18,4 +18,4 @@ __pycache__
 **/Debug/
 *.dict
 /.mypy_cache/
-*/logs.sqlite3
+*/logs*.sqlite3

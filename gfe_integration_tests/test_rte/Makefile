@@ -22,5 +22,5 @@ all: $(MY_MAKEFILES)
 	done
 
 clean:
-	$(RM) $(CUR_DIR)/logs.sqlite3 $(CUR_DIR)/*.aplx
+	$(RM) $(CUR_DIR)/logs*.sqlite3 $(CUR_DIR)/*.aplx
 	$(RM) -r $(CUR_DIR)/build
