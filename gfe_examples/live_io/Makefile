@@ -12,12 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# If FEC_INSTALL_DIR is not defined, this is an error!
-FEC_INSTALL_DIR := $(strip $(if $(FEC_INSTALL_DIR), $(FEC_INSTALL_DIR), $(if $(SPINN_DIRS), $(SPINN_DIRS)/fec_install, $(error FEC_INSTALL_DIR or SPINN_DIRS is not set.  Please define FEC_INSTALL_DIR or SPINN_DIRS))))
+CUR_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+FEC_INSTALL_DIR := $(strip $(if $(FEC_INSTALL_DIR), $(FEC_INSTALL_DIR), $(abspath $(CUR_DIR)/../../../SpiNNFrontEndCommon/c_common/front_end_common_lib)))
 
 APP = live_io
 SOURCES = live_io.c
 
-APP_OUTPUT_DIR := $(abspath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))/
+APP_OUTPUT_DIR := $(CUR_DIR)/
+# key for the database in this APP_OUTPUT_DIR
+DATABASE_KEY = L
 
 include $(FEC_INSTALL_DIR)/make/fec.mk
+
+clean:
+	${RM} $(APP_OUTPUT_DIR)logs*.sqlite3 $(APP_OUTPUT_DIR)*.aplx
+	$(RM) -r $(CUR_DIR)/build
