@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+CUR_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+
 MY_MAKEFILES = test_rte_during_run.mk test_rte_start.mk test_run_too_long.mk
 
 all: $(MY_MAKEFILES)
@@ -19,7 +21,6 @@ all: $(MY_MAKEFILES)
 		$(MAKE) -f $$f || exit $$?; \
 	done
 
-clean: $(MAKEFILES)
-	for f in $(MY_MAKEFILES); do \
-		$(MAKE) -f $$f clean || exit $$?; \
-	done
+clean:
+	$(RM) $(CUR_DIR)/logs*.sqlite3 $(CUR_DIR)/*.aplx
+	$(RM) -r $(CUR_DIR)/build

@@ -45,13 +45,12 @@ jobs:
         echo "SPINN_INSTALL_DIR=${GITHUB_WORKSPACE}/spinnaker_tools_install" >> $GITHUB_ENV
         echo "SPINN_COMMON_INSTALL_DIR=${GITHUB_WORKSPACE}/spinn_common_install" >> $GITHUB_ENV
         echo "FEC_INSTALL_DIR=${GITHUB_WORKSPACE}/fec_install" >> $GITHUB_ENV
-        echo "C_LOGS_DICT=$PWD/logs.sqlite3" >> $GITHUB_ENV
 
     - name: Build C dependencies
       run: |
         make -C spinnaker_tools install
         make -C spinn_common install
-        make -C SpiNNFrontEndCommon/c_common
+        make -C SpiNNFrontEndCommon/c_common install
 
     - name: Build Example code
       run: make
@@ -71,21 +70,18 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: fec_binaries
-        path: SpiNNFrontEndCommon/spinn_front_end_common/common_model_binaries/*.aplx
+        path: |
+          SpiNNFrontEndCommon/spinn_front_end_common/common_model_binaries/*.aplx
+          SpiNNFrontEndCommon/spinn_front_end_common/common_model_binaries/logs*.sqlite3
         retention-days: 5
 
     - name: Upload test_extra_monitor binaries
       uses: actions/upload-artifact@v4
       with:
         name: test_extra_monitor_binary
-        path: gfe_integration_tests/test_extra_monitor/*.aplx
-        retention-days: 5
-
-    - name: Upload log.sqlite3s
-      uses: actions/upload-artifact@v4
-      with:
-        name: logs.sqlite3
-        path: logs.sqlite3
+        path: | 
+          gfe_integration_tests/test_extra_monitor/*.aplx
+          gfe_integration_tests/test_extra_monitor/logs*.aplx
         retention-days: 5
 
   test:
@@ -120,12 +116,6 @@ jobs:
       uses: actions/download-artifact@v5
       with:
         name: test_extra_monitor_binary
-        path: external_binaries
-
-    - name: Download logs.sqlite3
-      uses: actions/download-artifact@v5
-      with:
-        name: logs.sqlite3
         path: external_binaries
 
     - name: Append cfg
