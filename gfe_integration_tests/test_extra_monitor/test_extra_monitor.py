@@ -42,7 +42,7 @@ def get_data_region_address(placement: Placement, region: DataRegions) -> int:
     return transceiver.read_word(placement.x, placement.y, address_location)
 
 
-def check_data(data: bytes) -> None:
+def check_data(data: bytearray) -> None:
     # check data is correct here
     ints = n_word_struct(len(data) // 4).unpack(data)
     start_value = 0
@@ -57,7 +57,7 @@ def check_data(data: bytes) -> None:
 
 def _do_transfer(gatherer: DataSpeedUpPacketGatherMachineVertex,
                  receiver_placement: Placement, writer_placement: Placement,
-                 writer_vertex: SDRAMWriter) -> bytes:
+                 writer_vertex: SDRAMWriter) -> bytearray:
     with StreamingContextManager(FecDataView.iterate_gathers()):
         extra_monitor = receiver_placement.vertex
         assert isinstance(extra_monitor, ExtraMonitorSupportMachineVertex)

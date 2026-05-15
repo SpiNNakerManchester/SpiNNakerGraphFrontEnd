@@ -97,7 +97,7 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
         return FecDataView.get_placement_of_vertex(self)
 
     def get_recording_channel_data(
-            self, recording_id: int) -> Tuple[bytes, bool]:
+            self, recording_id: int) -> Tuple[memoryview, bool]:
         """
         Get the data from a recording channel. The simulation must have
         :py:func:`spinnaker_graph_front_end.run` before this will work,
