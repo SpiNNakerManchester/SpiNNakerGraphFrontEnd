@@ -17,10 +17,11 @@ Utilities for setting up the global configuration.
 """
 
 import os
-from spinn_utilities.config_holder import (
-    add_default_cfg, clear_cfg_files)
-from spinn_front_end_common.interface.config_setup import add_spinnaker_cfg
+
+from spinn_utilities.config_holder import add_default_cfg, clear_cfg_files
+
 from spinn_front_end_common.data.fec_data_writer import FecDataWriter
+from spinn_front_end_common.interface.config_setup import add_spinnaker_cfg
 
 #: The name of the configuration file
 GFE_CFG = "spiNNakerGraphFrontEnd.cfg"

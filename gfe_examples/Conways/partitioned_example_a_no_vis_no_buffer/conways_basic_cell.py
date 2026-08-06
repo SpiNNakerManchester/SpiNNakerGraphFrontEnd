@@ -14,23 +14,34 @@
 
 from enum import IntEnum
 from typing import Iterable, List, Optional, Set
+
 from spinn_utilities.overrides import overrides
+
 from spinn_machine.tags import IPTag, ReverseIPTag
+
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.placements import Placement
 from pacman.model.resources import VariableSDRAM
+
+from spinn_front_end_common.abstract_models.impl import (
+    MachineDataSpecableVertex,
+)
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 from spinn_front_end_common.utilities.constants import (
-    SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
+    BYTES_PER_WORD,
+    SYSTEM_BYTES_REQUIREMENT,
+)
+from spinn_front_end_common.utilities.data_utils import (
+    generate_system_data_region,
+)
 from spinn_front_end_common.utilities.exceptions import ConfigurationException
 from spinn_front_end_common.utilities.helpful_functions import (
-    locate_memory_region_for_placement, n_word_struct)
-from spinn_front_end_common.abstract_models.impl import (
-    MachineDataSpecableVertex)
+    locate_memory_region_for_placement,
+    n_word_struct,
+)
+
 from spinnaker_graph_front_end.utilities import SimulatorVertex
-from spinn_front_end_common.utilities.data_utils import (
-    generate_system_data_region)
 
 
 # Regions for populations

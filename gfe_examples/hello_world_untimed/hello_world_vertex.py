@@ -12,30 +12,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from enum import IntEnum
 import logging
+from enum import IntEnum
 from typing import List
+
+import numpy
+
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
+
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.placements import Placement
 from pacman.model.resources import VariableSDRAM
-from spinn_front_end_common.data import FecDataView
-from spinn_front_end_common.utilities.constants import (
-    SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
-from spinn_front_end_common.utilities.helpful_functions import (
-    locate_memory_region_for_placement)
+
 from spinn_front_end_common.abstract_models import (
-    AbstractGeneratesDataSpecification)
-from spinn_front_end_common.interface.buffer_management.buffer_models import (
-    AbstractReceiveBuffersToHost)
+    AbstractGeneratesDataSpecification,
+)
+from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.buffer_management import (
-    recording_utilities)
+    recording_utilities,
+)
+from spinn_front_end_common.interface.buffer_management.buffer_models import (
+    AbstractReceiveBuffersToHost,
+)
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
-from spinnaker_graph_front_end.utilities import SimulatorVertex
+from spinn_front_end_common.utilities.constants import (
+    BYTES_PER_WORD,
+    SYSTEM_BYTES_REQUIREMENT,
+)
 from spinn_front_end_common.utilities.data_utils import (
-    generate_steps_system_data_region)
-import numpy
+    generate_steps_system_data_region,
+)
+from spinn_front_end_common.utilities.helpful_functions import (
+    locate_memory_region_for_placement,
+)
+
+from spinnaker_graph_front_end.utilities import SimulatorVertex
 
 logger = FormatAdapter(logging.getLogger(__name__))
 

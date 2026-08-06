@@ -15,6 +15,7 @@
 """ test vertex used in many unit tests
 """
 from spinn_utilities.overrides import overrides
+
 from pacman.model.graphs.application import ApplicationVertex
 
 

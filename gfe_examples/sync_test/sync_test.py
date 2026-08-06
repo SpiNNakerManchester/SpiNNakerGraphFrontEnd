@@ -13,10 +13,15 @@
 # limitations under the License.
 
 import os
-import spinnaker_graph_front_end as front_end
-from gfe_examples.sync_test.sync_test_vertex import (
-    SyncTestVertex, SEND_PARTITION)
+
 from pacman.model.graphs.application import ApplicationEdge
+
+import spinnaker_graph_front_end as front_end
+
+from gfe_examples.sync_test.sync_test_vertex import (
+    SEND_PARTITION,
+    SyncTestVertex,
+)
 
 front_end.setup(
     n_boards_required=3, model_binary_folder=os.path.dirname(__file__),

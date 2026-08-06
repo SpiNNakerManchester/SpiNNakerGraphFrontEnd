@@ -11,12 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from gfe_integration_tests.sdram_edge_tests.common import SdramTestVertex
-from gfe_integration_tests.sdram_edge_tests import common
-from gfe_integration_tests.sdram_edge_tests.test_constant_internal import (
-    SDRAMSplitterInternal)
-import spinnaker_graph_front_end as sim
 from spinnaker_testbase import BaseTestCase
+
+import spinnaker_graph_front_end as sim
+
+from gfe_integration_tests.sdram_edge_tests import common
+from gfe_integration_tests.sdram_edge_tests.common import SdramTestVertex
+from gfe_integration_tests.sdram_edge_tests.test_constant_internal import (
+    SDRAMSplitterInternal,
+)
 
 
 class TestConstantSDRAMEdgeInsideOneAppVert(BaseTestCase):

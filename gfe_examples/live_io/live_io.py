@@ -20,13 +20,17 @@ from typing import List
 from pacman.model.graphs.machine.machine_edge import MachineEdge
 
 from spinn_front_end_common.utilities.connections import LiveEventConnection
-from spinn_front_end_common.utility_models import (
-    EIEIOParameters, LivePacketGatherMachineVertex,
-    ReverseIPTagMulticastSourceMachineVertex)
 from spinn_front_end_common.utilities.utility_objs import (
-    LivePacketGatherParameters)
+    LivePacketGatherParameters,
+)
+from spinn_front_end_common.utility_models import (
+    EIEIOParameters,
+    LivePacketGatherMachineVertex,
+    ReverseIPTagMulticastSourceMachineVertex,
+)
 
 import spinnaker_graph_front_end as front_end
+
 from gfe_examples.live_io.live_io_vertex import LiveIOVertex
 
 n_receivers = 20

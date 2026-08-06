@@ -22,12 +22,15 @@ from spinn_utilities.overrides import overrides
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.data.fec_data_writer import FecDataWriter
 from spinn_front_end_common.interface.abstract_spinnaker_base import (
-    AbstractSpinnakerBase)
+    AbstractSpinnakerBase,
+)
 from spinn_front_end_common.interface.config_setup import (
-    add_spinnaker_template)
+    add_spinnaker_template,
+)
 from spinn_front_end_common.interface.provenance import GlobalProvenance
 
-from spinnaker_graph_front_end.config_setup import add_gfe_cfg, GFE_CFG
+from spinnaker_graph_front_end.config_setup import GFE_CFG, add_gfe_cfg
+
 from ._version import __version__ as version
 
 logger = FormatAdapter(logging.getLogger(__name__))

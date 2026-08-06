@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from enum import IntEnum
 import logging
+from enum import IntEnum
 from typing import Optional
 
 from spinn_utilities.log import FormatAdapter
@@ -21,21 +21,26 @@ from spinn_utilities.overrides import overrides
 
 from spinnman.model.enums import ExecutableType
 
+from pacman.model.graphs.application.abstract import (
+    AbstractOneAppOneMachineVertex,
+)
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.placements import Placement
 from pacman.model.resources import ConstantSDRAM
 
+from spinn_front_end_common.abstract_models import (
+    AbstractGeneratesDataSpecification,
+    AbstractHasAssociatedBinary,
+)
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 from spinn_front_end_common.utilities.constants import (
-    SYSTEM_BYTES_REQUIREMENT, BYTES_PER_WORD)
-from spinn_front_end_common.abstract_models import (
-    AbstractGeneratesDataSpecification, AbstractHasAssociatedBinary)
-
+    BYTES_PER_WORD,
+    SYSTEM_BYTES_REQUIREMENT,
+)
 from spinn_front_end_common.utilities.data_utils import (
-    generate_system_data_region)
-from pacman.model.graphs.application.abstract import (
-    AbstractOneAppOneMachineVertex)
+    generate_system_data_region,
+)
 
 logger = FormatAdapter(logging.getLogger(__name__))
 

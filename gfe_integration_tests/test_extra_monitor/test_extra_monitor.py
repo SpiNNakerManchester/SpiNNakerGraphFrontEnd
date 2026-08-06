@@ -12,19 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import time
 import os
+import time
+
 from pacman.model.placements import Placement
+
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.utilities.helpful_functions import (
-    get_region_base_address_offset, n_word_struct)
+    get_region_base_address_offset,
+    n_word_struct,
+)
 from spinn_front_end_common.utility_models import (
-    DataSpeedUpPacketGatherMachineVertex, StreamingContextManager,
-    ExtraMonitorSupportMachineVertex)
-import spinnaker_graph_front_end as sim
-from gfe_integration_tests.test_extra_monitor.sdram_writer import (
-    SDRAMWriter, DataRegions)
+    DataSpeedUpPacketGatherMachineVertex,
+    ExtraMonitorSupportMachineVertex,
+    StreamingContextManager,
+)
+
 from spinnaker_testbase import BaseTestCase
+
+import spinnaker_graph_front_end as sim
+
+from gfe_integration_tests.test_extra_monitor.sdram_writer import (
+    DataRegions,
+    SDRAMWriter,
+)
 
 _GATHERER_MAP = 'VertexToEthernetConnectedChipMapping'
 _TRANSFER_SIZE_MEGABYTES = 20
