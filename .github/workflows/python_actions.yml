@@ -30,4 +30,5 @@ jobs:
       pylint-packages: spinnaker_graph_front_end
       mypy-packages:
       mypy-full-packages: spinnaker_graph_front_end gfe_examples gfe_integration_tests
+      ruff-packages: spinnaker_graph_front_end gfe_examples gfe_integration_tests
       cfg-file: spiNNakerGraphFrontEnd
