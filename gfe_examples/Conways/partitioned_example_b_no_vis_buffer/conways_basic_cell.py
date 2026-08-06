@@ -27,14 +27,14 @@ from spinn_front_end_common.abstract_models.impl import (
     MachineDataSpecableVertex,
 )
 from spinn_front_end_common.data import FecDataView
+from spinn_front_end_common.interface.buffer_management. \
+    recording_utilities import (
+    get_recording_data_constant_size,
+    get_recording_header_size,
+)
 from spinn_front_end_common.interface.buffer_management.buffer_models import (
     AbstractReceiveBuffersToHost,
 )
-from spinn_front_end_common.interface.buffer_management. \
-    recording_utilities import (
-        get_recording_data_constant_size,
-        get_recording_header_size,
-    )
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 from spinn_front_end_common.utilities.constants import (
     BYTES_PER_WORD,

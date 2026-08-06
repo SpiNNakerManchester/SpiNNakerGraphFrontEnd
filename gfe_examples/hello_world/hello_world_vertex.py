@@ -28,11 +28,11 @@ from pacman.model.resources import ConstantSDRAM
 from spinn_front_end_common.abstract_models.impl import (
     MachineDataSpecableVertex,
 )
+from spinn_front_end_common.interface.buffer_management. \
+    recording_utilities import get_recording_header_size
 from spinn_front_end_common.interface.buffer_management.buffer_models import (
     AbstractReceiveBuffersToHost,
 )
-from spinn_front_end_common.interface.buffer_management. \
-    recording_utilities import get_recording_header_size
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT
 from spinn_front_end_common.utilities.helpful_functions import (
