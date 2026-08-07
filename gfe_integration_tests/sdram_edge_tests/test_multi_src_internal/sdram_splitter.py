@@ -41,7 +41,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
     def __init__(self) -> None:
         super().__init__()
         self.__post_vertex: Optional[SDRAMMachineVertex] = None
-        self._pre_vertices: List[SDRAMMachineVertex] = list()
+        self._pre_vertices: List[SDRAMMachineVertex] = []
 
     @property
     def _post_vertex(self) -> SDRAMMachineVertex:
@@ -65,7 +65,7 @@ class SDRAMSplitter(AbstractSplitterCommon):
         post_slice = Slice(
             0, int(self.governed_app_vertex.n_atoms / self.N_VERTS))
 
-        pre_slices = list()
+        pre_slices = []
         for count in range(1, self.N_VERTS):
             pre_slices.append(Slice(
                 post_slice.n_atoms * count,

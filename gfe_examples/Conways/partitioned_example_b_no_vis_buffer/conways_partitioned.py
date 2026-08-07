@@ -38,7 +38,7 @@ if cores <= (MAX_X_SIZE_OF_FABRIC * MAX_Y_SIZE_OF_FABRIC):
     raise KeyError("Don't have enough cores to run simulation")
 
 # contain the vertices for the connection aspect
-vertices = dict()
+vertices = {}
 
 active_states = [(2, 2), (3, 2), (3, 3), (4, 3), (2, 4)]
 
@@ -89,7 +89,7 @@ for x in range(0, MAX_X_SIZE_OF_FABRIC):
 front_end.run(runtime)
 
 # get recorded data
-recorded_data = dict()
+recorded_data = {}
 
 if not get_config_bool("Machine", "virtual_board"):
     # get the data per vertex
