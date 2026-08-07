@@ -12,12 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from typing import List, Optional
+
 from spinn_utilities.overrides import overrides
+
 from pacman.model.graphs.common import Slice
 from pacman.model.graphs.machine import (
-    SDRAMMachineEdge, DestinationSegmentedSDRAMMachinePartition)
+    DestinationSegmentedSDRAMMachinePartition,
+    SDRAMMachineEdge,
+)
 from pacman.model.partitioner_splitters import AbstractSplitterCommon
 from pacman.utilities.utility_objs import ChipCounter
+
 from gfe_integration_tests.sdram_edge_tests.common import SDRAMMachineVertex
 
 

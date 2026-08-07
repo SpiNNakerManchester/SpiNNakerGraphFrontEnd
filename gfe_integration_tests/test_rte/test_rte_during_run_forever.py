@@ -13,15 +13,19 @@
 # limitations under the License.
 
 import os
-import pytest
 from time import sleep
 
-from spinnman.model.enums import ExecutableType
+import pytest
+
 from spinnman.exceptions import SpinnmanException
+from spinnman.model.enums import ExecutableType
+
 from spinn_front_end_common.utilities.database import DatabaseConnection
+
 from spinnaker_testbase import BaseTestCase
 
 import spinnaker_graph_front_end as s
+
 from gfe_integration_tests.test_rte.run_vertex import RunVertex
 
 

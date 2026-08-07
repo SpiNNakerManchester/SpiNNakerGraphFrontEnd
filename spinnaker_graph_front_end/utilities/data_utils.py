@@ -13,9 +13,10 @@
 # limitations under the License.
 
 from typing import TYPE_CHECKING
-from spinn_front_end_common.abstract_models import (
-    AbstractHasAssociatedBinary)
+
+from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
+
 if TYPE_CHECKING:
     from .simulator_vertex import SimulatorVertex
 

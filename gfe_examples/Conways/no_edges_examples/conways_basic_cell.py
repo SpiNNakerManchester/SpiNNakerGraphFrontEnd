@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from spinn_utilities.overrides import overrides
+
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.resources import ConstantSDRAM
-from spinn_utilities.overrides import overrides
 
 
 class ConwayBasicCell(MachineVertex):

@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import logging
+import sys
 from types import ModuleType
 from typing import List, Optional, Tuple
-import sys
 
 from spinn_utilities.abstract_base import abstractmethod
-from spinn_utilities.overrides import overrides
 from spinn_utilities.log import FormatAdapter
+from spinn_utilities.overrides import overrides
 
 from spinnman.model.enums import ExecutableType
 
@@ -30,11 +30,13 @@ from pacman.model.resources import AbstractSDRAM
 from spinn_front_end_common.abstract_models import AbstractHasAssociatedBinary
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.buffer_management import (
-    recording_utilities)
+    recording_utilities,
+)
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
-
 from spinn_front_end_common.utilities.data_utils import (
-    generate_system_data_region)
+    generate_system_data_region,
+)
+
 log = FormatAdapter(logging.getLogger(__file__))
 
 

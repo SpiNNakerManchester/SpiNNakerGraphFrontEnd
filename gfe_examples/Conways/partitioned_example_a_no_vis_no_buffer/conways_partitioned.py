@@ -20,9 +20,9 @@ from spinn_utilities.config_holder import get_config_bool
 from pacman.model.graphs.machine import MachineEdge
 
 import spinnaker_graph_front_end as front_end
+
 from gfe_examples.Conways.partitioned_example_a_no_vis_no_buffer.\
-    conways_basic_cell import (
-        ConwayBasicCell)
+    conways_basic_cell import ConwayBasicCell
 
 runtime = 50
 MAX_X_SIZE_OF_FABRIC = 7

@@ -12,24 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 from enum import IntEnum
 from typing import Iterable, Optional
-import logging
+
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
+
 from spinn_machine.tags import IPTag, ReverseIPTag
+
 from pacman.model.graphs.machine import MachineVertex
 from pacman.model.placements import Placement
 from pacman.model.resources import ConstantSDRAM
-from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT
+
 from spinn_front_end_common.abstract_models.impl import (
-    MachineDataSpecableVertex)
+    MachineDataSpecableVertex,
+)
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 from spinn_front_end_common.interface.profiling import (
-    AbstractHasProfileData, ProfileData)
+    AbstractHasProfileData,
+    ProfileData,
+)
 from spinn_front_end_common.interface.profiling.profile_utils import (
-    get_profile_region_size, reserve_profile_region, write_profile_region_data,
-    get_profiling_data)
+    get_profile_region_size,
+    get_profiling_data,
+    reserve_profile_region,
+    write_profile_region_data,
+)
+from spinn_front_end_common.utilities.constants import SYSTEM_BYTES_REQUIREMENT
+
 from spinnaker_graph_front_end.utilities import SimulatorVertex
 
 logger = FormatAdapter(logging.getLogger(__name__))

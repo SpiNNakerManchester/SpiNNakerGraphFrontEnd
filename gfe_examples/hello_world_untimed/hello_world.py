@@ -22,12 +22,17 @@ We then fetch the written data and print it on the python console.
 
 import logging
 import os
+
 from spinn_utilities.config_holder import get_config_bool
 from spinn_utilities.log import FormatAdapter
+
 from spinn_front_end_common.data import FecDataView
+
 import spinnaker_graph_front_end as front_end
+
 from gfe_examples.hello_world_untimed.hello_world_vertex import (
-    HelloWorldVertex)
+    HelloWorldVertex,
+)
 
 logger = FormatAdapter(logging.getLogger(__name__))
 

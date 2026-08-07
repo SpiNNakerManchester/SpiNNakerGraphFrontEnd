@@ -21,11 +21,13 @@ from pacman.model.placements import Placement
 from pacman.model.resources import ConstantSDRAM
 
 from spinn_front_end_common.abstract_models import (
-    AbstractHasAssociatedBinary, AbstractGeneratesDataSpecification)
+    AbstractGeneratesDataSpecification,
+    AbstractHasAssociatedBinary,
+)
 from spinn_front_end_common.interface.ds import DataSpecificationGenerator
 from spinn_front_end_common.interface.simulation import (
-    simulation_utilities as
-    utils)
+    simulation_utilities as utils,
+)
 from spinn_front_end_common.utilities.constants import SIMULATION_N_BYTES
 
 

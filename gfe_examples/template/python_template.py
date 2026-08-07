@@ -18,9 +18,13 @@ Template for a Graph Front End program on SpiNNaker
 
 import logging
 import os
+
 from spinn_utilities.log import FormatAdapter
+
 from spinn_front_end_common.data import FecDataView
+
 import spinnaker_graph_front_end as front_end
+
 from gfe_examples.template.template_vertex import TemplateVertex
 
 logger = FormatAdapter(logging.getLogger(__name__))

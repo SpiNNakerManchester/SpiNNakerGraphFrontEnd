@@ -13,6 +13,7 @@
 # limitations under the License.
 
 from testfixtures import LogCapture  # type: ignore
+
 from spinnaker_testbase import ScriptChecker
 
 

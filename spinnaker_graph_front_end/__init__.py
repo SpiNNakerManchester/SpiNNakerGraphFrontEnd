@@ -47,8 +47,8 @@ It is possible to use GFE-style vertices in a neural graph (e.g., to simulate
 the external world). Talk to the SpiNNaker team for more details.
 """
 
-import os
 import logging
+import os
 import sys
 from types import ModuleType
 from typing import Iterable, Optional
@@ -60,21 +60,25 @@ from spinn_utilities.socket_address import SocketAddress
 
 from spinn_machine import Machine
 
-from pacman.model.graphs.application import (
-    ApplicationEdge, ApplicationVertex)
+from pacman.model.graphs.application import ApplicationEdge, ApplicationVertex
 from pacman.model.graphs.machine import MachineEdge, MachineVertex
 from pacman.model.routing_info import RoutingInfo
 from pacman.model.tags import Tags
 
 from spinn_front_end_common.data import FecDataView
-from spinn_front_end_common.utility_models import (
-    ReverseIpTagMultiCastSource as _RIPTMCS)
 from spinn_front_end_common.interface.buffer_management import BufferManager
+from spinn_front_end_common.utility_models import (
+    ReverseIpTagMultiCastSource as _RIPTMCS,
+)
 
-from spinnaker_graph_front_end._version import (
-    __version__, __version_name__, __version_month__, __version_year__)
-from spinnaker_graph_front_end.spinnaker import SpiNNaker
 from spinnaker_graph_front_end import spinnaker as gfe_file
+from spinnaker_graph_front_end._version import (
+    __version__,
+    __version_month__,
+    __version_name__,
+    __version_year__,
+)
+from spinnaker_graph_front_end.spinnaker import SpiNNaker
 
 logger = FormatAdapter(logging.getLogger(__name__))
 

@@ -15,10 +15,13 @@
 import os
 
 from spinn_front_end_common.data.fec_data_view import FecDataView
+
 from spinnaker_testbase import BaseTestCase
 
 import spinnaker_graph_front_end as s
+
 from gfe_integration_tests.test_profile.profiled_vertex import ProfiledVertex
+
 
 class  TestProfile(BaseTestCase):
 

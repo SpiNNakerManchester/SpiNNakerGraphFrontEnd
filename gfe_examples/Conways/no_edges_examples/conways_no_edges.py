@@ -13,9 +13,10 @@
 # limitations under the License.
 
 import spinnaker_graph_front_end as front_end
-from gfe_examples.Conways.no_edges_examples.conways_basic_cell import (
-    ConwayBasicCell)
 
+from gfe_examples.Conways.no_edges_examples.conways_basic_cell import (
+    ConwayBasicCell,
+)
 
 # set up the front end and ask for the detected machines dimensions
 front_end.setup()
