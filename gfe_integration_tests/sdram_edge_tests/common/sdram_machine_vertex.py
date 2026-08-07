@@ -68,9 +68,9 @@ class SDRAMMachineVertex(
             label=label, app_vertex=app_vertex, vertex_slice=vertex_slice)
         self.__sdram_cost = sdram_cost
         self.__incoming_sdram_partitions: List[AbstractSDRAMPartition] = (
-            list())
+            [])
         self.__outgoing_sdram_partitions: List[AbstractSDRAMPartition]  = (
-            list())
+            [])
 
     def add_incoming_sdram_partition(
             self, partition: AbstractSDRAMPartition) -> None:
