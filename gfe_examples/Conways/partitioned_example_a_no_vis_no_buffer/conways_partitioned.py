@@ -44,8 +44,8 @@ vertices: Dict[Tuple[int, int], ConwayBasicCell] = {}
 active_states = [(2, 2), (3, 2), (3, 3), (4, 3), (2, 4)]
 
 # build vertices
-for x in range(0, MAX_X_SIZE_OF_FABRIC):
-    for y in range(0, MAX_Y_SIZE_OF_FABRIC):
+for x in range(MAX_X_SIZE_OF_FABRIC):
+    for y in range(MAX_Y_SIZE_OF_FABRIC):
         vert = ConwayBasicCell(
             f"cell{(x * MAX_X_SIZE_OF_FABRIC) + y}",
             (x, y) in active_states)
@@ -55,15 +55,15 @@ for x in range(0, MAX_X_SIZE_OF_FABRIC):
 # verify the initial state
 output = ""
 for y in range(MAX_X_SIZE_OF_FABRIC - 1, 0, -1):
-    for x in range(0, MAX_Y_SIZE_OF_FABRIC):
+    for x in range(MAX_Y_SIZE_OF_FABRIC):
         output += "X" if vertices[x, y].state else " "
     output += "\n"
 print(output)
 print("\n\n")
 
 # build edges
-for x in range(0, MAX_X_SIZE_OF_FABRIC):
-    for y in range(0, MAX_Y_SIZE_OF_FABRIC):
+for x in range(MAX_X_SIZE_OF_FABRIC):
+    for y in range(MAX_Y_SIZE_OF_FABRIC):
 
         positions = [
             (x, (y + 1) % MAX_Y_SIZE_OF_FABRIC, "N"),
@@ -94,16 +94,16 @@ recorded_data = {}
 
 # get the data per vertex
 if not get_config_bool("Machine", "virtual_board"):
-    for x in range(0, MAX_X_SIZE_OF_FABRIC):
-        for y in range(0, MAX_Y_SIZE_OF_FABRIC):
+    for x in range(MAX_X_SIZE_OF_FABRIC):
+        for y in range(MAX_Y_SIZE_OF_FABRIC):
             recorded_data[x, y] = vertices[x, y].get_data()
 
     # visualise it in text form (bad but no vis this time)
-    for time in range(0, runtime):
+    for time in range(runtime):
         print(f"at time {time}")
         output = ""
         for y in range(MAX_X_SIZE_OF_FABRIC - 1, 0, -1):
-            for x in range(0, MAX_Y_SIZE_OF_FABRIC):
+            for x in range(MAX_Y_SIZE_OF_FABRIC):
                 output += ("X" if recorded_data[x, y][time] else " ")
             output += "\n"
         print(output)
