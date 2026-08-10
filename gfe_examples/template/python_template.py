@@ -44,7 +44,7 @@ front_end.setup(
 total_number_of_cores = front_end.get_number_of_available_cores_on_machine()
 
 # fill all cores with a Vertex each
-for x in range(0, total_number_of_cores):
+for x in range(total_number_of_cores):
     front_end.add_machine_vertex_instance(
         TemplateVertex(label=f"Template program at x {x}"))
 
