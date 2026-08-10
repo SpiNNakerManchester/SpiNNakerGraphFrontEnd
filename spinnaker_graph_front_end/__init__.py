@@ -83,11 +83,22 @@ from spinnaker_graph_front_end.spinnaker import SpiNNaker
 logger = FormatAdapter(logging.getLogger(__name__))
 
 
-__all__ = ['add_edge_instance', 'add_socket_address', 'add_vertex_instance',
-           'buffer_manager', 'get_number_of_available_cores_on_machine',
-           'has_ran', 'is_allocated_machine', 'machine', 'placements',
-           'ReverseIpTagMultiCastSource', 'routing_infos', 'run', 'setup',
-           'stop']
+__all__ = [
+    'ReverseIpTagMultiCastSource',
+    'add_edge_instance',
+    'add_socket_address',
+    'add_vertex_instance',
+    'buffer_manager',
+    'get_number_of_available_cores_on_machine',
+    'has_ran',
+    'is_allocated_machine',
+    'machine',
+    'placements',
+    'routing_infos',
+    'run',
+    'setup',
+    'stop',
+]
 # Cache of the simulator created by setup
 __simulator: Optional[SpiNNaker] = None
 
