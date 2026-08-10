@@ -34,8 +34,9 @@ class SDRAMSplitter(AbstractSplitterCommon):
 
     __slots__ = [
         "__pre_vertex",
+        "_partition",
         "_post_vertices",
-        "_partition"]
+    ]
 
     def __init__(self) -> None:
         super().__init__()

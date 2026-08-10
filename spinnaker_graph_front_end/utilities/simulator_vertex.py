@@ -46,7 +46,7 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
     the `spin1_api` simulation control protocol.
     """
 
-    __slots__ = ["_binary_name", "__front_end"]
+    __slots__ = ["__front_end", "_binary_name"]
 
     def __init__(self, label: Optional[str], binary_name: str,
                  vertex_slice: Optional[Slice] = None):
