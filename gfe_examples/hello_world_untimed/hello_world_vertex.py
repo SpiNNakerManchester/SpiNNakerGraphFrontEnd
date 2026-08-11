@@ -14,7 +14,6 @@
 
 import logging
 from enum import IntEnum
-from typing import List
 
 import numpy
 
@@ -139,7 +138,7 @@ class HelloWorldVertex(
         return str(raw_data, self._ENCODING)
 
     @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)
-    def get_recorded_region_ids(self) -> List[int]:
+    def get_recorded_region_ids(self) -> list[int]:
         return [Channels.HELLO]
 
     @overrides(AbstractReceiveBuffersToHost.get_recording_region_base_address)

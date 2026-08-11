@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import os
-from typing import Dict, Tuple
 
 from spinn_utilities.config_holder import get_config_bool
 
@@ -39,7 +38,7 @@ if cores <= (MAX_X_SIZE_OF_FABRIC * MAX_Y_SIZE_OF_FABRIC):
     raise KeyError("Don't have enough cores to run simulation")
 
 # contain the vertices for the connection aspect
-vertices: Dict[Tuple[int, int], ConwayBasicCell] = {}
+vertices: dict[tuple[int, int], ConwayBasicCell] = {}
 
 active_states = [(2, 2), (3, 2), (3, 3), (4, 3), (2, 4)]
 

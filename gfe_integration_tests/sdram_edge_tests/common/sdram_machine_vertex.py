@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from enum import IntEnum
-from typing import Iterable, List, Optional
+from typing import Iterable, Optional
 
 from spinn_utilities.overrides import overrides
 
@@ -67,9 +67,9 @@ class SDRAMMachineVertex(
         super().__init__(
             label=label, app_vertex=app_vertex, vertex_slice=vertex_slice)
         self.__sdram_cost = sdram_cost
-        self.__incoming_sdram_partitions: List[AbstractSDRAMPartition] = (
+        self.__incoming_sdram_partitions: list[AbstractSDRAMPartition] = (
             [])
-        self.__outgoing_sdram_partitions: List[AbstractSDRAMPartition]  = (
+        self.__outgoing_sdram_partitions: list[AbstractSDRAMPartition]  = (
             [])
 
     def add_incoming_sdram_partition(

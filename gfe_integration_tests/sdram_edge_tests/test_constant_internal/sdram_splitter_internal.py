@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import List, Optional
+from typing import Optional
 
 from spinn_utilities.overrides import overrides
 
@@ -54,12 +54,12 @@ class SDRAMSplitterInternal(AbstractSplitterCommon):
         return self.__post_vertex
 
     @overrides(AbstractSplitterCommon.get_out_going_vertices)
-    def get_out_going_vertices(self, partition_id: str) -> List[
+    def get_out_going_vertices(self, partition_id: str) -> list[
             SDRAMMachineVertex]:
         return [self._pre_vertex]
 
     @overrides(AbstractSplitterCommon.get_in_coming_vertices)
-    def get_in_coming_vertices(self, partition_id: str) -> List[
+    def get_in_coming_vertices(self, partition_id: str) -> list[
             SDRAMMachineVertex]:
         return [self._post_vertex]
 
@@ -92,16 +92,16 @@ class SDRAMSplitterInternal(AbstractSplitterCommon):
         chip_counter.add_core(self._post_vertex.sdram_required)
 
     @overrides(AbstractSplitterCommon.get_out_going_slices)
-    def get_out_going_slices(self) -> List[Slice]:
+    def get_out_going_slices(self) -> list[Slice]:
         return [self._post_vertex.vertex_slice]
 
     @overrides(AbstractSplitterCommon.get_in_coming_slices)
-    def get_in_coming_slices(self) -> List[Slice]:
+    def get_in_coming_slices(self) -> list[Slice]:
         return [self._pre_vertex.vertex_slice]
 
     @overrides(AbstractSplitterCommon.machine_vertices_for_recording)
     def machine_vertices_for_recording(
-            self, variable_to_record: str) -> List[SDRAMMachineVertex]:
+            self, variable_to_record: str) -> list[SDRAMMachineVertex]:
         return [self._pre_vertex, self._post_vertex]
 
     @overrides(AbstractSplitterCommon.reset_called)
@@ -110,6 +110,6 @@ class SDRAMSplitterInternal(AbstractSplitterCommon):
 
     @overrides(AbstractSplitterCommon.get_internal_sdram_partitions)
     def get_internal_sdram_partitions(
-            self) -> List[ConstantSDRAMMachinePartition]:
+            self) -> list[ConstantSDRAMMachinePartition]:
         assert isinstance(self._sdram_part, ConstantSDRAMMachinePartition)
         return [self._sdram_part]
