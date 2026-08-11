@@ -14,7 +14,7 @@
 import logging
 import sys
 from types import ModuleType
-from typing import List, Optional, Tuple
+from typing import Optional
 
 from spinn_utilities.abstract_base import abstractmethod
 from spinn_utilities.log import FormatAdapter
@@ -99,7 +99,7 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
         return FecDataView.get_placement_of_vertex(self)
 
     def get_recording_channel_data(
-            self, recording_id: int) -> Tuple[memoryview, bool]:
+            self, recording_id: int) -> tuple[memoryview, bool]:
         """
         Get the data from a recording channel. The simulation must have
         :py:func:`spinnaker_graph_front_end.run` before this will work,
@@ -130,7 +130,7 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
 
     def generate_recording_region(
             self, spec: DataSpecificationGenerator, region_id: int,
-            channel_sizes: List[int]) -> None:
+            channel_sizes: list[int]) -> None:
         """
         Generate the recording region for the data specification.
 

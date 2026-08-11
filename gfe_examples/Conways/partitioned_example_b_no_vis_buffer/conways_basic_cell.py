@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from enum import IntEnum
-from typing import Iterable, List, Optional, Set
+from typing import Iterable, Optional
 
 from spinn_utilities.overrides import overrides
 
@@ -89,7 +89,7 @@ class ConwayBasicCell(
 
         # app specific data items
         self._state = bool(state)
-        self._neighbours: Set[ConwayBasicCell] = set()
+        self._neighbours: set[ConwayBasicCell] = set()
 
     def add_neighbour(self, neighbour: "ConwayBasicCell") -> None:
         if neighbour == self:
@@ -148,7 +148,7 @@ class ConwayBasicCell(
         # End-of-Spec:
         spec.end_specification()
 
-    def get_data(self) -> List[bool]:
+    def get_data(self) -> list[bool]:
         # for buffering output info is taken form the buffer manager
         # get raw data, convert to list of booleans
         raw_data, data_missing = self.get_recording_channel_data(
@@ -186,7 +186,7 @@ class ConwayBasicCell(
         return str(self.label)
 
     @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)
-    def get_recorded_region_ids(self) -> List[int]:
+    def get_recorded_region_ids(self) -> list[int]:
         return [Channels.STATE_LOG]
 
     @overrides(AbstractReceiveBuffersToHost.get_recording_region_base_address)

@@ -15,7 +15,6 @@
 import os
 from random import randint
 from time import sleep
-from typing import List
 
 from pacman.model.graphs.machine.machine_edge import MachineEdge
 
@@ -60,7 +59,7 @@ def end_sim(label: str, c: LiveEventConnection) -> None:
     running = False
 
 
-def receive(label: str, time: int, keys: List[int]) -> None:
+def receive(label: str, time: int, keys: list[int]) -> None:
     print(f"Received from {label} at time {time}: {keys}")
 
 

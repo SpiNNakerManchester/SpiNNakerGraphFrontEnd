@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import logging
-from typing import Optional, Type
+from typing import Optional
 
 from spinn_utilities.config_holder import is_config_none
 from spinn_utilities.log import FormatAdapter
@@ -91,7 +91,7 @@ class SpiNNaker(AbstractSpinnakerBase):
 
     @property
     @overrides(AbstractSpinnakerBase._data_writer_cls)
-    def _data_writer_cls(self) -> Type[FecDataWriter]:
+    def _data_writer_cls(self) -> type[FecDataWriter]:
         return FecDataWriter
 
     def __repr__(self) -> str:

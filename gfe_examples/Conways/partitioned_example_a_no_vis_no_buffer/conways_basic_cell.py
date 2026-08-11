@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from enum import IntEnum
-from typing import Iterable, List, Optional, Set
+from typing import Iterable, Optional
 
 from spinn_utilities.overrides import overrides
 
@@ -77,7 +77,7 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
 
         # app specific data items
         self._state = bool(state)
-        self._neighbours: Set[ConwayBasicCell] = set()
+        self._neighbours: set[ConwayBasicCell] = set()
 
     def add_neighbour(self, neighbour: "ConwayBasicCell") -> None:
         if neighbour == self:
@@ -136,7 +136,7 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         # End-of-Spec:
         spec.end_specification()
 
-    def get_data(self) -> List[bool]:
+    def get_data(self) -> list[bool]:
         txrx = FecDataView.get_transceiver()
         placement = self.placement
         n_steps = FecDataView.get_current_run_timesteps()

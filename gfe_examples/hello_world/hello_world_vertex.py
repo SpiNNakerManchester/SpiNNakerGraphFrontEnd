@@ -14,7 +14,7 @@
 
 import logging
 from enum import IntEnum
-from typing import Iterable, List, Optional
+from typing import Iterable, Optional
 
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
@@ -97,7 +97,7 @@ class HelloWorldVertex(
         return str(bytearray(raw_data))
 
     @overrides(AbstractReceiveBuffersToHost.get_recorded_region_ids)
-    def get_recorded_region_ids(self) -> List[int]:
+    def get_recorded_region_ids(self) -> list[int]:
         return [Channels.HELLO]
 
     @overrides(AbstractReceiveBuffersToHost.get_recording_region_base_address)
