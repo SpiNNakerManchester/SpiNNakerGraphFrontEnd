@@ -51,7 +51,7 @@ import logging
 import os
 import sys
 from types import ModuleType
-from typing import Iterable, Optional
+from typing import Iterable
 
 from typing_extensions import Never
 
@@ -100,16 +100,16 @@ __all__ = [
     'stop',
 ]
 # Cache of the simulator created by setup
-__simulator: Optional[SpiNNaker] = None
+__simulator: SpiNNaker | None = None
 
 
-def setup(model_binary_module: Optional[ModuleType] = None,
-          model_binary_folder: Optional[str] = None,
-          database_socket_addresses: Optional[Iterable[SocketAddress]] = (),
-          n_chips_required: Optional[int] = None,
-          n_boards_required: Optional[int] = None,
-          time_scale_factor: Optional[int] = None,
-          *, timestep: Optional[int] = None) -> None:
+def setup(model_binary_module: ModuleType | None = None,
+          model_binary_folder: str | None = None,
+          database_socket_addresses: Iterable[SocketAddress] | None = (),
+          n_chips_required: int | None = None,
+          n_boards_required: int | None = None,
+          time_scale_factor: int | None = None,
+          *, timestep: int | None = None) -> None:
     """
     Set up a graph, ready to have vertices and edges added to it, and the
     simulator engine that will execute the graph.
@@ -184,7 +184,7 @@ def __get_simulator() -> SpiNNaker:
     return __simulator
 
 
-def run(duration: Optional[int] = None) -> None:
+def run(duration: int | None = None) -> None:
     """
     Run a simulation for a number of microseconds.
 
@@ -194,7 +194,7 @@ def run(duration: Optional[int] = None) -> None:
     __get_simulator().run(duration)
 
 
-def run_until_complete(n_steps: Optional[int] = None) -> None:
+def run_until_complete(n_steps: int | None = None) -> None:
     """
     Run until the simulation is complete.
 
@@ -269,9 +269,9 @@ def add_machine_edge_instance(edge: MachineEdge, partition_id: str) -> None:
     FecDataView.add_machine_edge(edge, partition_id)
 
 
-def add_socket_address(database_ack_port_num: Optional[int],
-                       database_notify_host: Optional[str],
-                       database_notify_port_num: Optional[int]) -> None:
+def add_socket_address(database_ack_port_num: int | None,
+                       database_notify_host: str | None,
+                       database_notify_port_num: int | None) -> None:
     """
     Add a socket address for the notification protocol.
 

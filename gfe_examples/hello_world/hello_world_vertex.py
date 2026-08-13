@@ -14,7 +14,7 @@
 
 import logging
 from enum import IntEnum
-from typing import Iterable, Optional
+from typing import Iterable
 
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
@@ -57,7 +57,7 @@ class HelloWorldVertex(
         SimulatorVertex, MachineDataSpecableVertex,
         AbstractReceiveBuffersToHost):
 
-    def __init__(self, n_hellos: int, label: Optional[str] = None):
+    def __init__(self, n_hellos: int, label: str | None = None):
         super().__init__(label, "hello_world.aplx")
 
         self._string_data_size = n_hellos * 13
@@ -73,8 +73,8 @@ class HelloWorldVertex(
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec: DataSpecificationGenerator, placement: Placement,
-            iptags: Optional[Iterable[IPTag]],
-            reverse_iptags: Optional[Iterable[ReverseIPTag]]) -> None:
+            iptags: Iterable[IPTag] | None,
+            reverse_iptags: Iterable[ReverseIPTag] | None) -> None:
         # Generate the system data region for simulation .c requirements
         self.generate_system_region(spec)
 

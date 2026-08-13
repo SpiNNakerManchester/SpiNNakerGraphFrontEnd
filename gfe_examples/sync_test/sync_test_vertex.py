@@ -14,7 +14,6 @@
 
 import logging
 from enum import IntEnum
-from typing import Optional
 
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
@@ -54,7 +53,7 @@ class DataRegions(IntEnum):
 
 
 class SyncTestVertex(AbstractOneAppOneMachineVertex):
-    def __init__(self, lead: bool, label: Optional[str] = None):
+    def __init__(self, lead: bool, label: str | None = None):
         AbstractOneAppOneMachineVertex.__init__(
             self, SyncTestMachineVertex(lead, self, label),
             label, n_atoms=1)
@@ -63,7 +62,7 @@ class SyncTestVertex(AbstractOneAppOneMachineVertex):
 class SyncTestMachineVertex(MachineVertex, AbstractHasAssociatedBinary,
                             AbstractGeneratesDataSpecification):
     def __init__(self, lead: bool, app_vertex: SyncTestVertex,
-                 label: Optional[str] = None):
+                 label: str | None = None):
         super().__init__(label, app_vertex)
         self._lead = lead
 

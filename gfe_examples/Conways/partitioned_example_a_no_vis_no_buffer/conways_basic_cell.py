@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from enum import IntEnum
-from typing import Iterable, Optional
+from typing import Iterable
 
 from spinn_utilities.overrides import overrides
 
@@ -88,8 +88,8 @@ class ConwayBasicCell(SimulatorVertex, MachineDataSpecableVertex):
         MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec: DataSpecificationGenerator, placement: Placement,
-            iptags: Optional[Iterable[IPTag]],
-            reverse_iptags: Optional[Iterable[ReverseIPTag]]) -> None:
+            iptags: Iterable[IPTag] | None,
+            reverse_iptags: Iterable[ReverseIPTag] | None) -> None:
         if len(self._neighbours) != 8:
             raise ValueError(
                 f"Only {len(self._neighbours)} neighbours, not 8")

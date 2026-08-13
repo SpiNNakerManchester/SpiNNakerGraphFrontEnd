@@ -14,7 +14,7 @@
 
 import logging
 from enum import IntEnum
-from typing import Iterable, Optional
+from typing import Iterable
 
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides
@@ -98,8 +98,8 @@ class TemplateVertex(
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec: DataSpecificationGenerator, placement: Placement,
-            iptags: Optional[Iterable[IPTag]],
-            reverse_iptags: Optional[Iterable[ReverseIPTag]]) -> None:
+            iptags: Iterable[IPTag] | None,
+            reverse_iptags: Iterable[ReverseIPTag] | None) -> None:
         # Generate the system data region for simulation .c requirements
         self.generate_system_region(spec, DataRegions.SYSTEM)
 
@@ -121,7 +121,7 @@ class TemplateVertex(
             size=self.TRANSMISSION_REGION_N_BYTES, label="transmission")
 
     def _write_app_memory_regions(self, spec: DataSpecificationGenerator,
-                                  iptags: Optional[Iterable[IPTag]]) -> None:
+                                  iptags: Iterable[IPTag] | None) -> None:
         # Get the key, assuming all outgoing edges use the same key
         routing_info = FecDataView.get_routing_infos()
         key = routing_info.get_single_key_from(self)
