@@ -19,7 +19,7 @@ from spinnaker_testbase import ScriptChecker
 
 class TestHelloWorldUntimed(ScriptChecker):
 
-   def test_hello_world_untimed(self) -> None:
+    def test_hello_world_untimed(self) -> None:
         with LogCapture("hello_world") as lc:
             self.check_script(
                 "gfe_examples/hello_world_untimed/hello_world.py")
