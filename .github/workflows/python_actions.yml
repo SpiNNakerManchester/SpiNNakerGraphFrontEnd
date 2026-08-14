@@ -26,7 +26,7 @@ jobs:
       ubuntu-packages: graphviz
       test-directories: unittests
       coverage-package: spinnaker_graph_front_end
-      flake8-packages: spinnaker_graph_front_end unittests gfe_examples
+      flake8-packages: spinnaker_graph_front_end unittests gfe_examples gfe_integration_tests
       pylint-packages: spinnaker_graph_front_end
       mypy-packages:
       mypy-full-packages: spinnaker_graph_front_end gfe_examples gfe_integration_tests

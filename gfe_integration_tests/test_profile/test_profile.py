@@ -23,7 +23,7 @@ import spinnaker_graph_front_end as s
 from gfe_integration_tests.test_profile.profiled_vertex import ProfiledVertex
 
 
-class  TestProfile(BaseTestCase):
+class TestProfile(BaseTestCase):
 
     def check_profile_data(self) -> None:
         s.setup(model_binary_folder=os.path.dirname(__file__))
