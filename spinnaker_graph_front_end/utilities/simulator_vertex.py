@@ -14,7 +14,6 @@
 import logging
 import sys
 from types import ModuleType
-from typing import Optional
 
 from spinn_utilities.abstract_base import abstractmethod
 from spinn_utilities.log import FormatAdapter
@@ -48,8 +47,8 @@ class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
 
     __slots__ = ["__front_end", "_binary_name"]
 
-    def __init__(self, label: Optional[str], binary_name: str,
-                 vertex_slice: Optional[Slice] = None):
+    def __init__(self, label: str | None, binary_name: str,
+                 vertex_slice: Slice | None = None):
         """
         :param label:
             The label for the vertex.

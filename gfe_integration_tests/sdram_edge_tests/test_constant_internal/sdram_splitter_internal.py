@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Optional
 
 from spinn_utilities.overrides import overrides
 
@@ -39,9 +38,9 @@ class SDRAMSplitterInternal(AbstractSplitterCommon):
 
     def __init__(self) -> None:
         super().__init__()
-        self.__pre_vertex: Optional[SDRAMMachineVertex] = None
-        self.__post_vertex: Optional[SDRAMMachineVertex] = None
-        self._sdram_part: Optional[ConstantSDRAMMachinePartition] = None
+        self.__pre_vertex: SDRAMMachineVertex | None = None
+        self.__post_vertex: SDRAMMachineVertex | None = None
+        self._sdram_part: ConstantSDRAMMachinePartition | None = None
 
     @property
     def _pre_vertex(self) -> SDRAMMachineVertex:

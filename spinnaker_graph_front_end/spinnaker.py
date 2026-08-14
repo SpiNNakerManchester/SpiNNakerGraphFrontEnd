@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import logging
-from typing import Optional
 
 from spinn_utilities.config_holder import is_config_none
 from spinn_utilities.log import FormatAdapter
@@ -53,10 +52,10 @@ class SpiNNaker(AbstractSpinnakerBase):
     """
 
     def __init__(
-            self, n_chips_required: Optional[int] = None,
-            n_boards_required: Optional[int] = None,
-            time_scale_factor: Optional[int] = None,
-            timestep: Optional[int] = None):
+            self, n_chips_required: int | None = None,
+            n_boards_required: int | None = None,
+            time_scale_factor: int | None = None,
+            timestep: int | None = None):
         """
         :param n_chips_required:
             How many chips are required.

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from enum import IntEnum
-from typing import Iterable, Optional
+from typing import Iterable
 
 from spinn_utilities.overrides import overrides
 
@@ -60,17 +60,15 @@ class SDRAMMachineVertex(
     SDRAM_PARTITION_BASE_DSG_SIZE = 2 * BYTES_PER_WORD
     SDRAM_PARTITION_COUNTERS = 1 * BYTES_PER_WORD
 
-    def __init__(self, label: Optional[str] = None,
-                 app_vertex: Optional[ApplicationVertex] = None,
-                 vertex_slice: Optional[Slice] = None,
-                 sdram_cost: Optional[int] = None):
+    def __init__(self, label: str | None = None,
+                 app_vertex: ApplicationVertex | None = None,
+                 vertex_slice: Slice | None = None,
+                 sdram_cost: int | None = None):
         super().__init__(
             label=label, app_vertex=app_vertex, vertex_slice=vertex_slice)
         self.__sdram_cost = sdram_cost
-        self.__incoming_sdram_partitions: list[AbstractSDRAMPartition] = (
-            [])
-        self.__outgoing_sdram_partitions: list[AbstractSDRAMPartition]  = (
-            [])
+        self.__incoming_sdram_partitions: list[AbstractSDRAMPartition] = ([])
+        self.__outgoing_sdram_partitions: list[AbstractSDRAMPartition] = ([])
 
     def add_incoming_sdram_partition(
             self, partition: AbstractSDRAMPartition) -> None:
@@ -81,8 +79,6 @@ class SDRAMMachineVertex(
         self.__outgoing_sdram_partitions.append(partition)
 
     @property
-
-
     @overrides(MachineVertex.sdram_required)
     def sdram_required(self) -> ConstantSDRAM:
         if (len(self.__incoming_sdram_partitions) +
@@ -121,8 +117,8 @@ class SDRAMMachineVertex(
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec: DataSpecificationGenerator, placement: Placement,
-            iptags: Optional[Iterable[IPTag]],
-            reverse_iptags: Optional[Iterable[ReverseIPTag]]) -> None:
+            iptags: Iterable[IPTag] | None,
+            reverse_iptags: Iterable[ReverseIPTag] | None) -> None:
         # reserve memory regions
         spec.reserve_memory_region(
             region=DataRegions.SYSTEM, size=SIMULATION_N_BYTES,

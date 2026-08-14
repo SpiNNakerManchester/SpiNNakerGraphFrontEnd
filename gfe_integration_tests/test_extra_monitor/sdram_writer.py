@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from enum import IntEnum
-from typing import Iterable, Optional
+from typing import Iterable
 
 from spinn_utilities.overrides import overrides
 
@@ -69,8 +69,8 @@ class SDRAMWriter(
     @overrides(MachineDataSpecableVertex.generate_machine_data_specification)
     def generate_machine_data_specification(
             self, spec: DataSpecificationGenerator, placement: Placement,
-            iptags: Optional[Iterable[IPTag]],
-            reverse_iptags: Optional[Iterable[ReverseIPTag]]) -> None:
+            iptags: Iterable[IPTag] | None,
+            reverse_iptags: Iterable[ReverseIPTag] | None) -> None:
         # Reserve SDRAM space for memory areas:
         self._reserve_memory_regions(spec)
 
