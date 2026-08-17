@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from collections.abc import Iterable
 from enum import IntEnum
-from typing import Iterable
 
 from spinn_utilities.overrides import overrides
 
@@ -29,9 +29,9 @@ from spinn_front_end_common.abstract_models.impl import (
 from spinn_front_end_common.data import FecDataView
 from spinn_front_end_common.interface.buffer_management. \
     recording_utilities import (
-        get_recording_data_constant_size,
-        get_recording_header_size,
-    )
+    get_recording_data_constant_size,
+    get_recording_header_size,
+)
 from spinn_front_end_common.interface.buffer_management.buffer_models import (
     AbstractReceiveBuffersToHost,
 )

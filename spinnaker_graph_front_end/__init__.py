@@ -50,10 +50,9 @@ the external world). Talk to the SpiNNaker team for more details.
 import logging
 import os
 import sys
+from collections.abc import Iterable
 from types import ModuleType
-from typing import Iterable
-
-from typing_extensions import Never
+from typing import Never
 
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.socket_address import SocketAddress
