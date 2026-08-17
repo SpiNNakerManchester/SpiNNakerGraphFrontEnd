@@ -13,8 +13,8 @@
 # limitations under the License.
 
 import logging
+from collections.abc import Iterable
 from enum import IntEnum
-from typing import Iterable
 
 from spinn_utilities.log import FormatAdapter
 from spinn_utilities.overrides import overrides

@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from collections.abc import Iterable
 from enum import IntEnum
-from typing import Iterable
 
 from spinn_utilities.overrides import overrides
 
