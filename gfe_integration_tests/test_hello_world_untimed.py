@@ -27,7 +27,7 @@ class TestHelloWorldUntimed(ScriptChecker):
         for n, output in enumerate(lc.records):
             msg = output.getMessage()
             print(msg)
-            expect = "Hello World {}  ".format(n)
+            expect = f"Hello World {n}  "
             if n < 10:
                 expect += " "
             assert msg.endswith(expect * 20)

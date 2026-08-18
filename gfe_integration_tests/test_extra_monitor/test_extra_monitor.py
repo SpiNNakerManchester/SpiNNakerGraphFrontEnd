@@ -59,8 +59,7 @@ def check_data(data: bytearray) -> None:
     start_value = 0
     for value in ints:
         if value != start_value:
-            print("should be getting {}, but got {}".format(
-                start_value, value))
+            print(f"should be getting {start_value}, but got {value}")
             start_value = value + 1
         else:
             start_value += 1
