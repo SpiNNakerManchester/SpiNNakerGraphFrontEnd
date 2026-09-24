@@ -36,7 +36,7 @@ from spinn_front_end_common.utilities.data_utils import (
     generate_system_data_region,
 )
 
-log = FormatAdapter(logging.getLogger(__file__))
+log = FormatAdapter(logging.getLogger(__name__))
 
 
 class SimulatorVertex(MachineVertex, AbstractHasAssociatedBinary):
