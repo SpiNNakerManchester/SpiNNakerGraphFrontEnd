@@ -106,14 +106,14 @@ jobs:
         cfg-file: spiNNakerGraphFrontEnd
 
     - name: Download Fec binaries
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v8
       with:
         name: fec_binaries
         # Need to go into spynnaker as FEC will have been moved by install
         path: external_binaries
 
     - name: Download test_extra_monitor_binary Binaries
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v8
       with:
         name: test_extra_monitor_binary
         path: external_binaries
